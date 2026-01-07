@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uniform 诊断测试 | Uniform Diagnostic Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .error { color: red; }
+        .warning { color: orange; }
+        .success { color: green; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; border: 1px solid #ddd; max-height: 400px; overflow: auto; }
+        button { margin: 5px; padding: 10px 15px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Uniform 诊断测试 | Uniform Diagnostic Test</h1>
+
+    <div class="section">
+        <h2>测试控制 | Test Controls</h2>
+        <button onclick="startDiagnostic()">开始诊断 | Start Diagnostic</button>
+        <button onclick="clearResults()">清除结果 | Clear Results</button>
+        <button onclick="exportResults()">导出结果 | Export Results</button>
+    </div>
+
+    <div class="section">
+        <h2>诊断结果 | Diagnostic Results</h2>
+        <pre id="results"></pre>
+    </div>
+
+    <div class="section">
+        <h2>详细分析 | Detailed Analysis</h2>
+        <pre id="analysis"></pre>
+    </div>
+
+    <script type="module">
+        // 导入必要的模块
+        import * as THREE from './public/lib/three.module.js';
+        import { waterUniforms } from './src/waves.js';
+
+        // 全局变量
+        let results = [];
+        let analysis = [];
+
+        function log(type, message, data = null) {
+            const timestamp = new Date().toISOString();
+            const entry = {
+                timestamp,
+                type,
+                message,
+                data
+            };
+            results.push(entry);
+
+            const colorClass = type === 'error' ? 'error' : type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'info';
+            const logElement = document.getElementById('results');
+            logElement.innerHTML += `<span class="${colorClass}">[${timestamp}] ${type.toUpperCase()}: ${message}</span>\n`;
+            if (data) {
+                logElement.innerHTML += `<span class="${colorClass}">  Data: ${JSON.stringify(data, null, 2)}</span>\n`;
+            }
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function analyzeUniform(uniformName, uniform, materialType, objectName) {
+            const issues = [];
+
+            if (!uniform) {
+                issues.push('uniform is null or undefined');
+                return issues;
+            }
+
+            if (typeof uniform !== 'object') {
+                issues.push(`uniform is not an object (type: ${typeof uniform})`);
+                return issues;
+            }
+
+            if (!('value' in uniform)) {
+                issues.push('uniform missing "value" property');
+                return issues;
+            }
+
+            if (uniform.value === undefined || uniform.value === null) {
+                issues.push('uniform.value is undefined or null');
+                return issues;
+            }
+
+            // 检查 THREE.js 对象类型
+            if (uniform.value instanceof THREE.Vector3) {
+                if (isNaN(uniform.value.x) || isNaN(uniform.value.y) || isNaN(uniform.value.z)) {
+                    issues.push('Vector3 contains NaN values');
+                }
+            } else if (uniform.value instanceof THREE.Color) {
+                if (isNaN(uniform.value.r) || isNaN(uniform.value.g) || isNaN(uniform.value.b)) {
+                    issues.push('Color contains NaN values');
+                }
+            } else if (uniform.value instanceof THREE.Texture) {
+                if (!uniform.value.image) {
+                    issues.push('Texture missing image property');
+                }
+            } else if (typeof uniform.value === 'number') {
+                if (isNaN(uniform.value)) {
+                    issues.push('numeric uniform is NaN');
+                }
+            }
+
+            return issues;
+        }
+
+        function testWaterUniforms() {
+            log('info', 'Testing waterUniforms from waves.js');
+
+            if (!waterUniforms || typeof waterUniforms !== 'object') {
+                log('error', 'waterUniforms is not a valid object', waterUniforms);
+                return;
+            }
+
+            for (const [uniformName, uniform] of Object.entries(waterUniforms)) {
+                const issues = analyzeUniform(uniformName, uniform, 'ShaderMaterial', 'WaterMesh');
+                if (issues.length > 0) {
+                    log('error', `Water uniform '${uniformName}' issues:`, issues);
+                } else {
+                    log('success', `Water uniform '${uniformName}' is valid:`, uniform);
+                }
+            }
+        }
+
+        function testMaterialCreation() {
+            log('info', 'Testing material creation');
+
+            // 测试 MeshStandardMaterial
+            try {
+                const stdMaterial = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(0xff0000),
+                    transparent: true,
+                    opacity: 0.85,
+                    depthWrite: false
+                });
+                log('success', 'MeshStandardMaterial created successfully');
+                log('info', 'Material properties:', {
+                    type: stdMaterial.type,
+                    transparent: stdMaterial.transparent,
+                    opacity: stdMaterial.opacity,
+                    depthWrite: stdMaterial.depthWrite
+                });
+            } catch (error) {
+                log('error', 'Failed to create MeshStandardMaterial:', error.message);
+            }
+
+            // 测试 MeshPhysicalMaterial
+            try {
+                const physMaterial = new THREE.MeshPhysicalMaterial({
+                    color: new THREE.Color(0x00ff00),
+                    transparent: true,
+                    opacity: 0.85,
+                    transmission: 0.1,
+                    depthWrite: false
+                });
+                log('success', 'MeshPhysicalMaterial created successfully');
+                log('info', 'Material properties:', {
+                    type: physMaterial.type,
+                    transparent: physMaterial.transparent,
+                    opacity: physMaterial.opacity,
+                    transmission: physMaterial.transmission,
+                    depthWrite: physMaterial.depthWrite
+                });
+            } catch (error) {
+                log('error', 'Failed to create MeshPhysicalMaterial:', error.message);
+            }
+
+            // 测试 ShaderMaterial
+            try {
+                const shaderMaterial = new THREE.ShaderMaterial({
+                    uniforms: waterUniforms,
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float uTime;
+                        varying vec2 vUv;
+                        void main() {
+                            gl_FragColor = vec4(sin(uTime), cos(uTime), 0.5, 1.0);
+                        }
+                    `,
+                    transparent: true
+                });
+                log('success', 'ShaderMaterial created successfully');
+                log('info', 'ShaderMaterial uniforms count:', Object.keys(shaderMaterial.uniforms).length);
+            } catch (error) {
+                log('error', 'Failed to create ShaderMaterial:', error.message);
+            }
+        }
+
+        function testThreeJsInternals() {
+            log('info', 'Testing Three.js internal functions');
+
+            // 测试 refreshMaterialUniforms 函数
+            try {
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: new THREE.Color(0xffffff),
+                    transparent: true,
+                    opacity: 0.85,
+                    depthWrite: false
+                });
+
+                const geometry = new THREE.PlaneGeometry(1, 1);
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+
+                // 尝试渲染一个小场景来触发 refreshMaterialUniforms
+                renderer.setSize(100, 100);
+                camera.position.z = 5;
+
+                try {
+                    renderer.render(scene, camera);
+                    log('success', 'Three.js render succeeded');
+                } catch (renderError) {
+                    log('error', 'Three.js render failed:', renderError.message);
+                    log('error', 'Render error stack:', renderError.stack);
+                }
+
+                renderer.dispose();
+            } catch (error) {
+                log('error', 'Failed to test Three.js internals:', error.message);
+            }
+        }
+
+        function analyzeResults() {
+            const analysisElement = document.getElementById('analysis');
+            analysisElement.innerHTML = '';
+
+            const errorCount = results.filter(r => r.type === 'error').length;
+            const warningCount = results.filter(r => r.type === 'warning').length;
+            const successCount = results.filter(r => r.type === 'success').length;
+
+            analysisElement.innerHTML += `=== 统计分析 | Statistical Analysis ===\n`;
+            analysisElement.innerHTML += `错误 | Errors: ${errorCount}\n`;
+            analysisElement.innerHTML += `警告 | Warnings: ${warningCount}\n`;
+            analysisElement.innerHTML += `成功 | Successes: ${successCount}\n\n`;
+
+            if (errorCount > 0) {
+                analysisElement.innerHTML += `=== 错误详情 | Error Details ===\n`;
+                results.filter(r => r.type === 'error').forEach((error, index) => {
+                    analysisElement.innerHTML += `${index + 1}. ${error.timestamp}: ${error.message}\n`;
+                    if (error.data) {
+                        analysisElement.innerHTML += `   数据 | Data: ${JSON.stringify(error.data)}\n`;
+                    }
+                });
+            }
+
+            if (successCount > 0) {
+                analysisElement.innerHTML += `\n=== 成功案例 | Success Cases ===\n`;
+                results.filter(r => r.type === 'success').forEach((success, index) => {
+                    analysisElement.innerHTML += `${index + 1}. ${success.timestamp}: ${success.message}\n`;
+                });
+            }
+
+            analysisElement.innerHTML += `\n=== 诊断建议 | Diagnostic Recommendations ===\n`;
+            if (errorCount > 0) {
+                analysisElement.innerHTML += `1. 发现 ${errorCount} 个错误，需要进一步调查\n`;
+                analysisElement.innerHTML += `2. 检查 uniform 对象结构是否正确\n`;
+                analysisElement.innerHTML += `3. 验证 THREE.js 对象的创建和初始化\n`;
+                analysisElement.innerHTML += `4. 考虑材质兼容性问题\n`;
+            } else {
+                analysisElement.innerHTML += `1. 所有测试通过，没有发现明显问题\n`;
+                analysisElement.innerHTML += `2. 如果主应用仍有问题，可能是在运行时动态创建的材质\n`;
+            }
+        }
+
+        window.startDiagnostic = function() {
+            results = [];
+            analysis = [];
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('analysis').innerHTML = '';
+
+            log('info', 'Starting uniform diagnostic test...');
+
+            testWaterUniforms();
+            testMaterialCreation();
+            testThreeJsInternals();
+
+            analyzeResults();
+
+            log('info', 'Diagnostic test completed.');
+        };
+
+        window.clearResults = function() {
+            results = [];
+            analysis = [];
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('analysis').innerHTML = '';
+        };
+
+        window.exportResults = function() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                results: results,
+                analysis: analysis
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uniform-diagnostic-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            log('info', 'Results exported to JSON file');
+        };
+
+        // 页面加载完成后自动开始诊断
+        window.addEventListener('load', () => {
+            log('info', 'Page loaded, ready for diagnostic testing');
+        });
+    </script>
+</body>
+</html>

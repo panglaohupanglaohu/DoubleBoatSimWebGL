@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uniform Interceptor Test | Uniform 拦截器测试</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1.2em;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+    .test-section {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .test-section h2 {
+      margin-top: 0;
+      border-bottom: 2px solid rgba(255,255,255,0.3);
+      padding-bottom: 10px;
+    }
+    #canvas {
+      width: 100%;
+      height: 400px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .log {
+      background: rgba(0,0,0,0.5);
+      border-radius: 8px;
+      padding: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-radius: 3px;
+    }
+    .log-success {
+      color: #4ade80;
+    }
+    .log-error {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.1);
+    }
+    .log-warning {
+      color: #fbbf24;
+    }
+    .log-info {
+      color: #60a5fa;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+    button {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid white;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+      transition: all 0.3s;
+      margin: 5px;
+    }
+    button:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛡️ Uniform Interceptor Test</h1>
+    <p class="subtitle">Uniform 拦截器测试 - 主动防护系统</p>
+
+    <div class="test-section">
+      <h2>🎨 Render Test | 渲染测试</h2>
+      <canvas id="canvas"></canvas>
+      <div class="button-group">
+        <button onclick="runTest1()">Test 1: Bad Uniforms</button>
+        <button onclick="runTest2()">Test 2: Null Values</button>
+        <button onclick="runTest3()">Test 3: Missing Properties</button>
+        <button onclick="runTest4()">Test 4: Dynamic Materials</button>
+        <button onclick="clearScene()">Clear Scene</button>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>📊 Statistics | 统计信息</h2>
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Materials Intercepted</div>
+          <div class="stat-value" id="stat-materials">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Uniforms Validated</div>
+          <div class="stat-value" id="stat-validated">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Uniforms Fixed</div>
+          <div class="stat-value" id="stat-fixed">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Render Errors</div>
+          <div class="stat-value" id="stat-errors">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>📝 Console Log | 控制台日志</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.165.0';
+    import { uniformInterceptor } from './src/tests/UniformInterceptor.js';
+
+    let scene, camera, renderer;
+    let renderErrors = 0;
+
+    // Initialize Three.js scene
+    function init() {
+      const canvas = document.getElementById('canvas');
+      
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x1a1a2e);
+
+      camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+      camera.position.z = 5;
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+
+      // Add some lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 5, 5);
+      scene.add(directionalLight);
+
+      log('✅ Three.js scene initialized', 'success');
+      updateStats();
+    }
+
+    // Logging function
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+
+      console.log(message);
+    }
+
+    // Update statistics
+    function updateStats() {
+      const stats = uniformInterceptor.validationStats;
+      document.getElementById('stat-materials').textContent = stats.materialsIntercepted;
+      document.getElementById('stat-validated').textContent = stats.uniformsValidated;
+      document.getElementById('stat-fixed').textContent = stats.uniformsFixed;
+      document.getElementById('stat-errors').textContent = renderErrors;
+    }
+
+    // Test 1: Create material with bad uniforms
+    window.runTest1 = function() {
+      log('🧪 Test 1: Creating material with bad uniforms...', 'info');
+      
+      const geometry = new THREE.BoxGeometry();
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          badUniform1: null,  // NULL uniform
+          badUniform2: undefined,  // UNDEFINED uniform
+          badUniform3: 42,  // Primitive instead of {value: ...}
+          badUniform4: { wrongProperty: 1.0 },  // Missing 'value' property
+          goodUniform: { value: 1.0 }  // Correct uniform
+        },
+        vertexShader: `
+          void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          void main() {
+            gl_FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+          }
+        `
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.x = -2;
+      scene.add(mesh);
+
+      log('Material created with 4 bad uniforms and 1 good uniform', 'warning');
+      
+      // Intercept the scene
+      uniformInterceptor.validateAndFixScene(scene);
+      uniformInterceptor.interceptScene(scene);
+      
+      updateStats();
+      render();
+    };
+
+    // Test 2: Null and undefined values
+    window.runTest2 = function() {
+      log('🧪 Test 2: Creating material with null/undefined values...', 'info');
+      
+      const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          nullValue: { value: null },
+          undefinedValue: { value: undefined },
+          emptyObject: {},
+          time: { value: 0 }
+        },
+        vertexShader: `
+          void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform float time;
+          void main() {
+            gl_FragColor = vec4(0.2, 0.8, 1.0, 1.0);
+          }
+        `
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.x = 0;
+      scene.add(mesh);
+
+      log('Material created with null/undefined values', 'warning');
+      
+      uniformInterceptor.validateAndFixScene(scene);
+      uniformInterceptor.interceptScene(scene);
+      
+      updateStats();
+      render();
+    };
+
+    // Test 3: Missing properties
+    window.runTest3 = function() {
+      log('🧪 Test 3: Creating material with missing properties...', 'info');
+      
+      const geometry = new THREE.ConeGeometry(0.5, 1, 32);
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          noValue: {},  // No 'value' property
+          arrayValue: [1, 2, 3],  // Array instead of object
+          stringValue: "hello",  // String instead of object
+        },
+        vertexShader: `
+          void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          void main() {
+            gl_FragColor = vec4(0.8, 0.2, 0.8, 1.0);
+          }
+        `
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.x = 2;
+      scene.add(mesh);
+
+      log('Material created with missing/incorrect properties', 'warning');
+      
+      uniformInterceptor.validateAndFixScene(scene);
+      uniformInterceptor.interceptScene(scene);
+      
+      updateStats();
+      render();
+    };
+
+    // Test 4: Dynamically add bad materials
+    window.runTest4 = function() {
+      log('🧪 Test 4: Dynamically adding materials with issues...', 'info');
+      
+      for (let i = 0; i < 3; i++) {
+        const geometry = new THREE.TorusGeometry(0.3, 0.1, 16, 100);
+        const material = new THREE.ShaderMaterial({
+          uniforms: {
+            [`dynamicBadUniform${i}`]: i,  // Primitive value
+            [`dynamicGoodUniform${i}`]: { value: Math.random() }
+          },
+          vertexShader: `
+            void main() {
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            void main() {
+              gl_FragColor = vec4(${Math.random()}, ${Math.random()}, ${Math.random()}, 1.0);
+            }
+          `
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(
+          Math.random() * 4 - 2,
+          Math.random() * 2 - 1,
+          Math.random() * 2 - 1
+        );
+        scene.add(mesh);
+      }
+
+      log('Added 3 dynamic materials with mixed uniforms', 'warning');
+      
+      uniformInterceptor.validateAndFixScene(scene);
+      uniformInterceptor.interceptScene(scene);
+      
+      updateStats();
+      render();
+    };
+
+    // Clear scene
+    window.clearScene = function() {
+      while(scene.children.length > 0) { 
+        const object = scene.children[0];
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(m => m.dispose());
+          } else {
+            object.material.dispose();
+          }
+        }
+        scene.remove(object);
+      }
+
+      // Re-add lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(5, 5, 5);
+      scene.add(directionalLight);
+
+      log('🗑️ Scene cleared', 'info');
+      render();
+    };
+
+    // Render function
+    function render() {
+      try {
+        renderer.render(scene, camera);
+        log('✅ Render successful', 'success');
+      } catch (error) {
+        renderErrors++;
+        log(`❌ Render error: ${error.message}`, 'error');
+        console.error(error);
+        updateStats();
+      }
+    }
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Rotate all meshes
+      scene.traverse((object) => {
+        if (object.isMesh) {
+          object.rotation.x += 0.01;
+          object.rotation.y += 0.01;
+        }
+      });
+
+      try {
+        renderer.render(scene, camera);
+      } catch (error) {
+        renderErrors++;
+        log(`❌ Animation render error: ${error.message}`, 'error');
+        updateStats();
+      }
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      const canvas = document.getElementById('canvas');
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    });
+
+    // Initialize and start
+    init();
+    animate();
+
+    // Make functions available globally
+    window.log = log;
+    window.scene = scene;
+    window.uniformInterceptor = uniformInterceptor;
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>船舶数字孪生系统 - 重构版 Demo</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="./public/favicon.svg" />
+  <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230a0f1a'/><path d='M 20 60 L 30 50 L 70 50 L 80 60 L 80 70 L 20 70 Z' fill='%234fc3f7'/></svg>" />
+  <!-- GUI增强样式 | GUI Enhancement Styles -->
+  <link rel="stylesheet" href="./public/gui-enhancements.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0f1a;
+      color: #e8f0ff;
+      font-family: "Inter", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #info {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      width: 380px;
+      line-height: 1.5;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #info.collapsed {
+      max-height: 50px;
+      overflow: hidden;
+    }
+
+    #info .toggle-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    #info .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    #info h1 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #4fc3f7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    #info p {
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: #b8d4ff;
+    }
+
+    #info .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(76, 175, 80, 0.2);
+      border: 1px solid rgba(76, 175, 80, 0.5);
+      border-radius: 4px;
+      font-size: 10px;
+      color: #81c784;
+      margin-right: 4px;
+      margin-top: 3px;
+    }
+
+    #info code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: #9ad6ff;
+      font-size: 11px;
+    }
+
+
+    .version {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      font-size: 12px;
+      color: #888;
+      z-index: 10;
+    }
+
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 100;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .loading h2 {
+      font-size: 24px;
+      color: #4fc3f7;
+      margin-bottom: 10px;
+    }
+
+    .loading p {
+      font-size: 14px;
+      color: #888;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .hide {
+      display: none;
+    }
+
+    /* 船体与设备面板样式 */
+    #ship-equipment-panel {
+      position: absolute;
+      top: 70px;
+      left: 12px;
+      width: 380px;
+      max-height: calc(100vh - 90px);
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      font-size: 13px;
+      cursor: move;
+      user-select: none;
+    }
+
+    #ship-equipment-panel.dragging {
+      cursor: grabbing;
+    }
+
+    #ship-equipment-panel .main-header {
+      padding: 12px 16px;
+      background: rgba(79, 195, 247, 0.15);
+      border-bottom: 2px solid rgba(79, 195, 247, 0.3);
+      cursor: move;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: #4fc3f7;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+
+    #ship-equipment-panel .main-header:hover {
+      background: rgba(79, 195, 247, 0.2);
+    }
+
+    #ship-equipment-panel .main-header .main-icon {
+      font-size: 18px;
+    }
+
+    #ship-equipment-panel .main-header .main-title {
+      flex: 1;
+    }
+
+    #ship-equipment-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #ship-equipment-panel::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+
+    #ship-equipment-panel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .panel-header {
+      padding: 12px 16px;
+      background: rgba(79, 195, 247, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s ease;
+      user-select: none;
+    }
+
+    .panel-header:hover {
+      background: rgba(79, 195, 247, 0.15);
+    }
+
+
+    .panel-icon {
+      font-size: 16px;
+      color: #4fc3f7;
+    }
+
+    .panel-title {
+      flex: 1;
+      color: #e8f0ff;
+      font-weight: 500;
+    }
+
+    .panel-toggle {
+      color: #888;
+      transition: transform 0.3s ease;
+      font-size: 12px;
+    }
+
+    .panel-header.collapsed .panel-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .panel-content {
+      padding: 12px 16px;
+      display: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .panel-content.collapsed {
+      display: none;
+    }
+
+    .panel-content:not(.collapsed) {
+      display: block;
+    }
+
+    .dashboard-item {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .dashboard-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .gauge-label {
+      color: #b8d4ff;
+      font-size: 12px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .gauge-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .circular-gauge {
+      width: 120px;
+      height: 120px;
+    }
+
+    .gauge-value {
+      position: absolute;
+      bottom: -20px;
+      color: #4fc3f7;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .bar-gauge-container {
+      margin: 10px 0;
+    }
+
+    .bar-gauge-bg {
+      width: 100%;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-gauge-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4fc3f7, #00ff00);
+      border-radius: 12px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+    }
+
+    .bar-value {
+      margin-top: 6px;
+      color: #4fc3f7;
+      font-weight: bold;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .status-indicators {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .status-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-light {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    .status-light.warning {
+      background: #ffff00;
+      box-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+    }
+
+    .status-light.fault {
+      background: #ff0000;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+
+    .status-item span {
+      color: #b8d4ff;
+      font-size: 12px;
+    }
+
+    /* 船体状态和天气状态面板样式 */
+    #ship-status-panel, #weather-status-panel {
+      position: fixed;
+      top: 12px;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      font-size: 13px;
+      min-width: 280px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 天气状态菜单：左侧与船舶数字孪生系统菜单右侧对齐 */
+    #weather-status-panel {
+      left: 404px; /* 12px (info left) + 380px (info width) + 12px (gap) */
+    }
+
+    /* 船体状态菜单：左侧与天气状态菜单右侧对齐 */
+    #ship-status-panel {
+      left: 696px; /* 404px (weather left) + 280px (weather min-width) + 12px (gap) */
+    }
+
+    .status-header {
+      color: #4fc3f7;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(79, 195, 247, 0.3);
+    }
+
+    .status-item-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .status-label {
+      color: #b8d4ff;
+      font-size: 12px;
+    }
+
+    .status-value {
+      color: #4fc3f7;
+      font-weight: 500;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <h2>🚢 加载中... | Loading...</h2>
+    <p>正在初始化数字孪生系统 | Initializing Digital Twin System</p>
+  </div>
+
+  <div id="app"></div>
+
+  <div id="info" class="collapsed">
+    <button class="toggle-btn" onclick="toggleInfo()">+</button>
+    <h1>🚢 船舶数字孪生系统 | Ship Digital Twin System</h1>
+    <div id="info-content">
+      <p style="font-size: 13px; color: #81c784; margin-bottom: 8px;">重构版 | Refactored Version</p>
+      <p>
+        <span class="badge">✅ 可插拔模拟器 | Pluggable Simulator</span>
+        <span class="badge">✅ 天气系统 | Weather System</span>
+        <span class="badge">✅ 模块化架构 | Modular Architecture</span>
+      </p>
+      <p>
+        <strong>新特性 | New Features：</strong><br>
+        • <code>SimulatorEngine</code> - 可动态添加/移除算法 | Dynamic algorithm management<br>
+        • <code>WeatherSystem</code> - 风、雨、海况模拟 | Wind, rain, sea state simulation<br>
+        • 算法独立计算，结果自动合并 | Independent calculation, auto-merge results<br>
+        • 事件驱动架构，易于扩展 | Event-driven architecture, easy to extend
+      </p>
+      <p>
+        <strong>操作 | Controls：</strong><br>
+        拖动旋转 | Drag to rotate • 滚轮缩放 | Scroll to zoom<br>
+        Shift+拖动平移 | Shift+Drag to pan<br>
+        右上角菜单可调节参数 | Use menu to adjust parameters
+      </p>
+      <p>
+        <strong>系统工具 | System Tools：</strong><br>
+        <a href="./public/mqtt-config.html" target="_blank" style="color: #4fc3f7; text-decoration: none; margin-right: 12px;">📡 MQTT传感器配置 | Sensor Config</a>
+        <a href="./public/system-test.html" target="_blank" style="color: #4fc3f7; text-decoration: none; margin-right: 12px;">🧪 系统功能验证 | System Test</a>
+        <a href="javascript:void(0)" onclick="if(window.autoValidator){autoValidator.runAllTests()}else{alert('验证器还未加载完成，请等待3秒后再试 | Validator not ready, please wait 3 seconds')}" style="color: #81c784; text-decoration: none;">▶️ 运行自动验证 | Run Auto Validation</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- 船体与设备菜单 -->
+  <div id="ship-equipment-panel">
+    <div class="main-header" id="ship-equipment-header">
+      <span class="main-icon">▣</span>
+      <span class="main-title">船体与设备 | Ship & Equipment</span>
+    </div>
+    <div class="panel-header collapsed" onclick="togglePanel('equipment')">
+      <span class="panel-icon">◉</span>
+      <span class="panel-title">设备运行数据 | Equipment Operation</span>
+      <span class="panel-toggle">▶</span>
+    </div>
+    <div class="panel-content collapsed" id="equipment-content">
+      <div class="dashboard-item">
+        <div class="gauge-label">主机状态 | Main Engine</div>
+        <div class="gauge-container">
+          <canvas id="mainEngineGauge" class="circular-gauge"></canvas>
+          <div class="gauge-value" id="mainEngineValue">0 RPM</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">舵角 | Rudder Angle</div>
+        <div class="gauge-container">
+          <canvas id="rudderGauge" class="circular-gauge"></canvas>
+          <div class="gauge-value" id="rudderValue">0°</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">推进效率 | Propulsion Efficiency</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="propulsionBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="propulsionValue">0%</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="status-indicators">
+          <div class="status-item">
+            <div class="status-light" id="generatorStatus"></div>
+            <span>发电机 | Generator</span>
+          </div>
+          <div class="status-item">
+            <div class="status-light" id="craneStatus"></div>
+            <span>吊机 | Crane</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-header collapsed" onclick="togglePanel('energy')">
+      <span class="panel-icon">◈</span>
+      <span class="panel-title">能源与动力数据 | Energy & Power</span>
+      <span class="panel-toggle">▶</span>
+    </div>
+    <div class="panel-content collapsed" id="energy-content">
+      <div class="dashboard-item">
+        <div class="gauge-label">燃油储量 | Fuel Level</div>
+        <div class="gauge-container">
+          <canvas id="fuelLevelGauge" class="circular-gauge"></canvas>
+          <div class="gauge-value" id="fuelLevelValue">0%</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">油耗 | Fuel Consumption</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="consumptionBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="consumptionValue">0 L/h</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">剩余航程 | Remaining Range</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="rangeBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="rangeValue">0 nm</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">电力负载 | Power Load</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="powerLoadBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="powerLoadValue">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-header collapsed" onclick="togglePanel('structure')">
+      <span class="panel-icon">◊</span>
+      <span class="panel-title">结构健康数据 | Structure Health</span>
+      <span class="panel-toggle">▶</span>
+    </div>
+    <div class="panel-content collapsed" id="structure-content">
+      <div class="dashboard-item">
+        <div class="gauge-label">船首应力 | Bow Stress</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="bowStressBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="bowStressValue">0 MPa</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">船中应力 | Midship Stress</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="midshipStressBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="midshipStressValue">0 MPa</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">船尾应力 | Stern Stress</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="sternStressBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="sternStressValue">0 MPa</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-header collapsed" onclick="togglePanel('pumpValve')">
+      <span class="panel-icon">◐</span>
+      <span class="panel-title">泵阀系统数据 | Pump & Valve System</span>
+      <span class="panel-toggle">▶</span>
+    </div>
+    <div class="panel-content collapsed" id="pumpValve-content">
+      <div class="dashboard-item">
+        <div class="status-indicators">
+          <div class="status-item">
+            <div class="status-light" id="pump1Status"></div>
+            <span>主泵 | Main Pump</span>
+          </div>
+          <div class="status-item">
+            <div class="status-light" id="pump2Status"></div>
+            <span>备用泵 | Backup Pump</span>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">主阀开度 | Main Valve Opening</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="valve1Bar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="valve1Value">0%</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">副阀开度 | Secondary Valve Opening</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="valve2Bar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="valve2Value">0%</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label">流量 | Flow Rate</div>
+        <div class="bar-gauge-container">
+          <div class="bar-gauge-bg">
+            <div class="bar-gauge-fill" id="flowRateBar" style="width: 0%"></div>
+          </div>
+          <div class="bar-value" id="flowRateValue">0 L/min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 船体状态菜单（页面中心顶端） -->
+  <div id="ship-status-panel">
+    <div class="status-header">船体状态 | Ship Status</div>
+    <div id="ship-status-content">
+      <div class="status-item-row">
+        <span class="status-label">位置 | Position:</span>
+        <span class="status-value" id="shipPosition">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">质量 | Mass:</span>
+        <span class="status-value" id="shipMass">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">水面高度 | Water Height:</span>
+        <span class="status-value" id="waterHeight">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">离水面 | Offset:</span>
+        <span class="status-value" id="waterOffset">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">稳定性 | Stability:</span>
+        <span class="status-value" id="shipStability">-</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 天气状态菜单（页面中心顶端，船体状态下方） -->
+  <div id="weather-status-panel">
+    <div class="status-header">天气状态 | Weather Status</div>
+    <div id="weather-status-content">
+      <div class="status-item-row">
+        <span class="status-label">风速 | Wind Speed:</span>
+        <span class="status-value" id="windSpeed">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">风向 | Wind Direction:</span>
+        <span class="status-value" id="windDirection">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">降雨 | Rain:</span>
+        <span class="status-value" id="rainIntensity">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">能见度 | Visibility:</span>
+        <span class="status-value" id="visibility">-</span>
+      </div>
+      <div class="status-item-row">
+        <span class="status-label">海况 | Sea State:</span>
+        <span class="status-value" id="seaState">-</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="version">
+    v2.1.0-bilingual | 双语版本 | Bilingual Version
+  </div>
+
+  <!-- 自动验证按钮 -->
+  <button id="auto-validate-btn" style="
+    position: fixed;
+    bottom: 60px;
+    right: 12px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #81c784, #4caf50);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    transition: all 0.3s ease;
+    z-index: 1000;
+  " onclick="
+    if (window.autoValidator) {
+      this.disabled = true;
+      this.textContent = '🔄 测试中... | Testing...';
+      this.style.background = '#888';
+      autoValidator.runAllTests().then(() => {
+        this.disabled = false;
+        this.textContent = '🧪 运行验证 | Run Validation';
+        this.style.background = 'linear-gradient(135deg, #81c784, #4caf50)';
+      });
+    } else {
+      alert('验证器还未加载完成，请等待3秒后再试\n\nValidator not ready, please wait 3 seconds');
+    }
+  " onmouseover="
+    if (!this.disabled) {
+      this.style.transform = 'translateY(-2px)';
+      this.style.boxShadow = '0 6px 16px rgba(76, 175, 80, 0.6)';
+    }
+  " onmouseout="
+    this.style.transform = 'translateY(0)';
+    this.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.4)';
+  ">
+    🧪 运行验证 | Run Validation
+  </button>
+
+  <script>
+    // 切换信息面板
+    let infoCollapsed = true; // 默认收起
+    function toggleInfo() {
+      const info = document.getElementById('info');
+      const btn = document.querySelector('.toggle-btn');
+      infoCollapsed = !infoCollapsed;
+      
+      if (infoCollapsed) {
+        info.classList.add('collapsed');
+        btn.textContent = '+';
+      } else {
+        info.classList.remove('collapsed');
+        btn.textContent = '−';
+      }
+      
+      // 更新船体与设备面板位置
+      updateShipEquipmentPanelPosition();
+    }
+    
+    // 更新船体与设备面板位置
+    function updateShipEquipmentPanelPosition() {
+      const info = document.getElementById('info');
+      const panel = document.getElementById('ship-equipment-panel');
+      if (!info || !panel) return;
+      
+      const infoRect = info.getBoundingClientRect();
+      panel.style.top = (infoRect.bottom - window.scrollY + 8) + 'px';
+    }
+
+    // 初始化时更新位置
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(updateShipEquipmentPanelPosition, 100);
+    });
+
+    // 窗口大小改变时更新位置
+    window.addEventListener('resize', updateShipEquipmentPanelPosition);
+
+    // 拖动功能
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const panel = document.getElementById('ship-equipment-panel');
+      const header = document.getElementById('ship-equipment-header');
+      
+      if (!panel || !header) return;
+
+      header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        panel.classList.add('dragging');
+        const rect = panel.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        panel.style.left = (e.clientX - dragOffset.x) + 'px';
+        panel.style.top = (e.clientY - dragOffset.y) + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          panel.classList.remove('dragging');
+        }
+      });
+    });
+
+    // 切换面板内容
+    function togglePanel(panelId) {
+      const content = document.getElementById(panelId + '-content');
+      const header = content.previousElementSibling;
+      
+      if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        header.classList.remove('collapsed');
+        const toggle = header.querySelector('.panel-toggle');
+        if (toggle) toggle.textContent = '▼';
+      } else {
+        content.classList.add('collapsed');
+        header.classList.add('collapsed');
+        const toggle = header.querySelector('.panel-toggle');
+        if (toggle) toggle.textContent = '▶';
+      }
+    }
+
+    // 绘制圆形仪表盘
+    function drawCircularGauge(canvasId, value, min, max, unit, color = '#4fc3f7') {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      
+      // 设置canvas尺寸
+      if (canvas.width !== 120 || canvas.height !== 120) {
+        canvas.width = 120;
+        canvas.height = 120;
+      }
+      
+      const ctx = canvas.getContext('2d');
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = Math.min(centerX, centerY) - 10;
+      
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制外圈
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI);
+      ctx.stroke();
+      
+      // 绘制刻度
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i <= 10; i++) {
+        const angle = (i / 10) * Math.PI;
+        const x1 = centerX + Math.cos(angle) * radius;
+        const y1 = centerY - Math.sin(angle) * radius;
+        const x2 = centerX + Math.cos(angle) * (radius - 8);
+        const y2 = centerY - Math.sin(angle) * (radius - 8);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      
+      // 计算指针角度
+      const ratio = (value - min) / (max - min);
+      const angle = ratio * Math.PI;
+      
+      // 绘制指针
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(
+        centerX + Math.cos(angle) * (radius - 15),
+        centerY - Math.sin(angle) * (radius - 15)
+      );
+      ctx.stroke();
+      
+      // 绘制中心点
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 更新仪表盘数据
+    window.updateDashboardData = function(data) {
+      if (!data || !data.ship) return;
+
+      const ship = data.ship;
+
+      // 设备运行数据
+      if (ship.mainEngine) {
+        const rpm = ship.mainEngine.rpm || 0;
+        drawCircularGauge('mainEngineGauge', rpm, 0, 2000, ' RPM', '#00ff00');
+        document.getElementById('mainEngineValue').textContent = rpm.toFixed(0) + ' RPM';
+      }
+
+      if (ship.rudder) {
+        const angle = ship.rudder.angle || 0;
+        drawCircularGauge('rudderGauge', angle + 35, 0, 70, '°', '#4fc3f7');
+        document.getElementById('rudderValue').textContent = angle.toFixed(1) + '°';
+      }
+
+      if (ship.propulsion) {
+        const efficiency = (ship.propulsion.efficiency || 0) * 100;
+        const bar = document.getElementById('propulsionBar');
+        const value = document.getElementById('propulsionValue');
+        if (bar) bar.style.width = efficiency + '%';
+        if (value) value.textContent = efficiency.toFixed(1) + '%';
+      }
+
+      // 更新状态指示灯
+      const updateStatusLight = (id, status) => {
+        const light = document.getElementById(id);
+        if (!light) return;
+        light.className = 'status-light';
+        if (status === 'warning') light.classList.add('warning');
+        else if (status === 'fault') light.classList.add('fault');
+      };
+
+      updateStatusLight('generatorStatus', 'normal');
+      updateStatusLight('craneStatus', ship.crane?.status === 'Standby' ? 'normal' : 'warning');
+
+      // 能源与动力数据
+      if (ship.fuel) {
+        const level = ship.fuel.level || 0;
+        drawCircularGauge('fuelLevelGauge', level, 0, 100, '%', '#ffaa00');
+        document.getElementById('fuelLevelValue').textContent = level.toFixed(1) + '%';
+
+        const consumption = ship.fuel.flowRate || 0;
+        const consumptionBar = document.getElementById('consumptionBar');
+        const consumptionValue = document.getElementById('consumptionValue');
+        if (consumptionBar) consumptionBar.style.width = Math.min(consumption / 100 * 100, 100) + '%';
+        if (consumptionValue) consumptionValue.textContent = consumption.toFixed(1) + ' L/h';
+
+        // 剩余航程（简化计算）
+        const remaining = ship.fuel.remaining || 0;
+        const range = remaining / consumption * 0.1;
+        const rangeBar = document.getElementById('rangeBar');
+        const rangeValue = document.getElementById('rangeValue');
+        if (rangeBar) rangeBar.style.width = Math.min(range / 1000 * 100, 100) + '%';
+        if (rangeValue) rangeValue.textContent = range.toFixed(0) + ' nm';
+      }
+
+      // 电力负载（模拟数据）
+      const powerLoad = 65;
+      const powerLoadBar = document.getElementById('powerLoadBar');
+      const powerLoadValue = document.getElementById('powerLoadValue');
+      if (powerLoadBar) powerLoadBar.style.width = powerLoad + '%';
+      if (powerLoadValue) powerLoadValue.textContent = powerLoad.toFixed(0) + '%';
+
+      // 结构健康数据
+      if (ship.structure) {
+        const updateStressBar = (id, stress) => {
+          const bar = document.getElementById(id + 'Bar');
+          const value = document.getElementById(id + 'Value');
+          const ratio = Math.min(stress / 100 * 100, 100);
+          if (bar) bar.style.width = ratio + '%';
+          if (value) value.textContent = stress.toFixed(1) + ' MPa';
+        };
+
+        if (ship.structure.bow) updateStressBar('bowStress', ship.structure.bow.stress || 0);
+        if (ship.structure.midship) updateStressBar('midshipStress', ship.structure.midship.stress || 0);
+        if (ship.structure.stern) updateStressBar('sternStress', ship.structure.stern.stress || 0);
+      }
+
+      // 泵阀系统数据
+      updateStatusLight('pump1Status', 'normal');
+      updateStatusLight('pump2Status', 'normal');
+
+      const valve1Bar = document.getElementById('valve1Bar');
+      const valve1Value = document.getElementById('valve1Value');
+      if (valve1Bar) valve1Bar.style.width = '75%';
+      if (valve1Value) valve1Value.textContent = '75.0%';
+
+      const valve2Bar = document.getElementById('valve2Bar');
+      const valve2Value = document.getElementById('valve2Value');
+      if (valve2Bar) valve2Bar.style.width = '50%';
+      if (valve2Value) valve2Value.textContent = '50.0%';
+
+      const flowRateBar = document.getElementById('flowRateBar');
+      const flowRateValue = document.getElementById('flowRateValue');
+      if (flowRateBar) flowRateBar.style.width = '50%';
+      if (flowRateValue) flowRateValue.textContent = '250.0 L/min';
+    };
+  </script>
+
+  <script type="module">
+    // 等待DOM加载完成后初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hide');
+      }, 2000);
+    });
+  </script>
+
+  <script type="module" src="./tests/AutoTestRunner.js"></script>
+  <script type="module" src="./src/demo-refactored.js"></script>
+</body>
+</html>
+

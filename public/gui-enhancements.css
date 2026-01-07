@@ -1,0 +1,60 @@
+/* GUI 增强样式 | GUI Enhancement Styles */
+
+/* 为所有数字输入添加明显的可编辑样式 */
+.lil-gui .controller.number input {
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.lil-gui .controller.number input:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #4a9eff;
+}
+
+.lil-gui .controller.number input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #4a9eff;
+  box-shadow: 0 0 5px rgba(74, 158, 255, 0.5);
+}
+
+/* 为滑块添加更好的视觉效果 */
+.lil-gui .controller.number .slider {
+  transition: background 0.2s ease;
+}
+
+.lil-gui .controller.number:hover .slider {
+  background: rgba(74, 158, 255, 0.2);
+}
+
+/* 改善整体GUI外观 */
+.lil-gui {
+  --background-color: rgba(15, 20, 30, 0.95);
+  --text-color: #ffffff;
+  --title-background-color: rgba(20, 30, 45, 0.95);
+  --title-text-color: #4a9eff;
+  --widget-color: rgba(255, 255, 255, 0.1);
+  --hover-color: rgba(74, 158, 255, 0.2);
+  --focus-color: rgba(74, 158, 255, 0.4);
+  --number-color: #4a9eff;
+  --string-color: #a3be8c;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lil-gui .title {
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+/* 折叠/展开图标动画 */
+.lil-gui .folder > .title::before {
+  transition: transform 0.2s ease;
+}
+
+.lil-gui .folder.closed > .title::before {
+  transform: rotate(-90deg);
+}
+

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型路径测试 | Model Path Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .info { color: #2196f3; }
+    </style>
+</head>
+<body>
+    <h1>模型路径测试 | Model Path Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const base = window.location.origin;
+        const currentPath = window.location.pathname;
+        const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+        
+        const candidates = [
+            `${base}/public/GLB_20251223141542.glb`,
+            `${base}/public/GLB_20251223141542.glb`,
+            '/public/GLB_20251223141542.glb',
+            `${basePath}public/GLB_20251223141542.glb`,
+            './public/GLB_20251223141542.glb',
+            'public/GLB_20251223141542.glb',
+        ];
+        
+        const resultsDiv = document.getElementById('results');
+        
+        resultsDiv.innerHTML += `<div class="test-item info">
+            <strong>当前页面路径 | Current page path:</strong> ${currentPath}<br>
+            <strong>基础路径 | Base path:</strong> ${basePath}<br>
+            <strong>服务器地址 | Server origin:</strong> ${base}
+        </div>`;
+        
+        candidates.forEach((url, index) => {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-item';
+            testDiv.innerHTML = `<strong>测试 ${index + 1}:</strong> ${url}<br><span id="result-${index}">测试中...</span>`;
+            resultsDiv.appendChild(testDiv);
+            
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    const resultSpan = document.getElementById(`result-${index}`);
+                    if (response.ok) {
+                        resultSpan.className = 'success';
+                        resultSpan.textContent = `✅ 成功 | Success (${response.status})`;
+                    } else {
+                        resultSpan.className = 'error';
+                        resultSpan.textContent = `❌ 失败 | Failed (${response.status})`;
+                    }
+                })
+                .catch(error => {
+                    const resultSpan = document.getElementById(`result-${index}`);
+                    resultSpan.className = 'error';
+                    resultSpan.textContent = `❌ 错误 | Error: ${error.message}`;
+                });
+        });
+    </script>
+</body>
+</html>
+

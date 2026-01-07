@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uniform Test Suite - 全面单元测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00cc00;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 30px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #canvas-container {
+            width: 400px;
+            height: 300px;
+            margin: 0 auto 30px;
+            border: 2px solid #00ff00;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #console-output {
+            background: #000;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-line {
+            margin: 2px 0;
+        }
+
+        .log-error {
+            color: #ff3333;
+        }
+
+        .log-warn {
+            color: #ffaa00;
+        }
+
+        .log-success {
+            color: #00ff00;
+        }
+
+        .log-info {
+            color: #00ccff;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #000;
+            border: 2px solid #00ff00;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #00cc00;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #000;
+            border: 2px solid #00ff00;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #003300, #00ff00);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Uniform Test Suite</h1>
+    <div class="subtitle">全面 Uniform 错误诊断和修复单元测试 | Comprehensive Uniform Error Diagnostic and Fix Unit Tests</div>
+
+    <div class="controls">
+        <button id="run-tests-btn">▶️ 运行测试 | Run Tests</button>
+        <button id="clear-btn">🗑️ 清空日志 | Clear Log</button>
+        <button id="export-btn">📥 导出结果 | Export Results</button>
+    </div>
+
+    <div class="progress-bar hidden" id="progress-bar">
+        <div class="progress-fill" id="progress-fill">0%</div>
+    </div>
+
+    <div class="stats-panel">
+        <div class="stat-box">
+            <div class="stat-label">总测试数 | Total Tests</div>
+            <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">✅ 通过 | Passed</div>
+            <div class="stat-value" id="stat-passed" style="color: #00ff00;">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">❌ 失败 | Failed</div>
+            <div class="stat-value" id="stat-failed" style="color: #ff3333;">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">成功率 | Success Rate</div>
+            <div class="stat-value" id="stat-rate">0%</div>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <div style="color: #00ff00; text-align: center;">
+            <div>Three.js Render Target</div>
+            <div style="font-size: 12px; margin-top: 10px;">测试将在后台渲染</div>
+        </div>
+    </div>
+
+    <div id="console-output"></div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.165.0';
+        import { uniformTestSuite } from './src/tests/UniformTestSuite.js';
+        import { renderSafetyPatch } from './src/tests/RenderSafetyPatch.js';
+
+        const consoleOutput = document.getElementById('console-output');
+        const runTestsBtn = document.getElementById('run-tests-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFill = document.getElementById('progress-fill');
+
+        let testResults = null;
+
+        // Intercept console.log, console.error, console.warn
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function addLogLine(text, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            line.textContent = text;
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLogLine(args.join(' '), 'info');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLogLine('❌ ' + args.join(' '), 'error');
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addLogLine('⚠️ ' + args.join(' '), 'warn');
+        };
+
+        // Create Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(400, 300);
+        renderer.setClearColor(0x000000);
+
+        // Apply render safety patch
+        renderSafetyPatch.setDebugMode(true);
+        renderSafetyPatch.applyPatch(renderer);
+
+        // Add lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // Run tests button
+        runTestsBtn.addEventListener('click', async () => {
+            runTestsBtn.disabled = true;
+            clearBtn.disabled = true;
+            progressBar.classList.remove('hidden');
+            consoleOutput.innerHTML = '';
+
+            try {
+                // Update progress
+                let progress = 0;
+                const updateProgress = () => {
+                    progress += 12.5; // 8 tests = 12.5% each
+                    progressFill.style.width = `${Math.min(progress, 100)}%`;
+                    progressFill.textContent = `${Math.min(progress, 100).toFixed(0)}%`;
+                };
+
+                // Run the test suite
+                console.log('🚀 Starting test suite...\n');
+                
+                // Simulate progress updates
+                const progressInterval = setInterval(updateProgress, 500);
+
+                testResults = await uniformTestSuite.runAllTests(scene, renderer);
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressFill.textContent = '100%';
+
+                // Update stats
+                document.getElementById('stat-total').textContent = testResults.total;
+                document.getElementById('stat-passed').textContent = testResults.passed;
+                document.getElementById('stat-failed').textContent = testResults.failed;
+                
+                const successRate = (testResults.passed / testResults.total * 100).toFixed(1);
+                document.getElementById('stat-rate').textContent = successRate + '%';
+                
+                // Color code the success rate
+                const rateElement = document.getElementById('stat-rate');
+                if (successRate >= 90) {
+                    rateElement.style.color = '#00ff00';
+                } else if (successRate >= 70) {
+                    rateElement.style.color = '#ffaa00';
+                } else {
+                    rateElement.style.color = '#ff3333';
+                }
+
+                console.log('\n✅ Test suite completed!');
+
+            } catch (error) {
+                console.error('❌ Test suite failed:', error);
+                console.error(error.stack);
+            } finally {
+                runTestsBtn.disabled = false;
+                clearBtn.disabled = false;
+                setTimeout(() => {
+                    progressBar.classList.add('hidden');
+                }, 2000);
+            }
+        });
+
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            consoleOutput.innerHTML = '';
+            document.getElementById('stat-total').textContent = '0';
+            document.getElementById('stat-passed').textContent = '0';
+            document.getElementById('stat-failed').textContent = '0';
+            document.getElementById('stat-rate').textContent = '0%';
+            testResults = null;
+        });
+
+        // Export button
+        exportBtn.addEventListener('click', () => {
+            if (!testResults) {
+                alert('请先运行测试 | Please run tests first');
+                return;
+            }
+
+            const data = {
+                timestamp: new Date().toISOString(),
+                results: testResults,
+                renderSafetyStats: renderSafetyPatch.getStats()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uniform-test-results-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            console.log('📥 Test results exported');
+        });
+
+        // Initial message
+        addLogLine('🧪 Uniform Test Suite Ready', 'success');
+        addLogLine('点击"运行测试"按钮开始 | Click "Run Tests" to begin', 'info');
+        addLogLine('', 'info');
+    </script>
+</body>
+</html>
+
