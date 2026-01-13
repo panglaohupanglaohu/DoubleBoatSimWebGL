@@ -215,6 +215,81 @@
       border-radius: 3px;
     }
 
+    /* 模型结构信息面板的滚动条样式 */
+    #modelStats-meshList::-webkit-scrollbar,
+    #modelStats-groupList::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #modelStats-meshList::-webkit-scrollbar-track,
+    #modelStats-groupList::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+    }
+
+    #modelStats-meshList::-webkit-scrollbar-thumb,
+    #modelStats-groupList::-webkit-scrollbar-thumb {
+      background: rgba(79, 195, 247, 0.3);
+      border-radius: 2px;
+    }
+
+    #modelStats-meshList::-webkit-scrollbar-thumb:hover,
+    #modelStats-groupList::-webkit-scrollbar-thumb:hover {
+      background: rgba(79, 195, 247, 0.5);
+    }
+
+    /* 滑块样式 */
+    #accommodationOpacitySlider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    #accommodationOpacitySlider:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    #accommodationOpacitySlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #4fc3f7;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(79, 195, 247, 0.6);
+      transition: all 0.2s ease;
+    }
+
+    #accommodationOpacitySlider::-webkit-slider-thumb:hover {
+      background: #5dd3ff;
+      box-shadow: 0 0 12px rgba(79, 195, 247, 0.8);
+      transform: scale(1.1);
+    }
+
+    #accommodationOpacitySlider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #4fc3f7;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 8px rgba(79, 195, 247, 0.6);
+      transition: all 0.2s ease;
+    }
+
+    #accommodationOpacitySlider::-moz-range-thumb:hover {
+      background: #5dd3ff;
+      box-shadow: 0 0 12px rgba(79, 195, 247, 0.8);
+      transform: scale(1.1);
+    }
+
     .panel-header {
       padding: 12px 16px;
       background: rgba(79, 195, 247, 0.1);
@@ -432,6 +507,72 @@
       font-size: 12px;
     }
   </style>
+  
+  <!-- 全局函数：在head中定义，确保HTML内联事件可以访问 -->
+  <script>
+    // 更新 AccommodationBlock 透明度
+    function updateAccommodationOpacity(opacityPercent) {
+      // 确保是数字类型
+      const opacityValue = parseFloat(opacityPercent);
+      if (isNaN(opacityValue)) {
+        console.error('❌ 无效的透明度值 | Invalid opacity value:', opacityPercent);
+        return;
+      }
+      
+      // 转换为 0-1 范围
+      const opacity = opacityValue / 100;
+      
+      // 更新显示值
+      const valueElement = document.getElementById('accommodationOpacityValue');
+      if (valueElement) {
+        valueElement.textContent = opacityValue + '%';
+      }
+      
+      // 调用 ShipController 更新材质透明度
+      if (window.shipController) {
+        if (typeof window.shipController.updateAccommodationOpacity === 'function') {
+          window.shipController.updateAccommodationOpacity(opacity);
+          
+          // 如果启用了调试模式，打印材质信息
+          if (window.DEBUG_OPACITY_UPDATE) {
+            if (typeof window.shipController.debugAccommodationBlockMaterials === 'function') {
+              window.shipController.debugAccommodationBlockMaterials();
+            }
+          }
+        } else {
+          console.warn('⚠️ ShipController 没有 updateAccommodationOpacity 方法');
+        }
+      } else {
+        console.warn('⚠️ ShipController 未就绪，请等待模型加载完成 | ShipController not ready, please wait for model to load');
+        // 如果shipController还没准备好，可以稍后重试（可选）
+        setTimeout(() => {
+          if (window.shipController && typeof window.shipController.updateAccommodationOpacity === 'function') {
+            window.shipController.updateAccommodationOpacity(opacity);
+            console.log('✅ 延迟更新透明度成功 | Delayed opacity update successful');
+          }
+        }, 1000);
+      }
+    }
+    
+    // 暴露到window对象（双重保险）
+    window.updateAccommodationOpacity = updateAccommodationOpacity;
+    
+    // 暴露调试方法到全局
+    window.debugAccommodationBlockMaterials = function() {
+      if (window.shipController && typeof window.shipController.debugAccommodationBlockMaterials === 'function') {
+        window.shipController.debugAccommodationBlockMaterials();
+      } else {
+        console.warn('⚠️ ShipController 未就绪或没有调试方法');
+      }
+    };
+    
+    // 启用详细调试信息
+    window.enableOpacityDebug = function() {
+      window.DEBUG_OPACITY_UPDATE = true;
+      console.log('✅ 透明度调试模式已启用 | Opacity debug mode enabled');
+      console.log('   提示：现在调整透明度时会显示详细信息 | Detailed info will be shown when adjusting opacity');
+    };
+  </script>
 </head>
 <body>
   <div id="loading" class="loading">
@@ -642,6 +783,63 @@
             <div class="bar-gauge-fill" id="flowRateBar" style="width: 0%"></div>
           </div>
           <div class="bar-value" id="flowRateValue">0 L/min</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-header collapsed" onclick="togglePanel('modelStructure')">
+      <span class="panel-icon">📊</span>
+      <span class="panel-title">模型结构信息 | Model Structure</span>
+      <span class="panel-toggle">▶</span>
+    </div>
+    <div class="panel-content collapsed" id="modelStructure-content">
+      <div class="dashboard-item">
+        <div class="gauge-label" style="font-size: 13px; font-weight: 600; color: #4fc3f7; margin-bottom: 12px;">统计概览 | Statistics</div>
+        <div style="font-size: 12px; line-height: 1.8;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #b8d4ff;">总节点数 | Total Nodes:</span>
+            <span style="color: #4fc3f7; font-weight: 600;" id="modelStats-totalNodes">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #b8d4ff;">Mesh数量 | Mesh Count:</span>
+            <span style="color: #4fc3f7; font-weight: 600;" id="modelStats-meshCount">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #b8d4ff;">Group数量 | Group Count:</span>
+            <span style="color: #4fc3f7; font-weight: 600;" id="modelStats-groupCount">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span style="color: #b8d4ff;">材质数量 | Material Count:</span>
+            <span style="color: #4fc3f7; font-weight: 600;" id="modelStats-materialCount">-</span>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label" style="font-size: 13px; font-weight: 600; color: #4fc3f7; margin-bottom: 12px;">AccommodationBlock 透明度 | AccommodationBlock Opacity</div>
+        <div style="margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #b8d4ff; font-size: 12px;">非透明度 | Opacity:</span>
+            <span style="color: #4fc3f7; font-weight: 600; font-size: 12px;" id="accommodationOpacityValue">15%</span>
+          </div>
+          <input type="range" id="accommodationOpacitySlider" min="15" max="60" value="15" step="1" 
+            style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; outline: none; cursor: pointer; -webkit-appearance: none;"
+            oninput="updateAccommodationOpacity(this.value)" />
+          <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #888;">
+            <span>15%</span>
+            <span>60%</span>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label" style="font-size: 13px; font-weight: 600; color: #4fc3f7; margin-bottom: 12px;">Mesh列表 | Mesh List</div>
+        <div id="modelStats-meshList" style="font-size: 11px; line-height: 1.6; color: #b8d4ff; max-height: 200px; overflow-y: auto; padding: 8px; background: rgba(255, 255, 255, 0.02); border-radius: 4px;">
+          <div style="color: #888; font-style: italic;">等待模型加载... | Waiting for model to load...</div>
+        </div>
+      </div>
+      <div class="dashboard-item">
+        <div class="gauge-label" style="font-size: 13px; font-weight: 600; color: #4fc3f7; margin-bottom: 12px;">Group列表 | Group List</div>
+        <div id="modelStats-groupList" style="font-size: 11px; line-height: 1.6; color: #b8d4ff; max-height: 200px; overflow-y: auto; padding: 8px; background: rgba(255, 255, 255, 0.02); border-radius: 4px;">
+          <div style="color: #888; font-style: italic;">等待模型加载... | Waiting for model to load...</div>
         </div>
       </div>
     </div>
@@ -1000,6 +1198,7 @@
       if (flowRateValue) flowRateValue.textContent = '250.0 L/min';
     };
   </script>
+
 
   <script type="module">
     // 等待DOM加载完成后初始化

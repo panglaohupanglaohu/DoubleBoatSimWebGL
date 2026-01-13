@@ -625,11 +625,14 @@ function _continueInit() {
     desiredSize: config.boatSize,
     platformHeight: 45,
     catamaran: { enabled: true },
-    glbPath: '/public/GLB_20251223141542.glb' // 明确指定GLB路径（绝对路径）
+    glbPath: '/public/boat 1.glb' // 明确指定GLB路径（绝对路径）
   });
 
   console.log('📦 船体控制器已创建 | Ship controller created');
   console.log('📁 GLB路径配置 | GLB path:', shipController.config.glbPath);
+  
+  // 将 shipController 暴露到 window 对象，供 HTML 中的函数调用
+  window.shipController = shipController;
 
   // 加载船体（异步，不阻塞）
   loadBoat().catch(err => {
@@ -1197,9 +1200,12 @@ function animate() {
         window._lastValidatorFixLog = Date.now();
       }
       
-      // 第二层：紧急修复（如果存在）
-      if (window._fixAllUniforms) {
-        window._fixAllUniforms(scene);
+      // 第二层：紧急修复（如果存在，只执行一次）
+      if (window._fixAllUniforms && !window._emergencyFixApplied) {
+        const emergencyFixCount = window._fixAllUniforms(scene);
+        if (emergencyFixCount > 0) {
+          window._emergencyFixApplied = true;
+        }
       }
       
       // 执行渲染
@@ -1211,10 +1217,11 @@ function animate() {
         console.error('❌ 渲染错误 | Render error:', renderError);
         console.error('   错误消息 | Error message:', renderError.message);
         
-        // 最后的尝试：使用紧急修复
-        if (window._fixAllUniforms) {
+        // 最后的尝试：使用紧急修复（只执行一次）
+        if (window._fixAllUniforms && !window._emergencyFixApplied) {
           console.log('🚑 使用紧急修复...');
           window._fixAllUniforms(scene);
+          window._emergencyFixApplied = true;
         }
         
         window._renderErrorLogged = true;
@@ -1476,6 +1483,19 @@ function setupGUI() {
     .onChange((value) => {
       if (shipController) {
         shipController.toggleDimensionLines(value);
+      }
+    });
+  
+  // 船体材质透明度控制
+  const shipMaterialOpacity = { opacity: 0.6 }; // 默认60%不透明度
+  displayFolder.add(shipMaterialOpacity, 'opacity', 0.1, 1.0, 0.01)
+    .name('船体透明度 | Ship Opacity')
+    .onChange((value) => {
+      if (shipController && shipController.updateShipMaterialOpacity) {
+        shipController.updateShipMaterialOpacity(value);
+        console.log(`🔵 船体材质透明度已更新 | Ship material opacity updated: ${(value * 100).toFixed(1)}%`);
+      } else {
+        console.warn('⚠️ shipController 未就绪，无法更新船体材质透明度');
       }
     });
 

@@ -19,7 +19,7 @@ export class ShipController {
       yFlip: config.yFlip || -1,
       linearDamping: config.linearDamping || 0.15,
       angularDamping: config.angularDamping || 0.6,
-      glbPath: config.glbPath || '/public/GLB_20251223141542.glb',
+      glbPath: config.glbPath || '/public/boat 1.glb',
       desiredSize: config.desiredSize || null, // 目标尺寸 {x, y, z} - X轴=宽度, Y轴=高度, Z轴=长度
       // desiredLength 已废弃，使用 desiredSize 代替
       platformHeight: config.platformHeight || 45, // 平台高度
@@ -35,6 +35,24 @@ export class ShipController {
     this.axesHelper = null;
     this.axisLabels = [];
     this.dimensionLines = null; // 长宽高尺寸线段
+    
+    // AccommodationBlock mesh 引用，用于动态更新透明度
+    this.accommodationBlockMeshes = [];
+    
+    // 船体mesh引用，用于动态更新材质透明度
+    this.shipMeshes = [];
+    
+    // 船体材质配置
+    this.shipMaterialConfig = {
+      color: 0x4a90e2, // 蓝色
+      transparent: true,
+      opacity: 0.6, // 默认60%透明度
+      roughness: 0.1, // 低粗糙度，更光滑
+      metalness: 0.0, // 非金属
+      side: THREE.DoubleSide,
+      depthWrite: true,
+      depthTest: true
+    };
   }
 
   /**
@@ -69,7 +87,7 @@ export class ShipController {
       </p>
       <p style="margin: 0 0 20px 0; line-height: 1.6; font-size: 14px; color: #bbb;">
         请检查：<br>
-        1. GLB模型文件是否存在：/public/GLB_20251223141542.glb<br>
+        1. GLB模型文件是否存在：/public/boat 1.glb<br>
         2. 服务器是否正确配置静态文件服务<br>
         3. 浏览器控制台是否有网络错误
       </p>
@@ -102,6 +120,67 @@ export class ShipController {
   }
 
   /**
+   * 更新模型统计信息到UI
+   * @private
+   */
+  _updateModelStatsUI(modelStats) {
+    try {
+      // 更新统计概览
+      const totalNodesEl = document.getElementById('modelStats-totalNodes');
+      const meshCountEl = document.getElementById('modelStats-meshCount');
+      const groupCountEl = document.getElementById('modelStats-groupCount');
+      const materialCountEl = document.getElementById('modelStats-materialCount');
+      
+      if (totalNodesEl) totalNodesEl.textContent = modelStats.totalNodes;
+      if (meshCountEl) meshCountEl.textContent = modelStats.meshCount;
+      if (groupCountEl) groupCountEl.textContent = modelStats.groupCount;
+      if (materialCountEl) materialCountEl.textContent = modelStats.materialCount;
+      
+      // 更新Mesh列表
+      const meshListEl = document.getElementById('modelStats-meshList');
+      if (meshListEl) {
+        if (modelStats.meshes.length > 0) {
+          meshListEl.innerHTML = modelStats.meshes.map((mesh, index) => {
+            return `<div style="margin-bottom: 4px; padding: 4px; background: rgba(79, 195, 247, 0.1); border-radius: 3px;">
+              <span style="color: #4fc3f7; font-weight: 600;">${index + 1}.</span> 
+              <span style="color: #e8f0ff;">${mesh.name || 'Unnamed'}</span>
+              <span style="color: #888; font-size: 10px;">(${mesh.type})</span>
+              <span style="color: #81c784; float: right;">${mesh.material} 材质</span>
+            </div>`;
+          }).join('');
+        } else {
+          meshListEl.innerHTML = '<div style="color: #888; font-style: italic;">无Mesh | No Meshes</div>';
+        }
+      }
+      
+      // 更新Group列表
+      const groupListEl = document.getElementById('modelStats-groupList');
+      if (groupListEl) {
+        if (modelStats.groups.length > 0) {
+          // 只显示前30个，避免列表过长
+          const displayGroups = modelStats.groups.slice(0, 30);
+          groupListEl.innerHTML = displayGroups.map((group, index) => {
+            return `<div style="margin-bottom: 4px; padding: 4px; background: rgba(79, 195, 247, 0.1); border-radius: 3px;">
+              <span style="color: #4fc3f7; font-weight: 600;">${index + 1}.</span> 
+              <span style="color: #e8f0ff;">${group.name || 'Unnamed'}</span>
+              <span style="color: #888; font-size: 10px;">(${group.type})</span>
+              <span style="color: #81c784; float: right;">${group.children} 子节点</span>
+            </div>`;
+          }).join('') + (modelStats.groups.length > 30 
+            ? `<div style="color: #888; font-style: italic; margin-top: 8px; text-align: center;">... 还有 ${modelStats.groups.length - 30} 个Group未显示</div>`
+            : '');
+        } else {
+          groupListEl.innerHTML = '<div style="color: #888; font-style: italic;">无Group | No Groups</div>';
+        }
+      }
+      
+      console.log('✅ 模型统计信息已更新到UI | Model statistics updated to UI');
+    } catch (error) {
+      console.warn('⚠️ 更新模型统计UI时出错 | Error updating model stats UI:', error);
+    }
+  }
+
+  /**
    * 加载船体模型
    */
   async load() {
@@ -111,7 +190,7 @@ export class ShipController {
       let index = 0;
       let loaded = false;
       const failedPaths = [];
-      
+
       // 预检查：先测试文件是否可以通过HTTP访问
       console.log('🔍 预检查：测试GLB文件是否可访问...');
       const testUrl = candidates[0]; // 使用第一个候选路径
@@ -149,9 +228,9 @@ export class ShipController {
         if (index >= candidates.length) {
           console.error('❌ All GLB paths failed');
           console.error('❌ 所有路径尝试失败，请检查：');
-          console.error('   1. 文件是否存在：D:\\DoubleBoatRefactor\\DoubleBoatSimWebGL\\public\\GLB_20251223141542.glb');
+          console.error('   1. 文件是否存在：D:\\DoubleBoatRefactor\\DoubleBoatSimWebGL\\public\\boat 1.glb');
           console.error('   2. 服务器是否正在运行：http://127.0.0.1:8080');
-          console.error('   3. 是否可以通过浏览器直接访问：http://127.0.0.1:8080/public/GLB_20251223141542.glb');
+          console.error('   3. 是否可以通过浏览器直接访问：http://127.0.0.1:8080/public/boat%201.glb');
           console.error('   已尝试的路径 | Attempted paths:', failedPaths);
           clearTimeout(timeout);
           const errorMsg = `所有GLB模型路径加载失败 | All GLB model paths failed<br><br>已尝试的路径 | Attempted paths:<br>${failedPaths.map(p => `• ${p}`).join('<br>')}<br><br>请检查：<br>1. 文件是否存在<br>2. 服务器是否运行<br>3. 浏览器控制台的详细错误信息`;
@@ -160,17 +239,42 @@ export class ShipController {
           return;
         }
 
-        const url = candidates[index++];
+        let url = candidates[index++];
         failedPaths.push(url);
         
-        const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+        // 对URL进行编码，确保空格等特殊字符被正确处理
+        // 只编码路径的各个部分，保留路径分隔符
+        let encodedUrl = url;
+        if (url.startsWith('http')) {
+          // 完整URL：只编码路径部分
+          try {
+            const urlObj = new URL(url);
+            const pathParts = urlObj.pathname.split('/').filter(p => p);
+            const encodedPath = '/' + pathParts.map(part => encodeURIComponent(part)).join('/');
+            encodedUrl = urlObj.origin + encodedPath;
+          } catch (e) {
+            // 如果URL解析失败，使用原始URL
+            console.warn('URL parsing failed, using original:', url);
+          }
+        } else {
+          // 相对路径：编码每个路径段，保留分隔符
+          const pathParts = url.split('/');
+          const encodedParts = pathParts.map(part => {
+            if (part === '') return '';
+            return encodeURIComponent(part);
+          });
+          encodedUrl = encodedParts.join('/');
+        }
+        
+        const fullUrl = encodedUrl.startsWith('http') ? encodedUrl : `${window.location.origin}${encodedUrl}`;
         console.log(`🔍 [${index}/${candidates.length}] 尝试加载模型 | Attempting to load: ${url}`);
+        console.log(`   编码后URL | Encoded URL: ${encodedUrl}`);
         console.log(`   完整URL | Full URL: ${fullUrl}`);
         
         // 添加加载管理器来监控加载状态
         const manager = new THREE.LoadingManager();
         manager.onStart = () => {
-          console.log(`🚀 开始加载 | Loading started: ${url}`);
+          console.log(`🚀 开始加载 | Loading started: ${encodedUrl}`);
         };
         manager.onProgress = (url, itemsLoaded, itemsTotal) => {
           console.log(`📥 加载进度 | Loading progress: ${itemsLoaded}/${itemsTotal} (${url})`);
@@ -180,7 +284,7 @@ export class ShipController {
         };
         
         loader.load(
-          url,
+          encodedUrl,
           (gltf) => {
             clearTimeout(timeout);
             loaded = true;
@@ -283,7 +387,7 @@ export class ShipController {
     const configPath = this.config.glbPath;
     
     // 从配置路径中提取文件名
-    const fileName = configPath.split('/').pop() || 'GLB_20251223141542.glb';
+    const fileName = configPath.split('/').pop() || 'boat 1.glb';
     
     console.log(`🔍 GLB模型加载配置 | GLB model loading config:`);
     console.log(`   Origin: ${base}`);
@@ -320,89 +424,331 @@ export class ShipController {
    */
   _setupGLBModel(gltf, url) {
     try {
-      this.mesh = gltf.scene;
-      
+    this.mesh = gltf.scene;
+    
       // 确保整个mesh组可见
       this.mesh.visible = true;
       
-      // 启用阴影，将整个船体模型设置为60%透明度的玻璃材质
+      // 统计模型部分
+      const modelStats = {
+        totalNodes: 0,
+        meshes: [],
+        groups: [],
+        materials: new Set(),
+        meshCount: 0,
+        groupCount: 0,
+        materialCount: 0
+      };
+      
+      // 第一次遍历：统计所有部分
+    this.mesh.traverse((child) => {
+        modelStats.totalNodes++;
+        
+      if (child.isMesh) {
+          modelStats.meshCount++;
+          const meshInfo = {
+            name: child.name || `Mesh_${modelStats.meshCount}`,
+            type: child.type,
+            material: child.material ? (Array.isArray(child.material) ? child.material.length : 1) : 0
+          };
+          modelStats.meshes.push(meshInfo);
+          
+          // 统计材质
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => {
+                if (mat) modelStats.materials.add(mat);
+              });
+            } else {
+              modelStats.materials.add(child.material);
+            }
+          }
+        } else if (child.isGroup || child.type === 'Group' || child.type === 'Object3D') {
+          modelStats.groupCount++;
+          const groupInfo = {
+            name: child.name || `Group_${modelStats.groupCount}`,
+            type: child.type,
+            children: child.children.length
+          };
+          modelStats.groups.push(groupInfo);
+        }
+      });
+      
+      modelStats.materialCount = modelStats.materials.size;
+      
+      // 输出统计信息到控制台
+      console.log('📊 模型结构统计 | Model Structure Statistics:');
+      console.log(`   总节点数 | Total nodes: ${modelStats.totalNodes}`);
+      console.log(`   Mesh数量 | Mesh count: ${modelStats.meshCount}`);
+      console.log(`   Group数量 | Group count: ${modelStats.groupCount}`);
+      console.log(`   材质数量 | Material count: ${modelStats.materialCount}`);
+      
+      if (modelStats.meshes.length > 0) {
+        console.log(`\n   📦 Mesh列表 | Mesh list (${modelStats.meshes.length}个):`);
+        modelStats.meshes.forEach((mesh, index) => {
+          console.log(`      ${index + 1}. ${mesh.name} (${mesh.type}) - ${mesh.material}个材质`);
+        });
+      }
+      
+      if (modelStats.groups.length > 0) {
+        console.log(`\n   📁 Group列表 | Group list (${modelStats.groups.length}个):`);
+        modelStats.groups.slice(0, 20).forEach((group, index) => {
+          console.log(`      ${index + 1}. ${group.name} (${group.type}) - ${group.children}个子节点`);
+        });
+        if (modelStats.groups.length > 20) {
+          console.log(`      ... 还有 ${modelStats.groups.length - 20} 个Group未显示`);
+        }
+      }
+      
+      // 更新左侧菜单的统计信息
+      this._updateModelStatsUI(modelStats);
+      
+      // 辅助函数：检查节点或其父级是否是 AccommodationBlock
+      const isAccommodationBlockNode = (node) => {
+        if (!node) return false;
+        
+        // 检查当前节点名称
+        if (node.name) {
+          const name = node.name.toLowerCase();
+          if (name.includes('accommodationblock') || 
+              name === 'accommodationblock') {
+            return true;
+          }
+        }
+        
+        // 检查父级节点
+        let parent = node.parent;
+        while (parent && parent !== this.mesh) {
+          if (parent.name) {
+            const parentName = parent.name.toLowerCase();
+            if (parentName.includes('accommodationblock') || 
+                parentName === 'accommodationblock') {
+              return true;
+            }
+          }
+          parent = parent.parent;
+        }
+        
+        return false;
+      };
+      
+      let accommodationBlockCount = 0;
+      
+      // 启用阴影，保留模型自带的材质
       this.mesh.traverse((child) => {
         if (child.isMesh) {
           try {
-            child.castShadow = true;
-            child.receiveShadow = true;
+        child.castShadow = true;
+        child.receiveShadow = true;
+        
+            // 检查是否是 AccommodationBlock 区域
+            const isAccommodationBlock = isAccommodationBlockNode(child);
             
-            // 获取旧材质（如果存在），用于后续释放资源
-            const oldMaterial = child.material;
-            
-            // 获取原始材质颜色，保留模型的原始外观
-            let originalColor = new THREE.Color(0x88aaff); // 默认蓝色
-            if (oldMaterial) {
-              if (Array.isArray(oldMaterial)) {
-                // 如果是材质数组，使用第一个材质的颜色
-                if (oldMaterial[0] && oldMaterial[0].color) {
-                  originalColor = oldMaterial[0].color.clone();
+            if (isAccommodationBlock) {
+              // 处理 AccommodationBlock：克隆材质并设置透明度
+              accommodationBlockCount++;
+              
+              // 存储mesh引用，用于后续动态更新
+              this.accommodationBlockMeshes.push(child);
+              
+              const originalMaterial = child.material;
+              
+              if (Array.isArray(originalMaterial)) {
+                // 如果是材质数组，克隆每个材质
+                const clonedMaterials = originalMaterial.map(mat => {
+                  if (!mat) return mat;
+                  
+                  const materialType = mat.type || 'Unknown';
+                  console.log(`🔷 处理材质数组中的材质 | Processing material in array:`, {
+                    type: materialType,
+                    name: child.name || 'unnamed',
+                    originalOpacity: mat.opacity,
+                    originalTransparent: mat.transparent
+                  });
+                  
+                  // 检查材质类型是否支持透明度
+                  const supportsTransparency = [
+                    'MeshStandardMaterial',
+                    'MeshPhysicalMaterial',
+                    'MeshPhongMaterial',
+                    'MeshLambertMaterial',
+                    'MeshBasicMaterial',
+                    'MeshToonMaterial'
+                  ].includes(materialType);
+                  
+                  let cloned;
+                  
+                  if (!supportsTransparency) {
+                    // 转换为支持透明度的材质
+                    console.log(`⚠️ 材质类型 ${materialType} 可能不支持透明度，转换为 MeshStandardMaterial`);
+                    cloned = new THREE.MeshStandardMaterial({
+                      color: mat.color ? mat.color.clone() : new THREE.Color(0xffffff),
+                      map: mat.map,
+                      roughness: mat.roughness !== undefined ? mat.roughness : 0.5,
+                      metalness: mat.metalness !== undefined ? mat.metalness : 0.0,
+          transparent: true,
+                      opacity: 0.15, // 15% 不透明度
+                      side: mat.side !== undefined ? mat.side : THREE.FrontSide,
+                      depthWrite: false,
+                      alphaTest: 0.0
+                    });
+                  } else {
+                    // 克隆材质
+                    cloned = mat.clone();
+                    
+                    // 设置初始透明度为 15%（不透明度 15%），可通过UI调整
+                    cloned.transparent = true;
+                    cloned.opacity = 0.15; // 默认值，可通过 updateAccommodationOpacity 方法更新
+                    
+                    // 确保材质支持透明度
+                    if (cloned.depthWrite !== undefined) {
+                      cloned.depthWrite = false; // 透明材质通常不写入深度
+                    }
+                    
+                    // 对于某些材质类型，需要额外设置
+                    if (cloned.type === 'MeshStandardMaterial' || cloned.type === 'MeshPhysicalMaterial') {
+                      if (cloned.alphaTest !== undefined) {
+                        cloned.alphaTest = 0.0; // 禁用alpha测试，使用透明度混合
+                      }
+                    }
+                  }
+                  
+                  cloned.needsUpdate = true;
+                  
+                  console.log(`✅ 材质已设置 | Material configured:`, {
+                    type: cloned.type,
+                    opacity: cloned.opacity,
+                    transparent: cloned.transparent,
+                    depthWrite: cloned.depthWrite
+                  });
+                  
+                  return cloned;
+                });
+                
+                child.material = clonedMaterials;
+              } else if (originalMaterial) {
+                // 单个材质，克隆它
+                const materialType = originalMaterial.type || 'Unknown';
+                console.log(`🔷 处理单个材质 | Processing single material:`, {
+                  type: materialType,
+                  name: child.name || 'unnamed',
+                  originalOpacity: originalMaterial.opacity,
+                  originalTransparent: originalMaterial.transparent
+                });
+                
+                // 检查材质类型是否支持透明度
+                const supportsTransparency = [
+                  'MeshStandardMaterial',
+                  'MeshPhysicalMaterial',
+                  'MeshPhongMaterial',
+                  'MeshLambertMaterial',
+                  'MeshBasicMaterial',
+                  'MeshToonMaterial'
+                ].includes(materialType);
+                
+                let clonedMaterial;
+                
+                if (!supportsTransparency) {
+                  // 转换为支持透明度的材质
+                  console.log(`⚠️ 材质类型 ${materialType} 可能不支持透明度，转换为 MeshStandardMaterial`);
+                  clonedMaterial = new THREE.MeshStandardMaterial({
+                    color: originalMaterial.color ? originalMaterial.color.clone() : new THREE.Color(0xffffff),
+                    map: originalMaterial.map,
+                    roughness: originalMaterial.roughness !== undefined ? originalMaterial.roughness : 0.5,
+                    metalness: originalMaterial.metalness !== undefined ? originalMaterial.metalness : 0.0,
+                    transparent: true,
+                    opacity: 0.15, // 15% 不透明度
+                    side: originalMaterial.side !== undefined ? originalMaterial.side : THREE.FrontSide,
+                    depthWrite: false,
+                    alphaTest: 0.0
+                  });
+                } else {
+                  // 克隆材质
+                  clonedMaterial = originalMaterial.clone();
+                  
+                  // 设置初始透明度为 15%（不透明度 15%），可通过UI调整
+                  clonedMaterial.transparent = true;
+                  clonedMaterial.opacity = 0.15; // 默认值，可通过 updateAccommodationOpacity 方法更新
+                  
+                  // 确保材质支持透明度
+                  if (clonedMaterial.depthWrite !== undefined) {
+                    clonedMaterial.depthWrite = false; // 透明材质通常不写入深度
+                  }
+                  
+                  // 对于某些材质类型，需要额外设置
+                  if (clonedMaterial.type === 'MeshStandardMaterial' || clonedMaterial.type === 'MeshPhysicalMaterial') {
+                    if (clonedMaterial.alphaTest !== undefined) {
+                      clonedMaterial.alphaTest = 0.0; // 禁用alpha测试，使用透明度混合
+                    }
+                  }
                 }
-              } else if (oldMaterial.color) {
-                originalColor = oldMaterial.color.clone();
+                
+                clonedMaterial.needsUpdate = true;
+                child.material = clonedMaterial;
+                
+                console.log(`✅ 材质已设置 | Material configured:`, {
+                  type: clonedMaterial.type,
+                  opacity: clonedMaterial.opacity,
+                  transparent: clonedMaterial.transparent,
+                  depthWrite: clonedMaterial.depthWrite
+                });
               }
-            }
-            
-            // 为整个船体创建白色不透明材质（白模）
-            const whiteMaterial = new THREE.MeshStandardMaterial({
-              color: 0xffffff, // 白色
-              transparent: false,
-              opacity: 1.0, // 完全不透明
-              roughness: 0.7, // 中等粗糙度
-              metalness: 0.0, // 非金属
-              side: THREE.DoubleSide, // 双面渲染
-              depthWrite: true, // 启用深度写入
-              depthTest: true, // 启用深度测试
-              // 确保材质正确初始化
-              needsUpdate: true
-            });
-            
-            // 先释放旧材质资源（如果存在）
-            if (oldMaterial) {
-              try {
+              
+              child.renderOrder = 1; // 透明材质稍后渲染
+              
+              console.log(`🔷 AccommodationBlock 材质已克隆并设置为透明 | AccommodationBlock material cloned and set to transparent: ${child.name || 'unnamed'}`);
+            } else {
+              // 其他 mesh：设置为蓝色玻璃材质
+              this.shipMeshes.push(child);
+              
+              // 创建蓝色玻璃材质（MeshPhysicalMaterial，更真实的玻璃效果）
+              const blueGlassMaterial = new THREE.MeshPhysicalMaterial({
+                color: this.shipMaterialConfig.color, // 蓝色 0x4a90e2
+                transparent: this.shipMaterialConfig.transparent,
+                opacity: this.shipMaterialConfig.opacity, // 默认60%透明度
+                roughness: this.shipMaterialConfig.roughness, // 低粗糙度，更光滑
+                metalness: this.shipMaterialConfig.metalness,
+                side: this.shipMaterialConfig.side,
+                depthWrite: this.shipMaterialConfig.depthWrite,
+                depthTest: this.shipMaterialConfig.depthTest,
+                transmission: 0.9, // 透射率，增强玻璃效果
+                thickness: 0.5, // 玻璃厚度
+                ior: 1.5, // 折射率（玻璃约为1.5）
+                clearcoat: 1.0, // 清漆层
+                clearcoatRoughness: 0.1
+              });
+              
+              // 处理旧材质，确保正确释放资源
+              const oldMaterial = child.material;
+              if (oldMaterial) {
                 if (Array.isArray(oldMaterial)) {
                   oldMaterial.forEach(mat => {
-                    if (mat && typeof mat.dispose === 'function') {
+                    if (mat && mat.dispose) {
                       mat.dispose();
                     }
                   });
-                } else if (oldMaterial && typeof oldMaterial.dispose === 'function') {
+                } else if (oldMaterial.dispose) {
                   oldMaterial.dispose();
                 }
-              } catch (disposeError) {
-                console.warn('⚠️ 释放旧材质时出错 | Error disposing old material:', disposeError);
               }
+              
+              child.material = blueGlassMaterial;
+              child.material.needsUpdate = true;
+              child.renderOrder = 0; // 正常渲染顺序
+              
+              console.log(`🔵 船体mesh已设置为蓝色玻璃材质 | Ship mesh set to blue glass material: ${child.name || 'unnamed'}`, {
+                color: `#${this.shipMaterialConfig.color.toString(16)}`,
+                opacity: this.shipMaterialConfig.opacity,
+                transmission: blueGlassMaterial.transmission
+              });
             }
-            
-            // 应用新材质
-            child.material = whiteMaterial;
-            child.renderOrder = 0; // 正常渲染顺序
-            
-            // 确保 mesh 可见
-            child.visible = true;
-            
+        
+        // 确保 mesh 可见
+        child.visible = true;
+        
             // 确保mesh的父对象也可见
             if (child.parent) {
               child.parent.visible = true;
-            }
-            
-            // 强制更新材质
-            whiteMaterial.needsUpdate = true;
-            
-            // 添加调试日志（仅第一个mesh）
-            if (!this._whiteMaterialLogged) {
-              console.log('✅ 船体白色材质已应用 | Ship white material applied:');
-              console.log(`   材质类型 | Material type: ${whiteMaterial.type}`);
-              console.log(`   颜色 | Color: white (0xffffff)`);
-              console.log(`   不透明 | Opaque: ${!whiteMaterial.transparent}`);
-              console.log(`   粗糙度 | Roughness: ${whiteMaterial.roughness}`);
-              console.log(`   金属度 | Metalness: ${whiteMaterial.metalness}`);
-              this._whiteMaterialLogged = true;
             }
           } catch (meshError) {
             console.error(`❌ 处理mesh时出错 | Error processing mesh:`, meshError);
@@ -411,6 +757,52 @@ export class ShipController {
           }
         }
       });
+      
+      if (accommodationBlockCount > 0) {
+        console.log(`✅ AccommodationBlock 区域已处理 | AccommodationBlock area processed: ${accommodationBlockCount} mesh(es) with 15% opacity`);
+        
+        // 验证材质设置是否正确
+        console.log(`🔍 验证 AccommodationBlock 材质设置 | Verifying AccommodationBlock material settings...`);
+        let verifiedCount = 0;
+        let errorCount = 0;
+        
+        this.accommodationBlockMeshes.forEach((mesh, index) => {
+          const material = mesh.material;
+          const materials = Array.isArray(material) ? material : [material];
+          
+          materials.forEach((mat, matIndex) => {
+            if (mat) {
+              const opacity = mat.opacity;
+              const transparent = mat.transparent;
+              
+              if (Math.abs(opacity - 0.15) < 0.001 && transparent === true) {
+                verifiedCount++;
+                console.log(`   ✅ Mesh ${index + 1}, Material ${matIndex + 1}: 正确设置 (opacity=${(opacity * 100).toFixed(1)}%, transparent=${transparent})`);
+              } else {
+                errorCount++;
+                console.error(`   ❌ Mesh ${index + 1}, Material ${matIndex + 1}: 设置错误!`, {
+                  expected: { opacity: 0.15, transparent: true },
+                  actual: { opacity, transparent },
+                  type: mat.type,
+                  mesh: mesh.name || 'unnamed'
+                });
+                
+                // 尝试修复
+                mat.opacity = 0.15;
+                mat.transparent = true;
+                if (mat.depthWrite !== undefined) mat.depthWrite = false;
+                mat.needsUpdate = true;
+                console.log(`   🔧 已尝试修复材质 | Attempted to fix material`);
+              }
+            }
+          });
+        });
+        
+        console.log(`📊 验证结果 | Verification result: ${verifiedCount} 个材质正确，${errorCount} 个需要修复`);
+      } else {
+        console.log(`⚠️ 未找到 AccommodationBlock 区域 | AccommodationBlock area not found`);
+        console.log(`   提示：请检查模型中的mesh名称是否包含 "AccommodationBlock"`);
+      }
     } catch (setupError) {
       console.error('❌ 设置GLB模型时出错 | Error setting up GLB model:', setupError);
       throw setupError;
@@ -945,6 +1337,358 @@ export class ShipController {
     sprite.renderOrder = 1000; // 确保在最前面渲染
     
     return sprite;
+  }
+
+  /**
+   * 调试：打印 AccommodationBlock 材质信息
+   * @public
+   */
+  debugAccommodationBlockMaterials() {
+    if (!this.accommodationBlockMeshes || this.accommodationBlockMeshes.length === 0) {
+      console.warn('⚠️ 未找到 AccommodationBlock mesh');
+      return;
+    }
+    
+    console.group('🔍 AccommodationBlock 材质调试信息');
+    this.accommodationBlockMeshes.forEach((mesh, index) => {
+      const material = mesh.material;
+      const materials = Array.isArray(material) ? material : [material];
+      
+      console.log(`Mesh ${index + 1}: ${mesh.name || 'unnamed'}`);
+      materials.forEach((mat, matIndex) => {
+        if (mat) {
+          console.log(`  材质 ${matIndex + 1}:`, {
+            type: mat.type,
+            opacity: mat.opacity,
+            transparent: mat.transparent,
+            depthWrite: mat.depthWrite,
+            alphaTest: mat.alphaTest,
+            visible: mat.visible,
+            needsUpdate: mat.needsUpdate,
+            uuid: mat.uuid
+          });
+        } else {
+          console.log(`  材质 ${matIndex + 1}: null`);
+        }
+      });
+    });
+    console.groupEnd();
+  }
+
+  /**
+   * 更新 AccommodationBlock 材质的透明度
+   * @param {number} opacity - 不透明度值 (0-1)，例如 0.15 表示 15% 不透明度
+   */
+  updateAccommodationOpacity(opacity) {
+    if (!this.accommodationBlockMeshes || this.accommodationBlockMeshes.length === 0) {
+      console.warn('⚠️ 未找到 AccommodationBlock mesh，无法更新透明度');
+      console.warn('   提示：请确保模型已加载且包含 AccommodationBlock 区域');
+      return;
+    }
+    
+    // 确保 opacity 在有效范围内 (0.15 - 0.60)
+    const clampedOpacity = Math.max(0.15, Math.min(0.60, opacity));
+    
+    let updatedCount = 0;
+    const debugInfo = [];
+    
+    this.accommodationBlockMeshes.forEach((mesh, index) => {
+      try {
+        const material = mesh.material;
+        
+        if (Array.isArray(material)) {
+          // 材质数组
+          material.forEach((mat, matIndex) => {
+            if (mat) {
+              const beforeOpacity = mat.opacity;
+              const beforeTransparent = mat.transparent;
+              const materialType = mat.type || 'Unknown';
+              
+              // 检查材质类型是否支持透明度
+              // 某些材质类型（如MeshBasicMaterial）可能不支持透明度，需要转换
+              const supportsTransparency = [
+                'MeshStandardMaterial',
+                'MeshPhysicalMaterial',
+                'MeshPhongMaterial',
+                'MeshLambertMaterial',
+                'MeshBasicMaterial',
+                'MeshToonMaterial'
+              ].includes(mat.type);
+              
+              if (!supportsTransparency && mat.type !== 'Unknown') {
+                console.warn(`⚠️ 材质类型 ${mat.type} 可能不支持透明度，尝试转换为 MeshStandardMaterial`);
+                // 转换为支持透明度的材质
+                const newMat = new THREE.MeshStandardMaterial({
+                  color: mat.color ? mat.color.clone() : new THREE.Color(0xffffff),
+                  map: mat.map,
+                  roughness: mat.roughness !== undefined ? mat.roughness : 0.5,
+                  metalness: mat.metalness !== undefined ? mat.metalness : 0.0,
+                  transparent: true,
+                  opacity: clampedOpacity,
+                  side: mat.side !== undefined ? mat.side : THREE.FrontSide,
+                  depthWrite: false,
+                  alphaTest: 0.0
+                });
+                
+                // 替换材质
+                material[matIndex] = newMat;
+                mesh.material = material; // 确保mesh引用更新后的材质数组
+                mat = newMat; // 更新当前材质引用
+              } else {
+                // 更新透明度
+                mat.opacity = clampedOpacity;
+                mat.transparent = true; // 始终透明（opacity范围是0.15-0.60，总是<1.0）
+                
+                // 确保材质支持透明度
+                if (mat.depthWrite !== undefined) {
+                  mat.depthWrite = false; // 透明材质通常不写入深度
+                }
+                
+                // 强制更新
+                mat.needsUpdate = true;
+                
+                // 对于某些材质类型，可能需要额外设置
+                if (mat.type === 'MeshStandardMaterial' || mat.type === 'MeshPhysicalMaterial') {
+                  // 确保这些属性存在
+                  if (mat.alphaTest !== undefined) {
+                    mat.alphaTest = 0.0; // 禁用alpha测试，使用透明度混合
+                  }
+                }
+              }
+              
+              updatedCount++;
+              
+              debugInfo.push({
+                mesh: mesh.name || `Mesh_${index}`,
+                materialIndex: matIndex,
+                type: materialType,
+                before: { opacity: beforeOpacity, transparent: beforeTransparent },
+                after: { opacity: mat.opacity, transparent: mat.transparent }
+              });
+            }
+          });
+        } else if (material) {
+          // 单个材质
+          const beforeOpacity = material.opacity;
+          const beforeTransparent = material.transparent;
+          const materialType = material.type || 'Unknown';
+          
+          // 检查材质类型是否支持透明度
+          const supportsTransparency = [
+            'MeshStandardMaterial',
+            'MeshPhysicalMaterial',
+            'MeshPhongMaterial',
+            'MeshLambertMaterial',
+            'MeshBasicMaterial',
+            'MeshToonMaterial'
+          ].includes(material.type);
+          
+          if (!supportsTransparency && material.type !== 'Unknown') {
+            console.warn(`⚠️ 材质类型 ${material.type} 可能不支持透明度，尝试转换为 MeshStandardMaterial`);
+            // 转换为支持透明度的材质
+            const newMat = new THREE.MeshStandardMaterial({
+              color: material.color ? material.color.clone() : new THREE.Color(0xffffff),
+              map: material.map,
+              roughness: material.roughness !== undefined ? material.roughness : 0.5,
+              metalness: material.metalness !== undefined ? material.metalness : 0.0,
+              transparent: true,
+              opacity: clampedOpacity,
+              side: material.side !== undefined ? material.side : THREE.FrontSide,
+              depthWrite: false,
+              alphaTest: 0.0
+            });
+            
+            // 替换材质
+            mesh.material = newMat;
+            material = newMat; // 更新当前材质引用
+          } else {
+            // 更新透明度
+            material.opacity = clampedOpacity;
+            material.transparent = true; // 始终透明（opacity范围是0.15-0.60，总是<1.0）
+            
+            // 确保材质支持透明度
+            if (material.depthWrite !== undefined) {
+              material.depthWrite = false; // 透明材质通常不写入深度
+            }
+            
+            // 强制更新
+            material.needsUpdate = true;
+            
+            // 对于某些材质类型，可能需要额外设置
+            if (material.type === 'MeshStandardMaterial' || material.type === 'MeshPhysicalMaterial') {
+              // 确保这些属性存在
+              if (material.alphaTest !== undefined) {
+                material.alphaTest = 0.0; // 禁用alpha测试，使用透明度混合
+              }
+            }
+          }
+          
+          updatedCount++;
+          
+          debugInfo.push({
+            mesh: mesh.name || `Mesh_${index}`,
+            materialIndex: 0,
+            type: materialType,
+            before: { opacity: beforeOpacity, transparent: beforeTransparent },
+            after: { opacity: material.opacity, transparent: material.transparent }
+          });
+        } else {
+          console.warn(`⚠️ Mesh ${mesh.name || `Mesh_${index}`} 没有材质 | Mesh has no material`);
+        }
+      } catch (error) {
+        console.error(`❌ 更新 AccommodationBlock 材质透明度时出错 | Error updating opacity:`, error);
+        console.error(`   Mesh名称 | Mesh name: ${mesh.name || 'unnamed'}`);
+        console.error(`   错误堆栈 | Error stack:`, error.stack);
+      }
+    });
+    
+    if (updatedCount > 0) {
+      // 验证更新是否生效
+      let verifiedCount = 0;
+      let mismatchCount = 0;
+      
+      this.accommodationBlockMeshes.forEach((mesh) => {
+        const material = mesh.material;
+        const materials = Array.isArray(material) ? material : [material];
+        
+        materials.forEach((mat) => {
+          if (mat) {
+            // 验证opacity是否真的被更新了
+            const actualOpacity = mat.opacity;
+            const opacityDiff = Math.abs(actualOpacity - clampedOpacity);
+            
+            if (opacityDiff < 0.001) { // 允许小的浮点误差
+              verifiedCount++;
+            } else {
+              mismatchCount++;
+              console.warn(`⚠️ 材质透明度不匹配 | Material opacity mismatch:`, {
+                expected: clampedOpacity,
+                actual: actualOpacity,
+                mesh: mesh.name || 'unnamed',
+                type: mat.type
+              });
+            }
+          }
+        });
+      });
+      
+      console.log(`✅ AccommodationBlock 透明度已更新 | AccommodationBlock opacity updated: ${(clampedOpacity * 100).toFixed(1)}% (${updatedCount} 个材质)`);
+      console.log(`   验证结果 | Verification: ${verifiedCount} 个材质已确认更新，${mismatchCount} 个不匹配`);
+      
+      // 详细调试信息（仅在开发时显示）
+      if (window.DEBUG_OPACITY_UPDATE) {
+        console.group('🔍 透明度更新详情 | Opacity Update Details');
+        debugInfo.forEach((info, i) => {
+          console.log(`材质 ${i + 1}:`, {
+            mesh: info.mesh,
+            type: info.type,
+            before: `${(info.before.opacity * 100).toFixed(1)}% (transparent: ${info.before.transparent})`,
+            after: `${(info.after.opacity * 100).toFixed(1)}% (transparent: ${info.after.transparent})`
+          });
+        });
+        console.groupEnd();
+      }
+      
+      // 如果验证失败，尝试强制重新应用
+      if (mismatchCount > 0) {
+        console.warn('⚠️ 检测到材质更新不匹配，尝试强制重新应用...');
+        // 延迟一帧后再次尝试更新
+        setTimeout(() => {
+          this.updateAccommodationOpacity(clampedOpacity);
+        }, 100);
+      }
+    } else {
+      console.warn('⚠️ 未更新任何材质，请检查 AccommodationBlock mesh 的材质设置');
+      console.warn(`   找到 ${this.accommodationBlockMeshes.length} 个 AccommodationBlock mesh，但无法更新材质`);
+    }
+  }
+
+  /**
+   * 更新船体材质透明度
+   * @param {number} opacity - 不透明度值 (0-1)，例如 0.6 表示 60% 不透明度（40%透明）
+   */
+  updateShipMaterialOpacity(opacity) {
+    if (!this.shipMeshes || this.shipMeshes.length === 0) {
+      console.warn('⚠️ 未找到船体 mesh，无法更新透明度');
+      console.warn('   提示：请确保模型已加载');
+      return;
+    }
+
+    // 确保 opacity 在有效范围内 (0.1 - 1.0)
+    const clampedOpacity = Math.max(0.1, Math.min(1.0, opacity));
+    
+    // 更新配置
+    this.shipMaterialConfig.opacity = clampedOpacity;
+    
+    let updatedCount = 0;
+    
+    this.shipMeshes.forEach((mesh, index) => {
+      try {
+        const material = mesh.material;
+        
+        if (material) {
+          const beforeOpacity = material.opacity;
+          const materialType = material.type || 'Unknown';
+          
+          // 确保是MeshPhysicalMaterial
+          if (materialType !== 'MeshPhysicalMaterial') {
+            console.warn(`⚠️ 材质类型 ${materialType} 不是 MeshPhysicalMaterial，重新创建为蓝色玻璃材质`);
+            
+            // 创建新的蓝色玻璃材质
+            const newMat = new THREE.MeshPhysicalMaterial({
+              color: this.shipMaterialConfig.color,
+              transparent: true,
+              opacity: clampedOpacity,
+              roughness: this.shipMaterialConfig.roughness,
+              metalness: this.shipMaterialConfig.metalness,
+              side: this.shipMaterialConfig.side,
+              depthWrite: this.shipMaterialConfig.depthWrite,
+              depthTest: this.shipMaterialConfig.depthTest,
+              transmission: 0.9,
+              thickness: 0.5,
+              ior: 1.5,
+              clearcoat: 1.0,
+              clearcoatRoughness: 0.1
+            });
+            
+            // 释放旧材质
+            if (material.dispose) {
+              material.dispose();
+            }
+            
+            mesh.material = newMat;
+            newMat.needsUpdate = true;
+          } else {
+            // 更新现有材质的透明度
+            material.opacity = clampedOpacity;
+            material.transparent = true;
+            material.needsUpdate = true;
+            
+            console.log(`🔵 更新船体材质透明度 | Updated ship material opacity:`, {
+              mesh: mesh.name || `Mesh_${index}`,
+              before: `${(beforeOpacity * 100).toFixed(1)}%`,
+              after: `${(clampedOpacity * 100).toFixed(1)}%`,
+              type: materialType
+            });
+          }
+          
+          updatedCount++;
+        } else {
+          console.warn(`⚠️ Mesh ${mesh.name || `Mesh_${index}`} 没有材质 | Mesh has no material`);
+        }
+      } catch (error) {
+        console.error(`❌ 更新船体材质透明度时出错 | Error updating ship material opacity:`, error);
+        console.error(`   Mesh名称 | Mesh name: ${mesh.name || 'unnamed'}`);
+        console.error(`   错误堆栈 | Error stack:`, error.stack);
+      }
+    });
+    
+    if (updatedCount > 0) {
+      console.log(`✅ 船体材质透明度已更新 | Ship material opacity updated: ${(clampedOpacity * 100).toFixed(1)}% (${updatedCount} 个mesh)`);
+    } else {
+      console.warn('⚠️ 未更新任何船体材质，请检查 shipMeshes 的设置');
+      console.warn(`   找到 ${this.shipMeshes.length} 个船体 mesh，但无法更新材质`);
+    }
   }
 
   /**

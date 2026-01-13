@@ -144,12 +144,12 @@ function createWater() {
 function loadBoat() {
   const loader = new GLTFLoader();
 
-  // 统一使用绝对路径：/public/GLB_20251223141542.glb
-  // 文件位置：D:\DoubleBoatRefactor\DoubleBoatSimWebGL\public\GLB_20251223141542.glb
+  // 统一使用绝对路径：/public/boat 1.glb
+  // 文件位置：D:\DoubleBoatRefactor\DoubleBoatSimWebGL\public\boat 1.glb
   const base = window.location.origin;
   const candidates = [
-    '/public/GLB_20251223141542.glb', // 绝对路径（最优先）
-    `${base}/public/GLB_20251223141542.glb` // 完整URL（备选）
+    '/public/boat 1.glb', // 绝对路径（最优先）
+    `${base}/public/boat 1.glb` // 完整URL（备选）
   ];
 
   let index = 0;
