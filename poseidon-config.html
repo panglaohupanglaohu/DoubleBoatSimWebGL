@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poseidon-X 系统配置 | System Configuration</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #0b1525 0%, #1e3a5f 100%);
+      color: #e8f0ff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(11, 21, 37, 0.95);
+      border: 2px solid #4fc3f7;
+      border-radius: 16px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+    
+    h1 {
+      color: #4fc3f7;
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .subtitle {
+      color: #81c784;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+    
+    .config-section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .config-section h2 {
+      color: #4fc3f7;
+      font-size: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-group label {
+      display: block;
+      color: #b8d4ff;
+      font-size: 14px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(79, 195, 247, 0.3);
+      border-radius: 8px;
+      color: #e8f0ff;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #4fc3f7;
+      box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.1);
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+      font-family: 'Consolas', monospace;
+    }
+    
+    .hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    
+    .hint a {
+      color: #4fc3f7;
+      text-decoration: none;
+    }
+    
+    .hint a:hover {
+      text-decoration: underline;
+    }
+    
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .provider-card {
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    
+    .provider-card:hover {
+      border-color: #4fc3f7;
+      background: rgba(79, 195, 247, 0.1);
+    }
+    
+    .provider-card.selected {
+      border-color: #4fc3f7;
+      background: rgba(79, 195, 247, 0.2);
+    }
+    
+    .provider-card .icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .provider-card .name {
+      font-weight: 600;
+      color: #e8f0ff;
+      margin-bottom: 4px;
+    }
+    
+    .provider-card .desc {
+      font-size: 11px;
+      color: #888;
+    }
+    
+    .btn {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 195, 247, 0.4);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn.success {
+      background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+    }
+    
+    .btn.danger {
+      background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 32px;
+    }
+    
+    .status-message {
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .status-message.success {
+      background: rgba(129, 199, 132, 0.2);
+      border: 1px solid #81c784;
+      color: #81c784;
+      display: block;
+    }
+    
+    .status-message.error {
+      background: rgba(244, 67, 54, 0.2);
+      border: 1px solid #f44336;
+      color: #ff8a80;
+      display: block;
+    }
+    
+    .agent-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    
+    .agent-card {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .agent-card .icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    
+    .agent-card .name {
+      font-weight: 600;
+      color: #4fc3f7;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    
+    .agent-card .role {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .agent-card .status {
+      margin-top: 12px;
+      padding: 6px 12px;
+      background: rgba(129, 199, 132, 0.2);
+      border-radius: 6px;
+      font-size: 11px;
+      color: #81c784;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span>🌊</span>
+      Poseidon-X 系统配置
+    </h1>
+    <p class="subtitle">Software 3.0 智能船舶系统 - 配置向导</p>
+    
+    <!-- LLM 配置 -->
+    <div class="config-section">
+      <h2>🧠 LLM 模型配置</h2>
+      
+      <div class="form-group">
+        <label>选择 LLM 提供商 | Select LLM Provider</label>
+        <div class="provider-grid">
+          <div class="provider-card" data-provider="deepseek" onclick="selectProvider('deepseek')">
+            <div class="icon">🚀</div>
+            <div class="name">DeepSeek</div>
+            <div class="desc">推荐 | Recommended</div>
+          </div>
+          <div class="provider-card" data-provider="openai" onclick="selectProvider('openai')">
+            <div class="icon">🤖</div>
+            <div class="name">OpenAI</div>
+            <div class="desc">GPT-4</div>
+          </div>
+          <div class="provider-card" data-provider="anthropic" onclick="selectProvider('anthropic')">
+            <div class="icon">🧠</div>
+            <div class="name">Anthropic</div>
+            <div class="desc">Claude</div>
+          </div>
+          <div class="provider-card" data-provider="local" onclick="selectProvider('local')">
+            <div class="icon">💻</div>
+            <div class="name">Local</div>
+            <div class="desc">本地模型</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="apiKey">API Key</label>
+        <input 
+          type="password" 
+          id="apiKey" 
+          placeholder="请输入您的 API Key | Enter your API Key"
+          value="">
+        <div class="hint">
+          DeepSeek: 访问 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 获取<br>
+          OpenAI: 访问 <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a> 获取<br>
+          Anthropic: 访问 <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> 获取
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="apiEndpoint">API Endpoint（可选）</label>
+        <input 
+          type="text" 
+          id="apiEndpoint" 
+          placeholder="https://api.deepseek.com/v1"
+          value="">
+        <div class="hint">
+          DeepSeek: https://api.deepseek.com/v1<br>
+          OpenAI: https://api.openai.com/v1<br>
+          留空使用默认值
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="model">模型选择 | Model</label>
+        <select id="model">
+          <optgroup label="DeepSeek" data-provider="deepseek">
+            <option value="deepseek-chat">DeepSeek Chat (推荐)</option>
+            <option value="deepseek-reasoner">DeepSeek Reasoner (思考模式)</option>
+            <option value="deepseek-coder">DeepSeek Coder</option>
+          </optgroup>
+          <optgroup label="OpenAI" data-provider="openai">
+            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+          </optgroup>
+          <optgroup label="Anthropic" data-provider="anthropic">
+            <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+            <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+          </optgroup>
+        </select>
+        <div class="hint">切换上方「提供商」后，请在此选择对应模型，否则 Bridge 可能报 Model Not Exist</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="temperature">Temperature（创造性）</label>
+        <input 
+          type="range" 
+          id="temperature" 
+          min="0" 
+          max="2" 
+          step="0.1" 
+          value="0.7"
+          oninput="document.getElementById('temperatureValue').textContent = this.value">
+        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+          <span style="font-size: 12px; color: #888;">0 (精确)</span>
+          <span id="temperatureValue" style="color: #4fc3f7; font-weight: bold;">0.7</span>
+          <span style="font-size: 12px; color: #888;">2 (创造)</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Agent 配置 -->
+    <div class="config-section">
+      <h2>🤖 智能体配置 | Agent Configuration</h2>
+      
+      <div class="agent-list">
+        <div class="agent-card">
+          <div class="icon">⚓</div>
+          <div class="name">Navigator</div>
+          <div class="role">领航员</div>
+          <div class="status">✅ 已启用</div>
+        </div>
+        <div class="agent-card">
+          <div class="icon">⚙️</div>
+          <div class="name">Engineer</div>
+          <div class="role">轮机长</div>
+          <div class="status">✅ 已启用</div>
+        </div>
+        <div class="agent-card">
+          <div class="icon">🏠</div>
+          <div class="name">Steward</div>
+          <div class="role">大管家</div>
+          <div class="status">✅ 已启用</div>
+        </div>
+        <div class="agent-card">
+          <div class="icon">🛡️</div>
+          <div class="name">Safety</div>
+          <div class="role">安全官</div>
+          <div class="status">✅ 已启用</div>
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-top: 24px;">
+        <label>
+          <input type="checkbox" id="enableVoice" style="width: auto; margin-right: 8px;">
+          启用语音输入 | Enable Voice Input (需要浏览器支持)
+        </label>
+      </div>
+    </div>
+    
+    <!-- 系统配置 -->
+    <div class="config-section">
+      <h2>⚙️ 系统配置 | System Configuration</h2>
+      
+      <div class="form-group">
+        <label for="maxContextTokens">最大上下文 Tokens</label>
+        <input 
+          type="number" 
+          id="maxContextTokens" 
+          value="128000"
+          min="4000"
+          max="200000"
+          step="1000">
+        <div class="hint">
+          DeepSeek Chat 支持最大 64K tokens<br>
+          GPT-4 支持 128K tokens<br>
+          Claude 3 支持 200K tokens
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="language">系统语言 | System Language</label>
+        <select id="language">
+          <option value="zh-CN">中文 (简体)</option>
+          <option value="en-US">English (US)</option>
+          <option value="zh-TW">中文 (繁體)</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- 按钮 -->
+    <div class="btn-group">
+      <button class="btn danger" onclick="resetConfig()">
+        🔄 重置配置
+      </button>
+      <button class="btn" onclick="testConnection()">
+        🧪 测试连接
+      </button>
+      <button class="btn success" onclick="saveConfig()">
+        💾 保存并启动
+      </button>
+    </div>
+    
+    <!-- 状态消息 -->
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+
+  <script>
+    let selectedProvider = 'deepseek';
+    let config = {};
+    
+    // 选择提供商
+    function selectProvider(provider) {
+      selectedProvider = provider;
+      
+      // 更新UI
+      document.querySelectorAll('.provider-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      
+      document.querySelector(`[data-provider="${provider}"]`)?.classList.add('selected');
+      
+      // 更新默认值
+      const apiEndpointInput = document.getElementById('apiEndpoint');
+      const modelSelect = document.getElementById('model');
+      
+      switch(provider) {
+        case 'deepseek':
+          apiEndpointInput.value = 'https://api.deepseek.com/v1';
+          modelSelect.value = 'deepseek-chat';
+          break;
+        case 'openai':
+          apiEndpointInput.value = 'https://api.openai.com/v1';
+          modelSelect.value = 'gpt-4';
+          break;
+        case 'anthropic':
+          apiEndpointInput.value = 'https://api.anthropic.com/v1';
+          modelSelect.value = 'claude-3-opus-20240229';
+          break;
+        case 'local':
+          apiEndpointInput.value = 'http://localhost:11434/v1';
+          modelSelect.value = 'llama2';
+          break;
+      }
+      
+      console.log(`✅ 已选择提供商: ${provider}`);
+    }
+    
+    // 保存配置
+    function saveConfig() {
+      config = {
+        llmProvider: selectedProvider,
+        apiKey: document.getElementById('apiKey').value,
+        apiEndpoint: document.getElementById('apiEndpoint').value,
+        model: document.getElementById('model').value,
+        temperature: parseFloat(document.getElementById('temperature').value),
+        maxContextTokens: parseInt(document.getElementById('maxContextTokens').value),
+        language: document.getElementById('language').value,
+        enableVoice: document.getElementById('enableVoice').checked
+      };
+      
+      // 验证
+      if (!config.apiKey && selectedProvider !== 'local') {
+        showMessage('error', '❌ 请输入 API Key');
+        return;
+      }
+      
+      // 保存到 localStorage
+      localStorage.setItem('poseidon_config', JSON.stringify(config));
+      
+      showMessage('success', '✅ 配置已保存！正在跳转到主页面...');
+      
+      console.log('💾 配置已保存:', config);
+      
+      // 3秒后跳转
+      setTimeout(() => {
+        window.location.href = './poseidon-x-demo.html';
+      }, 2000);
+    }
+    
+    // 测试连接
+    async function testConnection() {
+      const apiKey = document.getElementById('apiKey').value;
+      const apiEndpoint = document.getElementById('apiEndpoint').value;
+      const model = document.getElementById('model').value;
+      
+      if (!apiKey) {
+        showMessage('error', '❌ 请先输入 API Key');
+        return;
+      }
+      
+      showMessage('success', '🧪 正在测试连接...');
+      
+      try {
+        const response = await fetch(apiEndpoint + '/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: 'user', content: '你好，请回复"测试成功"' }
+            ],
+            max_tokens: 50
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const reply = data.choices?.[0]?.message?.content || '无响应';
+          showMessage('success', `✅ 连接成功！模型响应: ${reply}`);
+        } else {
+          const error = await response.text();
+          showMessage('error', `❌ 连接失败: ${response.status} - ${error}`);
+        }
+      } catch (error) {
+        showMessage('error', `❌ 连接失败: ${error.message}`);
+      }
+    }
+    
+    // 重置配置
+    function resetConfig() {
+      if (confirm('确定要重置所有配置吗？')) {
+        localStorage.removeItem('poseidon_config');
+        location.reload();
+      }
+    }
+    
+    // 显示消息
+    function showMessage(type, message) {
+      const msgEl = document.getElementById('statusMessage');
+      msgEl.className = `status-message ${type}`;
+      msgEl.textContent = message;
+    }
+    
+    // 加载已保存的配置
+    function loadSavedConfig() {
+      const saved = localStorage.getItem('poseidon_config');
+      if (saved) {
+        try {
+          const config = JSON.parse(saved);
+          
+          // 恢复表单值
+          if (config.llmProvider) selectProvider(config.llmProvider);
+          if (config.apiKey) document.getElementById('apiKey').value = config.apiKey;
+          if (config.apiEndpoint) document.getElementById('apiEndpoint').value = config.apiEndpoint;
+          // 模型：仅当与当前提供商匹配时才恢复，否则用 selectProvider 已设的默认值
+          const provider = config.llmProvider || selectedProvider;
+          const validModels = { deepseek: ['deepseek-chat','deepseek-reasoner','deepseek-coder'], openai: ['gpt-4','gpt-3.5-turbo'], anthropic: ['claude-3-opus-20240229','claude-3-sonnet-20240229'], local: ['llama2'] };
+          if (config.model && validModels[provider] && validModels[provider].includes(config.model)) {
+            document.getElementById('model').value = config.model;
+          }
+          if (config.temperature) document.getElementById('temperature').value = config.temperature;
+          if (config.maxContextTokens) document.getElementById('maxContextTokens').value = config.maxContextTokens;
+          if (config.language) document.getElementById('language').value = config.language;
+          if (config.enableVoice) document.getElementById('enableVoice').checked = config.enableVoice;
+          
+          showMessage('success', '✅ 已加载保存的配置');
+        } catch (error) {
+          console.error('加载配置失败:', error);
+        }
+      }
+    }
+    
+    // 页面加载时初始化
+    window.addEventListener('load', () => {
+      selectProvider('deepseek');
+      loadSavedConfig();
+    });
+  </script>
+</body>
+</html>

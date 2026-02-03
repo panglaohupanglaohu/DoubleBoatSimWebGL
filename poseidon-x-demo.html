@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poseidon-X 智能船舶系统 | Software 3.0 Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #0b1525 0%, #1e3a5f 100%);
+      color: #e8f0ff;
+      overflow: hidden;
+    }
+    
+    #app {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(11, 21, 37, 0.95);
+      border-bottom: 2px solid #4fc3f7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    
+    #header h1 {
+      font-size: 24px;
+      color: #4fc3f7;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    #header .logo {
+      font-size: 32px;
+    }
+    
+    #header .status {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+    }
+    
+    #header .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    #header .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #81c784;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    #controls {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      background: rgba(11, 21, 37, 0.95);
+      border: 2px solid #4fc3f7;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 350px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    
+    #controls h2 {
+      color: #4fc3f7;
+      font-size: 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .demo-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #2a4a6a;
+    }
+    
+    .demo-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .demo-section h3 {
+      color: #81c784;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .demo-button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .demo-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
+    }
+    
+    .demo-button:active {
+      transform: translateY(0);
+    }
+    
+    .demo-button.danger {
+      background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    }
+    
+    .demo-button.success {
+      background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+    }
+    
+    #status-panel {
+      position: fixed;
+      bottom: 240px;
+      left: 20px;
+      background: rgba(11, 21, 37, 0.95);
+      border: 2px solid #81c784;
+      border-radius: 12px;
+      max-width: 350px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    #status-panel.collapsed {
+      left: -330px;
+    }
+    
+    #status-panel h2 {
+      color: #81c784;
+      font-size: 16px;
+      margin: 0;
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(129, 199, 132, 0.3);
+      user-select: none;
+    }
+    
+    #status-panel h2:hover {
+      background: rgba(129, 199, 132, 0.1);
+    }
+    
+    #status-panel .toggle-arrow {
+      transition: transform 0.3s ease;
+    }
+    
+    #status-panel.collapsed .toggle-arrow {
+      transform: rotate(180deg);
+    }
+    
+    #status-content {
+      padding: 16px;
+    }
+    
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(129, 199, 132, 0.2);
+    }
+    
+    .status-line:last-child {
+      border-bottom: none;
+    }
+    
+    .status-label {
+      color: #b0bec5;
+    }
+    
+    .status-value {
+      color: #81c784;
+      font-weight: bold;
+    }
+    
+    /* 文本展示菜单：可左右拖拉缩放宽度 */
+    #console-output {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 360px;
+      min-width: 280px;
+      max-width: calc(100vw - 480px);
+      height: 200px;
+      background: rgba(11, 21, 37, 0.95);
+      border: 2px solid #ffd54f;
+      border-radius: 12px;
+      padding: 16px;
+      padding-right: 20px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    /* 右侧拖拉缩放条 */
+    #console-output-resize {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 10px;
+      cursor: col-resize;
+      background: rgba(255, 213, 79, 0.15);
+      border-radius: 0 10px 10px 0;
+      z-index: 1;
+    }
+    #console-output-resize:hover {
+      background: rgba(255, 213, 79, 0.4);
+    }
+    
+    #console-output .log-line {
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    
+    #console-output .log-success {
+      color: #81c784;
+    }
+    
+    #console-output .log-error {
+      color: #ff8a80;
+    }
+    
+    #console-output .log-info {
+      color: #4fc3f7;
+    }
+    
+    #console-output .log-warning {
+      color: #ffd54f;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部标题栏 -->
+    <div id="header">
+      <h1>
+        <span class="logo">🌊</span>
+        Poseidon-X 智能船舶系统
+        <span style="font-size: 12px; color: #81c784; font-weight: normal; margin-left: 12px;">
+          Software 3.0 Edition
+        </span>
+      </h1>
+      <div class="status">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span>系统在线</span>
+        </div>
+        <div class="status-item">
+          <span>🤖 4 Agents Active</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 左侧控制面板 -->
+    <div id="controls">
+      <h2>🎮 演示控制台</h2>
+      
+      <div class="demo-section">
+        <h3>基础功能</h3>
+        <button class="demo-button success" onclick="initSystem()">
+          🚀 初始化 Poseidon-X 系统
+        </button>
+        <button class="demo-button" onclick="checkStatus()">
+          📊 查看系统状态
+        </button>
+      </div>
+      
+      <div class="demo-section">
+        <h3>任务执行</h3>
+        <button class="demo-button" onclick="queryCollisionRisk()">
+          🚢 查询碰撞风险
+        </button>
+        <button class="demo-button" onclick="checkEngine()">
+          ⚙️ 检查主机状态
+        </button>
+        <button class="demo-button" onclick="checkInventory()">
+          📦 检查库存
+        </button>
+        <button class="demo-button" onclick="assessSafety()">
+          🛡️ 安全态势评估
+        </button>
+      </div>
+      
+      <div class="demo-section">
+        <h3>高级功能</h3>
+        <button class="demo-button" onclick="parallelTasks()">
+          ⚡ 并行执行多任务
+        </button>
+        <button class="demo-button" onclick="showDigitalTwin()">
+          🗺️ 数字孪生演示
+        </button>
+      </div>
+      
+      <div class="demo-section">
+        <h3>应急场景</h3>
+        <button class="demo-button danger" onclick="simulateMOB()">
+          🚨 模拟人员落水 (MOB)
+        </button>
+        <button class="demo-button danger" onclick="simulateFire()">
+          🔥 模拟机舱火灾
+        </button>
+      </div>
+    </div>
+    
+    <!-- 左侧系统状态面板（可折叠） -->
+    <div id="status-panel" class="collapsed">
+      <h2 onclick="toggleStatusPanel()">
+        <span>📊 系统状态</span>
+        <span class="toggle-arrow">◀</span>
+      </h2>
+      <div id="status-content">
+        <div class="status-line">
+          <span class="status-label">系统状态</span>
+          <span class="status-value" id="system-status">未初始化</span>
+        </div>
+        <div class="status-line">
+          <span class="status-label">活跃 Agents</span>
+          <span class="status-value" id="active-agents">0</span>
+        </div>
+        <div class="status-line">
+          <span class="status-label">已执行任务</span>
+          <span class="status-value" id="tasks-executed">0</span>
+        </div>
+        <div class="status-line">
+          <span class="status-label">Context Tokens</span>
+          <span class="status-value" id="context-tokens">0</span>
+        </div>
+        <div class="status-line">
+          <span class="status-label">传感器</span>
+          <span class="status-value" id="sensors-count">0</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 底部控制台输出（右侧边条可左右拖拉缩放宽度） -->
+    <div id="console-output">
+      <div id="console-output-resize" title="左右拖拉缩放"></div>
+      <div class="log-line log-info">🌊 Poseidon-X Console Ready</div>
+      <div class="log-line log-warning">💡 点击上方按钮开始演示</div>
+    </div>
+  </div>
+
+  <!-- 使用完整的集成脚本，展示真实的 3D 船舶模型 -->
+  <script type="module" src="./src/poseidon-integrated-demo.js"></script>
+  
+  <script type="module">
+    // UI 按钮功能绑定
+
+    // 文本展示菜单：右侧边条左右拖拉缩放宽度
+    (function initConsoleResize() {
+      const el = document.getElementById('console-output');
+      const handle = document.getElementById('console-output-resize');
+      if (!el || !handle) return;
+      let startX = 0, startW = 0;
+      const minW = 280, maxW = () => Math.max(minW, window.innerWidth - 480);
+      const onMove = (e) => {
+        const w = startW + (e.clientX - startX);
+        el.style.width = Math.min(maxW(), Math.max(minW, w)) + 'px';
+      };
+      const onEnd = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onEnd);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+      handle.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        startX = e.clientX;
+        startW = el.getBoundingClientRect().width;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+      });
+    })();
+
+    // 全局变量（poseidonSystem 由 poseidon-integrated-demo.js 在初始化完成后赋给 window.poseidonSystem）
+    let scene, camera, renderer;
+
+    // 初始化 Three.js 场景
+    function initThreeJS() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b1525);
+      
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+      camera.position.set(15, 9, 22);
+      
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+      
+      // 将渲染器添加到页面，但置于底层
+      const canvas = renderer.domElement;
+      canvas.style.position = 'fixed';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.zIndex = '0';
+      document.getElementById('app').insertBefore(canvas, document.getElementById('app').firstChild);
+      
+      // 添加基础光照
+      const hemiLight = new THREE.HemisphereLight(0xaadfff, 0x0b1120, 0.9);
+      scene.add(hemiLight);
+      
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      dirLight.position.set(30, 40, 15);
+      scene.add(dirLight);
+      
+      // 添加网格地面
+      const gridHelper = new THREE.GridHelper(200, 40, 0x4fc3f7, 0x2a4a6a);
+      scene.add(gridHelper);
+      
+      // 渲染循环
+      function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+      }
+      animate();
+      
+      log('✅ Three.js 场景已初始化', 'success');
+    }
+
+    // 工具函数：日志输出
+    function log(message, type = 'info') {
+      const consoleEl = document.getElementById('console-output');
+      const line = document.createElement('div');
+      line.className = `log-line log-${type}`;
+      line.textContent = `${new Date().toLocaleTimeString()} | ${message}`;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+      
+      // 同时输出到浏览器控制台
+      console.log(message);
+    }
+
+    // 更新状态面板
+    function updateStatusPanel() {
+      if (!window.poseidonSystem) return;
+      
+      const status = window.poseidonSystem.getSystemStatus();
+      
+      document.getElementById('system-status').textContent = status.status;
+      document.getElementById('active-agents').textContent = status.layer2.agents.length;
+      document.getElementById('tasks-executed').textContent = 
+        status.layer2.orchestrator?.completedTasks || 0;
+      document.getElementById('context-tokens').textContent = 
+        status.layer1.contextWindow?.currentTokens || 0;
+      document.getElementById('sensors-count').textContent = 
+        status.shipContext.sensors || 0;
+    }
+
+    // 全局函数：初始化系统（系统会自动初始化，这个函数用于手动触发）
+    window.initSystem = async function() {
+      log('✅ Poseidon-X 系统已自动初始化！', 'success');
+      log('💡 系统已在后台加载，请稍候...', 'info');
+      
+      // 等待 poseidonIntegration 初始化完成
+      const checkInterval = setInterval(() => {
+        if (window.poseidonIntegration && window.poseidonSystem) {
+          clearInterval(checkInterval);
+          
+          log('✅ 系统完全就绪！', 'success');
+          log(`   - ${Object.keys(window.poseidonSystem.agents).length} 个智能体已激活`, 'success');
+          log(`   - Bridge Chat 已启用（右下角）`, 'success');
+          log(`   - Digital Twin Map 已启用`, 'success');
+          log(`   - 真实 3D 船舶模型已加载`, 'success');
+          
+          updateStatusPanel();
+        }
+      }, 500);
+    };
+
+    // 全局函数：查看状态
+    window.checkStatus = function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化，请先点击"初始化系统"', 'warning');
+        return;
+      }
+      
+      const status = window.poseidonSystem.getSystemStatus();
+      log('📊 系统状态:', 'info');
+      log(`   - Status: ${status.status}`, 'info');
+      log(`   - Agents: ${status.layer2.agents.join(', ')}`, 'info');
+      log(`   - Tasks executed: ${status.layer2.orchestrator?.completedTasks || 0}`, 'info');
+      
+      updateStatusPanel();
+    };
+
+    // 全局函数：查询碰撞风险
+    window.queryCollisionRisk = async function() {
+      const sys = window.poseidonSystem;
+      if (!sys) {
+        log('⚠️ 系统正在初始化中，请稍候...', 'warning');
+        return;
+      }
+      
+      try {
+        log('🚢 正在查询碰撞风险...', 'info');
+        
+        const result = await sys.executeTask("右舷那艘集装箱船有碰撞风险吗？");
+        
+        log('✅ Navigator Agent 响应:', 'success');
+        log(`   ${result.result.response || JSON.stringify(result.result, null, 2)}`, 'success');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ 查询失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：检查主机
+    window.checkEngine = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      try {
+        log('⚙️ 正在检查主机状态...', 'info');
+        
+        const result = await window.poseidonSystem.executeTask(
+          "主机排温正常吗？"
+        );
+        
+        log('✅ Engineer Agent 响应:', 'success');
+        log(`   ${result.result.response || JSON.stringify(result.result, null, 2)}`, 'success');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ 查询失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：检查库存
+    window.checkInventory = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      try {
+        log('📦 正在检查库存...', 'info');
+        
+        const result = await window.poseidonSystem.executeTask(
+          "淡水库存够用吗？"
+        );
+        
+        log('✅ Steward Agent 响应:', 'success');
+        log(`   ${result.result.response || JSON.stringify(result.result, null, 2)}`, 'success');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ 查询失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：安全态势评估
+    window.assessSafety = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      try {
+        log('🛡️ 正在评估安全态势...', 'info');
+        
+        const result = await window.poseidonSystem.executeTask(
+          "过去24小时的安全态势如何？"
+        );
+        
+        log('✅ Safety Agent 响应:', 'success');
+        log(`   ${result.result.response || JSON.stringify(result.result, null, 2)}`, 'success');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ 查询失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：并行任务
+    window.parallelTasks = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      try {
+        log('⚡ 正在并行执行 4 个任务...', 'info');
+        
+        const tasks = [
+          "检查主机状态",
+          "评估碰撞风险",
+          "检查库存",
+          "评估安全态势"
+        ];
+        
+        const result = await window.poseidonSystem.orchestrator.executeParallel(
+          tasks,
+          window.poseidonSystem.shipContext
+        );
+        
+        log(`✅ 并行任务完成: ${result.successful}/${result.total} 成功`, 'success');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ 并行任务失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：数字孪生演示
+    window.showDigitalTwin = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      if (!window.poseidonSystem.digitalTwinMap) {
+        log('⚠️ Digital Twin Map 未启用', 'warning');
+        return;
+      }
+      
+      try {
+        log('🗺️ 正在演示 Digital Twin Map...', 'info');
+        
+        // 添加 AIS 目标
+        window.poseidonSystem.digitalTwinMap.addAISTarget('413123456', {
+          name: 'EVER GIVEN',
+          relativeX: 50,
+          relativeZ: 30,
+          distance: 2.5
+        });
+        
+        log('✅ AIS 目标已添加: EVER GIVEN', 'success');
+        
+        // 高亮风险区域
+        window.poseidonSystem.digitalTwinMap.highlight(
+          { x: 50, z: 30 },
+          '注意：AIS 目标靠近'
+        );
+        
+        log('✅ 风险区域已高亮（3秒后自动消失）', 'success');
+        
+        // 绘制航线
+        const waypoints = [
+          { x: 0, z: 0 },
+          { x: 100, z: 50 },
+          { x: 200, z: 100 }
+        ];
+        
+        window.poseidonSystem.digitalTwinMap.drawRoute(waypoints);
+        
+        log('✅ 航线已绘制（3个航路点）', 'success');
+        
+      } catch (error) {
+        log(`❌ Digital Twin 演示失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：模拟人员落水
+    window.simulateMOB = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      try {
+        log('🚨 模拟人员落水场景...', 'warning');
+        
+        const result = await window.poseidonSystem.executeTask(
+          "人员落水！右舷侧发现人员落水！"
+        );
+        
+        log('🚨 Safety Agent 紧急响应:', 'error');
+        log(`   ${result.result.response}`, 'error');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ MOB 响应失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：模拟火灾
+    window.simulateFire = async function() {
+      if (!window.poseidonSystem) {
+        log('⚠️ 系统未初始化', 'warning');
+        return;
+      }
+      
+      try {
+        log('🔥 模拟机舱火灾场景...', 'warning');
+        
+        const result = await window.poseidonSystem.executeTask(
+          "机舱B区检测到火情和烟雾！"
+        );
+        
+        log('🔥 Safety Agent 紧急响应:', 'error');
+        log(`   ${result.result.response}`, 'error');
+        
+        updateStatusPanel();
+        
+      } catch (error) {
+        log(`❌ 火灾响应失败: ${error.message}`, 'error');
+      }
+    };
+
+    // 全局函数：切换状态面板
+    window.toggleStatusPanel = function() {
+      const panel = document.getElementById('status-panel');
+      if (panel) {
+        panel.classList.toggle('collapsed');
+      }
+    };
+
+    // 页面加载完成后的提示
+    window.addEventListener('load', () => {
+      log('🌊 Poseidon-X 完整集成版启动', 'info');
+      log('📱 正在加载真实的 3D 船舶模型（80MB）...', 'info');
+      log('⏳ 请等待 10-15 秒，系统会自动初始化', 'warning');
+      log('💡 初始化完成后，可以使用以下功能：', 'info');
+      log('   - 右上角 GUI 面板（AI 控制）', 'info');
+      log('   - 右下角 Bridge Chat（自然语言对话）', 'info');
+      log('   - 左下角状态面板（点击展开/收起）', 'info');
+      log('   - 或使用演示按钮', 'info');
+    });
+
+    // 窗口大小调整
+    window.addEventListener('resize', () => {
+      if (camera && renderer) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    });
+  </script>
+</body>
+</html>
