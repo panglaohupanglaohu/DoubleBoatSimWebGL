@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 船舶控制器
  * 封装船体的所有操作和状态管理
  */
@@ -53,6 +53,125 @@ export class ShipController {
       depthWrite: true,
       depthTest: true
     };
+
+    // 船体颜色标记方案（区域 -> 十六进制颜色）
+    this.hullColorScheme = {
+      bow: 0x2196f3,        // 船首 蓝
+      stern: 0xf44336,       // 船尾 红
+      midship: 0x4caf50,    // 船舯 绿
+      waterline: 0xffeb3b,   // 水线 黄
+      keel: 0x9c27b0,       // 龙骨 紫
+      propulsion: 0xff9800,  // 推进器 橙
+      lifesaving: 0x76ff03,  // 救生 荧光绿
+      fire: 0xff1744,        // 消防 荧光红
+      danger: 0xffff00,      // 危险 荧光黄
+      cargo: 0x4caf50,      // 装卸 绿
+      mooring: 0x2196f3,    // 系泊 蓝
+      boarding: 0xffeb3b,    // 登船 黄
+      inspection: 0xffffff,  // 检查 白
+      radar: 0xf44336,       // 雷达 红
+      gps: 0x4caf50,         // GPS 绿
+      communication: 0x2196f3, // 通信 蓝
+      camera: 0x212121,     // 摄像头 黑
+      default: 0xe0e0e0     // 未匹配区域
+    };
+  }
+
+  /**
+   * 颜色名称（中/英）转十六进制
+   * @param {string} name - 如 "blue" "蓝色" "荧光绿"
+   * @returns {number|undefined}
+   */
+  static colorNameToHex(name) {
+    const s = (name || '').trim().toLowerCase();
+    const map = {
+      blue: 0x2196f3, 蓝色: 0x2196f3, 深蓝: 0x1565c0, 'dark blue': 0x1565c0,
+      red: 0xf44336, 红色: 0xf44336, 荧光红: 0xff1744, 'fluorescent red': 0xff1744,
+      green: 0x4caf50, 绿色: 0x4caf50, 荧光绿: 0x76ff03, 'fluorescent green': 0x76ff03,
+      yellow: 0xffeb3b, 黄色: 0xffeb3b, 荧光黄: 0xffeb3b, 'fluorescent yellow': 0xffeb3b,
+      purple: 0x9c27b0, 紫色: 0x9c27b0,
+      orange: 0xff9800, 橙色: 0xff9800,
+      white: 0xffffff, 白色: 0xffffff,
+      brown: 0x795548, 棕色: 0x795548,
+      black: 0x212121, 黑色: 0x212121
+    };
+    if (map[s] !== undefined) return map[s];
+    const hex = parseInt(s, 16);
+    if (!isNaN(hex) && s.length <= 8) return hex;
+    return undefined;
+  }
+
+  /**
+   * 根据 mesh 名称推断区域 key
+   * @param {string} meshName
+   * @returns {string}
+   */
+  _getRegionFromMeshName(meshName) {
+    const n = (meshName || '').toLowerCase();
+    if (/\b(bow|首|船首)\b/.test(n)) return 'bow';
+    if (/\b(stern|尾|船尾)\b/.test(n)) return 'stern';
+    if (/\b(mid|中|舯|midship)\b/.test(n)) return 'midship';
+    if (/\b(water|line|水线)\b/.test(n)) return 'waterline';
+    if (/\b(keel|龙骨)\b/.test(n)) return 'keel';
+    if (/\b(prop|推进|桨|rudder)\b/.test(n)) return 'propulsion';
+    if (/\b(life|救生)\b/.test(n)) return 'lifesaving';
+    if (/\b(fire|消防)\b/.test(n)) return 'fire';
+    if (/\b(danger|危险)\b/.test(n)) return 'danger';
+    if (/\b(cargo|装卸)\b/.test(n)) return 'cargo';
+    if (/\b(moor|系泊)\b/.test(n)) return 'mooring';
+    if (/\b(board|登船)\b/.test(n)) return 'boarding';
+    if (/\b(inspect|检查)\b/.test(n)) return 'inspection';
+    if (/\b(radar)\b/.test(n)) return 'radar';
+    if (/\b(gps)\b/.test(n)) return 'gps';
+    if (/\b(comm|通信|antenna)\b/.test(n)) return 'communication';
+    if (/\b(camera|摄像)\b/.test(n)) return 'camera';
+    return 'default';
+  }
+
+  /**
+   * 设置某区域颜色并重新应用方案
+   * @param {string} regionKey - bow/stern/midship/waterline/keel/propulsion/...
+   * @param {number} hexColor
+   */
+  setHullRegionColor(regionKey, hexColor) {
+    const key = (regionKey || '').toLowerCase().trim();
+    if (this.hullColorScheme.hasOwnProperty(key)) this.hullColorScheme[key] = hexColor;
+    else this.hullColorScheme.default = hexColor;
+    this.applyHullColorScheme();
+  }
+
+  /**
+   * 设置整船颜色（所有船体 mesh 同一颜色）
+   * @param {number} hexColor
+   */
+  setHullColor(hexColor) {
+    const color = new THREE.Color(hexColor);
+    this.shipMeshes.forEach((mesh) => {
+      if (!mesh.material) return;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((m) => {
+        if (m && m.color) m.color.copy(color);
+      });
+    });
+  }
+
+  /**
+   * 按当前方案为船体 mesh 按名称匹配区域并上色
+   */
+  applyHullColorScheme() {
+    const scheme = this.hullColorScheme;
+    const setColor = (mesh, hex) => {
+      const color = new THREE.Color(hex);
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      (mats || []).forEach((m) => {
+        if (m && m.color) m.color.copy(color);
+      });
+    };
+    this.shipMeshes.forEach((mesh) => {
+      const region = this._getRegionFromMeshName(mesh.name);
+      const hex = scheme[region] !== undefined ? scheme[region] : scheme.default;
+      setColor(mesh, hex);
+    });
   }
 
   /**
@@ -698,49 +817,52 @@ export class ShipController {
               
               console.log(`🔷 AccommodationBlock 材质已克隆并设置为透明 | AccommodationBlock material cloned and set to transparent: ${child.name || 'unnamed'}`);
             } else {
-              // 其他 mesh：设置为蓝色玻璃材质
+              // 其他 mesh：保留原有材质或使用白模
               this.shipMeshes.push(child);
               
-              // 创建蓝色玻璃材质（MeshPhysicalMaterial，更真实的玻璃效果）
-              const blueGlassMaterial = new THREE.MeshPhysicalMaterial({
-                color: this.shipMaterialConfig.color, // 蓝色 0x4a90e2
-                transparent: this.shipMaterialConfig.transparent,
-                opacity: this.shipMaterialConfig.opacity, // 默认60%透明度
-                roughness: this.shipMaterialConfig.roughness, // 低粗糙度，更光滑
-                metalness: this.shipMaterialConfig.metalness,
-                side: this.shipMaterialConfig.side,
-                depthWrite: this.shipMaterialConfig.depthWrite,
-                depthTest: this.shipMaterialConfig.depthTest,
-                transmission: 0.9, // 透射率，增强玻璃效果
-                thickness: 0.5, // 玻璃厚度
-                ior: 1.5, // 折射率（玻璃约为1.5）
-                clearcoat: 1.0, // 清漆层
-                clearcoatRoughness: 0.1
-              });
-              
-              // 处理旧材质，确保正确释放资源
+              // 检查原材质是否存在
               const oldMaterial = child.material;
-              if (oldMaterial) {
-                if (Array.isArray(oldMaterial)) {
-                  oldMaterial.forEach(mat => {
-                    if (mat && mat.dispose) {
-                      mat.dispose();
-                    }
-                  });
-                } else if (oldMaterial.dispose) {
-                  oldMaterial.dispose();
+              
+              // 如果原材质不存在或是玻璃材质（有 transmission 属性），创建简单白模
+              const isGlassMaterial = oldMaterial && 
+                (oldMaterial.type === 'MeshPhysicalMaterial' || oldMaterial.transmission !== undefined);
+              
+              if (!oldMaterial || isGlassMaterial) {
+                // 创建简单的白模材质（MeshStandardMaterial，性能好，不易出错）
+                const whiteMaterial = new THREE.MeshStandardMaterial({
+                  color: 0xffffff, // 白色
+                  transparent: false,
+                  opacity: 1.0,
+                  roughness: 0.7,
+                  metalness: 0.3,
+                  side: THREE.DoubleSide,
+                  depthWrite: true,
+                  depthTest: true
+                });
+                
+                // 释放旧材质
+                if (oldMaterial) {
+                  if (Array.isArray(oldMaterial)) {
+                    oldMaterial.forEach(mat => {
+                      if (mat && mat.dispose) mat.dispose();
+                    });
+                  } else if (oldMaterial.dispose) {
+                    oldMaterial.dispose();
+                  }
                 }
+                
+                child.material = whiteMaterial;
+                child.material.needsUpdate = true;
+                
+                console.log(`⚪ 船体mesh已设置为白模材质 | Ship mesh set to white material: ${child.name || 'unnamed'}`);
+              } else {
+                // 保留原有材质
+                console.log(`✅ 船体mesh保留原有材质 | Ship mesh keeping original material: ${child.name || 'unnamed'}`, {
+                  type: oldMaterial.type
+                });
               }
               
-              child.material = blueGlassMaterial;
-              child.material.needsUpdate = true;
-              child.renderOrder = 0; // 正常渲染顺序
-              
-              console.log(`🔵 船体mesh已设置为蓝色玻璃材质 | Ship mesh set to blue glass material: ${child.name || 'unnamed'}`, {
-                color: `#${this.shipMaterialConfig.color.toString(16)}`,
-                opacity: this.shipMaterialConfig.opacity,
-                transmission: blueGlassMaterial.transmission
-              });
+              child.renderOrder = 0;
             }
         
         // 确保 mesh 可见

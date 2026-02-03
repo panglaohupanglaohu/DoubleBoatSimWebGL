@@ -112,11 +112,52 @@ A WebGL-based ship digital twin visualization platform featuring 3D visualizatio
 
 - [核心特性](#-核心特性--core-features)
 - [快速开始](#-快速开始--quick-start)
+- [Poseidon-X 智能体与 Bridge 大模型](#-poseidon-x-智能体与-bridge-大模型)
 - [功能详解](#-功能详解--features)
 - [技术架构](#-技术架构--architecture)
 - [开发指南](#-开发指南--development)
 - [参数配置](#-参数配置--configuration)
 - [常见问题](#-常见问题--faq)
+
+---
+
+## 🤖 Poseidon-X 智能体与 Bridge 大模型
+
+本节说明 Poseidon-X 的 Agent 如何构建、如何通过 MCP 集成、以及配置的 DeepSeek 大模型在 Bridge 中如何应答并调用 Agent。详细文档见 [README-POSEIDON-X.md](./DoubleBoatSimWebGL/README-POSEIDON-X.md) 与 [POSEIDON-X-ARCHITECTURE.md](./DoubleBoatSimWebGL/POSEIDON-X-ARCHITECTURE.md)。
+
+### Agent 如何构建
+
+- **基类**：所有 Agent 继承 `AgentBase`（`src/poseidon/layer2-agents/AgentBase.js`），具备：
+  - **Vibe**：自然语言角色定义（人格与职责）
+  - **Memory**：短期对话 + 长期知识（如 COLREGs）
+  - **Tool Use**：通过 `registerTool(name, fn, description)` 注册工具，通过 `useTool(name, params)` 调用
+  - **LLM 推理**：`think()` 内通过 `LLMClient` 调用配置的大模型（DeepSeek 等）
+- **四个专业 Agent**：
+  - **NavigatorAgent**：领航员，工具如 `calculateCPA`、`assessCollisionRisk`
+  - **EngineerAgent**：轮机长，工具如 `analyzeExhaustTemp`、设备健康
+  - **StewardAgent**：大管家，工具如 `checkInventory`、伙食/环境
+  - **SafetyAgent**：安全官，工具如 `analyzeVideoFrame`、应急响应
+- **编排**：`AgentOrchestrator` 根据任务描述将任务路由到最合适的 Agent，并支持并行执行。
+
+### 如何使用 MCP 将 Agent 集成在一起
+
+- **MCP（Model Context Protocol）** 用于把外部工具/数据源以统一协议暴露给大模型。当前实现等价于「本地 MCP 式」集成：
+  - **Tools ≈ MCP Tools**：每个 Agent 的 `registerTool` 可视为一组工具定义；未来可把这些工具通过 MCP Server 暴露，供任意 MCP 客户端（含 Bridge）调用。
+  - **集成方式**：
+    1. **当前**：Bridge Chat 用关键词路由（`_routeToAgents`）决定调用哪些 Agent；LLM 仅做自然语言应答，Agent 调用由 Bridge 内部逻辑触发。
+    2. **MCP 集成**：将各 Agent 的工具列表导出为 MCP 的 `tools` 列表，并实现 MCP Server（例如在 Node 或浏览器内）。Bridge 或其它客户端通过 MCP 协议发现并调用这些工具，由大模型根据对话决定调用哪个工具（Function Calling / Tool Use）。
+  - **推荐步骤**：用 MCP SDK 建一个 Poseidon MCP Server，把 `NavigatorAgent`、`EngineerAgent` 等的工具注册为 MCP tools；Bridge 端使用 MCP 客户端连接该 Server，即可由 DeepSeek 等模型在对话中直接选工具、调 Agent。
+
+### DeepSeek 在 Poseidon-X Bridge 中的应答与调用 Agent
+
+- **配置**：在 `poseidon-config.html` 中配置 DeepSeek API Key 与模型（如 `deepseek-chat`），保存到 `localStorage` 的 `poseidon_config`。Bridge Chat 与各 Agent 的 `LLMClient` 均从该配置读取。
+- **Bridge 内应答流程**：
+  1. 用户在 Bridge 输入一句话 → `BridgeChat.sendMessage(message)`。
+  2. **构建上下文**：`_buildContextWindow()` 生成当前船舶状态 + 最近对话；与系统 Vibe（含「4 个智能体」等说明）一起组成 `messages`。
+  3. **调用大模型**：`this.llmClient.chat(messages)` 请求 DeepSeek API（`/v1/chat/completions`），得到 `response.content` 即 Bridge 展示给用户的**自然语言答复**。
+  4. **路由到 Agent**：`_routeToAgents(userMessage)` 根据关键词（如「碰撞」「主机」「库存」「安全」）生成待调用的 Agent 列表 `agentCalls`。
+  5. **执行 Agent**：若有 `agentCalls`，Bridge 依次 `_invokeAgent(agentName, task)`，即调用已注册的 Agent 的 `execute(task, context)`；Agent 内部可再调用 LLM（DeepSeek）做推理并 `useTool(...)`，结果可通过事件或后续对话展示给用户。
+- **小结**：DeepSeek 在 Bridge 中**直接负责**自然语言应答；**间接参与** Agent 调用——Bridge 根据用户话术决定调用哪些 Agent，各 Agent 内部再用同一 DeepSeek 配置做推理与工具调用。未来若接入 MCP，可由 DeepSeek 通过 MCP 的 Tool Use 直接选择并调用 Agent 工具，实现更细粒度的「大模型驱动 Agent」集成。
 
 ---
 
