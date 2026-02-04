@@ -108,45 +108,45 @@ A WebGL-based ship digital twin visualization platform featuring 3D visualizatio
 
 ---
 
-## 📋 目录 | Table of Contents
+## � Documentation
+> **Note**: Detailed documentation has been moved to the `docs/` directory to keep the project root clean.
 
-- [核心特性](#-核心特性--core-features)
-- [快速开始](#-快速开始--quick-start)
-- [Poseidon-X 智能体与 Bridge 大模型](#-poseidon-x-智能体与-bridge-大模型)
-- [功能详解](#-功能详解--features)
-- [技术架构](#-技术架构--architecture)
-- [开发指南](#-开发指南--development)
-- [参数配置](#-参数配置--configuration)
-- [常见问题](#-常见问题--faq)
+- [**Architecture**](docs/POSEIDON-X-ARCHITECTURE.md)
+- [**Project Structure**](docs/POSEIDON-X-PROJECT-STRUCTURE.md)
+- [**Features Guide**](docs/FEATURES_GUIDE.md)
+- [**Development Guide**](docs/DEVELOPMENT_GUIDE.md)
+- [**API & Integration**](docs/POSEIDON-X-LLM集成指南.md)
+
+## 🤖 Poseidon-X Agent System
+This project now follows an **AI Native** structure.
+- **Context**: See `.cursorrules` for AI coding standards.
+- **Agents**: See `.agent/` for memory and workflows.
+- **Tests**: Run `npm test` to verify system integrity (Puppeteer-based).
+
+### Quick Links
+- [**Refactored Demo**](./index-refactored.html)
+- [**Stability Test**](./test-stability.html)
 
 ---
 
-## 🤖 Poseidon-X 智能体与 Bridge 大模型
+## 🚀 Quick Start
 
-本节说明 Poseidon-X 的 Agent 如何构建、如何通过 MCP 集成、以及配置的 DeepSeek 大模型在 Bridge 中如何应答并调用 Agent。详细文档见 [README-POSEIDON-X.md](./DoubleBoatSimWebGL/README-POSEIDON-X.md) 与 [POSEIDON-X-ARCHITECTURE.md](./DoubleBoatSimWebGL/POSEIDON-X-ARCHITECTURE.md)。
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-### Agent 如何构建
+### 2. Start Dev Server
+```bash
+npm start
+```
+(Opens `http://localhost:3000`)
 
-- **基类**：所有 Agent 继承 `AgentBase`（`src/poseidon/layer2-agents/AgentBase.js`），具备：
-  - **Vibe**：自然语言角色定义（人格与职责）
-  - **Memory**：短期对话 + 长期知识（如 COLREGs）
-  - **Tool Use**：通过 `registerTool(name, fn, description)` 注册工具，通过 `useTool(name, params)` 调用
-  - **LLM 推理**：`think()` 内通过 `LLMClient` 调用配置的大模型（DeepSeek 等）
-- **四个专业 Agent**：
-  - **NavigatorAgent**：领航员，工具如 `calculateCPA`、`assessCollisionRisk`
-  - **EngineerAgent**：轮机长，工具如 `analyzeExhaustTemp`、设备健康
-  - **StewardAgent**：大管家，工具如 `checkInventory`、伙食/环境
-  - **SafetyAgent**：安全官，工具如 `analyzeVideoFrame`、应急响应
-- **编排**：`AgentOrchestrator` 根据任务描述将任务路由到最合适的 Agent，并支持并行执行。
-
-### 如何使用 MCP 将 Agent 集成在一起
-
-- **MCP（Model Context Protocol）** 用于把外部工具/数据源以统一协议暴露给大模型。当前实现等价于「本地 MCP 式」集成：
-  - **Tools ≈ MCP Tools**：每个 Agent 的 `registerTool` 可视为一组工具定义；未来可把这些工具通过 MCP Server 暴露，供任意 MCP 客户端（含 Bridge）调用。
-  - **集成方式**：
-    1. **当前**：Bridge Chat 用关键词路由（`_routeToAgents`）决定调用哪些 Agent；LLM 仅做自然语言应答，Agent 调用由 Bridge 内部逻辑触发。
-    2. **MCP 集成**：将各 Agent 的工具列表导出为 MCP 的 `tools` 列表，并实现 MCP Server（例如在 Node 或浏览器内）。Bridge 或其它客户端通过 MCP 协议发现并调用这些工具，由大模型根据对话决定调用哪个工具（Function Calling / Tool Use）。
-  - **推荐步骤**：用 MCP SDK 建一个 Poseidon MCP Server，把 `NavigatorAgent`、`EngineerAgent` 等的工具注册为 MCP tools；Bridge 端使用 MCP 客户端连接该 Server，即可由 DeepSeek 等模型在对话中直接选工具、调 Agent。
+### 3. Run Automated Tests
+```bash
+npm test
+```
+(Runs headless browser verification)
 
 ### DeepSeek 在 Poseidon-X Bridge 中的应答与调用 Agent
 

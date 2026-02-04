@@ -5,10 +5,13 @@
   "private": true,
   "scripts": {
     "start": "serve .",
-    "start:8000": "serve . -l 8000"
+    "start:8000": "serve . -l 8000",
+    "test": "node scripts/test-runner.js"
   },
   "devDependencies": {
-    "serve": "^14.2.0"
+    "puppeteer": "^24.36.1",
+    "serve": "^14.2.0",
+    "serve-handler": "^6.1.6"
   },
   "dependencies": {
     "cannon-es": "^0.20.0",
@@ -16,12 +19,3 @@
     "three": "^0.182.0"
   }
 }
-
-
-
-
-
-
-
-
-
