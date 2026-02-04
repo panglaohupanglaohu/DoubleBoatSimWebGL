@@ -124,7 +124,8 @@ This project now follows an **AI Native** structure.
 - **Tests**: Run `npm test` to verify system integrity (Puppeteer-based).
 
 ### Quick Links
-- [**Refactored Demo**](./index-refactored.html)
+- [**🤖 Poseidon-X AI Demo (Core)**](./poseidon-x-demo.html)
+- [**Refactored Boat Demo**](./index-refactored.html)
 - [**Stability Test**](./test-stability.html)
 
 ---
@@ -146,7 +147,7 @@ npm start
 ```bash
 npm test
 ```
-(Runs headless browser verification)
+(Runs verification for both Boat Demo and AI Agents)
 
 ### DeepSeek 在 Poseidon-X Bridge 中的应答与调用 Agent
 
