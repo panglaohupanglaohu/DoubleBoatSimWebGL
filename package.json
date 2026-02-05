@@ -1,6 +1,7 @@
 {
   "name": "double-boat-buoyancy-demo",
   "version": "1.0.0",
+  "type": "module",
   "description": "Three.js + Cannon.js multi-point buoyancy demo with GLB boat model.",
   "private": true,
   "scripts": {

@@ -42,7 +42,7 @@ export class NavigatorAgent extends AgentBase {
 你擅长使用专业术语（CPA, TCPA, COLREGs, ETA 等），但会在必要时用通俗语言解释。`,
       deploymentLocation: 'edge' // 部署在船端，实时性要求高
     });
-    
+
     // 领航员专属状态
     this.navigationState = {
       currentRoute: null, // 当前航线
@@ -51,16 +51,16 @@ export class NavigatorAgent extends AgentBase {
       collisionRisks: [], // 碰撞风险列表
       optimizationMode: 'balanced' // 'safe' | 'balanced' | 'efficient'
     };
-    
+
     // 注册工具
     this._registerTools();
-    
+
     // 加载 COLREGs 规则到长期记忆
     this._loadCOLREGsRules();
-    
+
     console.log('⚓ Navigator Agent ready');
   }
-  
+
   /**
    * 注册工具
    * @private
@@ -69,20 +69,20 @@ export class NavigatorAgent extends AgentBase {
     // 工具 1: 计算 CPA/TCPA（最近会遇距离/时间）
     this.registerTool('calculateCPA', async (params) => {
       const { ownShip, targetShip } = params;
-      
+
       // CPA 计算（简化版）
       const relativeVelocity = {
         x: targetShip.velocity.x - ownShip.velocity.x,
         z: targetShip.velocity.z - ownShip.velocity.z
       };
-      
+
       const relativePosition = {
         x: targetShip.position.x - ownShip.position.x,
         z: targetShip.position.z - ownShip.position.z
       };
-      
+
       const speed = Math.sqrt(relativeVelocity.x ** 2 + relativeVelocity.z ** 2);
-      
+
       if (speed < 0.01) {
         // 相对静止
         return {
@@ -90,11 +90,11 @@ export class NavigatorAgent extends AgentBase {
           tcpa: Infinity
         };
       }
-      
+
       // TCPA: 到达最近点的时间
-      const tcpa = -(relativePosition.x * relativeVelocity.x + relativePosition.z * relativeVelocity.z) / 
-                    (relativeVelocity.x ** 2 + relativeVelocity.z ** 2);
-      
+      const tcpa = -(relativePosition.x * relativeVelocity.x + relativePosition.z * relativeVelocity.z) /
+        (relativeVelocity.x ** 2 + relativeVelocity.z ** 2);
+
       // CPA: 最近会遇距离
       let cpa;
       if (tcpa < 0) {
@@ -105,18 +105,18 @@ export class NavigatorAgent extends AgentBase {
         const cpaZ = relativePosition.z + relativeVelocity.z * tcpa;
         cpa = Math.sqrt(cpaX ** 2 + cpaZ ** 2);
       }
-      
+
       return { cpa, tcpa };
     }, 'Calculate CPA/TCPA for collision avoidance');
-    
+
     // 工具 2: 评估碰撞风险
     this.registerTool('assessCollisionRisk', async (params) => {
       const { cpa, tcpa } = params;
-      
+
       // 风险等级判断（基于 IMO 标准）
       let riskLevel = 'none';
       let action = 'maintain';
-      
+
       if (cpa < 0.5) {
         riskLevel = 'critical';
         action = 'immediate_action';
@@ -130,19 +130,19 @@ export class NavigatorAgent extends AgentBase {
         riskLevel = 'low';
         action = 'maintain';
       }
-      
+
       return { riskLevel, action };
     }, 'Assess collision risk level');
-    
+
     // 工具 3: 生成避碰建议
     this.registerTool('generateAvoidanceManeuver', async (params) => {
       const { ownShip, targetShip, riskLevel } = params;
-      
+
       // 根据 COLREGs 规则生成建议
       // （实际应该用强化学习模型，这里简化）
-      
+
       const suggestions = [];
-      
+
       if (riskLevel === 'critical' || riskLevel === 'high') {
         // 右舷目标：向右转
         if (targetShip.bearing > 0 && targetShip.bearing < 180) {
@@ -160,17 +160,17 @@ export class NavigatorAgent extends AgentBase {
           });
         }
       }
-      
+
       return suggestions;
     }, 'Generate collision avoidance maneuver suggestions');
-    
+
     // 工具 4: 优化航线（燃油经济性）
     this.registerTool('optimizeRoute', async (params) => {
       const { waypoints, weatherData } = params;
-      
+
       // 路径优化（考虑风浪流）
       // 实际应该使用图搜索算法 + 能耗模型
-      
+
       const optimizedWaypoints = waypoints.map((wp, index) => {
         // 简化：稍微偏离原航线以避开恶劣海况
         return {
@@ -179,7 +179,7 @@ export class NavigatorAgent extends AgentBase {
           fuelSavingEstimate: Math.random() * 5 // 0-5% 燃油节省
         };
       });
-      
+
       return {
         waypoints: optimizedWaypoints,
         totalFuelSaving: optimizedWaypoints.reduce((sum, wp) => sum + (wp.fuelSavingEstimate || 0), 0),
@@ -187,7 +187,7 @@ export class NavigatorAgent extends AgentBase {
       };
     }, 'Optimize route for fuel efficiency');
   }
-  
+
   /**
    * 加载 COLREGs 规则
    * @private
@@ -202,14 +202,14 @@ export class NavigatorAgent extends AgentBase {
       'Rule 17': '直航船行动：直航船应保持航向和航速',
       'Rule 19': '能见度不良：所有船舶应以安全航速行驶'
     };
-    
+
     Object.entries(rules).forEach(([rule, description]) => {
       this.learn(`COLREGs.${rule}`, description);
     });
-    
+
     console.log('📚 COLREGs rules loaded into long-term memory');
   }
-  
+
   /**
    * 执行任务（重写基类方法）
    * @param {string} task - 任务描述
@@ -219,15 +219,15 @@ export class NavigatorAgent extends AgentBase {
     this.status = 'executing';
     this.currentTask = task;
     this.metrics.tasksExecuted++;
-    
+
     const startTime = Date.now();
-    
+
     try {
       console.log(`⚓ Navigator Agent executing: ${task}`);
-      
+
       // 根据任务类型分发
       let result;
-      
+
       if (task.includes('碰撞') || task.includes('风险') || task.includes('CPA')) {
         result = await this._handleCollisionQuery(task, context);
       } else if (task.includes('航线') || task.includes('路径') || task.includes('优化')) {
@@ -242,30 +242,30 @@ export class NavigatorAgent extends AgentBase {
           response: thought.content
         };
       }
-      
+
       // 更新性能指标
       const executionTime = Date.now() - startTime;
-      this.metrics.averageResponseTime = 
-        (this.metrics.averageResponseTime * (this.metrics.tasksExecuted - 1) + executionTime) / 
+      this.metrics.averageResponseTime =
+        (this.metrics.averageResponseTime * (this.metrics.tasksExecuted - 1) + executionTime) /
         this.metrics.tasksExecuted;
-      
+
       this.status = 'idle';
       this.currentTask = null;
-      
+
       // 触发事件
       this.emit('task:completed', { task, result, executionTime });
-      
+
       return result;
-      
+
     } catch (error) {
       this.status = 'error';
       this.metrics.successRate = (this.metrics.tasksExecuted - 1) / this.metrics.tasksExecuted;
-      
+
       console.error(`❌ Navigator Agent execution failed:`, error);
       throw error;
     }
   }
-  
+
   /**
    * 处理碰撞查询
    * @private
@@ -281,25 +281,25 @@ export class NavigatorAgent extends AgentBase {
       length: 400,
       beam: 59
     };
-    
+
     const ownShip = {
       position: { x: 0, z: 0 },
       velocity: { x: 5, z: 0 },
       heading: 90
     };
-    
+
     // 计算 CPA/TCPA
     const { cpa, tcpa } = await this.useTool('calculateCPA', {
       ownShip,
       targetShip: mockAISTarget
     });
-    
+
     // 评估风险
     const { riskLevel, action } = await this.useTool('assessCollisionRisk', {
       cpa,
       tcpa
     });
-    
+
     // 构建响应
     const response = {
       type: 'collision_assessment',
@@ -310,7 +310,7 @@ export class NavigatorAgent extends AgentBase {
       action,
       recommendation: ''
     };
-    
+
     // 生成建议
     if (riskLevel === 'low' || riskLevel === 'none') {
       response.recommendation = `无碰撞风险。CPA 为 ${cpa.toFixed(1)} 海里。建议在其船尾通过以节省燃油。`;
@@ -320,13 +320,13 @@ export class NavigatorAgent extends AgentBase {
         targetShip: mockAISTarget,
         riskLevel
       });
-      
+
       response.recommendation = `${riskLevel} 风险！建议：${maneuvers[0]?.action}。理由：${maneuvers[0]?.reason}`;
     }
-    
+
     return response;
   }
-  
+
   /**
    * 处理航线优化
    * @private
@@ -339,13 +339,13 @@ export class NavigatorAgent extends AgentBase {
       { x: 200, z: 100, name: 'WP2' },
       { x: 300, z: 150, name: '终点' }
     ];
-    
+
     // 优化航线
     const optimized = await this.useTool('optimizeRoute', {
       waypoints,
       weatherData: context.environment || {}
     });
-    
+
     return {
       type: 'route_optimization',
       originalWaypoints: waypoints,
@@ -355,7 +355,7 @@ export class NavigatorAgent extends AgentBase {
       recommendation: `航线已优化。预计节省燃油 ${optimized.totalFuelSaving.toFixed(1)}%，ETA 变化 ${optimized.etaChange}。`
     };
   }
-  
+
   /**
    * 处理航向/航速调整
    * @private
@@ -363,14 +363,14 @@ export class NavigatorAgent extends AgentBase {
   async _handleCourseSpeedAdjustment(task, context) {
     // 使用 LLM 分析任务
     const thought = await this.think(task, context);
-    
+
     return {
       type: 'course_speed_adjustment',
       response: thought.content,
       recommendation: '请通过舰桥控制台执行航向/航速调整。'
     };
   }
-  
+
   /**
    * 更新 AIS 目标
    * @param {string} mmsi - 目标 MMSI
@@ -381,18 +381,18 @@ export class NavigatorAgent extends AgentBase {
       ...data,
       lastUpdate: Date.now()
     });
-    
+
     // 自动评估碰撞风险
     this._assessAllCollisionRisks();
   }
-  
+
   /**
    * 评估所有目标的碰撞风险
    * @private
    */
   async _assessAllCollisionRisks() {
     this.navigationState.collisionRisks = [];
-    
+
     for (const [mmsi, target] of this.navigationState.aisTargets.entries()) {
       // 模拟风险计算（实际应该调用真实算法）
       const risk = {
@@ -402,17 +402,17 @@ export class NavigatorAgent extends AgentBase {
         tcpa: Math.random() * 30,
         riskLevel: 'low'
       };
-      
+
       if (risk.cpa < 1.0) {
         risk.riskLevel = 'high';
         this.navigationState.collisionRisks.push(risk);
-        
+
         // 触发警报
         this.emit('collision:risk', risk);
       }
     }
   }
-  
+
   /**
    * 设置优化模式
    * @param {string} mode - 'safe' | 'balanced' | 'efficient'

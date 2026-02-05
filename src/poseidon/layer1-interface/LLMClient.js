@@ -19,14 +19,14 @@ export class LLMClient {
       maxTokens: config.maxTokens || 4096,
       ...config
     };
-    
+
     console.log('🧠 LLM Client initialized:', {
       provider: this.config.provider,
       model: this.config.model,
       endpoint: this.config.apiEndpoint
     });
   }
-  
+
   /**
    * 获取默认 API 端点
    * @private
@@ -38,10 +38,10 @@ export class LLMClient {
       'anthropic': 'https://api.anthropic.com/v1',
       'local': 'http://localhost:11434/v1'
     };
-    
+
     return endpoints[provider] || endpoints.deepseek;
   }
-  
+
   /**
    * 获取默认模型
    * @private
@@ -53,10 +53,10 @@ export class LLMClient {
       'anthropic': 'claude-3-opus-20240229',
       'local': 'llama2'
     };
-    
+
     return models[provider] || models.deepseek;
   }
-  
+
   /**
    * 调用 LLM（OpenAI 兼容格式）
    * @param {Array} messages - 消息数组
@@ -67,7 +67,7 @@ export class LLMClient {
     if (!this.config.apiKey && this.config.provider !== 'local') {
       throw new Error('API Key 未配置。请访问 poseidon-config.html 配置。');
     }
-    
+
     // 按厂商规范化 model，避免 "Model Not Exist"
     let model = options.model || this.config.model;
     const endpoint = (this.config.apiEndpoint || '').toLowerCase();
@@ -79,19 +79,19 @@ export class LLMClient {
         console.warn('🧠 DeepSeek 使用有效模型名: deepseek-chat（原 model 不适用于当前 API）');
       }
     }
-    
+
     const requestBody = {
       model: model,
       messages: messages,
       temperature: options.temperature || this.config.temperature,
       max_tokens: options.maxTokens || this.config.maxTokens
     };
-    
+
     // Anthropic API 格式不同
     if (this.config.provider === 'anthropic') {
       return this._callAnthropic(messages, options);
     }
-    
+
     // OpenAI 兼容格式（DeepSeek, OpenAI, Local）
     try {
       const response = await fetch(this.config.apiEndpoint + '/chat/completions', {
@@ -102,14 +102,14 @@ export class LLMClient {
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API 调用失败 (${response.status}): ${errorText}`);
       }
-      
+
       const data = await response.json();
-      
+
       return {
         content: data.choices?.[0]?.message?.content || '',
         role: 'assistant',
@@ -117,13 +117,13 @@ export class LLMClient {
         usage: data.usage,
         finish_reason: data.choices?.[0]?.finish_reason
       };
-      
+
     } catch (error) {
       console.error('❌ LLM API 调用失败:', error);
       throw error;
     }
   }
-  
+
   /**
    * 调用 Anthropic API
    * @private
@@ -136,7 +136,7 @@ export class LLMClient {
       temperature: options.temperature || this.config.temperature,
       max_tokens: options.maxTokens || this.config.maxTokens
     };
-    
+
     try {
       const response = await fetch(this.config.apiEndpoint + '/messages', {
         method: 'POST',
@@ -147,14 +147,14 @@ export class LLMClient {
         },
         body: JSON.stringify(requestBody)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Anthropic API 调用失败 (${response.status}): ${errorText}`);
       }
-      
+
       const data = await response.json();
-      
+
       return {
         content: data.content?.[0]?.text || '',
         role: 'assistant',
@@ -162,13 +162,13 @@ export class LLMClient {
         usage: data.usage,
         stop_reason: data.stop_reason
       };
-      
+
     } catch (error) {
       console.error('❌ Anthropic API 调用失败:', error);
       throw error;
     }
   }
-  
+
   /**
    * 测试连接
    */
@@ -176,7 +176,7 @@ export class LLMClient {
     const messages = [
       { role: 'user', content: '你好，请回复"测试成功"' }
     ];
-    
+
     try {
       const response = await this.chat(messages, { maxTokens: 50 });
       console.log('✅ LLM 连接测试成功:', response.content);
@@ -186,13 +186,14 @@ export class LLMClient {
       return { success: false, error: error.message };
     }
   }
-  
+
   /**
    * 从 localStorage 加载配置
    */
   static loadFromStorage() {
+    if (typeof localStorage === 'undefined') return null;
     const saved = localStorage.getItem('poseidon_config');
-    
+
     if (saved) {
       try {
         const config = JSON.parse(saved);
@@ -208,7 +209,7 @@ export class LLMClient {
         console.error('加载配置失败:', error);
       }
     }
-    
+
     return null;
   }
 }
