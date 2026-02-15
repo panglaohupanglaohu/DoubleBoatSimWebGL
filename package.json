@@ -1,22 +1,17 @@
 {
-  "name": "double-boat-buoyancy-demo",
+  "name": "doubleboat-ai-native",
   "version": "1.0.0",
   "type": "module",
-  "description": "Three.js + Cannon.js multi-point buoyancy demo with GLB boat model.",
-  "private": true,
+  "description": "AI Native 架构的双船模拟后端服务",
+  "main": "server/index.js",
   "scripts": {
-    "start": "serve .",
-    "start:8000": "serve . -l 8000",
-    "test": "node scripts/test-runner.js"
-  },
-  "devDependencies": {
-    "puppeteer": "^24.36.1",
-    "serve": "^14.2.0",
-    "serve-handler": "^6.1.6"
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
   },
   "dependencies": {
-    "cannon-es": "^0.20.0",
-    "lil-gui": "^0.21.0",
-    "three": "^0.182.0"
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "body-parser": "^1.20.2"
   }
 }
