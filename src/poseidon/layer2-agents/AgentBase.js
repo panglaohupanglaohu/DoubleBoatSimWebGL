@@ -27,10 +27,10 @@ export class AgentBase extends EventEmitter {
 
     // LLM 配置
     this.llmConfig = {
-      provider: savedConfig?.llmProvider || config.llmProvider || 'deepseek',
+      provider: savedConfig?.llmProvider || config.llmProvider || 'minimax',
       apiKey: savedConfig?.apiKey || config.apiKey || '',
-      apiEndpoint: savedConfig?.apiEndpoint || config.apiEndpoint,
-      model: savedConfig?.model || config.model || 'deepseek-chat',
+      apiEndpoint: savedConfig?.apiEndpoint || config.apiEndpoint || 'https://api.minimax.chat/v1',
+      model: savedConfig?.model || config.model || 'MiniMax-M2.5',
       temperature: config.temperature || 0.7,
       maxTokens: config.maxTokens || 4096
     };

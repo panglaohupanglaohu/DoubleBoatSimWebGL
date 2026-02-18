@@ -106,6 +106,25 @@ function stabilizeShip() {
 
 // 初始化
 async function init() {
+  // 【关键】立即 patch THREE 核心，防止首次渲染报错
+  (function patchThreeCore() {
+    const orig = THREE.WebGLRenderer.prototype.setProgram;
+    THREE.WebGLRenderer.prototype.setProgram = function(program, material) {
+      try {
+        if (material && material.uniforms) {
+          for (const key in material.uniforms) {
+            const u = material.uniforms[key];
+            if (u === undefined || u === null) {
+              material.uniforms[key] = { value: 0 };
+            }
+          }
+        }
+      } catch (e) {}
+      return orig.call(this, program, material);
+    };
+    console.log('🔧 THREE.js core patched');
+  })();
+  
   // 确保 DOM 已加载
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -133,6 +152,32 @@ async function init() {
   
   // 应用 Three.js patch
   patchThreeJS();
+  
+  // 直接 patch Three.js 核心渲染函数
+  if (THREE.WebGLRenderer && THREE.WebGLRenderer.prototype.render) {
+    const originalRender = THREE.WebGLRenderer.prototype.render;
+    THREE.WebGLRenderer.prototype.render = function(scene, camera, ...args) {
+      try {
+        // 遍历所有材质，修复 uniforms
+        scene.traverse((obj) => {
+          if (obj.material) {
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            mats.forEach((mat) => {
+              if (mat && mat.uniforms) {
+                for (const key in mat.uniforms) {
+                  const u = mat.uniforms[key];
+                  if (u === undefined || u === null) {
+                    mat.uniforms[key] = { value: 0 };
+                  }
+                }
+              }
+            });
+          }
+        });
+      } catch (e) {}
+      return originalRender.call(this, scene, camera, ...args);
+    };
+  }
   
   // 创建渲染器（使用与 demo-refactored.js 相同的配置）
   try {
@@ -266,7 +311,7 @@ async function init() {
     desiredSize: config.boatSize,
     platformHeight: 45,
     catamaran: { enabled: true },
-    glbPath: '/public/boat 1.glb'
+    glbPath: '/public/GLB_20251223141542.glb'
   });
   
   window.shipController = shipController;
@@ -433,6 +478,45 @@ function setupGUI() {
         shipController.reset();
         shipController.placeOnWater(clock.elapsedTime);
       }
+    },
+    // 应急场景
+    simulate_fire: () => {
+      if (poseidonSystem) {
+        poseidonSystem.executeTask("机舱B区检测到火情和烟雾！")
+          .then(r => console.log('🔥 Safety Agent:', r));
+      }
+    },
+    simulate_mob: () => {
+      if (poseidonSystem) {
+        poseidonSystem.executeTask("人员落水！右舷侧发现人员落水！")
+          .then(r => console.log('🚨 Safety Agent:', r));
+      }
+    },
+    // 查询功能
+    check_inventory: () => {
+      if (poseidonSystem) {
+        poseidonSystem.executeTask("淡水库存够用吗？")
+          .then(r => console.log('📦 Steward:', r));
+      }
+    },
+    check_safety: () => {
+      if (poseidonSystem) {
+        poseidonSystem.executeTask("过去24小时的安全态势如何？")
+          .then(r => console.log('🛡️ Safety:', r));
+      }
+    },
+    parallel_tasks: () => {
+      if (poseidonSystem && poseidonSystem.orchestrator) {
+        const tasks = ["检查主机状态", "评估碰撞风险", "检查库存", "评估安全态势"];
+        poseidonSystem.orchestrator.executeParallel(tasks, poseidonSystem.shipContext)
+          .then(r => console.log('⚡ Parallel:', r));
+      }
+    },
+    digital_twin: () => {
+      if (poseidonSystem && poseidonSystem.digitalTwinMap) {
+        poseidonSystem.digitalTwinMap.addAISTarget('TEST001', { name: 'TEST SHIP', relativeX: 50, relativeZ: 30, distance: 2.5 });
+        console.log('🗺️ Digital Twin: AIS target added');
+      }
     }
   };
   
@@ -556,6 +640,41 @@ function setupGUI() {
     weatherSystem.setRain(v);
     const ctrls = window.__poseidonGUI?.weatherControllers;
     if (ctrls?.rainIntensity && typeof ctrls.rainIntensity.updateDisplay === 'function') ctrls.rainIntensity.updateDisplay();
+    pushEnvironmentToBridge();
+    return true;
+  };
+  
+  window.poseidonSetTemperature = function (value) {
+    if (!weatherSystem) return false;
+    const v = Math.max(-20, Math.min(30, Number(value)));
+    if (isNaN(v)) return false;
+    weatherSystem.weather.temperature = v;
+    weatherSystem.setTemperature(v);
+    const ctrls = window.__poseidonGUI?.weatherControllers;
+    if (ctrls?.temperature && typeof ctrls.temperature.updateDisplay === 'function') ctrls.temperature.updateDisplay();
+    pushEnvironmentToBridge();
+    return true;
+  };
+  
+  window.poseidonSetSnowIntensity = function (value) {
+    if (!weatherSystem) return false;
+    const v = Math.max(0, Math.min(100, Number(value)));
+    if (isNaN(v)) return false;
+    weatherSystem.weather.snowIntensity = v;
+    weatherSystem.setSnow(v);
+    pushEnvironmentToBridge();
+    return true;
+  };
+  
+  window.poseidonSetWeatherPreset = function (preset) {
+    if (!weatherSystem) return false;
+    const validPresets = ['calm', 'moderate', 'storm', 'typhoon', 'snow'];
+    if (!validPresets.includes(preset)) return false;
+    weatherSystem.setPreset(preset);
+    const ctrls = window.__poseidonGUI?.weatherControllers;
+    if (ctrls?.windSpeed) ctrls.windSpeed.updateDisplay();
+    if (ctrls?.windDirection) ctrls.windDirection.updateDisplay();
+    if (ctrls?.rainIntensity) ctrls.rainIntensity.updateDisplay();
     pushEnvironmentToBridge();
     return true;
   };
@@ -770,6 +889,32 @@ function animate() {
   // 更新船体
   if (shipController) {
     shipController.update(deltaTime);
+  }
+  
+  // 修复未定义的 uniforms（防止 Three.js 报错）
+  if (scene) {
+    try {
+      scene.traverse((obj) => {
+        if (obj.material) {
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach((mat) => {
+            if (mat && mat.uniforms && mat.type === 'ShaderMaterial') {
+              const keys = Object.keys(mat.uniforms);
+              for (const key of keys) {
+                const u = mat.uniforms[key];
+                if (u === undefined || u === null) {
+                  mat.uniforms[key] = { value: 0 };
+                } else if (!u.hasOwnProperty('value')) {
+                  mat.uniforms[key] = { value: u };
+                }
+              }
+            }
+          });
+        }
+      });
+    } catch (e) {
+      // 忽略修复错误
+    }
   }
   
   // 更新水面

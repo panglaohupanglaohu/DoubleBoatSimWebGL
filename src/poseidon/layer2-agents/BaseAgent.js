@@ -21,8 +21,8 @@ export class BaseAgent extends EventEmitter {
       name: config.name || 'UnnamedAgent',
       role: config.role || 'general',
       vibe: config.vibe || '一个通用的智能助手',
-      llmProvider: config.llmProvider || 'openai',
-      model: config.model || 'gpt-4',
+      llmProvider: config.llmProvider || 'minimax',
+      model: config.model || 'MiniMax-M2.5',
       temperature: config.temperature || 0.7,
       maxTokens: config.maxTokens || 4096,
       tools: config.tools || [], // 可用工具列表

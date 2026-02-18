@@ -1,0 +1,4 @@
+// 首页 - 重定向到 index-refactored.html
+app.get('/', (req, res) => {
+  res.sendFile(join(dirname(fileURLToPath(import.meta.url)), '..', 'index-refactored.html'));
+});

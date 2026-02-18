@@ -293,6 +293,11 @@
             <div class="name">Anthropic</div>
             <div class="desc">Claude</div>
           </div>
+          <div class="provider-card" data-provider="minimax" onclick="selectProvider('minimax')">
+            <div class="icon">🌐</div>
+            <div class="name">MiniMax</div>
+            <div class="desc">国产大模型</div>
+          </div>
           <div class="provider-card" data-provider="local" onclick="selectProvider('local')">
             <div class="icon">💻</div>
             <div class="name">Local</div>
@@ -311,6 +316,7 @@
         <div class="hint">
           DeepSeek: 访问 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 获取<br>
           OpenAI: 访问 <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a> 获取<br>
+          MiniMax: 访问开放平台获取<br>
           Anthropic: 访问 <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> 获取
         </div>
       </div>
@@ -324,6 +330,7 @@
           value="">
         <div class="hint">
           DeepSeek: https://api.deepseek.com/v1<br>
+          MiniMax: https://api.minimax.chat/v1
           OpenAI: https://api.openai.com/v1<br>
           留空使用默认值
         </div>
@@ -332,6 +339,10 @@
       <div class="form-group">
         <label for="model">模型选择 | Model</label>
         <select id="model">
+          <optgroup label="MiniMax" data-provider="minimax">
+            <option value="MiniMax-M2.5">MiniMax M2.5</option>
+            <option value="abab6.5s-chat">Abab 6.5s</option>
+          </optgroup>
           <optgroup label="DeepSeek" data-provider="deepseek">
             <option value="deepseek-chat">DeepSeek Chat (推荐)</option>
             <option value="deepseek-reasoner">DeepSeek Reasoner (思考模式)</option>
@@ -477,6 +488,10 @@
           apiEndpointInput.value = 'https://api.deepseek.com/v1';
           modelSelect.value = 'deepseek-chat';
           break;
+        case 'minimax':
+          apiEndpointInput.value = 'https://api.minimax.chat/v1';
+          modelSelect.value = 'MiniMax-M2.5';
+          break;
         case 'openai':
           apiEndpointInput.value = 'https://api.openai.com/v1';
           modelSelect.value = 'gpt-4';
@@ -596,7 +611,7 @@
           if (config.apiEndpoint) document.getElementById('apiEndpoint').value = config.apiEndpoint;
           // 模型：仅当与当前提供商匹配时才恢复，否则用 selectProvider 已设的默认值
           const provider = config.llmProvider || selectedProvider;
-          const validModels = { deepseek: ['deepseek-chat','deepseek-reasoner','deepseek-coder'], openai: ['gpt-4','gpt-3.5-turbo'], anthropic: ['claude-3-opus-20240229','claude-3-sonnet-20240229'], local: ['llama2'] };
+          const validModels = { minimax: ['MiniMax-M2.5','abab6.5s-chat'], deepseek: ['deepseek-chat','deepseek-reasoner','deepseek-coder'], openai: ['gpt-4','gpt-3.5-turbo'], anthropic: ['claude-3-opus-20240229','claude-3-sonnet-20240229'], local: ['llama2'] };
           if (config.model && validModels[provider] && validModels[provider].includes(config.model)) {
             document.getElementById('model').value = config.model;
           }

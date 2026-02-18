@@ -240,7 +240,7 @@ function _continueInit() {
       desiredSize: config.boatSize,
       platformHeight: 45,
       catamaran: { enabled: true },
-      glbPath: '/public/boat 1.glb'
+      glbPath: '/public/GLB_20251223141542.glb'
     });
 
     console.log('📦 船体控制器已创建 | Ship controller created');
@@ -900,7 +900,7 @@ function _setupRenderer() {
             desiredSize: config.boatSize,
             platformHeight: 45,
             catamaran: { enabled: true },
-            glbPath: '/public/boat 1.glb' // 明确指定GLB路径（绝对路径）
+            glbPath: '/public/GLB_20251223141542.glb' // 明确指定GLB路径（绝对路径）
           });
 
           console.log('📦 船体控制器已创建 | Ship controller created');

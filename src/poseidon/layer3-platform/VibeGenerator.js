@@ -22,8 +22,8 @@ export class VibeGenerator extends EventEmitter {
     super();
     
     this.config = {
-      llmProvider: config.llmProvider || 'openai',
-      model: config.model || 'gpt-4',
+      llmProvider: config.llmProvider || 'minimax',
+      model: config.model || 'MiniMax-M2.5',
       outputLanguage: config.outputLanguage || 'javascript', // 'javascript' | 'python'
       templatePath: config.templatePath || './templates',
       ...config

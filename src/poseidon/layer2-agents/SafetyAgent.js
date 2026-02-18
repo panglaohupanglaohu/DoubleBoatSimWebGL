@@ -311,14 +311,43 @@ export class SafetyAgent extends AgentBase {
    * @private
    */
   async _handleSafetyAssessment(task, context) {
+    // 获取基础数据
     const assessment = await this.useTool('assessSafetySituation', {
       period: 24 // 过去 24 小时
     });
     
+    // 调用 LLM 进行深度分析
+    const llmPrompt = `你是一位资深船舶安全官。请根据以下安全态势数据，提供专业的安全分析和建议：
+
+安全态势数据：
+- 过去 24 小时事件数：${assessment.totalEvents}
+- 严重事件：${assessment.eventTypes.critical}
+- 警告事件：${assessment.eventTypes.warning}
+- 信息事件：${assessment.eventTypes.info}
+- 监控覆盖率：${(assessment.coverage * 100).toFixed(0)}%
+- 整体状态：${assessment.overallStatus}
+
+请提供：
+1. 当前安全态势分析
+2. 潜在风险识别
+3. 改进建议
+
+请用中文回复。`;
+
+    let llmAnalysis = '';
+    try {
+      const thought = await this.think(llmPrompt, context);
+      llmAnalysis = thought.content;
+    } catch (e) {
+      console.warn('Safety Agent LLM 分析失败，使用默认分析:', e.message);
+      llmAnalysis = assessment.recommendation;
+    }
+    
     return {
       type: 'safety_assessment',
       assessment,
-      response: `安全态势评估（过去 ${assessment.period}）：\n状态：${assessment.overallStatus.toUpperCase()}\n总事件数：${assessment.totalEvents}\n监控覆盖率：${(assessment.coverage * 100).toFixed(0)}%\n\n${assessment.recommendation}`
+      llmAnalysis,
+      response: `安全态势评估（过去 ${assessment.period}）：\n状态：${assessment.overallStatus.toUpperCase()}\n总事件数：${assessment.totalEvents}\n监控覆盖率：${(assessment.coverage * 100).toFixed(0)}%\n\n📊 LLM 深度分析：\n${llmAnalysis}`
     };
   }
   

@@ -15,8 +15,8 @@ export class LLMJudge extends EventEmitter {
     super();
     
     this.config = {
-      llmProvider: config.llmProvider || 'openai',
-      model: config.model || 'gpt-4',
+      llmProvider: config.llmProvider || 'minimax',
+      model: config.model || 'MiniMax-M2.5',
       scoringCriteria: config.scoringCriteria || this._getDefaultCriteria(),
       strictness: config.strictness || 0.8, // 0-1，越高越严格
       ...config

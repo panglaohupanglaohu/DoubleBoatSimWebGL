@@ -40,8 +40,8 @@ export class PoseidonX extends EventEmitter {
       enableBridgeChat: config.enableBridgeChat !== false,
       enableDigitalTwin: config.enableDigitalTwin !== false,
       enableVoice: config.enableVoice || false,
-      llmProvider: config.llmProvider || 'openai',
-      model: config.model || 'gpt-4',
+      llmProvider: config.llmProvider || 'minimax',
+      model: config.model || 'MiniMax-M2.5',
       ...config
     };
     

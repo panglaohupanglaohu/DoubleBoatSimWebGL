@@ -148,7 +148,7 @@ function loadBoat() {
   // 文件位置：D:\DoubleBoatRefactor\DoubleBoatSimWebGL\public\boat 1.glb
   const base = window.location.origin;
   const candidates = [
-    '/public/boat 1.glb', // 绝对路径（最优先）
+    '/public/GLB_20251223141542.glb', // 绝对路径（最优先）
     `${base}/public/boat 1.glb` // 完整URL（备选）
   ];
 

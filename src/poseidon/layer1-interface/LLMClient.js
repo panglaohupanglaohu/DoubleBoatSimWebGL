@@ -2,7 +2,8 @@
  * LLM Client - 真实的 LLM API 调用客户端
  * 
  * 支持多个提供商：
- * - DeepSeek (推荐)
+ * - MiniMax (推荐 - 2.5 模型)
+ * - DeepSeek
  * - OpenAI (GPT-4)
  * - Anthropic (Claude)
  * - 本地模型 (Ollama)
@@ -11,7 +12,7 @@
 export class LLMClient {
   constructor(config = {}) {
     this.config = {
-      provider: config.provider || 'deepseek',
+      provider: config.provider || 'minimax',
       apiKey: config.apiKey || '',
       apiEndpoint: config.apiEndpoint || this._getDefaultEndpoint(config.provider),
       model: config.model || this._getDefaultModel(config.provider),
@@ -33,13 +34,14 @@ export class LLMClient {
    */
   _getDefaultEndpoint(provider) {
     const endpoints = {
+      'minimax': 'https://api.minimax.chat/v1',
       'deepseek': 'https://api.deepseek.com/v1',
       'openai': 'https://api.openai.com/v1',
       'anthropic': 'https://api.anthropic.com/v1',
       'local': 'http://localhost:11434/v1'
     };
 
-    return endpoints[provider] || endpoints.deepseek;
+    return endpoints[provider] || endpoints.minimax;
   }
 
   /**
@@ -48,13 +50,14 @@ export class LLMClient {
    */
   _getDefaultModel(provider) {
     const models = {
+      'minimax': 'MiniMax-M2.5',
       'deepseek': 'deepseek-chat',
       'openai': 'gpt-4',
       'anthropic': 'claude-3-opus-20240229',
       'local': 'llama2'
     };
 
-    return models[provider] || models.deepseek;
+    return models[provider] || models.minimax;
   }
 
   /**
@@ -71,6 +74,13 @@ export class LLMClient {
     // 按厂商规范化 model，避免 "Model Not Exist"
     let model = options.model || this.config.model;
     const endpoint = (this.config.apiEndpoint || '').toLowerCase();
+    
+    // MiniMax API 处理
+    if (this.config.provider === 'minimax' || endpoint.includes('minimax.chat')) {
+      return this._callMiniMax(messages, options);
+    }
+    
+    // DeepSeek API 处理
     const isDeepSeekEndpoint = endpoint.includes('deepseek.com');
     if (this.config.provider === 'deepseek' || isDeepSeekEndpoint) {
       const deepseekModels = ['deepseek-chat', 'deepseek-reasoner', 'deepseek-coder'];
@@ -120,6 +130,52 @@ export class LLMClient {
 
     } catch (error) {
       console.error('❌ LLM API 调用失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 调用 MiniMax API
+   * @private
+   */
+  async _callMiniMax(messages, options = {}) {
+    const model = options.model || this.config.model;
+    
+    const requestBody = {
+      model: model,
+      messages: messages,
+      temperature: options.temperature || this.config.temperature,
+      max_tokens: options.maxTokens || this.config.maxTokens
+    };
+
+    try {
+      // MiniMax 使用 text/chatcompletion_v2 端点
+      const response = await fetch(this.config.apiEndpoint + '/text/chatcompletion_v2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`MiniMax API 调用失败 (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      return {
+        content: data.choices?.[0]?.message?.content || '',
+        role: data.choices?.[0]?.message?.role || 'assistant',
+        model: data.model,
+        usage: data.usage,
+        finish_reason: data.choices?.[0]?.finish_reason
+      };
+
+    } catch (error) {
+      console.error('❌ MiniMax API 调用失败:', error);
       throw error;
     }
   }

@@ -23,10 +23,10 @@ export class BridgeChat extends EventEmitter {
     const finalConfig = { ...config, ...savedConfig };
     
     this.config = {
-      llmProvider: finalConfig.llmProvider || 'deepseek',
+      llmProvider: finalConfig.llmProvider || 'minimax',
       apiKey: finalConfig.apiKey || '',
-      apiEndpoint: finalConfig.apiEndpoint || 'https://api.deepseek.com/v1',
-      model: finalConfig.model || 'deepseek-chat',
+      apiEndpoint: finalConfig.apiEndpoint || 'https://api.minimax.chat/v1',
+      model: finalConfig.model || 'MiniMax-M2.5',
       temperature: finalConfig.temperature || 0.7,
       voiceEnabled: finalConfig.enableVoice || false,
       language: finalConfig.language || 'zh-CN',
@@ -38,10 +38,15 @@ export class BridgeChat extends EventEmitter {
 3. Steward Agent（大管家）- 负责仓储和船员福祉
 4. Safety Agent（安全官）- 负责安全监控和应急响应
 
+你还可以直接执行以下菜单操作：
+- 天气控制：设置降雨强度、风速、风向、温度、降雪强度、天气预设（calm/moderate/storm/typhoon/snow）
+- 视图切换：顶视图(top view)、整体视图(overall view)
+- 船体标记：设置船体颜色或区域颜色
+
 当用户提问时，你要：
-1. 判断应该由哪个Agent处理
-2. 调用对应的Agent
-3. 将Agent的结果用自然语言呈现给用户
+1. 判断应该由哪个Agent处理，或者是否需要执行菜单操作
+2. 调用对应的Agent或执行菜单操作
+3. 将结果用自然语言呈现给用户
 
 你的语气专业、简洁、可靠。
 你是一位经验丰富的领航员，精通海事专业术语。
@@ -50,6 +55,7 @@ export class BridgeChat extends EventEmitter {
 2. 在数字孪生海图上高亮关键信息
 3. 协调船上各个专业智能体（领航员、轮机长、大管家、安全官）
 4. 在紧急情况下提供快速决策支持
+5. 当用户要求设置天气参数时，直接执行并确认
 
 回答风格：专业、简洁、可执行。`,
       ...config
@@ -114,9 +120,9 @@ export class BridgeChat extends EventEmitter {
     this.chatContainer.style.cssText = `
       position: fixed;
       bottom: 20px;
-      left: 20px;
-      width: 400px;
-      height: 500px;
+      right: 20px;
+      width: 380px;
+      height: 480px;
       background: rgba(11, 21, 37, 0.95);
       border: 2px solid #4fc3f7;
       border-radius: 12px;
@@ -184,8 +190,8 @@ export class BridgeChat extends EventEmitter {
     
     // 添加欢迎消息（未配置 API Key 时提示去配置）
     const welcomeText = this.config.apiKey
-      ? '欢迎登上 Poseidon-X 智能舰桥。我是您的 AI 领航员，已接入大模型。您可以通过语音或文字向我提问，我会协调全船的智能体为您服务。'
-      : '欢迎登上 Poseidon-X 智能舰桥。请先打开 poseidon-config.html 配置 DeepSeek API Key，即可使用真实大模型对话。';
+      ? `✅ 已配置 ${this.config.llmProvider || 'LLM'} API Key。我是您的 AI 领航员，已接入大模型。您可以通过语音或文字向我提问，我会协调全船的智能体为您服务。`
+      : '欢迎登上 Poseidon-X 智能舰桥。请先打开 poseidon-config.html 配置 LLM API Key（支持 DeepSeek、OpenAI、MiniMax 等），即可使用真实大模型对话。';
     this._addMessage('system', welcomeText);
     
     // 输入区域
@@ -495,15 +501,116 @@ export class BridgeChat extends EventEmitter {
         }
       }
     }
+    // 降雨强度：设置降雨强度为15、降雨强度15、雨量15、rain 15 等
     if (typeof window.poseidonSetRainIntensity === 'function') {
-      // 匹配：雨 强度100、雨强度100、降雨100、雨量100、rain intensity 100
-      const rainMatch = text.match(/(?:雨\s*强度|降雨|雨量|rain\s*intensity)\s*(\d+(?:\.\d+)?)\s*(?:%|mm)?/i)
-        || text.match(/雨\s*(\d+(?:\.\d+)?)/)
-        || lower.match(/(?:雨\s*强度|降雨|雨量|rain\s*intensity)\s*(\d+(?:\.\d+)?)/);
-      if (rainMatch) {
-        const val = parseFloat(rainMatch[1]);
-        if (!isNaN(val) && window.poseidonSetRainIntensity(val)) {
-          return { executed: true, label: '🌧️ Rain Intensity ' + val };
+      const rainPatterns = [
+        /设置\s*降雨\s*强度\s*[为为]?\s*(\d+(?:\.\d+)?)/i,
+        /降雨\s*强度\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /雨\s*强度\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /雨量\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /rain\s*intensity\s*(\d+(?:\.\d+)?)/i,
+        /雨\s*(\d+(?:\.\d+)?)\s*mm/i,
+        /降雨\s*(\d+(?:\.\d+)?)/i
+      ];
+      for (const pattern of rainPatterns) {
+        const match = text.match(pattern) || lower.match(pattern);
+        if (match) {
+          const val = parseFloat(match[1]);
+          if (!isNaN(val) && window.poseidonSetRainIntensity(val)) {
+            return { executed: true, label: `🌧️ Rain Intensity ${val} mm/h` };
+          }
+        }
+      }
+    }
+    
+    // 风速：设置风速为20、风速20、wind speed 20 等
+    if (typeof window.poseidonSetWindSpeed === 'function') {
+      const windSpeedPatterns = [
+        /设置\s*风速\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /风速\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /wind\s*speed\s*(\d+(?:\.\d+)?)/i,
+        /风\s*(\d+(?:\.\d+)?)\s*m\/s/i
+      ];
+      for (const pattern of windSpeedPatterns) {
+        const match = text.match(pattern) || lower.match(pattern);
+        if (match) {
+          const val = parseFloat(match[1]);
+          if (!isNaN(val) && window.poseidonSetWindSpeed(val)) {
+            return { executed: true, label: `🌬️ Wind Speed ${val} m/s` };
+          }
+        }
+      }
+    }
+    
+    // 风向：设置风向为180、风向180、wind direction 180 等
+    if (typeof window.poseidonSetWindDirection === 'function') {
+      const windDirPatterns = [
+        /设置\s*风向\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /风向\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /wind\s*direction\s*(\d+(?:\.\d+)?)/i
+      ];
+      for (const pattern of windDirPatterns) {
+        const match = text.match(pattern) || lower.match(pattern);
+        if (match) {
+          const val = parseFloat(match[1]);
+          if (!isNaN(val) && window.poseidonSetWindDirection(val)) {
+            return { executed: true, label: `🧭 Wind Direction ${val}°` };
+          }
+        }
+      }
+    }
+    
+    // 温度：设置温度为20、温度20、temperature 20 等
+    if (typeof window.poseidonSetTemperature === 'function') {
+      const tempPatterns = [
+        /设置\s*温度\s*[为]?\s*(-?\d+(?:\.\d+)?)/i,
+        /温度\s*[为]?\s*(-?\d+(?:\.\d+)?)/i,
+        /temperature\s*(-?\d+(?:\.\d+)?)/i
+      ];
+      for (const pattern of tempPatterns) {
+        const match = text.match(pattern) || lower.match(pattern);
+        if (match) {
+          const val = parseFloat(match[1]);
+          if (!isNaN(val) && window.poseidonSetTemperature(val)) {
+            return { executed: true, label: `🌡️ Temperature ${val}°C` };
+          }
+        }
+      }
+    }
+    
+    // 降雪强度：设置降雪强度为10、雪量10 等
+    if (typeof window.poseidonSetSnowIntensity === 'function') {
+      const snowPatterns = [
+        /设置\s*降雪\s*强度\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /降雪\s*强度\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /雪量\s*[为]?\s*(\d+(?:\.\d+)?)/i,
+        /snow\s*intensity\s*(\d+(?:\.\d+)?)/i
+      ];
+      for (const pattern of snowPatterns) {
+        const match = text.match(pattern) || lower.match(pattern);
+        if (match) {
+          const val = parseFloat(match[1]);
+          if (!isNaN(val) && window.poseidonSetSnowIntensity(val)) {
+            return { executed: true, label: `❄️ Snow Intensity ${val} mm/h` };
+          }
+        }
+      }
+    }
+    
+    // 天气预设：晴天、小雨、暴风雨、台风、snow 等
+    if (typeof window.poseidonSetWeatherPreset === 'function') {
+      const presetPatterns = [
+        { keys: ['晴天', '晴朗', 'calm', '好天气'], preset: 'calm' },
+        { keys: ['多云', '阴天', 'cloudy'], preset: 'moderate' },
+        { keys: ['暴风雨', 'storm', '风暴'], preset: 'storm' },
+        { keys: ['台风', '飓风', 'typhoon'], preset: 'typhoon' },
+        { keys: ['雪', '下雪', 'snow'], preset: 'snow' }
+      ];
+      for (const { keys, preset } of presetPatterns) {
+        if (keys.some(k => lower.includes(k) || text.includes(k))) {
+          if (window.poseidonSetWeatherPreset(preset)) {
+            return { executed: true, label: `⛈️ Weather Preset: ${preset}` };
+          }
         }
       }
     }
@@ -519,7 +626,17 @@ export class BridgeChat extends EventEmitter {
       { keys: ['顶视图', '俯视图', 'top view', 'topview', '从上往下'], actionId: 'view_top', label: '⬇️ Top View' },
       { keys: ['整体视图', 'overall view', 'overallview', '全局视图'], actionId: 'view_overall', label: '🌐 Overall View' },
       { keys: ['坐标轴', 'show axes', 'axes', '显示坐标轴', '隐藏坐标轴'], actionId: 'show_axes', label: '👁️ Show Axes' },
-      { keys: ['尺寸线', '尺寸', 'show dimensions', 'dimensions', '显示尺寸'], actionId: 'show_dimensions', label: '👁️ Show Dimensions' }
+      { keys: ['尺寸线', '尺寸', 'show dimensions', 'dimensions', '显示尺寸'], actionId: 'show_dimensions', label: '👁️ Show Dimensions' },
+      // 应急场景
+      { keys: ['火灾', '火情', '机舱火灾', '模拟火灾', 'fire', 'simulate fire'], actionId: 'simulate_fire', label: '🔥 Simulate Fire' },
+      { keys: ['落水', 'MOB', '人员落水', '模拟落水', 'man overboard', 'simulate mob'], actionId: 'simulate_mob', label: '🚨 Simulate MOB' },
+      // 查询功能
+      { keys: ['查询碰撞风险', '碰撞风险', 'collision risk'], actionId: 'check_collision', label: '🚢 Check Collision Risk' },
+      { keys: ['检查主机', '主机状态', 'engine status', 'check engine'], actionId: 'check_engine', label: '⚙️ Check Engine' },
+      { keys: ['检查库存', '库存', 'inventory'], actionId: 'check_inventory', label: '📦 Check Inventory' },
+      { keys: ['安全态势', '安全评估', 'safety assessment'], actionId: 'check_safety', label: '🛡️ Safety Assessment' },
+      { keys: ['并行任务', '并行执行', 'parallel'], actionId: 'parallel_tasks', label: '⚡ Parallel Tasks' },
+      { keys: ['数字孪生', 'digital twin', '数字孪生演示'], actionId: 'digital_twin', label: '🗺️ Digital Twin Demo' }
     ];
     for (const { keys, actionId, label } of menuMap) {
       if (keys.some(k => lower.includes(k) || text.includes(k))) {

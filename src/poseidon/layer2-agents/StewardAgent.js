@@ -50,6 +50,9 @@ export class StewardAgent extends AgentBase {
       deploymentLocation: 'edge'
     });
     
+    // 注册工具
+    this._registerTools();
+    
     // 大管家专属状态
     this.stewardState = {
       inventory: new Map(), // 库存（RFID 数据）
@@ -68,6 +71,71 @@ export class StewardAgent extends AgentBase {
     this._loadInventoryKnowledge();
     
     console.log('🏠 Steward Agent ready');
+  }
+  
+  /**
+   * 执行任务
+   */
+  async execute(task, context = {}) {
+    console.log(`🏠 StewardAgent executing: ${task}`);
+    
+    const taskLower = task.toLowerCase();
+    
+    // 根据任务类型选择工具
+    try {
+      // 库存查询
+      if (taskLower.includes('库存') || taskLower.includes('淡水') || taskLower.includes('食物') || taskLower.includes('物资')) {
+        let itemName = '淡水'; // 默认查询淡水
+        if (taskLower.includes('大米') || taskLower.includes('鸡') || taskLower.includes('蔬菜')) {
+          itemName = task.match(/(大米|鸡肉|蔬菜)/)?.[1] || '淡水';
+        }
+        
+        const result = await this.useTool('checkInventory', { itemName });
+        return {
+          response: `📦 ${itemName} 库存情况：${result.quantity} ${result.unit}，状态：${result.status}`,
+          tool: 'checkInventory',
+          result
+        };
+      }
+      
+      // 菜单生成
+      if (taskLower.includes('菜单') || taskLower.includes('吃饭') || taskLower.includes('伙食')) {
+        const result = await this.useTool('generateMenu', {
+          date: new Date().toISOString().split('T')[0],
+          crewNationalities: ['CN', 'PH']
+        });
+        return {
+          response: `🍽️ 今日菜单：${result.breakfast} / ${result.lunch} / ${result.dinner}`,
+          tool: 'generateMenu',
+          result
+        };
+      }
+      
+      // 环境查询
+      if (taskLower.includes('环境') || taskLower.includes('温度') || taskLower.includes('舱室')) {
+        const cabinId = taskLower.match(/([ABC])区?/)?.[1] || 'A';
+        const result = await this.useTool('monitorCabinEnvironment', { cabinId: `cabin-${cabinId}` });
+        return {
+          response: `🏠 舱室${cabinId}区：温度${result.temperature.toFixed(1)}°C，湿度${result.humidity.toFixed(1)}%`,
+          tool: 'monitorCabinEnvironment',
+          result
+        };
+      }
+      
+      // 默认：调用 LLM 思考
+      const thought = await this.think(task, context);
+      return {
+        response: thought.content,
+        thinking: true
+      };
+      
+    } catch (error) {
+      console.error('StewardAgent execute error:', error);
+      return {
+        response: `处理任务时出错：${error.message}`,
+        error: true
+      };
+    }
   }
   
   /**

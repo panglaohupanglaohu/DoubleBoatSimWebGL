@@ -19,6 +19,10 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.static(join(dirname(fileURLToPath(import.meta.url)), '..')));
+// 首页 - 重定向到 index-refactored.html
+app.get('/', (req, res) => {
+  res.sendFile(join(dirname(fileURLToPath(import.meta.url)), '..', 'index-refactored.html'));
+});
 
 // ============================================
 // MiniMax LLM 集成

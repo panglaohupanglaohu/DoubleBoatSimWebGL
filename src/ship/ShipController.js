@@ -19,7 +19,7 @@ export class ShipController {
       yFlip: config.yFlip || -1,
       linearDamping: config.linearDamping || 0.15,
       angularDamping: config.angularDamping || 0.6,
-      glbPath: config.glbPath || '/public/boat 1.glb',
+      glbPath: config.glbPath || '/public/GLB_20251223141542.glb',
       desiredSize: config.desiredSize || null, // 目标尺寸 {x, y, z} - X轴=宽度, Y轴=高度, Z轴=长度
       // desiredLength 已废弃，使用 desiredSize 代替
       platformHeight: config.platformHeight || 45, // 平台高度
