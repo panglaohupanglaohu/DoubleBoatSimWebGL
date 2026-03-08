@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 船舶数字孪生系统 - 重构版主文件
  * Ship Digital Twin System - Refactored Main File
  */
@@ -1188,6 +1188,8 @@ function _setupRenderer() {
       }
 
       // ============= 更新循环 =============
+      let lastStatusUpdateTime = 0;
+
       function animate() {
         requestAnimationFrame(animate);
 
@@ -1197,7 +1199,8 @@ function _setupRenderer() {
           return;
         }
 
-        const deltaTime = clock.getDelta();
+        // 对 deltaTime 做上限，避免掉帧后一步跳太大导致物理不稳定
+        const deltaTime = Math.min(clock.getDelta(), 1 / 30);
         const elapsed = clock.elapsedTime;
 
         // 更新物理
@@ -1419,8 +1422,17 @@ function _setupRenderer() {
           }
         }
 
-        // 更新状态显示（每帧更新）
-        updateStatus();
+        // 更新状态显示（节流到 ~5 次/秒，减少 DOM 开销）
+        if (clock) {
+          const now = clock.elapsedTime;
+          if (!lastStatusUpdateTime || now - lastStatusUpdateTime > 0.2) {
+            updateStatus();
+            lastStatusUpdateTime = now;
+          }
+        } else {
+          // 理论上不会走到这里，作为降级保护
+          updateStatus();
+        }
       }
 
       // ============= GUI设置 =============
@@ -1515,6 +1527,15 @@ function _setupRenderer() {
             weatherSystem.setTemperature(value);
           });
         numericCtrls.push(weatherControls.temperature);
+
+        // 天气效果质量（high / medium / low）
+        weatherFolder.add(weatherSystem, 'quality', ['high', 'medium', 'low'])
+          .name('天气质量 | Weather Quality')
+          .onChange((value) => {
+            if (typeof weatherSystem.setQuality === 'function') {
+              weatherSystem.setQuality(value);
+            }
+          });
 
         // 台风等级控制（1-17级）
         const typhoonControl = weatherFolder.add({ typhoonLevel: 0 }, 'typhoonLevel', 0, 17, 1)
@@ -2390,19 +2411,53 @@ function _setupRenderer() {
       }
 
       // ============= 更新状态显示 =============
+      // DOM 引用缓存，避免每帧重复查询
+      const _statusDomCache = {
+        initialized: false,
+        shipPositionEl: null,
+        shipMassEl: null,
+        waterHeightEl: null,
+        waterOffsetEl: null,
+        shipStabilityEl: null,
+        windSpeedEl: null,
+        windDirectionEl: null,
+        rainIntensityEl: null,
+        visibilityEl: null,
+        seaStateEl: null
+      };
+
+      function _getStatusDomElements() {
+        if (_statusDomCache.initialized) return _statusDomCache;
+
+        _statusDomCache.shipPositionEl = document.getElementById('shipPosition');
+        _statusDomCache.shipMassEl = document.getElementById('shipMass');
+        _statusDomCache.waterHeightEl = document.getElementById('waterHeight');
+        _statusDomCache.waterOffsetEl = document.getElementById('waterOffset');
+        _statusDomCache.shipStabilityEl = document.getElementById('shipStability');
+        _statusDomCache.windSpeedEl = document.getElementById('windSpeed');
+        _statusDomCache.windDirectionEl = document.getElementById('windDirection');
+        _statusDomCache.rainIntensityEl = document.getElementById('rainIntensity');
+        _statusDomCache.visibilityEl = document.getElementById('visibility');
+        _statusDomCache.seaStateEl = document.getElementById('seaState');
+
+        _statusDomCache.initialized = true;
+        return _statusDomCache;
+      }
+
       // 完全重写 updateStatus 函数，确保数据实时同步
       function updateStatus() {
-        // 获取所有DOM元素（在函数开头获取，避免重复查找）
-        const shipPositionEl = document.getElementById('shipPosition');
-        const shipMassEl = document.getElementById('shipMass');
-        const waterHeightEl = document.getElementById('waterHeight');
-        const waterOffsetEl = document.getElementById('waterOffset');
-        const shipStabilityEl = document.getElementById('shipStability');
-        const windSpeedEl = document.getElementById('windSpeed');
-        const windDirectionEl = document.getElementById('windDirection');
-        const rainIntensityEl = document.getElementById('rainIntensity');
-        const visibilityEl = document.getElementById('visibility');
-        const seaStateEl = document.getElementById('seaState');
+        const {
+          shipPositionEl,
+          shipMassEl,
+          waterHeightEl,
+          waterOffsetEl,
+          shipStabilityEl,
+          windSpeedEl,
+          windDirectionEl,
+          rainIntensityEl,
+          visibilityEl,
+          seaStateEl
+        } = _getStatusDomElements();
 
         // 如果船体未加载，显示默认值
         if (!shipController || !shipController.body) {

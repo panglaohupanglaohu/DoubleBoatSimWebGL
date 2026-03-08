@@ -11,6 +11,7 @@ export class WeatherSystem extends EventEmitter {
     super();
     this.scene = scene;
     this.simulatorEngine = simulatorEngine;
+    this.quality = 'high'; // 'high' | 'medium' | 'low'
     
     // 当前天气预设
     this._currentPreset = 'calm';
@@ -34,6 +35,10 @@ export class WeatherSystem extends EventEmitter {
     // 可见性状态缓存（用于调试日志）
     this._lastRainVisible = undefined;
     this._lastSnowVisible = undefined;
+
+    // 中低质量模式下用于跳帧的开关
+    this._rainFrameToggle = false;
+    this._snowFrameToggle = false;
     
     this.enabled = true;
     
@@ -160,6 +165,31 @@ export class WeatherSystem extends EventEmitter {
     } else {
       console.warn(`⚠️ 未知天气预设: ${preset} | Unknown weather preset: ${preset}`);
     }
+  }
+
+  /**
+   * 设置天气效果质量（high / medium / low）
+   * 低质量会完全关闭雨雪粒子，减轻负载
+   */
+  setQuality(level) {
+    const allowed = ['high', 'medium', 'low'];
+    if (!allowed.includes(level)) {
+      console.warn(`⚠️ 无效的天气质量等级: ${level}，可选值: high / medium / low`);
+      return;
+    }
+
+    this.quality = level;
+
+    // 根据质量等级立即调整可见性
+    if (this.rainParticles) {
+      this.rainParticles.visible = this.weather.rainIntensity > 0 && this.quality !== 'low';
+    }
+    if (this.snowParticles) {
+      this.snowParticles.visible =
+        this.weather.snowIntensity > 0 && this.weather.temperature <= 0 && this.quality !== 'low';
+    }
+
+    console.log(`🎚️ 天气质量已设置为: ${level}`);
   }
 
   /**
@@ -520,8 +550,8 @@ export class WeatherSystem extends EventEmitter {
    */
   _updateRainParticles() {
     if (!this.rainParticles) return;
-    
-    const shouldBeVisible = this.weather.rainIntensity > 0;
+
+    const shouldBeVisible = this.weather.rainIntensity > 0 && this.quality !== 'low';
     this.rainParticles.visible = shouldBeVisible;
     
     // 调试日志（仅在状态改变时输出）
@@ -558,8 +588,9 @@ export class WeatherSystem extends EventEmitter {
    */
   _updateSnowParticles() {
     if (!this.snowParticles) return;
-    
-    const shouldBeVisible = this.weather.snowIntensity > 0 && this.weather.temperature <= 0;
+
+    const shouldBeVisible =
+      this.weather.snowIntensity > 0 && this.weather.temperature <= 0 && this.quality !== 'low';
     this.snowParticles.visible = shouldBeVisible;
     
     // 调试日志（仅在状态改变时输出）
@@ -593,6 +624,14 @@ export class WeatherSystem extends EventEmitter {
    */
   _updateRainAnimation(deltaTime) {
     if (!this.rainParticles || !this.rainParticles.visible || this.weather.rainIntensity <= 0) return;
+
+    // 中质量：隔帧更新；低质量在 _updateRainParticles 中直接隐藏
+    if (this.quality === 'medium') {
+      this._rainFrameToggle = !this._rainFrameToggle;
+      if (this._rainFrameToggle) return;
+    } else if (this.quality === 'low') {
+      return;
+    }
     
     const positions = this.rainParticles.geometry.attributes.position.array;
     const velocities = this.rainParticles.geometry.attributes.velocity.array;
@@ -654,6 +693,14 @@ export class WeatherSystem extends EventEmitter {
    */
   _updateSnowAnimation(deltaTime) {
     if (!this.snowParticles || !this.snowParticles.visible || this.weather.snowIntensity <= 0 || this.weather.temperature > 0) return;
+
+    // 中质量：隔帧更新；低质量在 _updateSnowParticles 中直接隐藏
+    if (this.quality === 'medium') {
+      this._snowFrameToggle = !this._snowFrameToggle;
+      if (this._snowFrameToggle) return;
+    } else if (this.quality === 'low') {
+      return;
+    }
     
     const positions = this.snowParticles.geometry.attributes.position.array;
     const velocities = this.snowParticles.geometry.attributes.velocity.array;
