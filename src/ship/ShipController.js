@@ -42,16 +42,22 @@ export class ShipController {
     // 船体mesh引用，用于动态更新材质透明度
     this.shipMeshes = [];
     
-    // 船体材质配置
+    // 船体材质配置 - 半透明玻璃
     this.shipMaterialConfig = {
-      color: 0x4a90e2, // 蓝色
+      color: 0x88CCFF,        // 淡蓝色玻璃
       transparent: true,
-      opacity: 0.6, // 默认60%透明度
-      roughness: 0.1, // 低粗糙度，更光滑
-      metalness: 0.0, // 非金属
-      side: THREE.DoubleSide,
-      depthWrite: true,
-      depthTest: true
+      opacity: 0.3,           // 默认 30% 不透明度（70% 透明）
+      roughness: 0.05,        // 非常光滑
+      metalness: 0.0,         // 非金属
+      side: THREE.DoubleSide, // 双面渲染
+      depthWrite: false,      // 玻璃不需要深度写入
+      depthTest: true,
+      transmission: 0.95,     // 高透光率
+      thickness: 0.5,         // 玻璃厚度
+      ior: 1.5,               // 折射率 (玻璃典型值 1.5)
+      clearcoat: 1.0,         // 清漆层
+      clearcoatRoughness: 0.05,
+      envMapIntensity: 1.5    // 环境贴图强度
     };
 
     // 船体颜色标记方案（区域 -> 十六进制颜色）
@@ -1729,7 +1735,7 @@ export class ShipController {
    * 更新船体材质透明度
    * @param {number} opacity - 不透明度值 (0-1)，例如 0.6 表示 60% 不透明度（40%透明）
    */
-  updateShipMaterialOpacity(opacity) {
+  updateShipMaterialOpacity(opacity = 0.3) {
     if (!this.shipMeshes || this.shipMeshes.length === 0) {
       console.warn('⚠️ 未找到船体 mesh，无法更新透明度');
       console.warn('   提示：请确保模型已加载');
