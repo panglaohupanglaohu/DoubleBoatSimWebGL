@@ -68,8 +68,18 @@ export class LLMClient {
    */
   async chat(messages, options = {}) {
     if (!this.config.apiKey && this.config.provider !== 'local') {
-      throw new Error('API Key 未配置。请访问 poseidon-config.html 配置。');
+      const errorMsg = `API Key 未配置 (provider: ${this.config.provider})。请访问 poseidon-config.html 配置。`;
+      console.error('❌', errorMsg);
+      throw new Error(errorMsg);
     }
+
+    console.log('🧠 LLM Chat request:', {
+      provider: this.config.provider,
+      model: this.config.model,
+      endpoint: this.config.apiEndpoint,
+      hasApiKey: !!this.config.apiKey,
+      apiKeyLength: this.config.apiKey?.length || 0
+    });
 
     // 按厂商规范化 model，避免 "Model Not Exist"
     let model = options.model || this.config.model;
