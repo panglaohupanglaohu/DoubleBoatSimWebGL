@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>船舶工程监控 | Marine Engineering Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a1628 0%, #1a2840 100%);
+      color: #eee;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    
+    header {
+      text-align: center;
+      padding: 30px 0;
+      border-bottom: 1px solid rgba(0,212,255,0.2);
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      font-size: 32px;
+      background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+    
+    .panel {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .panel h2 {
+      color: #00d4ff;
+      margin-bottom: 20px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .metric-row:last-child { border-bottom: none; }
+    
+    .metric-label { color: #aaa; font-size: 14px; }
+    .metric-value { color: #00d4ff; font-weight: bold; font-size: 16px; }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .status-good { background: rgba(0,204,153,0.2); color: #00cc99; }
+    .status-warning { background: rgba(255,170,0,0.2); color: #ffaa00; }
+    .status-critical { background: rgba(255,68,68,0.2); color: #ff4444; }
+    
+    .alert-box {
+      background: rgba(255,68,68,0.1);
+      border-left: 3px solid #ff4444;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    
+    .alert-box.warning {
+      background: rgba(255,170,0,0.1);
+      border-left-color: #ffaa00;
+    }
+    
+    .knowledge-base {
+      background: rgba(0,212,255,0.05);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    
+    .knowledge-base h3 {
+      color: #7b2ff7;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    .knowledge-base ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    
+    .knowledge-base li {
+      padding: 8px 0;
+      color: #ccc;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .knowledge-base li::before {
+      content: '📖';
+    }
+    
+    .formula-box {
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #00d4ff;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #666;
+      font-size: 12px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚓ 船舶工程监控面板</h1>
+      <div class="subtitle">Marine Engineering Dashboard - Based on Ship Theory Knowledge Base</div>
+    </header>
+    
+    <div class="dashboard-grid">
+      <!-- 稳定性监控 -->
+      <div class="panel">
+        <h2>📊 稳定性监控</h2>
+        <div class="metric-row">
+          <span class="metric-label">初稳性高度 GMt</span>
+          <span class="metric-value" id="gmt">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">横摇周期 Tr</span>
+          <span class="metric-value" id="roll-period">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">纵摇周期 Tp</span>
+          <span class="metric-value" id="pitch-period">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">横倾角</span>
+          <span class="metric-value" id="roll-angle">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">状态</span>
+          <span class="status-badge status-good" id="stability-status">正常</span>
+        </div>
+        
+        <div class="formula-box">
+          GMt = KB + BMt - KG<br>
+          Tr = 2π × B / √(GMt × g)
+        </div>
+      </div>
+      
+      <!-- IMO 合规 -->
+      <div class="panel">
+        <h2>📋 IMO 稳性衡准</h2>
+        <div class="metric-row">
+          <span class="metric-label">最小 GMt (≥0.15m)</span>
+          <span id="imo-gmt">⏳ 检查中</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">最大横倾角 (≤30°)</span>
+          <span id="imo-roll">⏳ 检查中</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">GZ 曲线合规</span>
+          <span id="imo-gz">⏳ 检查中</span>
+        </div>
+        
+        <div class="knowledge-base">
+          <h3>IMO 完整稳性衡准</h3>
+          <ul>
+            <li>天气衡准 K ≥ 1.0</li>
+            <li>最大 GZ 出现在 ≥25°</li>
+            <li>GZ 曲线下面积 ≥0.055 m·rad (0-30°)</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- 运动响应 -->
+      <div class="panel">
+        <h2>🌊 运动响应</h2>
+        <div class="metric-row">
+          <span class="metric-label">晕船指数 MSK</span>
+          <span class="metric-value" id="msk">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">舒适度</span>
+          <span class="metric-value" id="comfort">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">有义波高</span>
+          <span class="metric-value" id="wave">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">横摇 RMS</span>
+          <span class="metric-value" id="roll-rms">--</span>
+        </div>
+        
+        <div class="formula-box">
+          MSK = 0.5 × Roll_RMS + 0.3 × Pitch_RMS
+        </div>
+      </div>
+      
+      <!-- 能效分析 -->
+      <div class="panel">
+        <h2>⚡ 能效分析</h2>
+        <div class="metric-row">
+          <span class="metric-label">推进效率</span>
+          <span class="metric-value" id="efficiency">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">燃油消耗率</span>
+          <span class="metric-value" id="sfc">--</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">能效评分</span>
+          <span class="metric-value" id="score">--</span>
+        </div>
+        
+        <div class="knowledge-base">
+          <h3>双体船阻力组成</h3>
+          <ul>
+            <li>摩擦阻力 (Frictional)</li>
+            <li>兴波阻力 (Wave-making)</li>
+            <li>粘压阻力 (Viscous Pressure)</li>
+            <li>空气阻力 (Air)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 告警区域 -->
+    <div class="panel" style="margin-top: 20px;">
+      <h2>⚠️ 告警列表</h2>
+      <div id="alerts">
+        <div style="color: #666; text-align: center; padding: 20px;">暂无告警</div>
+      </div>
+    </div>
+    
+    <footer>
+      Based on Basic Ship Theory & Introduction to Marine Engineering<br>
+      Knowledge Base: /agents/marine_engineer/knowledge_base/
+    </footer>
+  </div>
+  
+  <script src="marine-dashboard.js"></script>
+</body>
+</html>
