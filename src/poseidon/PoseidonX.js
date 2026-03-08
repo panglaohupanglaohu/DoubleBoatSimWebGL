@@ -196,9 +196,6 @@ export class PoseidonX extends EventEmitter {
       this.marinePanel.initialize(marineContainer);
       console.log('  ✅ Marine Engineering Panel initialized');
     }
-      
-      console.log('  ✅ Bridge Chat initialized');
-    }
     
     console.log('✅ Layer 1 initialized');
   }
