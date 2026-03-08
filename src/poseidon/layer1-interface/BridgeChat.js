@@ -121,8 +121,8 @@ export class BridgeChat extends EventEmitter {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 380px;
-      height: 480px;
+      width: 360px;
+      height: 280px;
       background: rgba(11, 21, 37, 0.95);
       border: 2px solid #4fc3f7;
       border-radius: 12px;
