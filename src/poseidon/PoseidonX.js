@@ -11,6 +11,7 @@
 import { BridgeChat } from './layer1-interface/BridgeChat.js';
 import { DigitalTwinMap } from './layer1-interface/DigitalTwinMap.js';
 import { ContextWindow } from './layer1-interface/ContextWindow.js';
+import { MarineEngineeringPanel } from './layer1-interface/MarineEngineeringPanel.js';
 
 // Layer 2: 智能体
 import { NavigatorAgent } from './layer2-agents/NavigatorAgent.js';
@@ -175,6 +176,26 @@ export class PoseidonX extends EventEmitter {
       this.bridgeChat.on('message:sent', (data) => {
         this.emit('chat:message', data);
       });
+      
+      console.log('  ✅ Bridge Chat initialized');
+    }
+    
+    // Marine Engineering Panel（船舶工程监控面板）
+    this.marinePanel = new MarineEngineeringPanel({
+      shipType: 'catamaran',
+      length: 138,
+      beam: 26,
+      draft: 5.5,
+      displacement: 37000,
+      hullSpacing: 80
+    });
+    
+    // 在页面中查找或创建容器
+    const marineContainer = document.getElementById('marine-engineering-panel');
+    if (marineContainer) {
+      this.marinePanel.initialize(marineContainer);
+      console.log('  ✅ Marine Engineering Panel initialized');
+    }
       
       console.log('  ✅ Bridge Chat initialized');
     }
