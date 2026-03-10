@@ -11,21 +11,51 @@
 
 export class LLMClient {
   constructor(config = {}) {
+    // 每次调用时动态从 localStorage 加载配置，支持热插拔
     this.config = {
-      provider: config.provider || 'minimax',
-      apiKey: config.apiKey || '',
-      apiEndpoint: config.apiEndpoint || this._getDefaultEndpoint(config.provider),
-      model: config.model || this._getDefaultModel(config.provider),
-      temperature: config.temperature || 0.7,
-      maxTokens: config.maxTokens || 4096,
+      provider: 'minimax',  // 默认值，会被 loadConfig() 覆盖
+      apiKey: '',
+      apiEndpoint: '',
+      model: '',
+      temperature: 0.7,
+      maxTokens: 4096,
       ...config
     };
 
-    console.log('🧠 LLM Client initialized:', {
+    console.log('🧠 LLM Client initialized (configurable):', {
       provider: this.config.provider,
-      model: this.config.model,
-      endpoint: this.config.apiEndpoint
+      model: this.config.model
     });
+  }
+
+  /**
+   * 动态加载配置（从 localStorage，支持热插拔）
+   * @private
+   */
+  _loadConfig() {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const saved = localStorage.getItem('poseidon_config');
+      if (saved) {
+        const config = JSON.parse(saved);
+        // 更新配置
+        this.config.provider = config.llmProvider || this.config.provider;
+        this.config.apiKey = config.apiKey || this.config.apiKey;
+        this.config.apiEndpoint = config.apiEndpoint || this._getDefaultEndpoint(this.config.provider);
+        this.config.model = config.model || this._getDefaultModel(this.config.provider);
+        this.config.temperature = config.temperature || this.config.temperature;
+        
+        console.log('🔌 LLM Config loaded (hot-swap):', {
+          provider: this.config.provider,
+          model: this.config.model,
+          hasApiKey: !!this.config.apiKey
+        });
+        return config;
+      }
+    } catch (error) {
+      console.warn('⚠️ 加载配置失败:', error);
+    }
+    return null;
   }
 
   /**
@@ -67,6 +97,9 @@ export class LLMClient {
    * @returns {Promise<Object>} - LLM 响应
    */
   async chat(messages, options = {}) {
+    // 每次调用前动态加载配置，支持热插拔
+    this._loadConfig();
+
     if (!this.config.apiKey && this.config.provider !== 'local') {
       const errorMsg = `API Key 未配置 (provider: ${this.config.provider})。请访问 poseidon-config.html 配置。`;
       console.error('❌', errorMsg);

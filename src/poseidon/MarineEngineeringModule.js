@@ -20,6 +20,7 @@ export class MarineEngineeringModule {
       beam: config.beam || 26,
       draft: config.draft || 5.5,
       displacement: config.displacement || 37000,
+      hullSpacing: config.hullSpacing || 80, // 两片体中心距 (m)
       GMt: config.GMt || 15,
       GMl: config.GMl || 120,
       
@@ -55,11 +56,11 @@ export class MarineEngineeringModule {
   monitorStability(sensorData) {
     const { roll, pitch, heave, speed, heading } = sensorData;
     
-    // 计算当前 GMt
+    // 计算当前 GMt（参数顺序：displacement, hullSpacing, beam）
     const gmData = this.stabilityCalc.calculateGMt(
       this.config.displacement,
-      this.config.beam,
-      this.config.draft
+      this.config.hullSpacing,
+      this.config.beam
     );
     
     // 计算摇摆周期

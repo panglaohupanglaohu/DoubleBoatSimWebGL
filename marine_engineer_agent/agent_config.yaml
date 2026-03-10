@@ -1,0 +1,18 @@
+# 智能体基础信息
+agent:
+  name: "marine_engineer_agent"
+  version: "1.0.0"
+  description: "船舶工程领域智能体，提供问答、故障诊断服务"
+  author: "Matrix Agent"
+
+# 知识库配置
+knowledge_base:
+  type: "document"
+  path: "./knowledge_base"
+  embedding_model: "all-MiniLM-L6-v2"
+
+# 运行配置
+runtime:
+  max_context_length: 4096
+  temperature: 0.1
+  top_k: 5

@@ -1,0 +1,4660 @@
+--- Page 1 ---
+Ship Design and Construction
+
+Written by an International Group of Authorities
+Thomas Lamb, Editor
+
+Volume |
+
+Published in 2003 by
+The Society of Naval Architects and Marine Engineers
+601 Pavonia Ave « Jersey City, NJ * 07306
+
+
+--- Page 2 ---
+Copyright © 2003 The Society of Naval Architects and Marine Engineers.
+ISBN 0-939773-40-6
+
+The opinions or assertions of the authors herein are not to be construed as
+official or reflecting the views of SNAME.
+
+It is understood and agreed that nothing expressed herein is intended or
+shall be construed to give any person, firm, or corporation any right,
+remedy, or claim against SNAME or any of its officers or members.
+
+Design and production by Andrew MacBride.
+Printed in the United States of America by Sheridan Books.
+
+
+--- Page 3 ---
+Chapter 1
+
+Chapter 2
+
+Contents
+
+A Word from the President ix
+Foreword xi
+
+Preface xiii
+
+Acknowledgments xv
+
+Author Biographies for Volume I xix
+
+INTRODUCTION T.Lamb, University of Michigan, The Department of Naval Architecture and
+Marine Engineering, USA
+
+1.1 The Purpose of This Book 1-1 1.2 Need for Integration 1-1 1.3 Globalization 1-1
+1.4 What is Design? 1-2 1.5 Difference Between Design and Engineering 1-2
+
+1.6 What Do We Mean by Design Process? 1-2 1.7 Impact of Computers on Design 1-2
+
+18 Design Approaches 1-3 19 Ship Construction 1-4 1.10 Production Engineering 1-5
+1.11 Role of Naval Architect 1-5 1.12 Skills Needed by Naval Architects 1-6
+
+1.13 Safety 1-6 1.14 Human Factors 1-6 1.15 Risk 1-6 1.16 Ethics 1-7
+
+1.17 Putting It All Together 1-9 1.18 References 1-9
+
+THE MARINE ENVIRONMENT G. A. Meadows and L. Meadows, University of Michigan,
+The Department of Naval Architecture and Marine Engineering, USA
+
+2.1 The World's Waterways 2-1 2.2 Important Fluid Properti~s 2-5
+2.3 Ocean Optics and Acoustics 2-6 2.4 Ocean Currents and Circulation 2-10
+2.5 Wave Mechanics 2-17 2.6 Astronomical Tides of the Oceans 2-26
+
+mn
+
+
+--- Page 4 ---
+Chapter 3
+
+Chapter 4
+
+Chapter 5
+
+Chapter 6
+
+Chapter 7
+
+Chapter 8
+
+Chapter 9
+
+Contents
+
+THE MARINE INDUSTRY T. Colton, Maritime Business Strategies, LLC, USA
+
+3.1 Introduction 3-1 3.2 The World Fleet Today 3-1 3.3 The Marine Industry Today 3-16
+3.4 Summary 3-28 3.5 References 3-29
+
+THE SHIP ACQUISITION PROCESS C. Cushing, C.R. Cushing & Co. Inc., USA
+
+4.1 Introduction 4-1 4.2 Planning 4-1 4.3 Design 4-4
+44 Commercial Activities 4-10 4.5 Production 4-16 4.6 Closure 4-26
+
+THE SHIP DESIGN PROCESS P.Gale, IIMA, USA
+
+5.1 Introduction 5-1 5.2 Design Phases 5-6 5.3 Design Procedure 5-15
+5.4 Design Development 5-22 5.5 Design Topics 5-28 5.6 References 5-38
+5.7 Bibliography 5-39
+
+ENGINEERING ECONOMICS H. Benford, University of Michigan, The Department of Naval
+Architecture and Marine Engineering, USA
+
+6.1 Nomenclature 6-1 6.2 Introduction 6-2 6.3 The Time-Value of Money and Cash Flow 6-3
+64 Taxes and Depreciation 6-13 6.5 Leverage 6-17 6.6 Measures of Merit 6-20
+
+6.7 Constructing the Analysis 6-27 6.8 Building Costs 6-31 6.9 Operating Costs 6-33
+
+6.10 References 6-35
+
+MISSION AND OWNER'S REQUIREMENTS M. Buetzow, Chevron Shipping, USA, and
+
+P. Koenig, Office of Naval Research, Asia
+
+7.1 Introduction 7-1 7.2 Top-Level Mission Requirements 7-2
+
+7.3. Other Owner's Technical Requirements 7-11 74 Ownership and Operating Agreements 7-16
+7.5 Shipbuilding Contract Price and Total Project Cost 7-20 7.6 References 7-23
+
+7.7 Useful Readings 7-23
+
+REGULATORY AND CLASSIFICATION REQUIREMENTS G. Ashe, ABS, USA, and
+
+1. Lantz, USCG, USA
+
+8.1 Introduction 8-1 8.2 Classification 8-2 8.3 International Statutory
+
+Requirements 8-6 8.4 National Regulatory Requirements 8-19 8.5 Regional and Local
+Regulatory Requirements 8-20 8.6 Certification and Enforcement 8-20
+
+CONTRACTS AND SPECIFICATIONS K. It: Fisher, Fisher Maritime Transportation
+
+Counselors, Inc., USA
+
+9.1 Introduction to Shipbuilding Contracts 9-1 9.2 Formation of the Shipbuilding Agreement 9-10
+9.3 Formation of Contract Specifications and Plans 9-26 9.4 Management of Contracts During
+Performance 9-40 9.5 References 9-46 9.A Appendix '9-46
+
+
+--- Page 5 ---
+Chapter
+
+Chapter
+
+Chapter
+
+Chapter
+
+Chapter
+
+Contents
+
+10 COST ESTIMATING L. Deschamps, SPAR Associates Inc., USA, and J. TfJImbuleNaval Suiface
+
+11
+
+12
+
+13
+
+14
+
+Waifare Center, USA
+
+10.1 Nomenclature 10-1 10.2 Introduction 10-2 10.3 Types of Co~t Estimates 10-3
+10.4 Design and Costing Strategies 10-3 10.5 Organizing the Cost Estimate 10-5
+
+10.6 Cost Estimating Relationships 10-6 10.7 Use of Historical Costs 10-7
+
+10.8 Impact of Build Strategy 10-8 10.9 Cost Adjustments and Forecasts 10-9
+
+10.10 Cost Risk 10-14 10.11 Cost Estimating Systems 10-15 10.12 References 10-16
+10.13 Suggested Reading 10-16
+
+PARAMETRIC DESIGN M. Parsons, University of Michigan, The Department of Naval Architecture
+and Marine Engineering, USA
+
+11.1 Nomenclature 11-1 11.2 Parametric Ship Description 11-2 11.3 Parametric Weight and
+Centers Estimation 11-21 11.4 Hydrodynamic Performance Estimation 11-28
+11.5 Parametric Model Development 11-38 11.6 Parametric Model Optimization 11-43
+
+11.7 References 11-46
+
+MASS PROPERTIES W Boze, Northrop Grumman Newport News Shipbuilding Company, USA
+
+12.1 Introduction 12-1 12.2 Managing Mass Properties Data 12-3 12.3 Moment offnertia and
+Gyradius 12-4 12.4 Determination of Component Weight and Center of Gravity 12-7
+
+12.5 Margins and Allowances 12-9 12.6 Mass Properties Management 12-11
+
+12.7. Computer Applications 12-16 12.8 Risk and Risk Management 12-16
+
+12.9 Mass Properties Validation 12-18 12.10 References 12-19
+
+COMPUTER-BASED TOOLS J. Ross, Proteus Engineering, Division of Anteon Corporation, USA
+
+13.1 Nomenclature 13-1 13.2 Introduction 13-1 13.3 Computer-aided Design 13-3
+13.4 Computer-Aided Engineering 13-4 13.5 Computer-Aided Synthesis Modeling 13-6
+13.6 Computer-Aided Manufacturing 13-7 13.7 Product Model Programs 13-8
+
+13.8 Computer-Integrated Manufacturing 13-11 13.9 Computer Systems Integration 13-13
+13.10 Computer Implementation 13-16 13.11 Future Trends 13-20
+
+13.12 References 13-22
+
+DESIGN/PRODUCTION INTEGRATION T.Lamb, University of Michigan, The Department of
+Naval Architecture and Marine Engineering, USA
+
+14.1 Introduction 14-1 14.2 Engineering Approach 14-2 14.3 Design for Production 14-10
+14.5 References 14-69
+
+
+--- Page 6 ---
+vi
+
+Chapter 15
+
+Chapter 16
+
+Chapter 17
+
+Chapter 18
+
+Chapter 19
+
+Chapter 20
+
+Contents
+
+HUMAN FACTORS IN SHIP DESIGN S.R. Calhoun and S. C. Stevens, USCG, USA
+
+15.1 Introduction 15-1 15.2 Human Factors 15-2 15.3 Human Capabilities and
+Limitations 15-6 15.4 Human Sensory Limitations 15-11 15.5 Ship Motions: Vibrations and
+Acceleration 15-17 15.6 Other Sensory and Environmental Limitations 15-20
+
+15.7 Fatigue 15-21 15.8 The Design of Human Machine Environments: Who Does What
+and How? 15-22 15.9 Where to Go from Here 15-26 15.10 References 15-26
+
+SAFETY R. L. Markle, President, Radio Technical Commission for Maritime Services, USA
+
+16.1 Prevention 16-1 16.2 The Human Factor 16-2 16.3 Fire Safety Construction 16-3
+16.4 Fire Fighting Systems 16-7 16.5 Escape 16-11 16.6 Muster/Assembly Stations 16-12
+16.7 Evacuation 16-13 16.8 References 16-21
+
+ARRANGEMENT AND STRUCTURAL COMPONENT DESIGN _ B. Boon, Bart Boon Research
+and Consultancy, The Netherlands
+
+17.1 Introduction 17-1 17.2 StructuralArrangementDesign 17-2 17.3 General Approach of
+Structural Design for Strength and Stiffness 17-3 17.4 Functions of Structures and
+
+Their Components 17-3 17.5 Material Selection, Including Material Forms 17-4
+
+17.6 Thinking In Structure Models 17-7 17.7 Transfer and Transmission of Loads 17-8
+
+17.8 Failure Mechanisms and Structural Objectives 17-12 17.9 Concepts of Structural
+
+Components 17-13 17.10 Overall Structural Arrangements, Including Midship Sections 17-39
+17.11 Structural Areas 17-50 17.12 Structural Details Examples 17-53 17.13 References 17-55
+
+ANALYSIS AND DESIGN OF SHIP STRUCTURE P.Rigo, /nstitut du Genie Civil, Belgium, and
+E. Rizzuto, University of Genoa, Italy
+
+18.1 Nomenclature 18-1 18.2 Introduction 18-1 18.3 Loads 18-4
+
+18.4 Stresses and Deflections 18-21 18.5 Limit States and Failure Modes 18-35
+
+18.6 Assessment of Structural Capacity 18-36 18.7 Numerical Analysis for Structural Design 18-60
+18.8 Design Criteria 18-69 18.9 Design Procedure 18-70 18.10 References 18-73
+
+RELIABILITy-BASED STRUCTURAL DESIGN B. M. Ayyub and I. A. Assakkaf, University of
+Maryland, USA
+
+19.1 Introduction 19-1 19.2 Ship Structural Components 19-3 19.3 Reliability, Risk, Safety"
+and Performance 19-5 19.4 Reliability-Based Structural Design Approaches 19-8
+
+19.5 LRFD-Based Design Criteria for Ship Structures 19-15 19.6 Examples: Design
+
+and Analysis 19-27 19.7 References 19-32
+
+HULL MATERIALS AND WELDING V.Bertram, ENS/ETA, France, and T.Lamb, University of
+Michigan, The Department of Naval Architecture and Marine Engineering, USA
+
+20.1 Introduction 20-1 20.2 Material Properties and Tests 202 20.3 Structural Steels 20-5
+20.4 Nonferrous Alloys 20-9 20.5 Welding 20-13 20.6 References 20-23
+
+
+--- Page 7 ---
+(Japter 21
+
+Olapter 22
+
+Chapter
+
+Chapter
+
+Chapter
+
+Chapter
+
+23
+
+24
+
+25
+
+26
+
+Contents vii
+
+COMPOSITES A. Horsmon, ATC Chemicals Corporation, USA
+
+21.1 Nomenclature 21-1 21.2 Introduction 21-1 21.3 Basic Materials 21-2
+214 Design 21-7 21.5 Manufacturing Methods 21-11 21.6 Repair 21-15
+21.7 Summary 21-16 21.7 References 21-16
+
+GENERAL ARRANGEMENT DESIGN, HULL OUTFIT AND FITTINGS H. Hofmann,
+
+M. Rosenblatt & Son, USA
+
+22.1 Introduction 22-1 22.2 General Arrangement Design 22-1 22.3. Accommodation
+Arrangement Design 22-7 22.4 Closures 22-13 22.5 Anchor and Mooring Arrangements
+and Deck Fittings 22-22 22.6 Pilot Boarding 22-31 22.7 Hold Sparring, Ceiling, and
+Dunnage 22-32 22.8 Deck Covering 22-35 22.9 Joinerwork, Insulation, and Linings 22-39
+22.10 Furniture, Furnishings, and Steward Outfit 22-39 22.11 References 22-45
+
+SHIP PRESERVATION M. Kikuta and M. Shimko, M. Rosenblatt & Son, USA
+
+23.1 Introduction 23-1 23.2 General Principles of Corrosion and Corrosion Control 23-1
+23.3 Improving the Performance of Preservation Systems 23-7 23.4 Cost-Benefit Analysis 23-12
+23.5 Recommendations for Design and New Construction 23-13 23.6 References 23-15
+
+MACHINERY CONSIDERATIONS A. Rowen, SNAME, USA
+
+24.1 Nomenclature 24-1 24.2 General Considerations 24-1 24.3 Diesel Plants 24-12
+
+24.4 Gas Turbines 24-18 24.5 Steam Plants 24-20 24.6 Construction Considerations 24-21
+24.7 References 24-27
+
+THE SHIPBUILDING PROCESS M.-H. Spicknall, University of Michigan, The Department of Naval
+Architecture and Marine Engineering, USA
+
+25.1 Introduction 25-1 25.2 General Production Approaches 25-1
+
+25.3 Ship Production Approaches 25-4 25.4 Summary 25-17 25.5 References 25-18
+
+SHIPYARD LAYOUT AND EQUIPMENT T.Lamb, University of Michigan, The Department of
+Naval Architecture and Marine Engineering, USA
+
+26.1 Introduction 26-1 26.2 Brief History 26-1 26.3 Shipyard Layout Requirements 26-1,2
+26.4 Shipyard Equipment 26-19 26.5 Typical Shipyard Characteristics 26-31
+
+26.6 References 26-31
+
+
+--- Page 8 ---
+With this new edition of SHIP DESIGN AND CONSTRUC-
+TIONthe Society of Naval Architects and Marine Engineers
+again advances the cycle of revision and updating of its
+major textbooks. The third edition of Marine Engineering
+was released in 1992, while the fourth edition of Principles
+of Naval Architecture is in the final stages of preparation.
+Over the decades since the first editions of these three books
+were published they have not only served their intended and
+primary purposes of educating generations of students and
+providing reference material for practicing professionals, but
+have often provided international members of the marine
+community with their first introduction to the Society. This
+new edition acknowledges the international applicability of
+its content and the growing international influence of the
+Society in the geographical diversity of its authors.
+
+While the content of this edition is entirely new and up
+to date, the philosophy of preceding editions is retained:
+the book again addresses the practical aspects of ship de-
+sign and shipbuilding that are relevant to shipowners and
+operators as well as to the designers and builders. Expand-
+ing the book to two volumes with 55 chapters has permit-
+
+A Wordfrom the President
+
+ted an enormous increase in the breadth and depth of con-
+tent. Professor Thomas Lamb's diligence and persistence
+as Editor have rewarded the Society and the profession with
+a book that is virtually a whole professional library in two
+volumes.
+
+As an active and involved member of the Society Tam
+well aware of the level of effort that goes into the prepara-
+tion and publication of such a significant treatise as SHIP
+DESIGNANDCONSTRUCTIONind as President lam pleased
+and honored to use this space to thank Professor Lamb and
+all of those who worked with him, including the Chairman
+and members of the Control Committee, the authors, the re-
+viewers, and all of the other contributors. Without their ef-
+forts this major and, I believe, necessary and successful
+book would not have been possible. This new edition of
+SHIP DESIGN AND CONSTRUCTIONwill stand as a credit
+to the Society, an inspiration to its readers, and a benefit to
+the industry for many years to come.
+
+Bruce S. Rosenblatt
+President
+
+Ix
+
+
+--- Page 9 ---
+With the passage of time since the 1980 edition of Ship De-
+sign and Construction, progress in the related arts and sci-
+ences has increasingly dictated the need for an updated
+version. Accordingly, in January 1996, SNAME's Execu-
+tive Committee directed that the revision proceed promptly
+and approved the formation of the Control Committee. In
+February 1996, the editor, Professor Thomas Lamb, was
+appointed.
+
+SNAME embarked on a program of publishing signifi-
+cant treatises on the subject of naval architecture, marine
+engineering, and shipbuilding with the 1939 edition of Prin-
+ciples of Naval Architecture. This was followed in 1942
+with the publication of Marine Engineering and in 1955
+with Design and Construction of Steel Merchant Ships. This
+present edition of Ship Design and Construction evolved
+from the 1955 Design and Construction of Steel Merchant
+Ships and the 1969 and 1980 revisions that bore the same
+title as the current edition. The organization of the subject
+matter of this new edition, however, is totally different from
+what was contained in the 1980 edition; in fact it is a com-
+plete re-write. There is a change not only in the text mate-
+rial but also in the philosophy in which the material is
+presented.
+
+The 1980 edition concerned itself with the practical as-
+pects of ship design as they relate to the requirements of the
+owner and operator and as they relate to the characteristics
+of the mission that the ship is to perform. Producibility of
+the ship was stressed as a design goal as well as the need to
+investigate shipbuilding and ship operating economics to de-
+rive a cost-effective vessel that would perform the intended
+task. In addition to the design aspects, coverage was provided
+
+Foreword
+
+of such subjects as shipbuilding contracts, government reg-
+ulations, shipyard production techniques, launchings, trials,
+and guarantee surveys. The current edition updates and ex-
+pands on this material and incorporates a complete change
+in presentation. The book has been organized in two volumes
+for the first time. The first comprises the technical aspects
+of the design and construction and the second provides de-
+tails on the application to specific ship types.
+
+The purpose of the book remains essentially the same
+as that of the prior editions-namely, a textbook "to assist
+students and others entering the field of shipbuilding to-
+wards a knowledge of how merchant ships are designed and
+constructed and to provide them with a good background
+for further study." Nevertheless, a number of considerations
+led the Control Committee to modify extensively the scope
+and organization of the book. The increasing globalization
+of shipbuilding and the development of commercial ship de-
+sign outside the U.S. dictated that the new book have in-
+ternational authorship. That this was accomplished can be
+seen by the fact that the authors are from 14 countries.
+
+The Committee reviewed the 1980 edition of the book
+and determined it:
+
+did not provide individual chapters on specific ship types,
+
+* in some cases, such as with launching, there appeared
+to be an imbalance in the level of detail in which a sub-
+ject was intended,
+
+* certain technical areas could be blended into coverage
+of specific ship types such as Chapters 10 and lion dry
+cargo handling and transportation of liquid cargo, re-
+spectively,
+
+x1
+
+
+--- Page 10 ---
+xii Foreword
+
+authorship was mainly from U.S.,
+
+naval vessels were not specifically considered, and
+there was a clear absence of a significant presentation
+on the impact of machinery.
+
+As a result, the Committee concluded:
+
+develop the new edition in two volumes with the first con-
+taining a treatment of general technical subjects and the
+second treating specific ship types,
+naval vessels should be considered,
+in the chapters for specific vessel types address what is
+unusual relating to the general technical subject chap-
+
+ters in the first volume as applied to the design and pro-
+duction of these vessels,
+
+work towards incorporating a more worldwide repre-
+sentation of chapters' authorship as much of the tech-
+
+nology exists overseas, and
+
+the essentially re-written book would as a result of its
+content not only address its primary intended mission
+but would be a significant source of reference material
+for the practitioner.
+
+Through the cooperation of the Publications Committee
+and the Editors and Control Committees for this book and
+for the forthcoming edition of Principles of Naval Archi-
+tecture, SNAME continues to provide a compatible series
+of volumes that will cover the gamut of technology from the
+
+basic concept of a vessel to the ultimate delivery to its owner
+and operator. This has proved to be an exacting task, par-
+ticularly during a period when new intergovernmental reg-
+ulations have been undergoing rapid development and when
+environmental demands have forced changes not only in the
+ships themselves but also in the facilities where they are con-
+structed and the waterways in which they operate.
+
+This current edition is most significantly the creation of
+the Editor, Professor Thomas Lamb, with the support of the
+authors. The Control Committee has been of assistance, but
+Professor Lamb has provided the focus and painstaking ef-
+fort to see this complete re-write through. The task has been
+made much more difficult by the decreased external sup-
+port of professional society activities. A work like this be-
+comes a labor of devotion by the Editor. SNAME owes a
+debt of gratitude to Professor Lamb for this work.
+
+As a result of the collaborative effort involved in its
+preparation, the 2003 edition of Ship Design and Con-
+struction will better meet the current needs of all those in-
+volved in ship  design/production. Because of its
+comprehensive treatment and the near impossibility for one
+person to retain specialized knowledge in every technical
+field covered by this edition, the book should be valued by
+practicing ship designers and builders as well.
+
+Dr. John C. Daidola, P.E.
+Chairman, Control Committee
+
+
+--- Page 11 ---
+This book has a great heritage, namely, the earlier editions
+in 1955, 1969 and 1980. However, the needs for a new edi-
+tion derive not just from the time that has past since the last
+edition, but because of the exciting and challenging situa-
+tion that ship designers and shipbuilders, not only in the
+US. but around the world, face today. The demand for ships
+has never been greater and the associated commercial as well
+as technical challenges are worthy of any vibrant industry.
+However, there are many problems.
+
+Shipbuilding is a global industry and one that can be in-
+troduced relatively easily into developing countries. Be-
+cause of this and even more important, because it uses
+significant numbers of workers, it is often used by devel-
+oping nations as a way to develop an employment and in-
+dustrial base as well as to attain a foundation for balance of
+payments exports to pay for the technology imports they
+need to develop.
+
+Even with the higher demand for ships the world ship-
+building capacity is still greater by more than 50%, with new
+shipyards still being built. This results in fierce competition
+and, unfortunately, low world shipbuilding prices. The ship
+prices are set by the lowest cost shipbuilders, often in de-
+veloping countries, where financial support is given to the
+industry to attain national goals. This can upset the normal
+competitive forces and result in some traditional shipbuilding
+countries having problems in meeting the low prices and
+even having to exit shipbuilding, as was the case of Swe-
+den and Britain in the 1980s.
+
+The situation in the U.S. is somewhat different in that it
+has not been a player in the international commercial ship-
+building market since the 1950s. Also, as the U.S. ship-
+
+Preface
+
+building industry operates in a protected environment, and
+as long as it keeps out of the international market, it is not
+directly affected by world pricing. However, today the U.S.
+shipyards are facing a dilemma. With U.S. Navy new ship
+orders decreasing well below the level to keep the U.S. ship-
+yards fully occupied, they must find other markets or face
+closure. In the past the Jones Act provided a demand for
+commercial ships and at the time of writing there are tankers,
+RO/ROs, cruise ships and acontainer ship being constructed
+in US. shipyards. This is a welcome development and one
+that should continue for some time as the existing Jones Act
+ships are becoming quite old and in need of replacement.
+
+This in turn creates a demand for educated and experi-
+enced ship designers and shipbuilders not only in the U.S.
+but in the developing countries, for obvious reasons, and
+also in the traditional shipbuilding countries where demand
+is falling, as the existing knowledge and skills are lost due
+to industry scale-down.
+
+All the above creates the need for this book, as it cap-
+tures existing knowledge from around the world on best
+ship design and construction practices, provides a readily
+accessible record of this knowledge, and thus provides a
+way for students, as well as inexperienced ship designers
+and shipbuilders, to acquire the knowledge they need in
+their learning and work.
+
+Many outsiders do not perceive shipbuilding as a "high-
+tech" industry. However, it does use specific high technol-
+ogy in its processes to design and construct ships and other
+marine equipment, which can be among the most complex
+products in the w6rld.
+
+It also does not change as quickly as some other indus-
+
+Xi
+
+
+--- Page 12 ---
+xIV Preface
+
+tries. That this is so is demonstrated by the fact that the pre-
+vious edition of this book is still a useful and relevant ref-
+erence book for students and practitioners of ship design
+and construction. Also, when talking of shipyards, the one
+U.S. yard and most of the Japanese shipyards, built in the
+1960s, are still considered the new shipyards.
+
+Nevertheless, much has changed since the publication
+of the last printing of the 1980 edition of the book, and it
+is time for a revision. Actually this edition is not just a re-
+vision but acomplete re-write and significant format change.
+Another change is in its authorship. Shipbuilding is a global
+industry and the U.S. is not currently a leader in commer-
+cial ship construction. It was therefore appropriate to seek
+the best authors from the shipbuilding world, not just from
+the U.S., especially as the U.S. has not been involved re-
+cently in some areas of the commercial ship design covered.
+
+It is being published in two volumes for the first time.
+‘Volume I contains the generic ship design theory and con-
+struction information without application to specific ship
+types, except where it is necessary to completely describe
+the application. Volume II contains chapters on specific ship
+types and the special design issues applying thereto. The
+Book Control Committee decided the contents.
+
+An obvious change is the impact of computers and in-
+formation technology on the design and construction of
+ships and marine vehicles. There has also been a number
+of new ship and offshore platform design types that have
+appeared since the publication of the previous book.
+
+It is the intent of this edition of Ship Design and Con-
+struction to cover the changes and provide an instruction
+and information book that will be useful well into the 21st
+century. There is so much information to cover that the prob-
+lem facing the Book Control Committee was not what to
+include but what to leave out. Rather than repeat informa-
+tion that is readily available to U.S. readers, it references
+
+other state-of-the-art publications from groups such as
+SNAME, the National Shipbuilding Research Program, and
+the USA Shipbuilding web site.
+
+Specific changes are that the new book does not include
+chapters on Load Line, Tonnage, and Launching that were
+new in the 1980 edition. Nor does it include individual chap-
+ters on Cargo Handling-Dry Cargo, Transport of Liquid
+and Hazardous Cargoes, and Trials and Preparation for De-
+livery-topics _ that are covered in other chapters. It was also
+decided not to include a glossary, as there are many others
+already published and even some available on the Internet.
+
+The new book focuses on the fact that there are many
+ship types and within each type many variations. Therefore,
+each major ship type is covered in a separate chapter in Vol-
+ume II. In addition, a chapter on Offshore Production and
+Drilling is included. For the first time chapters on Naval
+Surface Vessels and Submarines are included. This allowed
+the aspects of ship design and construction that are generic
+to be placed in Volume I.
+
+New topic chapters have been added in Volume I, such
+as the Marine Environment. It has always been a puzzle to
+the editor how ship designers could design products to op-
+erate in the oceans of the world without any knowledge of
+the oceans. So this chapter gives an introduction to this im-
+portant subject. Others are The Marine Industry, The Ship
+Acquisition Process, Mass Properties, Simulation-Based
+Design, Computer-Based Tools, Design/Production — Inte-
+gration, Human Factors in Ship Design, Reliability-Based
+Structural Design, and Machinery Considerations.
+
+The symbols used throughout the book are in accordance
+with the international standard. Units of measure are all
+metric and the past practice of displaying corresponding
+US. customary English units in parentheses is not used.
+
+Thomas Lamb, Editor
+
+
+--- Page 13 ---
+The preparation of this type of a book requires the help of
+many people in addition to the authors and even each au-
+thor requires the help of others. A single author, or a team
+of authors, of a book, usually acknowledges one level of as-
+sistance. In the case of an edited book involving a control
+committee, many authors and many voluntary reviewers of
+chapters, many levels of assistance must be acknowledged.
+
+For this reason this acknowledgment will be presented in
+sections as follows:
+
+1. SNAME's acknowledgment of Book Control Commit-
+tee and Editor,
+
+. Editor's acknowledgment of Control Committee,
+
+. Editor's acknowledgment of Chapter authors,
+
+. Editor's acknowledgment of Chapter reviewers,
+
+. Authors acknowledgments, and
+
+. Acknowledgment for use of photographs, figures and
+other information.
+
+AuUskwWN
+
+1. The Society of Naval Architects and Marine Engineers
+(SNAME) would like to acknowledge with great appre-
+ciation, the participation of the Book Control Commit-
+tee and especially the willingness of the Chairman and
+the Editor for undertaking the exciting but difficult task
+of bringing this book to completion and publication. The
+Book Control Committee consisted of the following
+SNAME members:
+
+Dr. John Daidola, Chairman
+Mark Bebar
+
+Acknowledgments
+
+John Boylston
+Dr. Charles Cushing
+Peter Gale
+Robert Geary
+Ronald Kiss
+George Knight
+Capt. Jeffrey Lantz
+Arnold Moore
+Peter Noble
+Rod Vulovic
+Thomas Lamb, Editor
+
+. It is with sincere appreciation that the Editor acknowl-
+
+edges the encouragement, assistance, and support that
+he received from the Book Control Committee. Many
+members served multiple dual roles as chapter authors
+and chapter reviewers. For them this book was a labor
+of love and the editor hopes that they are pleased with
+the outcome.
+
+. The Editor would like to acknowledge with appreciation,
+
+the effort of all the chapter authors. Without their par-
+ticipation and willingness to put their hard-learned
+knowledge and experience into writing, this book would
+not exist.
+
+. A major activity in preparing this book was the review
+
+of the draft chapters. Many people in addition to the
+Book Control Committee, assisted in this extensive ef-
+fort. The Editor acknowledges with great appreciation
+
+xv
+
+
+--- Page 14 ---
+xvi Ship Design & Construction,
+
+the following people who generously gave of their time
+to review chapters for the book:
+
+Andrew Allan
+Dr. David Andrews
+Mark Bebar
+John Boylston
+Dr. Ian Buxton (reviewed all of Volume I)
+Dr. Charles Cushing
+Dr. John Daidola
+Dr. Stian Erichsen
+Peter Gale
+Robert Geary
+Joseph Key
+Ronald Kiss
+George Knight
+Capt. Jeffrey Lantz
+Dr. Gunther Migeotte
+Arnold Moore
+Dr. Michael Parsons
+Michael M. Powell
+Dr. Richard Storch
+Capt. Barry Tibbitts
+Dr. David G. M. Watson
+
+It is acknowledged that all the Book Control Commit-
+tee members, authors and chapter reviewers participated on
+a voluntary basis without any remuneration for their time
+and expense, and they should be proud of their achieve-
+ment, which is this book.
+
+The editor would like to thank Nilothpaul Dutta, a grad-
+uate student at the University of Michigan, for preparing
+the first flag encircled SNAME logo and Susan Evans for
+preparing the final version, for the front of the book.
+
+Finally, the editor would like to acknowledge the help
+and strong support from Susan Evans, SNAME Publica-
+tions Manager, who converted most of the figures into the
+required format, Terry Flanagan for his final editing, and
+Andrew MacBride who provided the book design and set
+the text for Volume I.
+
+5. The authors of the chapters in Volume I of this book wish
+to express their appreciation as follows:
+
+Thomas Lamb (Chapters 1, 14,20,22 and 26) would like
+to thank the assistance from K. Sultani for preparing some
+of the figures for Chapter 22, and Charles Weil for prepar-
+ing figures for Chapter 26. Also Thomas Lamb gratefully
+acknowledges the permission of Dr. Volker Bertram to use
+his notes and figures on the history and current practice of
+hull curvature and plate development.
+
+Peter Gale (Chapter 5) wishes to thank CAPT Barry F.Tib-
+bitts, USN (Ret.). Barry is the co-author of two other chap-
+
+Volume 1
+
+ters of this book; he also provided significant input to Chap-
+ter 5. He provided the initial drafts of Section 5.4.3 and all
+of Section 5.5 except Section 5.5.1. He carefully reviewed
+the author's drafts of all of the other sections of the chap-
+ter and provided insightful comments. Mr. Larry Guenin
+prepared most of the chapter figures based on the author's
+sketches. Mr. Bill Forsyth inserted the figures into the text
+and edited the entire chapter. Ms. Margaret Holland tracked
+down many references. The assistance of all these persons
+is gratefully acknowledged. Finally, the author would like
+to thank John J. McMullen Associates for providing ad-
+ministrative support for this work.
+
+Mark Buetzow and Dr. Philip Koenig (Chapter 7) wish to
+acknowledge the support of their employers, ChevronTex-
+aco Shipping Company LLC and the Office of Naval Re-
+search. In addition, they would like to thank Bruce Bishop,
+Greg Visineau, Maria Ximenes, and Andrs Ziedins for their
+valuable contributions.
+
+Glenn Ashe and Jeff Lantz (Chapter 8) wish to acknowl-
+edge the invaluable input from Gus Bourneuf, Joe Torrato
+and Cynthia Lakis for their earlier research in the history
+and development of classification societies and statutory
+bodies, and from Peter Eareckson and Frank Perrini on the
+history and development of the tonnage regulations and
+convention.
+
+Dr. Kenneth W Fisher (Chapter 9) wishes to acknowledge
+the assistance of the following persons in the development
+of the chapter, in alphabetical order: Albert H. Bowers III,
+Richard DiNapoli, William Hurley, Thomas J. Kanavaros,
+Duane Laible and Wm. Bradford Mead. He also acknowl-
+edges the invaluable assistance of Thomas Lamb and the
+editorial committee's insights and suggestions. Lastly, Dr.
+Fisher wishes to thank the hundreds of persons from around
+the world who have given him more insight into the me-
+chanics of shipbuilding contracts and specifications during
+their participation in his many presentations of his seminar,
+"Contract Management for Ship Construction, Repair and
+Design."
+
+Mike Parsons (Chapter 11) wishes to acknowledge the as-
+sistance of Ph.D. Candidate David J. Singer in two
+ways. First, he assisted with the preparation and process-
+ing of the figures within the chapter. Second, he developed
+and tested the Artificial Neural Network compared within
+the chapter.
+
+Jonathan Ross (Chapter 13) would like to acknowledge Tobin
+McNatt, Vice President, Anteon Corporation and General
+manager of Proteus Engineering, for providing management
+support and encouragement; Torben Anderson, Executive
+
+
+--- Page 15 ---
+Acknowledgments xvii
+
+Vice President of Odense Steel Shipyard for his hospitality
+during the authors visit to the shipyard, and the following
+persons for their professional comments and advice: Diego
+Abal, Stephen Baum, John Chiffer, Kenji Doi, Bruce Hays,
+George Hazen, Tom Heldreth, John Horvath, Rick Lovdahl,
+Brian Miller, Owen Hughes, Richard Voelker, and Ron Wood.
+In addition, the author would like to thank the numerous ref-
+erence authors cited in the chapter, whose knowledge made
+the chapter possible. Finally, for providing excellent insights
+in their book Aligning Change, the author would like to ac-
+knowledge Peter marks and Kathleen Riley.
+
+Robert Markle (Chapter 16) wishes to acknowledge the as-
+sistance of the following people in preparing the chapter:
+Anthony DiSanto, Rolf Jensen & Associates, Andrew Gre-
+nier, Rolf Jensen & Associates, Matthew Gustafson, U.S.
+Social Security Administration, Kriste Hall, Soza & Com-
+pany, Ltd., Kurt J. Heinz, Office of Design and Engineer-
+ing Standards, U.S. Coast Guard, Morgan J. Hurley,
+Technical Director, Society of Fire Prevention Engineers,
+LCDR Christopher Myskowski, Marine Safety Office Hous-
+ton-Galveston, U.S. Coast Guard, James K. Nelson, Jr.,
+Chair, Department of Construction Engineering, Materials
+Engineering and Industrial Design, Western Michigan Uni-
+versity, LT Douglas Simpson, U.S. Coast Guard, Klaus
+Wahle, Office of Design and Engineering Standards, U.S.
+Coast Guard, and Joseph Westwood-Booth, Senior Techni-
+cal Officer, International Maritime Organization
+
+Bart Boon (Chapter 17) wishes to acknowledge the input
+from Stephen Kennedy of IE Intelligent Engineering, Theo
+Bosman of the Royal Netherlands Navy and Ben-Anne de
+Vries of Damen Shipyards for their help in preparing the
+chapter.
+
+Philippe Rigo and Enrico Rizzuto (Chapter 18) wish to ac-
+knowledge several contributors. To reach a high interna-
+tional standard for Chapter 18, the authors have solicited
+contributions and advises from outstanding fellows. Partic-
+ularly, the authors would like to mention and to thank:
+
+Dr. Besnier E, Principia Marine (ex IRCN), France,
+who contributes to Vibration - Sub-section 18.6.8
+and Numerical Analysis - Sub-section 18.7.1.
+
+Prof. Paik J.K. (Pusan University, Korea) and Dr.
+Thayamballi A.K. (Chevron Shipping, USA), who
+contribute to Buckling and ultimate strength failures
+modes - Sub-sections 18.6.3 and 4 and Collision and
+Grounding- Sub-section 18
+
+Mr. Pradillon J-Y, Principia Marine (ex IRCN),
+France, for his contribution to Analysis Method for
+Specific Design Stages - Sub-section 18.7.5,
+
+Prof. Paetzold, H., TUHa Hamburg, Germany, for
+reference materials on Fatigue.
+
+Prof. Na S-S, Mokpo National University, Korea, for
+his contribution to the Design Procedure (Section
+18.9)
+
+Dr. Valsgard S. from Norway and the DnV, for their
+agreement to use the DnV Technical Report 99-0394,
+namely in Sub-section 18.6.6 - Fatigue and 18.7.2-
+FEA.
+
+Prof. Yao T., University of Osaka, Japan, who con-
+tributes to ultimate strength of hull girder, sub-sec-
+tion 18.6.5.
+
+Dr. Bilal M. Ayyub and Dr. Ibrahim. A. Assakkaf (Chapter
+19) would like to acknowledge the opportunity and support
+provided by the Carderock Division of the Naval SurfCice
+Warfare Center of the U.S. Navy through its engineers and
+researchers that include J. Adamchak, J. Beach, T. Brady,
+D. Bruchman, J. Conley, J. Dalzell, A. Disenbacher, A.
+Engle, B. Hay, P. Hess, D. Kihl, R. Lewis, W. Melton, W.
+Richardson, and J. Sikora; and the guidance of the Naval
+Sea System and Command by E. Comstock, J. Hough, R.
+McCarthy, N. Nappi, T. Packard, J. Snyder, and R. Walz.
+
+6. The following authors would like to give credit for the
+permission/approval to use the photographs, figures and
+other original information in their chapters:
+
+Peter Gale (Chapter 5)
+
+Figure 5.12, Cohen, Lou, Quality Function Deployment:
+How To Make QFD Work For You, Diagram 1-2, p. 14,
+© 1995 Addison-Wesley Publishing Company Inc.
+Reprinted by permission of Pearson Education, Inc.
+
+Jonathan Ross (Chapter 13)
+
+Frontispiece, PTC, Needham, MA, U.S.A.
+
+Figures 13.2, 13.3, and 13.7, PTC, Needham, MA, U.S.A.
+
+Figure 13.6, BAS Engineering, Aalesund, Norway
+
+Figures 13.8 and 13.9,Sener Ingenieria y Sistemas, SA,
+Madrid, Spain
+
+Thomas Lamb (Chapter 14)
+
+FiguresI4.17-14.20 and 14.22-14.26, Professor Volker
+Bertram
+
+Robert Markle (Chapter 16)
+
+Figure 16.2, Library of Congress
+
+Figure 16.3, Austal Ships
+
+Figure 16.4, U.S. Coast Guard
+
+Figure 16.7, Norsafe (Jl:'Irgensen & VikAS)
+
+
+--- Page 16 ---
+xviii Ship Design & Construction,
+
+Figure 16.8, Alexander/Ryan Marine & Safety Co.
+Figure 16.9, Clemson University
+Figure 16.10, Clemson University
+Figure 16.11, Clemson University
+
+Figure 16.12, Viking Lifesaving Equipment (America), Inc.,
+
+Mare Safety A/S
+Figure 16.13, RFD Ltd., Survitec Group
+Figure 16.14, DBC Marine Safety Systems, Ltd.
+Figure 16.15, Willard Marine, Inc.
+
+Figure 16.16, Viking Lifesaving Equipment (America), Inc.
+
+Bart Boon (Chapter 17)
+
+Figures 17.1 and 17.10, SAPA Group, Sweden
+
+Figure 17.11, Meyer Werft, Germany
+
+Figures 17.12 and 17.13, Corus Aluminium Walzprodukte,
+Germany
+
+Figures 17.14 and 17.15, Intelligent Engineering, Canada
+
+Figure 17.17, Rederij ClipperStadAmsterdam, The Nether-
+lands (photographer Thad Koza)
+
+Figures 17.26,17.27,17.30 and 17.65, Gerald W. Smolla,
+Canada
+
+Figures 17.29 and 17.37, Huisman Itrec and Heerema Ma-
+rine Contractors, The Netherlands
+
+Figure 17.34, Marine Structure Consultants, The Nether-
+lands
+
+Figures 17.39 and 17.49, Smit Engineering, The Nether-
+lands
+
+Figure 17.55, Scheepswerf Peters, The Netherlands
+
+Figure 17.62, IHC Holland Dredgers, The Netherlands
+
+Figures 17.66 and 17.67, Schelde Shipbuilding, The Nether-
+lands
+
+Philippe Rigo and Enrico Rizzuto (Chapter 18)
+
+Figures 18.54-18.55, Principia Marine (ex. IRCN), France
+Figures 18.57-18.61, Det Norskse Veritas
+
+Thomas Lamb (Chapter 20)
+
+Figure 20.9h, Bender Shipbuilding, Mobile, Alabama,
+US.A.
+
+Hans Hofmann and Thomas Lamb (Chapter 22)
+
+Figure 22. Ie, Kelvin Hughes Limited, Hainault, Ilford,JUK
+
+Figure 22.4, Stolt-Nielsen Transportation Group, Houston,
+Texas, U.S.A.
+
+Figure 22.5, Navimor Internationalltd, Chopina, Poland
+
+Figure 22.9, Ansell Jones Ltd, Walsall, UK
+
+Figure 22.10, Navimor Internationalltd, Chopina, Poland
+
+Figure 22.11, Navimor Internationalltd, Chopina, Poland
+
+Figuer 22.14, MacGREGOR, Gothenburg, Sweden
+
+Figure 22.15, Ansell Jones Ltd, Walsall, UK
+
+Volume 1
+
+Figures 22.16 and 22.17, Fr~eman Marine Inc. Oregon,
+US.A.
+
+Figures 22.18 and 22.19, Ansell Jones Ltd, Walsall, UK
+
+Figure 22.20-22.24, Mareco Marine Systems, Finland
+
+Figure 22.26, Ansell Jones Ltd, Walsal,l UK
+
+Figures 22.27 and 22.29, Marine Crewman, Website,
+Chapter 21
+
+Figure 22.28, Poseidon, Poland
+
+Figure 22.30 and 22.34, Steen GmbH, Germany
+
+Figure 22.35 and 22.36, Hatlapa, Uetersen, Germany
+
+Figures 22.37 and 22.38, Ansell Jones Ltd, Walsall, UK
+
+Figures 22.40-22.42, Ansell Jones Ltd, Walsall, UK
+
+Figure 22.46, Hopeman Brothers, Virginia,U.S.A.
+
+Figure 22.47, Navimor Internationalltd, Chopina, Poland
+
+Figure 22.48, Kvaerner Masa- Yards, Piikio Works, Finland
+
+Figure 22.49, Hopeman Brothers, Virginia, U.S.A.
+
+Figure 22.50, Navimor Internationalltd, Chopina, Poland
+
+Alan Rowen (Chapter 24)
+
+Figure 24.10, New Sulzer Diesel, now a division of the
+Wfutsila Corporation
+
+Figure 24.11, MAN-B&W Diesel, Inc.
+
+Mark Spicknall (Chapter 25)
+
+Figure 25.2, Mustang Engineering
+
+Figure 25.3, Titan SNC-LAVALIN
+
+Figure 25.4, Federal Aviation Administration
+
+Figures 25.9-25.24, Louis D. Chirillo photo archive on
+NSnet.com
+
+Thomas Lamb (Chapter 26)
+
+Fronticepiece , Volkewerft, Stralsund, Germany
+
+Figure 26.11, Sumitomo Shipbuilding Company, Opima, Japan
+
+Figure 26.14 and 26.15, Northrop Grumman Ship Systems,
+Ingalls Division, Pascagoula, U.S.A.
+
+Figure 26.18, Aker MTW Shipyard, Wismar, Germany
+
+Figure 26.20, IMG, Rostock, Germany
+
+Figure 26.24, Sambo Shipbuilding Company, Korea
+
+Figure 26.25, Samsung Shipbuilding Company, Korea
+
+Figure 26.37, IMG, Rostock, Germany
+
+Figures 26.47-26.49, IMG, Rostock, Germany
+
+Figure 26.64, IMG, Rostock, Germany
+
+Other illustrations come from open literature and are ref-
+erenced in the text. Some come from the internat web pages
+of the.companies. Unfortunately, in some cases explicit per-
+mission could not be obtained from authors or publishers,
+but their important contribution to the chapter is hereby ac-
+knowledged.
+
+
+--- Page 17 ---
+Author Biographies for Volume /
+
+Chapters 1, 14, 20, 22 and 26
+
+Thomas Lamb is aResearch Scientist, Director of the Ship-
+building Research Lab and the NAVSEA Ship Production
+Science Program, and an adjunct professor in the Depart-
+ment of Naval Architecture and Marine Engineering at the
+University of Michigan. He served a 5-year apprenticeship
+as a Shipwright in HM Dockyard, Rosyth, Scotland, from
+1950-1955. He received his Honors B.S. from Kings Col-
+lege, Durham University in 1958 and an MBA from Tulane
+University in 1990. He is a Fellow of the Society of Naval
+Architects and Marine Engineers, the Royal Institution of
+Naval Architects and the Institute of Marine Engineering
+Science and Technology, and a Member of the American
+Society of Naval Engineers, the Society of Logistic Engi-
+neers and the International Council on Systems Engineer-
+ing. He is a Registered Professional Engineer in Washington
+and Wisconsin, a British Chartered Engineer and a Euro-
+pean Engineer.
+
+Chapter 2
+
+Dr. Guy A. Meadows is a Professor of Applied Ocean
+Physics and Director of the Ocean Engineering and Marine
+Hydrodynamics Laboratories in the Department of Naval
+Architecture and Marine Engineering at the University of
+Michigan. He received his B.S.E (1972) and M.S.E. (1974)
+in Mechanical Engineering from Michigan State University,
+and his Ph.D. in Marine Science from Purdue University in
+1977. He joined the faculty ofthe University of Michigan
+in 1977, where he established his research programs in field
+and analytical studies of marine environmental hydrody-
+
+namics, active microwave remote sensing of ocean dynamics
+and the development of in situ and remote oceanographic
+
+instrumentation and data acquisition systems designed to
+measure the spatial and temporal structure of coastal bound-
+ary layer flows.
+
+Dr. Lorelle A. Meadows is a Research Scientist in Engi-
+neering in the Department of Naval Architecture and Ma-
+rine Engineering at the University of Michigan. She received
+her B.S. (1983) in Marine Geochemistry, M.S. (1985) in
+Physical Oceanography and her Ph.D. (2002) in Oceanic
+Science from the University of Michigan. She joined the
+staff of the University of Michigan in 1986 where she
+worked to develop research programs in environmental near-
+shore dynamics and remote sensing of ocean surface
+processes. In addition to overseeing an active research pro-
+gram, she teaches upper-level ocean dynamics and intro-
+ductory engineering courses.
+
+Chapter 3
+
+Tim Colton is President of Maritime Business Strategies,
+LLC, a consulting firm specializing in improving the per-
+formance of businesses and organizations in the maritime
+industry. He started his career in shipbuilding in 1958 at Lith-
+gows Limited, Scotland, where he served an apprenticeship
+and became Planning Manager. After a stint as Production
+Manager of a Canadian shipyard, he joined John J. Mc-
+Mullen Associates in New York City in 1968, where he
+worked primarily .as a consultant to the shipbuilding in-
+dustry. He returned to active shipbuilding in 1978, as VP,
+
+XIX
+
+
+--- Page 18 ---
+XX Ship Design & Construction,
+
+Planning, for Levingston Shipbuilding, Orange, Texas, but
+moved back north in 1982 when Levingston bought Sun
+Ship, to be VP, Marketing, for Pennsylvania Shipbuilding.
+In 1988, he became a shipbuilding consultant again, this
+time with his own firm, Colton & Company, in Washington
+DC. He returned to shipbuilding a second time in 1998,
+joining Halter Marine Group as Senior VP, Production Sup-
+port, subsequently becoming Senior VP, Business Devel-
+opment, for Friede Goldman Halter. He left FGH in May
+2001 to return to consulting. He has a B.Sc. in naval archi-
+tecture from the University of Glasgow and an MS. in in-
+dustrial engineering from Columbia University. He is the
+Chairman of the Public Policy Committee of the Society of
+Naval Architects and Marine Engineers, and also serves on
+the U.S. Advisory Committee of Lloyd's Register.
+
+Chapter 4
+
+Dr. Charles Cushing has been President of C. R. Cushing &
+Co., Inc. since its founding in 1968. His firm of naval archi-
+tects and marine engineers has been responsible for the design
+and/or construction of over 250 ships worldwide, including
+container ships, tankers, bulk carriers, ITB's, passenger ves-
+sels and other types. Dr. Cushing is recognized as one of the
+"container pioneers," having started with Pan Atlantic (later re-
+named Sea Land) and served as their Chief Naval Architect.
+He served at sea on a Danish ship as a seaman, and later on
+US. passenger and cargo ships as a cadet and licensed deck
+officer. He is a graduate of the U.S. Merchant Marine Acad-
+emy, SUNY Maritime, MIT and Cardiff College. He has lec-
+tured at World Maritime University since 1986, and lectures
+regularly at other institutions. He is a licensed Professional En-
+gineer, Charter Engineer (UK) and Euro Engineer.
+
+Chapter 5
+
+Mr. Gale has over 42 years of marine experience, includ-
+ing an extensive background in planning, performing, in-
+tegrating, managing and reviewing naval ship designs. He
+spent nearly 29 years as a naval architect employed by the
+Naval Sea Systems Command and its predecessor organi-
+zations. After leaving NAVSEA in 1988, Mr. Gale taught
+naval architecture and ship design courses at Webb Insti-
+tute for three years. In 1991, Mr. Gale joined John J. Mc-
+Mullen Associates, Inc. as Chief Naval Architect of the
+Naval Ship Design and Engineering Operation. In this po-
+sition, he manages projects requiring his ship design man-
+agement and integration expertise and also provides ship
+design consulting services both within the company and to
+outside clients. Mr. Gale served as a consultant to Bath Iron
+Works Corp. during their Arsenal Ship design effort and
+
+Volume 1
+
+supported the CVX Project Office at NAVSEA. Recently,
+he has been supporting Ingalls Shipbuilding on the DD21,
+now DD(X), Gold Team. He was awarded a Bachelor of Sci-
+ence in Naval Architecture and Marine Engineering from
+the Webb Institute of Naval Architecture in 1959, and a
+Master of Science in Nautical Engineering from the Stevens
+Institute of Technology in 1964. Mr. Gale is a life member
+of SNAME and RINA. He is a member of ASNE and the
+Naval Research Advisory Council.
+
+Chapter 6
+
+Harry Benford has been professionally associated with the
+University of Michigan's Department of Naval Architec-
+ture and Marine Engineering since 1948, and gained Emer-
+itus status in 1982. He is best known for his pioneering work
+in applying economics to decision making in ship design.
+He has published extensively in matters pertaining to his
+chosen field and is the recipient of several SNAME awards,
+including the Taylor medal.
+
+Chapter 7
+
+Mark R. Buetzow is Manager of Upstream Projects for
+ChevronTexaco Shipping Company LLC. He holds a B.S.
+degree in mechanical engineering and an M.S. degree in
+naval architecture from the University of California, Berke-
+ley. He is a licensed Professional Engineer in the state of
+California. Mr. Buetzow has held various engineering and
+operations positions in ChevronTexaco Shipping over the
+last 27 years. Besides other engineering and operations re-
+lated work, he has provided design and/or project manage-
+ment services for numerous tankers, FPSOs, tu~s, and
+barges. He is currently a member of the ABS Americas Di-
+visional Technical Committee, the Tanker Structure Coop-
+erative Forum, and the Society of Naval Architects and
+Marine Engineers.
+
+Dr. Philip C. Koenig is Associate Director for Industrial Eco-
+nomics and Technology at the Office of Naval Research, In-
+ternational Field Office (Asia) in Tokyo, Japan. A graduate
+of Webb Institute of Naval Architecture, he received an M.S.
+degree in naval architecture from the University of Califor-
+nia, Berkeley, an Sc.D. degree in engineering economics
+from George Washington University, and is a licensed Pro-
+fessional Engineer in the state of California. Dr. Koenig was
+previously a design and construction engineer at Chevron
+Shipping Company in San Francisco, California and a naval
+architect at Davi<;ITaylor Model Basin, Carderock, Mary-
+land. He serves on SNAME's Journal of Ship Production
+Committee and Marine Technology Committee.
+
+
+--- Page 19 ---
+Author Biographies
+
+Chapter 8
+
+Jeff Lantz has recently retired from the USCG where he was
+the Chief of the Coast Guard's Office of Design and Engi-
+neering Standards and is responsible for the safety standards
+for vessel designs in the areas of structure, stability, electri-
+cal, mechanical, control, firefighting and lifesaving. He is
+also responsible for the Prevention Through People (PIP) and
+risk-based decision-making programs for the Coast Guard's
+marine safety, security and environmental protection pro-
+grams. He also serves as the head of the U.S. delegation to
+IMO's Ship Design and Engineering sub-committee. He grad-
+uated from the Coast Guard Academy in 1974 and the Uni-
+versity of Michigan in 1978, where he obtained advanced
+degrees in Naval Architecture and Marine Engineering and
+in Mechanical Engineering.
+
+Glenn Ashe is presently assigned as Director of Government
+Operations for the American Bureau of Shipping and heads
+their Government Operations Office in Alexandria, Virginia.
+Mr. Ashe is a 1969 graduate of Georgia Tech with a degree
+in electrical engineering. After graduation he completed
+four years of active duty with the US Navy. Upon leaving
+active duty, he affiliated with the Naval Reserve and retired
+in 1994 having attained the rank of Captain. Upon leaving
+active duty, Mr. Ashe attended graduate school at MIT and
+graduated in 1975 with advanced degrees in Naval Archi-
+tecture and Marine Engineering and Ocean Engineering.
+His professional career has included positions with the US
+Navy, US Coast Guard, Military Sealift Command and pri-
+vate naval architectural design firms. He joined the Amer-
+ican Bureau of Shipping in 1990 as Director of Engineering
+for ABS Americas and was Director of Business Develop-
+ment in 1993 and assumed his present position as Director
+of Government Operations in October of 1995. Mr. Ashe is
+amember of ASNE and SNAME.
+
+Chapter 9
+
+Dr. Kenneth W. Fisher has been president of Fisher Mar-
+itime Transportation Counselors, Inc. since 1976. Dr. Fisher
+continues assisting numerous shipyards, shipowners, naval
+architects and vendors from many nations understand and
+avoid the potential pitfalls between the technical and proj-
+ect issues of ship construction, conversion, repair and de-
+sign on one hand, and the legal and contractual issues on
+the other. Having received training as an arbitrator, he reg-
+ularly acts as expert witness or arbitrator for resolving con-
+tract disputes in the marine industries. He is widely known
+for his seminars on the management of contracts for ship
+construction, repair, conversion and design, which have
+been attended by thousands of individuals from organiza-
+
+for Volume 1 xxi
+
+tions in many nations. A graduate of Webb Institute of Naval
+Architecture, he has postgraduate degrees from the Uni-
+versity of Michigan and the University of Sydney. Previ-
+ously he was on the faculties ofthe State University of New
+York Maritime College, the University of Sydney and the
+University of New South Wales. Dr. Fisher is a Fellow of
+the Royal Institution of Naval Architects and a Life Mem-
+ber of SNAME.
+
+Chapter 10
+
+Laurent Deschamps is President of SPAR Associates, Inc.,
+where he has over 25 years of work experience developing
+and implementing computerized shipyard planning and man-
+agement control systems. Since the early 1980's, he has been
+involved in the development of automated cost estimating
+systems. In the 1990s these systems were linked to a vari-
+ety of CAD and naval engineering software to expedite Cost
+evaluations of engineering trade-off studies. SPAR has been
+aprime contractor to the U.S. Navy's Product Oriented De-
+sign & Construction ("PODAC") Cost Model that provides
+features for estimating costs by interim product, manufac-
+turing process and stage of construction. He earned his Bach-
+elor of Science degree from Trinity College, Hartford,
+Connecticut and his B.S. in Mechanical Engineering from
+that same institution. He is a member of SNAME.
+
+Chapter 11
+
+Dr. Michael G. Parsons is a Professor of Naval Architec-
+ture and Marine Engineering at the University of Michigan
+where he has been teaching marine design for the past 18
+years. Previous teaching was focused primarily in marine
+engineering. He served as Chair of that department from
+1981-1991 and as Associate Dean of Undergraduate Edu-
+cation for the College of Engineering from 1991-1996. He
+received a B.S.E. (Naval Architecture and Marine Engi-
+neering) from the University of Michigan in 1963; a Cer-
+tificate in Reactor Engineering from the Bettis Reactor
+Engineering School in 1965; a M.M.E. (Mechanical Engi-
+neering) from The Catholic University of American in 1969;
+and a Ph.D. (Applied Mechanics) from Stanford University
+in 1972. He served six years in the U.S. Navy assigned to
+BuShips/NAVSEA Code 08 and the Atomic Energy Com-
+mission Code 1500 prior to pursuing his Ph.D. He joined
+the faculty at Michigan in 1972. He is a Fellow of the So-
+ciety of Naval Architects and Marine Engineers and is a
+member of the American Society of Naval Engineers, the
+American Society for Engineering Education, the U.S. Naval
+Institute, and the International Association of Great Lakes
+Research.
+
+
+--- Page 20 ---
+Author Biographies
+
+Chapter 8
+
+Jeff Lantz has recently retired from the USCG where he was
+the Chief of the Coast Guard's Office of Design and Engi-
+neering Standards and is responsible for the safety standards
+for vessel designs in the areas of structure, stability, electri-
+cal, mechanical, control, firefighting and lifesaving. He is
+also responsible for the Prevention Through People (PTP) and
+risk-based decision-making programs for the Coast Guard's
+marine safety, security and environmental protection pro-
+grams. He also serves as the head of the U.S. delegation to
+IMO's Ship Design and Engineering sub-committee. He grad-
+uated from the Coast Guard Academy in 1974 and the Uni-
+versity of Michigan in 1978, where he obtained advanced
+degrees in Naval Architecture and Marine Engineering and
+in Mechanical Engineering.
+
+Glenn Ashe is presently assigned as Director of Government
+Operations for the American Bureau of Shipping and heads
+their Government Operations Office in Alexandria, Virginia.
+Mr. Ashe is a 1969 graduate of Georgia Tech with a degree
+in electrical engineering. After graduation he completed
+four years of active duty with the US Navy. Upon leaving
+active duty, he affiliated with the Naval Reserve and retired
+in 1994 having attained the rank of Captain. Upon leaving
+active duty, Mr. Ashe attended graduate school at MIT and
+graduated in 1975 with advanced degrees in Naval Archi-
+tecture and Marine Engineering and Ocean Engineering.
+His professional career has included positions with the US
+Navy, US Coast Guard, Military Sealift Command and pri-
+vate naval architectural design firms. He joined the Amer-
+ican Bureau of Shipping in 1990 as Director of Engineering
+for ABS Americas and was Director of Business Develop-
+ment in 1993 and assumed his present position as Director
+of Government Operations in October of 1995. Mr. Ashe is
+amember of ASNE and SNAME.
+
+Chapter 9
+
+Dr. Kenneth W. Fisher has been president of Fisher Mar-
+itime Transportation Counselors, Inc. since 1976. Dr. Fisher
+continues assisting numerous shipyards, shipowners, naval
+architects and vendors from many nations understand and
+avoid the potential pitfalls between the technical and proj-
+ect issues of ship construction, conversion, repair and de-
+sign on one hand, and the legal and contractual issues on
+the other. Having received training as an arbitrator, he reg-
+ularly acts as expert witness or arbitrator for resolving con-
+tract disputes in the marine industries. He is widely known
+for his seminars on the management of contracts for ship
+construction, repair, conversion and design, which have
+been attended by thousands of individuals from organiza-
+
+for Volume 1 xxi
+
+tions in many nations. A gr<iduateof Webb Institute of Naval
+Architecture, he has postgraduate degrees from the Uni-
+versity of Michigan and the University of Sydney. Previ-
+ously he was on the faculties ofthe State University of New
+York Maritime College, the University of Sydney and the
+University of New South Wales. Dr. Fisher is a Fellow of
+the Royal Institution of Naval Architects and a Life Mem-
+ber of SNAME.
+
+Chapter 10
+
+Laurent Deschamps is President of SPAR Associates, Inc.,
+where he has over 25 years of work experience developing
+and implementing computerized shipyard planning and man-
+agement control systems. Since the early 1980's, he has been
+involved in the development of automated cost estimating
+systems. In the 1990s these systems were linked to a vari-
+ety of CAD and naval engineering software to expedite cost
+evaluations of engineering trade-off studies. SPAR has been
+aprime contractor to the U.S. Navy's Product Oriented De-
+sign & Construction ("PODAC") Cost Model that provides
+features for estimating costs by interim product, manufac-
+turing process and stage of construction. He earned his Bach-
+elor of Science degree from Trinity College, Hartford,
+Connecticut and his B.S. in Mechanical Engineering from
+that same institution. He is a member of SNAME.
+
+Chapter 11
+
+Dr. Michael G. Parsons is a Professor of Naval Architec-
+ture and Marine Engineering at the University of Michigan
+where he has been teaching marine design for the past 18
+years. Previous teaching was focused primarily in marine
+engineering. He served as Chair of that department from
+1981-1991 and as Associate Dean of Undergraduate Edu-
+cation for the College of Engineering from 1991-1996. He
+received a B.S.E. (Naval Architecture and Marine Engi-
+neering) from the University of Michigan in 1963; a Cer-
+tificate in Reactor Engineering from the Bettis Reactor
+Engineering School in 1965; a M.M.E. (Mechanical Engi-
+neering) from The Catholic University of American in 1969;
+and aPh.D. (Applied Mechanics) from Stanford University
+in 1972. He served six years in the U.S. Navy assigned to
+BuShips/NAVSEA Code 08 and the Atomic Energy Com-
+mission Code 1500 prior to pursuing his Ph.D. He joined
+the faculty at Michigan in 1972. He is a Fellow of the So-
+ciety of Naval Architects and Marine Engineers and is a
+member of the American Society of Naval Engineers, the
+American Society for Engineering Education, the U.S. Naval
+Institute, and the International Association of Great Lakes
+Research.
+
+
+--- Page 21 ---
+xxii Ship Design & Construction,
+
+Chapter 12
+
+William Boze is currently the Manager of Naval Architec-
+ture at Northrop Grumman Newport News. He received both
+his Bachelors of Engineering degree in Naval Architecture
+from State University of New York Maritime College and
+his Third Assistant Engineer Coast Guard License for Steam
+& Motor Vessels Unlimited Horsepower in 1980. In his 22
+years at Newport News he has participated in various stages
+of ship design and construction for a variety of ships. He also
+served six years in the United States Naval Reserve mostly
+in the capacity of Assistant Repair Officer at the Philadel-
+phia Naval Base SIMA. He is a member of the Society of
+Naval Architecture and its Ship Design Technical Commit-
+tee as well as the Society of Allied Weight Engineers.
+
+Chapter 13
+
+Jonathan Ross is the Director of Engineering at Proteus En-
+gineering Division of Anteon Corporation. He received his
+BS in Mechanical Engineering from Carnegie-Mellon Uni-
+versity and his MSE in Naval Architecture from the Uni-
+versity of Michigan. As an Officer Candidate School
+Distinguished Naval Graduate, he received a commission
+in the U.S. Navy as an Engineering Duty officer. He is a
+registered Professional Engineer in Michigan and Mary-
+land and a Chartered Engineer in Britain. Prior to joining
+Proteus Engineering he worked for Ross-McNatt, Inc, Gi-
+anotti and Associates, Inc., NOA, and the Johns Hopkins
+University Applied Physics Laboratory. His current spe-
+cialties include CAD/CAE/CAM/CIM, computer aided ship
+design, and shipyard modernization. He was instrumental
+in introducing FORAN into North America. He is a mem-
+ber of SNAME and RINA.
+
+Chapter 14
+Thomas Lamb, see Chapter 1
+
+Chapter 15
+
+LT Scott Calhoun graduated from the U.S. Coast Guard
+Academy in 1995 with a Bachelor's Degree in Naval Ar-
+chitecture and Marine Engineering. After serving two years
+as a Student Engineer aboard U.S. Coast Guard Cutter
+Dauntless (WMEC-624), he attended the University of
+Michigan where in 1999 he was awarded a Master's De-
+gree in Naval Architecture and Marine Engineering. He is
+currently assigned to the Human Element and Ship Design
+Division of U.S. Coast Guard Headquarters in Washington
+DC., working on Crew Endurance Management research
+with the USCG Research and Development Center.
+
+Volume 1
+
+LT Sam Stevens graduated from the U.S. Coast Guard Acad-
+emy in 1995 with a Bachelor's Degree in Mechanical En-
+gineering. He served two years aboard U.S. Coast Guard
+Cutter Mallow (WLB-396) as a Deck Watch Officer, fol-
+lowed by two years at the National Drug Intelligence Cen-
+ter as an intelligence analyst. From 1999-2001, he attended
+the University of Michigan where he was awarded a Mas-
+ter of Science Degree in Naval Architecture and Marine En-
+gineering and a Master of Science Degree in Kinesiology.
+He is currently assigned to the Human Element and Ship
+Design Division of U.S. Coast Guard Headquarters in Wash-
+ington, D.C., working on Crew Endurance Management re-
+search.
+
+Chapter 16
+
+Robert L. Markle is President of the Radio Technical Com-
+mission for Maritime Services (RTCM), a non-profit  sci-
+entific and educational organization, focusing on all aspects
+of maritime radio communications, radio navigation, and
+related technologies. Prior to that, he spent 27 years work-
+ing at U.S. Coast Guard Headquarters in Washington, DC,
+in various assignments related to maritime safety. He con-
+cluded his Coast Guard career as Chief of the Lifesaving
+and Fire Safety Standards Division, where he administered
+U.S. programs on standards and enforcement for marine
+lifesaving, and fire protection systems.
+
+Chapter 17
+
+Bart Boon studied Naval Architecture at Delft University
+of Technology in The Netherlands from which he gradu-
+ated in 1970 with ship structures as specialization. With a
+one-year scholarship from Lloyd's Register of Shipping he
+studied shipbuilding in various developing countries. In
+1972 he joined THC Gusto shipyard in Holland where he
+was involved in the structural and general design of several
+novel offshore units. These included several oil drilling jack-
+ups, dynamically positioned drillships, jack-ups for civil
+engineering purposes, and pipe-laying barges, among them
+the semi-submersible Viking Piper. After a reorganization
+of the Dutch shipbuilding industry and closure of the yard,
+Bart joined THC Gusto Engineering in which the yard's de-
+sign activities were continued. In 1986 he became profes-
+sor of Mobile Offshore Structures Design at Delft University.
+After a few years' intermezzo at Twente University, where
+he headed the industrial liaison office, Bart rejoined Delft
+University in 1994 as Professor of Ship and Offshore struc-
+tures. As such he also managed the Ship Structures Labo-
+ratory of the university. Since 2000 he has run his own
+company advising the ship and offshore industry on vari-
+
+
+--- Page 22 ---
+Author Biographies
+
+ous structural subjects. He is member of the Standing Com-
+mittee of ISSC, and the International Ship and Offshore
+Structures Congress.
+
+Chapter 18
+
+Dr. Philippe Rigo belongs to the National Fund for Scien-
+tific Research (NFSR) and works at ANAST, Department
+of Naval Architecture and Transport Systems of the Uni-
+versity of Liege (ULg, Belgium). He has lectured on Analy-
+sis and Optimization Structures at Liege, Michigan and
+Hanoi Universities. He obtained his PhD Degree in 1988
+from the University of Liege and the Highest Belgian Sci-
+entific Degree (Agrege de l'Enseignement Superieur Uni-
+versitaire) in 1999. He received a postdoctoral fellowship
+from the JSPS at Kyoto University in 1990-91 and a Visi-
+tor Professor fellowship at Department of Naval Architec-
+ture and Marine Engineering of the University of Michigan.
+He worked for 7 years in the Department of Hydraulic
+Structures (Civil Engineering) where he gained experience
+in structural and numerical analysis. During this period he
+also achieved several experimental tests in the hydraulic
+laboratory and towing tank. Since 1991 he has been an
+ISSC Committee Member working mainly on ultimate
+strength.
+
+Dr. Enrico Rizzuto is an Associate Professor in Ship Struc-
+tural Design at the Department of Naval Architecture and
+Marine Technologies (DINAV) of the University of Genoa
+since 2001. He obtained his Honors Degree in Naval Ar-
+chitecture and Marine Engineering in 1986 from the Uni-
+versity of Genoa. He served three years at CETENA (the
+Italian Ship Research Center) in the Hydrodynamic De-
+partment, where he gained experience in the design of pro-
+pellers and in their verification as regards hydrodynamic
+performance, induced pressures and radiated noise. During
+this period he was also responsible for the development and
+analysis of a few contractual sea trials of commercial and
+naval ships. In 1990 he joined DINAV as Researcher. In
+1993-94 he obtained a grant funded by the European Union
+for a I-year research program, developed at the Royal In-
+stitute of Technology (KTH) in Stockholm (Sweden). He
+is responsible at DINAV for several research contracts
+awarded within International and National research pro-
+grams or funded by major Research Centers, Shipyards and
+Manufacturers in the shipbuilding field, covering theoreti-
+cal and experimental definition of quasi-static, dynamic and
+impulsive loads acting on ship structures and of inherent re-
+sponses; vibration and noise propagation on board ships;
+reliability evaluation of ship structures and plants. He is a
+member of ISSC 2000 (Committee VI. 1: Extreme Hull
+
+for Volume f xxiii
+
+Girder Loading) and of ISSC 2003 (Committee VI. 1: Fa-
+tigue Loading)
+
+Chapter 19
+
+Professor Bilal M. Ayyub is the General Director of the Cen-
+ter for Technology and Systems Management at the Univer-
+sity of Maryland, College Park. Dr. Ayyub completed his
+B.S.C.E. (1980), M.S.C.E. (1981), and Ph.D. (1983) at Geor-
+gia Institute of Technology in Atlanta. He joined the Univer-
+sity of Maryland in 1983, and presently is a Professor of Civil
+and Environmental Engineering at the University of Maryland,
+College Park. He directed the structures programs and the
+project management program at the University of Maryland.
+He is aconsultant and board member of two corporations that
+provide services in the areas of risk and decision analysis. Dr.
+Ayyub has served the engineering community in various ca-
+pacities through societies that include ASCE (fellow), ASME
+(fellow), SNAME (fellow), IEEE (senior member), ASNE
+(life member), and NAFIPS. Dr. Ayyub received several best-
+paper, research, and service awards from ASCE, ASME, ASNE
+and NAFIPS, and is on the editorial boards of professional
+journals. Professor Ayyub has completed several research proj-
+ects funded by the National Science Foundation, the U.S.
+Coast Guard, the U.S. Navy, the U.S. Army Corps of Engi-
+neers, the Maryland State Highway Administration, the ASME,
+and several engineering companies. He is a researcher and
+consultant in the reliability and risk analysis of engineering
+systems, and in decision analysis. His publications, which in-
+clude five textbooks, six edited books, book chapters, refer-
+eed journal papers, reports, and papers in conference
+proceedings, number about 350.
+
+Dr. Ibrahim A. Assakkaf is an instructor of Civil Engineer-
+ing at the University of Maryland, College Park. He is the
+director of reliability research at the Center for Technology
+and Systems Management (CTSM) at the University of
+Maryland. He completed both his B.S. degree (1990) and
+MSS. degree (1993) in civil engineering at the George Wash-
+ington University in Washington D.C., and his Ph.D. degree
+(1998) at the University of Maryland. Before 1985, Dr. As-
+sakkaf was employed as a general manager for six years by
+Assakkaf Establishment, a major construction company in
+Saudi Arabia that was awarded a number of both public and
+private projects in Saudi Arabia. Dr. Assakkaf's most recent
+experience was with the CTSM by working on projects
+funded by the U.S. Navy, University of New Orleans (UNO),
+and other government organizations to develop Load and
+Resistance Factor Design (LRFD) for ship structures. Dr.
+Assakkaf is the author and co-author of 50 papers and re-
+ports relating to reliability-based designs and analyses.
+
+
+--- Page 23 ---
+Xxiv Ship Design & Construction,
+
+Chapter 20
+
+Dr. Volker Bertram is a Professor of Naval Architecture
+and Offshore Engineering at ENSIETA in BrestlFrance
+where he teaches ship production and materials, design,
+seakeeping and ship hydrodynamics. He received his
+M.S.E. from the University of Michigan, a Dipl-Ing. and
+a Dring. from the University of Hamburg, and a
+Dr.Ing.habil. from TU Berlin. Industry experience includes
+work for Mitsubishi Heavy Industries, the Hamburg and
+Rome ship model basins, and McKinsey & Co. He taught
+at TU Hamburg-Harburg and Danish Technical University
+before joining ENSIETA.
+
+Thomas Lamb, See Chapter 1
+
+Chapter 21
+
+Al Horsmon is the Naval Architect for ATC Chemicals
+Corp. ATC makes structural foam used in sandwich com-
+posites, mainly for all different kinds of marine craft. He
+works with other naval architects, designers, and builders
+to design composite structures. He received his B.S. in
+Ocean Engineering from the U.S. Coast Guard Academy
+in 1976. He served in the Coast Guard as a shipboard en-
+gineer, then as a marine inspector before attending gradu-
+ate school at the University of Michigan where he received
+Masters Degrees in Naval Architecture and Marine Engi-
+neering, and in Mechanical Engineering in 1984. He then
+worked at Coast Guard Headquarters where he analyzed
+casualties and wrote decisions on materials applications,
+including NVIC 8-87 on Fiberglass. Since coming off ac-
+tive duty in 1988, he has remained in the Reserves, worked
+as aresearcher at the University of Michigan, as an inde-
+pendent consultant to the marine industry, and as a tech-
+nical representative to TORIN, then Airex and now ATe.
+He joined ATC full time in 1999.
+
+Chapter 22
+
+Hans Hofmann is a Program Manager of AMSEC LLC -
+M. Rosenblatt & Son, Washington Operations. He recently
+completed the successful design of the surface portion of
+the USCG Deepwater project as amember of the Lockheed
+Martin-Northrop Grumman Team. He also was the Pro-
+gram Manager for the design of the U.S. Navy T-AO 187
+Class Oiler Design. He served a 3-year apprenticeship at
+Stuelcken Shipyard in Hamburg, Germany that began in
+1950 and completed his education in 1957. He is a mem-
+ber of the Society of Naval Architects and Marine Engi-
+neers, the American Society of Naval Engineers and the
+USCG SOLAS Working Group. He has published papers
+
+Volume 1
+
+on Design for Producibility, Impact of Double Hull on
+Tanker Design and Design of Floating Dry Docks.
+
+Thomas Lamb, see Chapter 1
+
+Chapter 23
+
+Michael Shimko is the Manager for Materials Engineer-
+
+ing of AMSEC LLC - M. Rosenblatt & Son, Washington
+
+Operations. He received his B.Sc. (Chemistry) from the
+University of Maryland in 1977 and his M.Sc. (Mechani-
+
+cal Engineering) from the Naval Postgraduate School in
+1983. He completed a 17-year career, as an Engineering
+
+Duty Officer in the United States Navy in 1994, which
+started as his assignment as a material and division officer
+onboard the conventional-powered aircraft carrier USS'For-
+restal (CV 59). He has experience in both public and pri-
+vate shipyards, and served as the Deputy Director for
+Materials Engineering at the Naval Sea Systems COmQIand
+in Washington, De. Additionally, he served as a Mechan-
+
+ical and Materials Engineering instructor at the United
+
+States Naval Academy. Since his active-duty tour in the
+Navy, he has been employed by AMSEC LLC where he is
+currently the Manager for Materials Engineering. He is a
+registered Professional Engineer in Pennsylvania, NACE
+International certified Materials Selection and Design Spe-
+cialist, as well as a Corrosion Specialist. He is a member
+of American Society of Naval Engineers (ASNE) and
+NACE International.
+
+Miles Kikuta is the Deputy of AMSEC LLC - M. Rosen-
+blatt & Son, Washington Operations. He received his B.Sc.
+(Electrical Engineering) from Illinois Institute of Technol-
+ogy in 1974 and his M.Sc. (Mechanical Engineering) and
+Ocean Engineer degrees from Massachusetts Institute of
+Technology in 1984. He completed a 20-year career as a
+Surface Line Officer and Engineering Duty Officer in the
+United States Navy in 1994. His assignments included tours
+on board USS Jouett (CG 29) as the Damage Control As-
+sistant, instructor at the Surface Warfare Officer School, a
+ship superintendent ata public shipyard, Assistant Program
+Manager for Aircraft Carrier Service Life Extension Pro-
+gram in the Naval Sea Systems Command (NAVSEA) and
+Deputy Director, Materials Engineering Group in NAVSEA.
+Upon his retirement from the United States Navy, he has
+been employed by AMSEC LLC where he has managed the
+Materials Engineering Group, the Fluids Group, and the
+Marine Engineering Division. He is currently the Deputy
+of Washington Operations, focusing on NAVSEA tasks and
+projects. He is amember of the American Society of Naval
+Engineers and NACE International.
+
+
+--- Page 24 ---
+Author Biographies
+
+Chapter 24
+
+Professor Emeritus Alan Rowen retired from Webb Insti-
+tute of Naval Architecture in 2001 and assumed his cur-
+rent position as Technical Director ofthe Society of Naval
+Architects and Marine Engineers (SNAME). Professor
+Rowen taught at Webb Institute for almost 25 years, and
+was the first Rosenblatt Professor of Marine Engineering.
+After graduating from the State University of New York
+Maritime College in 1965 he sailed on merchant ships as
+a watchstanding engineer, later returning to the Maritime
+College as an Engineering Watch Officer and Instructor.
+Subsequently he then joined the Naess Shipping Group,
+moved to London as Manager of New Construction, but
+returned to New York in 1977 to the post at Webb Institute.
+While at Webb Prof. Rowen worked as a research associ-
+ate and as an independent consultant. He contributed to a
+number of publications that are widely used in the indus-
+try, and by students at Webb Institute and at other schools.
+He is a Life Fellow of SNAME, and chaired the Society's
+Ships' Machinery Committee. He is also a Fellow of the
+Institute of Marine Engineers and an officer of the Insti-
+tute's Eastern USA Branch.
+
+for Volume 1 XXV
+
+Chapter 25
+
+Mark Spicknall is an Assistant Research Scientist within the
+University of Michigan's Department of Naval Architecture and
+Marine Engineering. His research focuses on developing and.
+deploying methods and tools for strategic and product plan-
+ning, production engineering, production planning, schedul-
+ing, and control, quality management, cost estimating,
+
+technology management, and business risk analysis. In addi-
+tion to collaborative industry research, Mr. Spicknall has sig-
+nificant practical shipbuilding experience having worked at
+Newport News Shipbuilding for several years in a variety of
+operations management positions. He is a former editor of the
+Journal of Ship Production and remains amember of SNAME's
+
+Journal of Ship Production Committee. He is also a member
+of the Shipyard Production Process Technologies Panel of the
+National Shipbuilding Research Program. Mr. Spicknall has a
+B.S_E. in Naval Architecture and Marine Engineering and an
+MBA, both from the University of Michigan ..
+
+Chapter 26
+Thomas Lamb, see Chapter I
+
+
+--- Page 25 ---
+Chapter 1
+
+1.1. THE PURPOSE OFTHIS BOOK
+The purpose of this book is to:
+
+* assist ship designers and shipbuilders make better design
+decisions by providing the required knowledge in one
+relatively easily accessible source,
+
+* provide a book that can be used by naval architecture
+students to learn about ship design and construction, and
+
+* serve as areference when they enter the marine industry.
+
+It is also hoped that the coverage of the book will be of
+interest to those who seek an authoritative reference in this
+field.
+
+1.2 NEED FORINTEGRATION
+
+The successful practice of shipbuilding is not only a design
+matter, but depends on the integration of marketing, design,
+procurement, production, and the business functions such
+as finance and human resources.
+
+Naval architects need to have a basic understanding of
+all of them to be effective and successful in their careers.
+New approaches such as Concurrent Engineering (CE),
+Integrated Product and Process Development (IPPD), and
+Integrated Product Teams (IPTs) have been developed to
+ensure that all areas impacting design decisions are con-
+sidered, and Systems Engineering (SE) has been devel-
+oped to ensure that the isolated specialist solutions are
+integrated. These are addressed in Chapter 5 - The Ship
+Design Process.
+
+The naval architect has the education and training to
+fully understand the implications of ship design trade-off
+
+Introduction
+
+Thomas Lamb
+
+decisions and should always be the integrator or systems
+engineer for ships.
+
+1.3 GLOBALIZATION
+
+Shipbuilding has always been global in that the ships built
+in one country may be for a shipowner from another coun-
+try and trade worldwide. Even the materials to construct
+the ship could come from many countries, such as steel
+from Norway, diesel engine from Denmark, propellers from
+Britain, and bridge consoles from U.S. for a ship being built
+in Spain.
+
+Even the ship design has been global in that design agents
+in one country could design a ship to be built in another,
+such as designed in Canada and constructed in China. While
+some shipowners prefer to build in their own country, the
+price to do so may be prohibitive and the shipowner may
+be forced to build in the country with the lowest prices in
+order to stay competitive in the shipping market.
+
+However, shipbuilding is not a true free market in that
+many countries support their shipbuilding industry through
+direct and indirect (sometimes hidden) subsidies. Currently,
+Korea is the price setter and is pricing well below the ac-
+tual cost to construct ships in many other countries. Some
+developing countries choose shipbuilding as a way to de-
+velop an industrial base and also to provide a positive ele-
+ment to their balance of payments. The technology is easily
+transferable, and, at the fabrication level, it does not require
+a high level of education or skills with high productivity, if
+the country's labor and/or exchange rate is low compared
+to other shipbuilding countries. For example, China has
+very low productivity but this is offset by very low wages.
+
+1-1
+
+
+--- Page 26 ---
+1-2 Ship Design & Construction,
+
+1.4. WHAT IS DESIGN?
+
+Today, there is still a general lack of understanding of the
+essence of design. Design is the arrangement of elements
+that go into human productions. Design is not a body of
+knowledge. It is the activity that integrates the existing bod-
+ies of knowledge, to achieve a given outcome.
+
+Design is ahighly manipulative activity in which the de-
+signer has to continuously and simultaneously pay atten-
+tion to and balance many factors that influence the design
+outcome.
+
+Because of the incompleteness of knowledge at the dif-
+ferent design stages when decisions are being made, it is
+usual to reexamine them at subsequent points in time when
+more knowledge is developed. This process of reexamina-
+tion is the iterative nature of design and is recognized as an
+integral part of the process.
+
+Todesign is to invent (1).
+
+1.5 DIFFERENCEBETWEEN DESIGN AND
+ENGINEERING
+
+Engineering is a very misused word. It can be used to de-
+scribe a profession, the process of developing a design into
+working instructions, and a type of manufacturing. In this
+book we will be considering the second case only. One of
+the earliest definitions of Engineering, from the Charter of
+the Institution of Civil Engineers is that:
+
+Engineering is the art of directing the great sources of
+power in nature for the use and convenience of man.
+
+Another idea offered by Dr. S. Erichsen is:
+Designers create and Engineers analyze.
+
+Some people see Design as a part of Engineering. In this
+sense they see that some engineers design and some ana-
+lyze the design of others. So in this book the following def-
+initions will be used:
+
+Design decides all technical matters. This includes the
+analyses necessary to validate these design decisions. En-
+gineering develops and documents the design to enable its
+manufacture.
+
+1.6 WHAT DOWE MEAN BY DESIGN PROCESS?
+
+All activity has a process whether it is formally documented
+or not. An individual designer may develop a new design
+process for performing a particular design, but over time it will
+evolve into a set of preferred steps. Within an industry a few
+
+Volume 1
+
+preferred processes are eventually selected (best practices)
+and implemented through documentation, publication, and
+teaching. Chapter 5 - The Ship Design Process, documents
+the current process used in the U.S. for naval ship design.
+
+By Process we refer to a series of actions or operations
+leading to an end. Design process is interchangeable with
+Methodology. Both process and methodology thus are pro-
+cedures for completing activities. The procedures are
+structured, that is they are a step-by-step description and pro-
+vide a framework or template for the key information and
+decision-making.
+
+A good process, if followed, will produce an effective
+design for minimum effort and in the shortest time. Practi-
+tioners of ship design have developed this process over many
+years. The process can be a learning tool thus saving new
+designers time.
+
+When performed on the computer, this process is blurred
+by speed, but the process is still there, imbedded in the var-
+lous programs.
+
+Documented design processes usually have developed
+over time by trial and error and the best (efficient in effort
+and duration) is reached by evolution. Some developers of
+such processes for ship design have presented their processes
+in technical books and papers.
+
+There are exceptions to the gradual evolution approach
+including developers who have applied Systems Engineer-
+
+ing approaches to develop requirements and a solution for
+the ship design process.
+
+A structured design process permits the designer to de-
+velop innovative and creative solutions. Documented design
+processes provide the following advantages:
+
+* the process is made explicit,
+
+* it is known to everyone, allowing an understanding of
+the design rationale and reducing the possibility of pro-
+ceeding with unsupported decisions,
+
+* ensures that important design issues are considered,
+
+* structured processes are largely self-documenting; in the
+process of executing the process a record of the decisions
+is created for future reference and for educating new de-
+signers, and
+
+* standardization within companies and even industries.
+
+1.7 IMPACT OFCOMPUTERS ON DESIGN
+
+Even where there was no process documentation, the use
+of computers has demanded that processes be developed as
+a way to define the flow of information. While a user of a
+design synthesis program may not see or understand the
+process used by the program, it is there. Because of the
+
+
+--- Page 27 ---
+Chapter
+
+speed of computations the computer can perform in a mil-
+lisecond what took days and even weeks manually. This
+does not, however, eliminate the need for a process that is
+efficient in operation.
+
+1.8 DESIGN APPROACHES
+
+The design of a marine vessel or offshore platform brings
+together the needs and ideas of many functions from the ship
+operator, shipowner, designer, planner, procurer, and pro-
+ducer. Without proper integration and collaboration, the end
+product may not satisfy anyone.
+
+In addition, design is a decision-making process. The
+selection of design parameters is a decision. As with any
+decision there is usually some level of uncertainty. Designers
+use knowledge to reduce this uncertainty and thus enable
+superior decisions.
+
+There are two factors that complicate design decision-
+making, namely the uncertainty involved in both the inputs
+and outcomes, and knowing what information (knowledge)
+must be considered in developing the outcomes from the
+selected options. A naval architect must be knowledgeable
+in the many disciplines that are involved in a marine ves-
+sel, be it a ship or offshore drilling or production platform.
+It is the naval architect's responsibility to ensure the inte-
+gration of all the systems into a successful product.
+
+Mathematical (computer) models are used to reduce un-
+certainty in design decision-making. Some models provide
+only a single (deterministic) value for the outcome. Today,
+this is usually not acceptable. What is needed is a set of out-
+comes and their probability. The old design spiral has given
+way to the Design Option Space and Set-based Design.
+
+Today ship design is seen as atypically multi-disciplinary
+activity. Because of this, no one person is expected to be
+equally proficient in all the disciplines involved and this re-
+quires the use of what has become known as Systems En-
+gineering and teams to accomplish the successful design of
+any large complex product. Ships are among the most com-
+plex products in the world. That this is so can be seen by
+considering the number of individual parts required for dif-
+ferent products as shown in Table 1.1.
+
+Design is a process of synthesis (refining) and integra-
+tion covering many disciplines. Successful design depends
+on knowing what information is required, how to get it, and
+how to use it.
+
+Because of the extent of required knowledge, traditional
+design is accomplished by dividing the overall product into
+manageable parts, each of which has a disciplinary focus.
+Systems Engineering focuses on the relationship of the dif-
+
+ferent systems and disciplines involved in their design and
+
+1: Introduction 1-3
+
+integration of them all, to give the best outcome. Systems
+Engineering provides a framework, which offers the ability
+to develop design options and to enable decision-making to
+make a rational selection of one of the options. To develop
+a design option space requires two distinctly different ac-
+tivities, namely design synthesis and parametric selection.
+
+The option space may contain too many options for an
+individual, or even a team of designers to consider every
+option, although today, modeling and computers increase
+the number of options that can be considered.
+
+However, often only a small number of the options may
+be selected for further analysis and even if the best of these
+is finally selected, it is quite likely that the overall best de-
+sign or global optimum was not considered.
+
+This means that the selected design was sub-optimal.
+Mathematical methods to find the single optimum solution
+in the option space are often limited and may also miss,the
+best option. It is better to have a method to show the out-
+comes of sets of options from the option space, which con-
+tains the best option, rather than have just a single solution.
+Then the decision-making tools can be applied to all the op-
+tions and the best one selected.
+
+Chapter 5 describes the ship design process in detail.
+The following is a general discussion on design approaches.
+
+The design spiral, originated by Professor J. Harvey
+Evans (2), has been used to describe the preferred ship de-
+sign process for many years. It is focused on a series of ac-
+tivities that converge, as efficiently as possible, on a single
+solution to the design requirements of a specific project.
+This approach often involves making decisions based on
+incomplete information and/or compromise. Thus, it either
+requires significant rework (iterations) to reach an accept-
+able design or acceptance of a design that is not the best.
+
+The Design Bounding approach (3) is an alternative de-
+sign process that uses the option space. It considers a num-
+ber of ships within a range of values for all dimensions and
+coefficients, which bracket or bound the domain space that
+contains all the solutions. While it involves performing the
+
+TABLE 1.1 Number of Unique Parts in Product
+
+Product Type Number of Unique Parts
+Aircraft Carrier 2 500 000
+Submarine 1 000 000
+
+VLCC 250 000
+
+Boeing 777 100 000
+
+Fighter aircraft 15 000
+Automobile 1000
+
+
+
+--- Page 28 ---
+1-4 Ship Design & Construction,
+
+design calculations for every design combination it avoids
+the need for iteration, and with the use of computers many
+calculations can be made very quickly.
+
+In the last decade the Set-based design approach, ac-
+credited to Toyota, has been offered as the best approach.
+There are many other concepts proposed in reference 4.
+
+It is because of the iterative nature of many design ap-
+proaches that the principle of Least Commitment should be
+followed. That is, progressing from step to step in the
+process, no irreversible decision should be taken until it is
+necessary. This principle of Least Commitment provides
+maximum flexibility in each step and the assurance that
+more alternatives remain available as long as possible, thus
+permitting the eventual selection of the best alternative. The
+Policy of Least Commitment has been shown to result in
+more efficient design, primarily due to the reduced re-
+quirement for iteration, since better decisions are being
+made at each step of the process. This is the goal behind the
+Set-based design approach.
+
+Set-based design is an alternative approach to the com-
+mon single design approach where a design is iterated and
+improved until an acceptable solution is developed. This
+single iterative design approach was named _ as point-to-
+point design (5). The problem with this approach is that it
+is often believed to result in the optimum design, whereas
+experience has shown that this is not the case. Most design
+synthesis programs follow this same approach and attempt
+to converge on an acceptable design.
+
+Set-based design deliberately considers a set of designs
+that will meet the requirements until all unknowns are de-
+termined, and then the best alternative is selected. It is ba-
+sically a weeding-out process. Set-based design has been
+shown to provide better design and in shorter time. This is
+the so-ca~led Sec~nd Toyota Paradox in that you appear to
+do more 10 less time.
+
+Set-based design offers many advantages over the point-
+to-point design approach, such as:
+
+* traditional design develops one solution to the design
+requirements and it has no way of knowing if it is a good
+solution other than experience.
+
+traditional design optimization evaluates one solution
+after another in a standard search routine. This approach
+can be expensive in the number of single designs it eval-
+uates to find the optimum solution, and
+
+in transportation studies it has been found that the met-
+ric curves are relatively flat and that there are many so-
+lutions with significantly different characteristics that
+are almost equally acceptable. The single optimum so-
+lution approach ignores these alternatives that may offer
+other advantages.
+
+Volume 1
+
+Commercial and naval ships have significantly different
+scopes at the early design stages such as Concept and Pre-
+liminary (see Chapter 5 - Ship Design Process for a dis-
+cussion on the various types of design and their stages). A
+Navy Concept Design is even larger in scope than a typical
+commercial Preliminary Design.
+
+The U.S. shipbuilders/designers, generally, prepare many
+more documents for Contract Design than most other ship-
+building countries. A typical U.S. Contract Design for a
+commercial ship would consist of up to 40 drawings and
+800 pages of specifications. A typical Contract Design for
+the rest of the world would have 3 to 6 drawings and 10 to
+100 pages of specifications, including a Selected Vendor
+List.
+
+The success of acommercial ship design has always and
+will always be measured by its economic outcome. That is,
+was it a financial success for the shipowner as well as the
+shipbuilder? Ship designers today are being required to oase
+decisions on cost outcomes. Target Costing, the U.S. Navy's
+Cost as an Independent Variable, Total Ownership Cost and
+Life Cycle Costing, are approaches and tools that must be
+part of the ship designers core skill competencies. Chapter
+6 discusses the application of Engineering Economics in ship
+design.
+
+Another design issue that has developed globally over
+the past 20 years is Designfor X, where X can stand for any
+and all of Production, Assembly, Manufacture, Maintenance
+and other construction and service-oriented needs. This
+book recognizes all these and provides chapters, or infor-
+mation on many of them. Design for Production is covered
+in Chapter 14- Design|Production Integration.
+
+1.9 SHIP CONSTRUCTION
+
+Block construction and pre-outfitting were a common and
+necessary practice in the U.S. (6) and U.K., and even in
+German submarines (7), in World War II. After the war it
+was still used in U.S. shipyards but not improved. The Japan-
+ese developed a higher level of these practices to catapult
+them into world shipbuilding leadership. This development
+is described in Chapters 25 - The Shipbuilding Process and
+26 - Shipyard Layout and Equipment.
+
+CAD/CAMICIM both provides and drives the need for
+dimensional accuracy, which in turn enables the applica-
+tion of robotic assembly and welding. Computer applica-
+tions in ship design and shipbuilding are described in
+Chapter 13 - Computer Based Tools. Processes such as
+plasma cutting, high-pressure water jet cutting, one side
+welding, automation for panel lines and pipe shops, ro-
+botic profile and pipe fabrication are discussed in Chapter
+
+
+--- Page 29 ---
+Chapter 1: Introduction 1-5
+
+26 - Shipyard Layout and Equipment. The handling of ma-
+terial and work in progress has also seen significant im-
+provement and innovation.
+
+1.10 PRODUCTION ENGINEERING
+
+The term Production Engineering has many different mean-
+ings in different companies. Its purpose is to eliminate in-
+efficient design and methods. In its most basic use it is the
+engineering that is performed to prepare the information
+and documentation required by the Production Department
+to enable them to plan, schedule, construct, and test the
+ship, boat or, offshore platform.
+
+In the past, because the manner in which the technical
+documentation was prepared by the Engineering Depart-
+ment was, in some cases, not suitable for direct use by the
+production workers, a separate group was formed to de-
+velop the required production documentation. This group
+also was often given the task of developing the work pack-
+ages, which could involve process analysis, shop planning,
+scheduling, and production and material control.
+
+In this book use of the term Production Engineering will
+follow the basic meaning as presented in Chapters 5- The
+Ship Design Process and Chapter 14 - DesignJProduction
+Integration.
+
+Production engineering principles include:
+
+alignment of design, production engineering, produc-
+tion process, facilities and tooling,
+
+standard range and type of interim products,
+integration of steel and outfit design,
+
+design for self-aligning assembly,
+
+design for workstations, and
+
+simple and robust systems architecture and arrangements,
+and reduced material and labor content.
+
+Production engineering tools include:
+
+group technology,
+
+shipbuilding policy and build strategies,
+trade-off analysis,
+
+parametric analysis,
+
+concurrent engineering,
+
+elemental cost analysis, and
+
+shipyard standards.
+
+1.11. ROLEOFNAVAL ARCHITECT
+
+The role of naval architects is both wide and focused. It ob-
+viously depends, to some extent, on the segment of the in-
+
+dustry in which they choose'to work. However, whatever it
+is, itis usually in a leadership role. That they are able to ful-
+fill this leadership role is a reflection of the useful breadth
+as well as specialization of the education and eventual ex-
+perience gained in the industry.
+
+Naval architects are found in many positions in the ma-
+rine industry. Table III shows the industry categories in
+which they can be found and Table III lists typical posi-
+tions. It can be seen from the tables that the role of naval
+architects offers many interesting challenges and opportu-
+nities for a satisfying and rewarding career in the marine
+industry.
+
+TABLE 1.11
+Work
+
+Industry Segments in which Naval Architects
+
+Shipowner
+Design Agent
+Shipbuilder
+
+Boat Builder
+
+Government
+
+* USCG
+* Department of Transportation
+
++ Navy
+* Army Corps of Engineers
+* Research Centers
+
+Classification Societies
+Education (universities)
+Independent research centers
+
+Marine equipment manufacturers
+
+TABLE 1.111 Positions for Naval Architects
+
+Shipowner's Technical/Design Manager
+Design Agent Executive
+
+Shipyard Executive
+
+Chief Naval Architect
+
+Naval Architect
+
+Project Manager
+
+Technical Project Manager
+
+Technical Manager
+
+Ship Manager
+
+
+--- Page 30 ---
+1-6 Ship Design & Construction,
+
+1.12 SKILLS NEEDED BY NAVAL ARCHITECTS
+
+A naval architect needs to be educated in all the topics re-
+quired in the design and construction of ships and other ma-
+rine products. In addition, the ship designer must have a
+basic understanding of most of the engineering discipline
+topics as well as some business. The educational require-
+ments for naval architects can be obtained by looking at the
+course curricula for the various universities that offer de-
+grees in naval architecture.
+
+Although there are some differences, the traditional naval
+architecture topics include:
+
+* Theoretical Naval Architecture
+
+* Hydrodynamics
+
+¢ Marine Structural Design and Analysis (Chapters 17,
+18, and 19)
+
+* Materials (Chapter 20)
+
+¢ Welding (Chapter 20)
+
+* Mass Properties (Chapter 12)
+
+* Ship Motions
+
+¢ Ship Design Theory (Chapter 5)
+
+¢ Ship Design Practice (Chapter 11)
+
+* Shipbuilding Practice (Chapters 14,25, and 26)
+
+* Planning and Scheduling (Chapter 25)
+
+* Eng!n~ering Eco~~mics (Ch~pter 6)
+
+* Statistics, Prob~blhty, a~d RISk
+
+¢ Product Modehng Practice
+
+* Computer Based Tools (Chapter 13)
+
+7 ld
+Other tOpICSmc u e:
+
+* The Marine Environment (Chapter 2)
+
+* The Marine Industry (Chapter 3)
+
+* Ship Acquisition (Chapter 4)
+
+* Shipowner's Requirements (Chapter 7)
+
+* Regulatory and Classification Requirements (Chapter 8)
+* Contracts and Specifications (Chapter 9)
+
+* Cost Estimating (Chapter 10)
+
+¢ Human Factors (Chapter 15)
+
+* Safety (Chapter 16)
+
+* Composites (Chapter 21)
+
+* Corrosion and Preservation (Chapter 23)
+
+* Marine Engineering Considerations (Chapter 24)
+
+Most of these are covered at least at an introductory level
+in this book. Those that are not covered or only briefly ad-
+dressed can be studied and understood from many other
+books (most of which are referenced in this book), such as
+the SNAME Principles of Naval Architecture and Marine
+Engineering, as well as the transactions from the marine
+technical professional societies.
+
+Volume 1
+
+1.13 SAFETY
+
+Ship designers are involved in designing a product that must
+be completely self-sufficient while it can be thousands of
+miles from any other direct support and may have to remain
+so for weeks and even months. This has demanded a keen
+understanding of the need for safety and it is at the fure-
+front of many of their actions, even before the imposition
+of international and/or national safety laws.
+
+Notwithstanding this basic focus on safety there have
+been unintentional lapses with often catastrophic results,
+such as large loss of life at sea and pollution of the envi-
+ronment. In some cases the abuse of shipowners resulted in
+laws that had to be applied by ship designers, such as the
+original Plimsoll Mark to limit the loading of ships.
+
+Today the major body legislating safety in the marine
+industry is the International Marine Organization (IMO),
+which is a branch ofthe United Nations. Chapters 8 - R~g-
+ulatory and Classification Requirements and 16 - Saf~ty,
+discuss this organization as well as other regulatory and
+classification requirements.
+
+1.14. HUMAN FACTORS
+
+Today, it is unacceptable to design any product without con-
+sidering its interface with humans not only in the operation
+of the product but also in its manufacture. Human Factors
+(HF) is discussed in Chapter 15- Human Factors in Ship
+Design. The focus on reduced manning for ship crews is
+based on HF research and analysI’. Human Factors are also
+part of recent IMO regulations as an attempt to improve
+safet~ ~tsea through improved design of ships and training
+of ShIP screw.
+
+1.15 RISK
+
+A major development since the publication of the previous
+edition of this book is the use of statistics and probability
+in design and for risk assessment in all aspects of design
+and operation.
+
+Though relatively new to marine applications, risk analy-
+sis and other risk techniques have been used in other in-
+dustries for more than 50 years. It obtained its impetus from
+the start of entirely new industries such as nuclear power
+generation and the U.S. space program. Then it was applied
+to the protection of the environment and most recently to
+the safety in the operating of all types of products.
+
+All these cases shared the same problem in that there was
+no historical data on which to base design/operating deci-
+
+
+--- Page 31 ---
+Chapter
+
+sions, or to predict the performance of equipment relative
+to its safe operation.
+
+In order to deal with this situation the designers/opera-
+tors turned to the application of probability to find solu-
+tions. Techniques such asfault tree analysis were developed
+to break down the problem into parts that could be analyzed
+and assigned individual probability levels, which would
+then be combined into an overall risk assessment.
+
+The old way to design for uncertainty and to eliminate
+risk of failure was to apply safety margins to the derived re-
+quirements. The problem is that safety margins are built on
+experience and where there is no experience safe (large)
+safety margins have to be applied which is a waste of re-
+sources and may be cost prohibitive.
+
+After its initial development, the application of risk analy-
+sis expanded into indu~tries wher~ the rate of new.technol-
+ogy development was hlgh, or the nsk of catastrophIC or very
+serious outcomes was present. In some cases it was only
+brought into use after significant accidents occurred, such
+as the Exxon Valdez cargo oil spill in Alaska.
+
+So what is risk analysis and management?
+
+Risk analysis is the derivation and evaluation of an ad-
+verse (undesirable) outcome of some activity or process.
+The foundation of risk analysis is probability. Probability
+is the likelihood of an event occurring expressed mathe-
+maticaliy as a value ranging from 0 to 1.
+
+In the case of the current focus, it can be seen as the risk
+of not achieving the contract speed on trials or deadweight
+for a ship, the risk of structural failure, the risk of an oil spill,
+the risk of collision in a crowded sea lane, and so on. Prob-
+abilistic approaches in ship design now cover subdivision,
+damage stability, oil outflow, structure (see Chapter 19 -
+Probability-based Design), machinery monitoring and con-
+trol, maintenance and operation.
+
+Risk assessment is the measurement of the risk in a spe-
+cific problem.
+
+Risk management ‘sometimes ca
+use of nsK ana !ysisto 14entli4¥ ways to reTuce tBi4 ent
+
+"69 initigattOn)’1s,4%e
+ifi.a
+ns (s).
+
+For further fiformatlOn on nsk analysIs and manage-
+ment in general see references 9-11, and for risk analysis
+of complex engineered systems see chapter 1.5 of reference
+9. Another good introduction addressing the marine indus-
+try is the special issue of the USCG Marine Safety Coun-
+cil Proceedings magazine (12).
+
+The global marine industry was introduced to risk analy-
+sis and management through the activities ofI[MO. The UK
+Marine Safety Agency developed a risk analysis and miti-
+gation approach, the Formal Safety Assessment (FSA), which
+is a broad brush approach to identifying major risk areas,
+analyzing them in turn, developing ways to mitigate the
+
+1: Introduction 1-7
+
+risk, performing a cost-benefit analysis for the proposed so-
+lutions, and then deciding on an approach.
+
+Recent areas of risk assessment in the marine industry
+are the reliability-based structural design (Chapter 19), and
+the risk analysis of high-speed craft (Chapter 38 - Ferries
+and Chapter 44 - High Speed Surface Craft).
+
+Based on their respective responsibilities, it is under-
+standable why both the classification societies and the na-
+tional regulatory services in the marine industry were also
+early users of the approach.
+
+Today there are anumber of computer-based tools to aid
+in risk analysis and management. Some of these are pre-
+sented in reference 10.
+
+1.16 EIMICS
+
+The history of engineering (13,14) shows that, in the main,
+engineers have maintained a high ethical standard in their
+work. This is also true in the marine world. Both SNAME
+and ASNE have had a statement of ethics for its members
+since their beginning and in certain states and countries,
+registered professional (chartered) engineers (naval archi-
+tects) also monitor and control the ethical standards of their
+profession.
+
+Many people believe that the three greatest issues chal-
+lenging engineers today are in the areas of: ethics, envi-
+ronment, and resources.
+
+Ship designers sometimes find that doing what is right
+may put them in conflict with the desires of their employ-
+ers, or if independent, their clients. What should they do in
+such cases? If not handled properly, their decision could re-
+sult in damage to their career and their company's reputa-
+tion, or conversely have a detrimental outcome to society.
+
+Fortunately there are mechanisms in place, such as:
+
++ the legal system, ll
+
+* state prolesslOng aws, g
+
+* company proce ures, an
+
+* prolésslOna H SOCletystan Fars,
+
+The ethical behavior of ship designers is especially im-
+portant in that it influences the direction of the development
+of technology in the marine and atmospheric world. The de-
+cisions they make have a direct consequence on public safety
+and the environment and the use of resources.
+
+What does this demand of today's and future ship de-
+signers? Must they become legal experts?
+
+Fortunately the answer is no. Most people have an in-
+nate ability to know right from wrong, although it can be-
+come biased by the opportunity or perception of personal
+gain. Add to this innate ability, guidelines that can be taught
+
+
+--- Page 32 ---
+1-8 Ship Design & Construction,
+
+to students and codes that can be presented and managed
+by their peers, and there is a system for education and con-
+trol.
+
+In the simplest sense, it requires that the ship designer:
+
+* consider social and environmental
+decisions,
+
+* not become involved in projects that will be harmful to
+society or the environment,
+
+* not be wasteful of any resource because they are all
+scarce, and
+
+impact of all design
+
+Volume 1
+
+* make available any of theittechnical data and decisions
+that may be of public interest, under the appropriate con-
+ditions.
+
+Th, oth dM
+
+fth . S tects an a-
+
+les poligy o- e“oclety oN a’
+rine Engineers is worth study and is as presented in Table 1.N
+
+Another ethics statement worth review is that of the Eu-
+ropeanAssociation of Engineers (15). A code of ethics can
+be considered as acollective recognition of professional re-
+sponsibilities by a group of practitioners. When properly
+drafted such codes can be of tremendous help in guiding
+
+yalArchi
+
+TABLE 1IV SNAME Code of Ethics
+
+Foreword
+
+Engineering work continues to be an
+important factor in the progress of civ-
+ilization and the welfare of the com-
+munity. The Engineering Profession is
+held responsible for the planning, con-
+struction and operation of such work,
+and is entitled to the position and au-
+thority that will enable it to discharge
+this responsibility and to tender service
+to humanity. Honesty, justice and cour-
+tesy form a moral phil\osophy that, as-
+sociated with the mutual interest among
+peoples, constitutes the foundation of
+ethics. As professionals naval architects
+and marine engineers should recognize
+such standards, not by passive obser-
+vance, but as a set of dynamic principles
+to guide conduct.
+
+Fundamental Principles
+
+Naval Architects and Marine Engineers
+should maintain and advance the in-
+tegrity, honor and dignity of their pro-
+fessions by:
+
+* using their knowledge, experience
+and skill for the enhancement of
+human well-being and as good stew-
+ards of the environment,
+
+* striving to increase the competence
+of the professions of naval architec-
+ture and marine engineering, and
+
+* being honest and impartial, and serv-
+
+ing with fidelity the public, their em-
+ployers and clients.
+
+Specific Canons
+
+Naval architects and marine engineers
+shall:
+
+1. Carry on their professional work in
+a spirit of fairness to employees and
+contractors, fidelity to clients and
+employers, loyalty to their country,
+and devotion to the high ideals of
+courtesy and personal honor.
+
+2. Hold paramount the safety, health
+and welfare of the public in the per-
+formance of their professional du-
+ties. They will interest themselves
+in the public welfare, in behalf of
+which they will be ready to apply
+their special knowledge, skill and
+training for the use and benefit of
+mankind.
+
+3. Refrain from associating
+selves with, or allowing the use of
+
+them-
+
+their names by, any enterprise of
+questionable character.
+
+4. Advertise only in a dignified man-
+ner, being careful to avoid mis-
+leading statements.
+
+S. Regard as confidential any informa-
+tion obtained by them as to the busi-
+ness affairs and technical methods
+or processes of a client or employer.
+
+6. Inform aclient or employer of any
+business connections, interests or
+
+. Accept compensation,
+
+. Cooperate
+
+affiliations that might influence
+their judgment or impair the disin-
+
+terested quality of their services.
+
+. Refrain from using any improper
+
+or questionable methods of solicit-
+ing professional work and will de-
+cline to payor to accept commis-
+sions for securing such work.
+financial or
+otherwise, for a particular service,
+from one source only, except with
+the full knowledge and consent of
+all interested parties.
+
+. Build their professional reputations
+
+on the merits of their services and
+shall not compete unfairly with oth-
+ers.
+
+. Perform services only in the areas
+
+of their competence.
+
+in advancing the pro-
+fessions of naval architecture and
+marine engineering by exchanging
+general information and experience
+with their fellow naval architects
+and marine engineers and students,
+and also by contributing to the work
+of technical societies, schools of
+applied science and the technical
+press.
+
+. Continue their professional devel-
+
+opment throughout their careers
+and shall provide opportunities for
+the professional development of
+those naval architects and marine
+
+engineers under their supervision.
+
+
+--- Page 33 ---
+Chapter 1: Introduction 1-9
+
+requisite knowledge and the behavior of its participants. Its
+principal use is a guide, to behavior when its adherents are
+
+eClslOns m t elf wor
+The lcensti ‘ ssl 4)
+e ‘Icensmg 0 engmeers ~ roiesslOna an artere
+is an attempt to control behavior and thus ethics. The State
+
+Professional Engineering newsletters have many references
+to disciplinary action taken by the State for professional en-
+gineers who violated their laws.
+
+faced WIt t e man}
+
+117 PUTTING IT ALLTOGETHER
+
+Even if a person is knowledgeable in all the areas covered
+by this book and the many references contained herein, it
+
+does not mean that they will be able to successfully com-
+. d : be h ”
+Phicam~~e  eSlen project, cause suc an activIty re-
+qmres addItional skills and knowledge.
+As stated in the preface the most rmportant skill ISknowmg:
+* what must be done,
+* how it should be done
+
+* hat knowled __ is req'd and
+w e mre
+
+* how to get the reqmied knowledge.
+
+This is in effect Ship Design Management. The man-
+agement of ship design is not directly addressed in the book,
+but some of the knowledge it requires is discussed. Chapter
+5- The Ship Design Process, is the only chapter directly ad-
+
+». th, fi tt fth, ttd d_ Th, thi.d d
+dresshg “e rs woo esae nee's. ec r nee IS
+
+covered throughout the other chapters in the book, and the
+final need ISaddressed by providmg state of the art knowl-
+edge plus references where even more information (knowl-
+edge) can be acquired for specific ship types in Volume II.
+
+It is therefore hoped that this book will be of significant
+help in acquiring this important. skill.
+
+1.18 REFERENCES
+
+1. Widolst, Jr. N. Qysign Innovatwn mi Shlppmg, Delft Um-
+
+verslt rieSS. . .
+
+Evang, J’ H., "Basic Design Concepts," ASNE Journal, No-
+
+vember 1959
+
+3. Lamb,T.,"A Ship Design Procedure," SNAMEMarine Tech-
+nology, October 1969
+
+4. Ulrich, K. T. and Eppinger, S.D., Product Design and De-
+velopment, McGraw-Hill, Inc., 1995
+
+5. Ward, A., et al, "The Second Toyota Paradox: How Delay-
+ing Decision~ Can ~ake Better Cars Faster," Sloan Man-
+agement Revlew/Spnng 1995
+
+6. Kern, D. H. and Brown, J. A., "New Construction at the
+Boston Navy:'ard, 1941-1945," AS~ Journal, July 129~,
+
+7. Starks, J. E, German U-Boat DesIgn and ProductIOn,
+SNAME Transactions, RINA, 1948
+
+8. NATIONAL RESEARCH COUNCIL, "Engineering Edu-
+callOn- Désignmgan Adaptive System,” 1995
+
+9. Molak.V.Ed., Fundamentals of Risk Analysis and Manage-
+ment, CRC Press Inc., 1997
+
+10. Symposium on Risk Management "Sharing the Lessons
+Learned," JN , Hampton Roads Area Chapter, Hamp-
+ton, vA, My aby, P P P
+
+11. Robmette,G.J. and Marshall,J.S.,"An Integrated Approach
+to Risk Analysis and Risk Assessment," Symposium on Risk
+Management "Sharing the Lessons Learned," INCaSE,
+Ham?ton Roads Ar~a Chapter, Hampton, VA,M~y 2001
+
+12. Specla~Issue on ~Isk Management, USCG Manne Safety
+Coygcll. Proceedmgs, Vol.56, Number 3, July-September
+
+2.
+
+Unger, SHe | ontra mg tee nology: Ethics and Me Re.
+
+sponsible Engineer, Wiley Interscience, John Wiley & Sons,
+
+Inc., 1994
+
+14. Kemper,J. D., Engineers and their Profession, 3rd Edition,
+Holt, Rinehart and Winston, New York, 1982
+
+15. Code of Ethics, European Association of Engineers.
+
+
+--- Page 34 ---
+Chapter 2
+
+2.1. THEWORLD'S WATERWAYS
+
+The oceans, navigable lakes, inland seas and rivers of the
+world comprise slightly over 72% of the earth's surface.
+These world waterways are extremely important to national
+and international commerce, with approximately 95% of
+all goods being transported by water. Oceans, lakes and
+rivers are characteristically broad and relatively shallow
+with extremely large aspect ratios (the ocean being equiv-
+alent in aspect ratio to a piece of loose leaf paper). Hence,
+it should be anticipated from an applied ocean physics point
+of view, that stresses acting upon both the surface and bot-
+tom boundaries of these basins should control the dynam-
+ics of their circulation, motion, and internal structure. Fluxes
+of momentum, mass, and heat across these boundaries (sur-
+face, edges, and bottoms), are largely responsible for the
+internal dynamics, which result in motion in the marine en-
+vironment.
+
+2.1.1 Oceans
+The world's oceans collectively comprise approximately
+72% of the earth's surface area. The ocean can be divided
+into three primary basins, the Pacific (33% of the earth's
+surface area), the Atlantic (16%) and the Indian (14%).
+Smaller seas such as the Baltic, Bering, Caribbean, Mediter-
+ranean, and North Seas, as well as the Sea of Japan and the
+Gulf of Mexico occupy the remaining 9% of the aquatic
+surface area. A valuable summary of the area of the major
+ocean basins and marginal seas is presented in Table 2.1.
+The geographical distribution of this ocean area is heav-
+
+The Marine Environment
+
+Guy A. Meadows and Lorelle A. Meadows
+
+ily skewed toward the Southern Hemisphere. This produces
+an excess concentration of landmass in the Northern Hemi-
+sphere and acorrespondingly large ocean mass in the South-
+erm Hemisphere. Figure 2.1 demonstrates that the surface
+of the earth can be divided into a land hemisphere with its
+pole centered in France (47% land and 53% water) and a
+water hemisphere with its pole near New Zealand (90%
+water and 10% land).
+
+The vertical distribution of landmass and ocean basin is
+also asymmetric. The mean elevation of land above pres-
+ent day sea level is only approximately 840 meters. Of this
+region, the continental plateau, which accounts for ap-
+proximately 20% of the land portion of the earth's surface,
+is at an elevation of only 270 meters. Similarly, within the
+oceans, the deep-sea bottom, abyssal plains, occurs at a
+depth of approximately 4420 meters, while the mean depth
+of the sea is approximately 3800 meters.
+
+Hence, the volume of continental landmass above pres-
+ent sea level is less than one tenth of the volume of the
+oceanic waters. Alternately, the mean sphere depth, or the
+mean elevation of the entire earth, is located 2440 meters
+below current sea level. Hence, water would cover the earth
+to this depth if we resided on a purely spherical planet.
+
+A typical cross-section of an oceanic margin is presented
+in Figure 2.2. The continental shelf is a nearly flat plain im-
+mediately adjacent to the shore. The bottom here slopes
+gently at an angle of about 0.5 degrees. The width of this
+terrace ranges from a few kilometers along the Pacific coasts
+of the Americas to more than 1000 kilometers in the Arc-
+tic. The sea bottom steepens appreciably at the shelfbreak,
+typically at about 130 meters of water depth. At this point,
+
+2-1
+
+
+--- Page 35 ---
+2-2 Ship Design & Construction,
+
+the bottom slope increases to | to 4 degrees. Seaward of the
+shelfbreak is the continental slope, where the 4 degree bot-
+tom slope is maintained over a horizontal extent of ap-
+proximately 50 kilometers. The continental slope is the site
+of the submarine canyons of the oceans. These canyons
+have steep sides, V-shaped profiles and vertical relief of up
+
+TABLE 2.1 The Approximate Physical Characteristics of
+the Major Ocean Basins and Marginal Seas
+
+Area Depth
+
+Body of Water (1 (fi km, (m)
+OCEANS
+
+Pacific Ocean, proper 165 4280
+Pacific Ocean, including adjacent seas 180 4030
+Atlantic Ocean, proper 82 3870
+Atlantic Ocean, including adjacent seas 105 3330
+Indian Ocean, proper 73 3960
+Indian Ocean, including adjacent seas 15 3900
+LARGE MEDITERRANEAN SEAS
+
+Arctic Ocean 9:5 1530
+East Asian Seas 6.0 1210
+Caribbean and Gulf of Mexico 4.4 2170
+Mediterranean and Black Seas 3.0 1460
+SMALL MEDITERRANEAN SEAS
+
+Hudson Bay 1.23 130
+Red Sea 044 490
+Baltic Sea 0.42 55
+Persian Gulf 0.24 25
+MARGINAL SEAS
+
+Bering Sea 2.27 1440
+Okhotsk Sea 1.53 840
+East China Sea 1.25 190
+Japan Sea 1.01 1350
+North Sea 0.58 94
+Gulf of St. Lawrence 0.24 130
+Gulf of California 0.16 810
+Irish Sea 0.10 60
+Bass Strait 0.07 70
+
+Volume 1
+
+to 2 kilometers, making them one of the deepest landforms
+on earth. The continental rise-is a long shallow sloping ap-
+proach to the deep abyssal plains of the ocean. It may ex-
+tend for more than 500 kilometers where bottom slopes
+flatten out to approximately 1 degree. The deep, almost flat
+and featureless Abyssal Plains exist at depths of approxi-
+mately 3000 to 6000 meters and separate continental mar-
+gins from mid ocean ridges in most basins. Mid ocean ridges
+are volcanic mountain chains on the sea floor with relatively
+steep slopes and rugged topography. They can be of suffi-
+cient elevation above the deep ocean floor to provide sig-
+nificant impediments to ocean circulation and exchange
+between basins.
+
+2.1.2 Lakes
+
+Many of the large lakes of the world are navigable and sup-
+port immense ship-borne commerce. The North American
+Great Lakes, comprised of Lakes Superior, Michigan,
+Huron, Erie, and Ontario, are perhaps the best known of such
+systems (Figure 2.3). This vast "inland sea" system spans
+more than 1200 kilometers from west to east and forms the
+largest fresh surface water basin on earth.
+
+Latitude
+
+0 20 40 60 80 100
+Percent Water Cover
+Figure 2.1. Longitudinal Distribution of Land and Sea (Gray region
+represents sea)
+
+
+--- Page 36 ---
+Continental Slope
+
+5000 Continental Shelf
+
+Continental rise Abyssal Plain
+
+0 200 400 600 800 1000 1200
+Distance from shore (km)
+
+Figure 2.2 Typical Cross-Section of an Oceanic Margin
+
+MAE OF THE Woops
+
+spe en
+
+Figure 2.3. The North American Great Lakes
+
+
+--- Page 37 ---
+In addition to commercial shipping, these freshwater
+seas also provide water for consumption, transportation,
+power, recreation and a host of other uses, see Government
+of Canada and U.S. Environmental Protection Agency (1).
+
+The connecting channels of the Great Lakes are an im-
+portant component of this system. The connecting channels
+are composed of a 97 kilometer waterway flowing from
+Lake Superior to Lake Huron. The St. Mary's River drops
+from the surface elevation of Lake Superior at 183 meters
+above sea level to that of Lakes Huron and Michigan (176
+meters above sea level). The St. Clair and Detroit Rivers con-
+necting Lake Huron to Lake Erie drop a corresponding 3
+meters over their combined length of 143 km. The Niagara
+River falls an additional 99 meters between Lakes Erie and
+Ontario over its short 56 km run. Finally, the St. Lawrence
+River completes the system and the journey to the sea by
+falling the remaining 74 meters over its approximately 2600
+kilometer journey. A physical description of the Great Lakes
+System is presented in Table 2.11.
+
+Navigation in and through the large lakes of the world
+is often complicated by drastic environmental effects, in-
+cluding severe and rapidly developing wind-generated seas,
+with significant wave heights in excess of 10 meters. Envi-
+ronmental effects also include a variety of secondary wind
+effects such as large wind driven oscillations of these en-
+closed basins. Water elevation differences between oppo-
+site ends of Lake Erie have been recorded in excess of 4.8
+meters. These hydrologic forces can cause momentary cur-
+rent reversals in the connecting channels as well as signif-
+icant nearly "instantaneous" waterlevel changes. During the
+winter months in these mid-latitude seas, the formation of
+both shore fast ice as well as ice floes produce another sig-
+nificant challenge to shipping. Hence, by international agree-
+
+Ship Design & Construction,
+
+Volume 1
+
+ment the Great Lakes system is closed to shipping between
+January 15 and spring "break out" on March 15.
+
+2.1.3. Rivers
+
+Navigation and marine construction in rivers often poses
+unique and challenging engineering problems. In addition
+to the obvious physical conditions of varying flow rates,
+seasonal migration of bottom features, periodic dredging re-
+quirements, debris, constricted navigation channels and
+varying water levels, rivers often offer new challenges as
+well. On the positive side, they have historically provided
+safe refuge from the sea as well as convenient access to land
+based facilities and transportation routes. In recent history,
+contaminants, both living and non-living provide a special
+level of concern for the contemporary Naval Architect and
+Marine Engineer.
+
+For example, the spread of non-indigenous species
+through vessel ballast water exchange is of worldwide con-
+cern. During vessel operations in "fresh" river systems, or-
+ganisms and contaminants can easily be spread by the
+enormous ballast water exchanges of typical modern vessels.
+large suspended sediment con-
+centrations can lead to the introduction of abrasive materi-
+als into pumping systems and the eventual accumulation of
+large quantities of material in ballast tanks. For a more com-
+plete description of this problem, see National Research
+Council Committee on Ships' Ballast Operations (2).
+
+Typical open ocean seawater density is 1026.95 kg/m*
+(ocean water at a salinity of 35 parts per mil or 90, tem-
+perature of 10° C and at atmospheric pressure). Freshwa-
+ter at the same temperature and pressure has a density of
+1000 kg/m?. Hence, a 2.7% change in density should be an-
+
+In riverine environments,
+
+TABLE 2.11 Physical Dimensions of the Great lakes as Modified from The Great Lakes Atlas (1)
+Superior Michigan Huron Erie Ontario Totals
+Elevation" (m) 183 176 176 173 74
+Length (lan) 563 494 332 388 311
+Breadth (lan) 257 190 245 92 85
+Average Depth" (m) 147 85 59 19 86
+Maximum Depth" (m) 406 282 229 64 244
+Volume" (lan3) 12 100 4920 3540 484 1640 22 684
+Water Area (lan?) 82 100 57 800 59 600 25 700 18 960 244 160
+
+"Measured at Low Water Datum.
+
+
+--- Page 38 ---
+Chapter 2: The Marine Environment 2-5
+
+ticipated when traveling from seawater into a fresh water
+region. Hence, vessel displacement will also vary by this
+amount (2.7%). A vessel drawing 10 m at sea will draw
+10.27 m in a freshwater environment. Care must be exer-
+cised in this transition.
+
+2.2 IMPORTANT FLUID PROPERTIES
+
+Water, salt, ice, and air are the four major constituents of im-
+portance in the marine environment. The water, which com-
+poses approximately 96.5% of the fluid filling the ocean
+basins (normal ocean dissolved "salt" content is approxi-
+mately 3.5% or 35%0), is perhaps the most unique substance
+on the planet. It has amazing physical and chemical prop-
+erties, which have resulted not only in the development of
+life on this planet, but have allowed this fluid to become the
+major transport medium of our world's commerce. Water is:
+
+* highly incompressible,
+
+* has an extremely large heat capacity and thermal con-
+ductivity,
+
+* is largely opaque to the transmission of electromagnetic
+energy, particularly in the visible part of the spectrum,
+and
+
+* is almost totally opaque to the transmission of electro-
+magnetic energy in the radio and radar frequency part
+of the spectrum.
+
+Freshwater and seawater are both, however, extremely
+transparent to acoustic energy providing an extremely valu-
+able mechanism for both long range interrogation as well
+as communications through this fluid medium.
+
+2.2.1 Fresh Water
+
+Perhaps one of the most unique properties of fresh water is
+its density dependence upon temperature. Above approxi-
+mately 4°C water behaves as a normal fluid, expanding
+when heated and contracting when cooled. However, be-
+tween approximately 4° C (the temperature of maximum
+density offresh water) and 0° C (the phase change point for
+fresh water between liquid and solid) water expands when
+cooled and contracts when heated, thus producing a point
+of maximum density at approximately 4° C. This tempera-
+ture of maximum density results in the potential for density
+driven circulation patterns primarily-during the spring heat-
+ing and fall cooling periods of large fresh water bodies, such
+as the Great Lakes. At the point of phase change, approxi-
+mately 0° C, water undergoes a significant structural change
+into the ice crystal lattice, producing a 9% increase in vol-
+
+ume as the phase change occurs. This increase in volume
+and corresponding decrease in density allows the solid phase,
+ice, to be less dense than the.liquid phase at slightly greater
+temperature, producing the necessary buoyancy allowing ice
+to float. If it were not for this peculiar behavior, the oceans
+and fresh water bodies would freeze from the bottom up, thus
+resulting in a massively different marine environment than
+the one to which we have become accustomed.
+
+2.2.2 Salt
+
+As dissolved salts are added to fresh water, peculiar and some-
+what unique physical changes occur. The density of water in-
+creases with increasing salinity, with the density reaching
+approximately 1.025 grams per cubic centimeter for normal
+seawater at a salinity of 35%0 and 20° C. It is interesting to
+note that both the temperature of maximum density and the
+freezing point of water decrease with increasing salinity and
+that the temperature of maximum density decreases at a
+greater rate than the freezing point. Neumann and Pierson (3)
+provide the following relationships for the temperature of
+maximum density, Tpmaxand the freezing point of seawater,
+Te’ as a function of salinity, S, respectively
+
+Tp (OC) = 3.95 - 0.2008 - 0.0011S2 (]
+
+Tg (OC) = -0.003 - 0.05278 - 0.000048? [2]
+
+These relationships are shown graphically in Figure 2.4.
+These two lines intersect at a salinity of approximately
+24.7%0, far "fresher" than that of normal seawater (35%0).
+The implication of this fact is that ice formed from sea water,
+at salinities of 35%0, will experience its freezing point at a
+slightly warmer temperature than the temperature of max-
+
+Temperature (oC)
+
+Salinity (oo)
+
+Figure 2.4 The Variation of Temperature of Maximum Density and Freezing
+Point of Sea Water with Salinity
+
+
+--- Page 39 ---
+2-6 Ship Design & Construction,
+
+imum density. This further implies that the temperature of
+maximum density would occur in the solid (ice) phase, thus
+hypothetically rendering ice denser than the surrounding
+fluid supporting it. It is obvious that this does not occur in
+the real marine environment. This is due to the fact that as
+the solid phase ice lattice forms, salt ions are precipitated
+from the ice structure, into the underlying fluid. This process
+renders the solid phase nearly fresh in salinity, and buoy-
+ant relative to its surroundings with anomalously high salin-
+ities directly below the forming ice sheet. Since fluid density
+increases in the marine environment with increasing salin-
+ity, these precipitated salt ions form a denser fluid and cause
+an unstable stratification resulting in vertical, density driven
+motions (mixing) below the ice sheet.
+
+2.2.3 Ice
+
+The often-rapid loss of heat across the air/sea interface can
+result in the formation of ice. In the open ocean, ice origi-
+nates primarily from two sources, sea ice and glacier ice.
+The formation of sea ice depends upon not only the surface
+salinity, but also on the vertical distribution of salinity and
+the water depth.
+
+As shown in Section 2.2.2, at a seawater salinity of ap-
+proximately 24.7%0, both the temperature of maximum den-
+sity and the freezing point correspond at approximately -1.33°
+C. Therefore, water bodies with a bulk salinity less than
+
+24.7%0 will tend to cool uniformly to the temperature of max-The
+
+imum density for that particular salinity. Continued cooling
+at the surface results in the development of a thin layer where
+ice will begin to form once the freezing point is reached. The
+ice formation process begins earlier over shallow regions and
+requires longer development time over deeper regions. For
+water bodies with bulk salinities greater than 24.7%0, cool-
+ing must progress to lower temperatures, again from top to
+bottom until freezing commences at the surface.
+
+For a detailed description of sea ice conditions and its
+affect on marine structures, see Chapter 35 of this book.
+
+2.24 Air
+
+The flUYdoverlymg the oceans, lakes, and nvers ISair. It has
+adensity approximately 1000 times less than that of water.
+Under most conditions it is responsible for the transport of
+enormous quantities of momentum into the sea surface, the
+exchange of heat out of or into the sea surface, and the ex-
+traction of moisture, or mass, from the sea. This interaction
+is responsible for a major portion of the control of climate
+on the planet and the intense modification of climate in local
+communities bordering these bodies of water. The extent to
+which the oceans and inland seas of the world modify and
+
+Volume 1
+
+moderate climate is now only-beginning to be fully under-
+stood. There is significant evidence, for example, that the
+presence of the Great Lakes in the continental interior or
+North America is responsible for the modification of climate
+within aregion approximately 1600 kIn beyond their bound-
+aries. In addition, the phenomenon known as EI Nino, a re-
+gion of unusually high ocean surface water temperature off
+the coast of Peru, plays a significant role in the climate of
+our planet. The details of air-sea interaction and the ability
+of the earth's atmosphere to generate both circulation and
+wave motions on large bodies of water will be more fully
+examined in Section 2.4.
+
+2.2.5 Density
+
+The salinity and temperature of seawater are important in
+the marine environment in terms of defining the character-
+istics of a particular water body and in the determinatiorrof
+the seawater density, p. Seawater density can range from
+about 1021.11 kg/m? at the surface to 1070.00 kg/m? at
+10 000 m depth.
+
+As discussed in Sections 2.2.1 and 2.2.2, the density of
+seawater is dependent upon its temperature and salinity. In
+summary, the density of seawater decreases with increas-
+ing temperature above the temperature of maximum den-
+sity, and increases with increasing salinity. In addition, the
+density of seawater increases with increasing pressure.
+
+vertical water column can be divided into three zones
+in terms of its temperature structure: an upper zone ap-
+proximately 50 to 200 m in depth where the temperature is
+similar to that at the surface, a middle zone where the tem-
+perature decreases dramatically from 200 to 1000 m in
+depth, and a lower zone where the temperature changes
+slowly. The middle zone is referred to as the thermocline
+and represents a region of rapidly increasing density with
+depth as well. The depth and gradient of the thermocline
+varies throughout the world's oceans, but remains a per-
+manent feature in the low and middle latitudes.
+
+2.3 OCEAN OPTICS AND ACOUSTICS
+
+To first order, the equations and principles that describe
+both the propagation of electromagnetic (light) and acoustic
+(sound) radiation through the sea are sufficiently similar to
+warrant a combined approach. It must be noted, however,
+that electromagnetic propagation is based upon transverse
+wave theory (particles moving perpendicular to the direc-
+tion of wave propagation) and acoustic propagation is based
+upon longitudinal wave theory (particles moving parallel to
+the direction of wave propagation).
+
+
+--- Page 40 ---
+Chapter 2: The Marine Environment 2-7
+
+U1 Ocean Optics
+As electromagnetic radiation from the sun (for the purposes
+of our discussion, light in the visible part of the spectrum)
+passes through the atmosphere of our planet, this energy is
+absorbed, reflected and transmitted, to varying degrees,
+through the medium. The degree to which these three
+processes occur depends upon the wavelength (color) of the
+light and the composition of the atmosphere. Absorption of
+incoming solar radiation is mainly attributed to water vapor,
+carbon dioxide and ozone in the atmosphere. That portion
+of the incident solar radiation that is absorbed by the at-
+mosphere is transformed into heat and contributes to the
+heat budget of the atmosphere. Reflection occurs primarily
+by scattering of solar radiation by air molecules themselves,
+as well as by airborne dust, water droplets and other con-
+taminants. Similarly, that portion which is scattered by the
+atmosphere, may reach the earth's surface, 72% of which
+is covered by water, in the form of diffuse solar radiation.
+That portion which reaches the earth's surface as direct ra-
+diation, transmitted directly through the atmosphere, ac-
+counts for approximately 23% of the total incident solar
+radiation on a global scale.
+
+Figure 2.5 provides a comparison of the spectrum of
+solar radiation available at the top of the earth's atmosphere
+
+' 1
+1 !
+\<-VISIBLE PART ->!
+i i
+-20f | i
+z ' (<——INFRA-RED
+>} t
+< 1
+aa
+200g 1
+aa
+Z|
+t
+t
+Bi
+wo zi
+wy
+1
+1
+t
+a
+7
+ij
+
+3.4 5 6 7 8 9 OW tt t2
+
+3 14 15 6 17 1B
+WAVE LENGTH
+
+6x 103 Poor?
+
+2x 10-3 |
+sao 4
+Sx to-ab 4
+2x 10-44
+1x to~4b 4
+5x 10-8} 4
+2x 10-8h 4
+1x 10-8b 4
+Sx tore 4
+2xto-8L 4
+1x 10-8
+
+Vx 102 2x 102 Sx 10? 1x 109 2x 10 6 x 109 1 x 10 2x 104 § x 104 1x 10°
+
+‘Wavelength (nm)
+Figure 2.5 The Approximate Solar Radiation Spectrum at the Top of the
+Earth's Atmosphere and at Sea Surface (4)
+
+PERCENTAGE OF ENERGY
+2.3456 80 $2 320M EKO
+
+19 20 2) 22 23 Bap
+
+Figure 2.6 The Energy Spectrum of Incident Radiation that Penetrates a Clear Ocean to Several Depths (5)
+
+
+
+--- Page 41 ---
+2-8 Ship Design & Construction,
+
+and at the sea surface. Similarly, the spectral attenuation of
+incident solar radiation at the surface and various depths
+below the sea surface is provided by Figure 2.6. As can
+readily be seen, the total quantity of solar radiation (area
+under the curve) decreases markedly with both depth in the
+atmosphere and depth below the sea surface. For all prac-
+tical purposes, no incident sunlight remains in the sea below
+adepth of approximately 100 meters under the best of water
+clarity conditions. In coastal and turbid waters, the loss of
+solar radiation is even more intense.
+
+Both mechanical (acoustic) and electromagnetic waves
+are refracted when passing from one medium into a second
+medium with a differing density and, thus, propagation ve-
+locity. For isotropic media, Snell’s law adequately describes
+the refraction.
+
+Figure 2.7 depicts the refraction of an incident light ray
+approaching the water surface at an angle of incidence, ,,
+and refracting through the interface at refracted angle @,. If
+c, and c, are the velocities of light in air and water, respec-
+tively, then Snell’s law provides
+
+sin(®, ) cy 1
+
+DS 8 St ig = 3
+sin(®,)  ¢2 nal GI
+
+where n,, is the relative index of refraction. For pure water
+at 15° C and a wavelength of 0.5876 microns, near the peak
+of the visible part of the spectrum, the index of refraction
+is 1.333338. The index of refraction for seawater increases
+with increasing salinity and decreasing temperature.
+
+The extinction or loss of incident solar radiation with
+depth in the sea is the result of both absorption and scat-
+tering. Both pure water molecules, k, and suspended and
+dissolved material, k,, cause absorption. Similarly, scat-
+tering is caused by water molecules, €, and suspended and
+dissolved materials, €,,. All of these components, which de-
+termine the extinction coefficient, are wavelength depend-
+ent (different for each color of light). Hence, the extinction
+coefficient, 0, must be defined for a specific wavelength of
+light, A.
+
+Oy, =ky tkyy +g ty [4]
+
+Hence, for a beam of parallel incident electromagnetic
+radiation with total energy intensity, I,, at the sea surface,
+the corresponding intensity of total energy, I,, at any depth
+z, below the surface is given by the relationship
+
+I, =I,e7% [5]
+
+where is the extinction coefficient averaged over the wave-
+length. And for an individual wavelength
+
+Volume 1
+
+(1,), = (is), (6)
+
+Note that although an average extinction coefficient may
+be defined, representing the total energy of penetrating light
+in the water column, the spectral composition of light
+changes significantly with depth below the surface or with
+distance from source to receiver.
+
+2.3.2 Ocean Acoustics
+
+Just as in the previous case of electromagnetic propagation
+in the sea at optical wavelengths, Snell’s law is also utilized
+in the case of acoustic propagation. In the acoustic case, vari-
+ations in the speed of propagation are brought about by
+changes in both the compressibility and density of the
+medium. Hence, as salinity, temperature, and pressure
+change, either vertically or horizontally in the ocean envi-
+ronment, so also does the speed and direction of acoustic
+propagation.
+
+The velocity of acoustic propagation, V is given by
+
+V=J— 7
+p [7]
+
+where M is the bulk modulus of compressibility and p is
+the fluid density. In the case of the acoustic propagation in
+the sea, both M and p are functions of salinity, temperature
+and pressure.
+
+The velocity of sound in water is much greater than in
+air, due to the much smaller compressibility of water. For
+typical open ocean surface seawater, at a salinity of ap-
+proximately 35%o, and temperature of 30° C, the speed of
+acoustic propagation is 1543 m/s. Sound velocity in the sea
+
+Cc,
+
+2
+
+Figure 2.7 Schematic Diagram of Snell's Law
+
+
+--- Page 42 ---
+Chapter 2: The Marine Environment 2-9
+
+imcreases with increasing temperature, salinity and pres-
+sare. Within the typical ranges of these oceanic parameters,
+the speed of sound is dominated by the effects of changing
+temperature. The effect of pressure is also substantial, chang-
+ing the speed of sound by about 200 m/s between the sur-
+face and deepest ocean depths. This effect must be accounted
+for in order to obtain accurate depth information from echo
+sounding.
+
+Analogous to the optical case, acoustic energy is also ab-
+sorbed and scattered by the aquatic environment. As a re-
+salt of the viscosity of water, and the associated suspended
+and dissolved materials, a loss of kinetic energy of the prop-
+agating sound wave occurs. As kinetic energy is converted
+into heat, a decrease in the intensity, I, of the sound energy,
+proportional to the distance traveled, dx, is realized. Hence
+
+1=Iye™ [8]
+
+where I, is the initial intensity at x = 0, v is the acoustic ab-
+sorption coefficient, and x is the distance traveled from the
+source.
+
+From the classical theory of Stokes and Kirchhoff the
+absorption coefficient for water, v, is
+
+16n2y
+
+~ 322Vp 01
+
+where 1 is the dynamic viscosity, and A the acoustic wave-
+length.
+
+The propagation distance, d, from the source to a point
+where the sound intensity has been reduced to a value of
+Ie or 37% of its original intensity, Ip, is given by
+
+— 3p _
+~ 16%?
+
+3V3p
+~ 1602n2y
+
+[10]
+
+where n = V/N, the acoustic frequency.
+
+Hence, as the frequency of the acoustic energy increases,
+the distance traveled to reach 37% of the original intensity
+decreases. If long acoustic propagation distances are de-
+sired, low frequency acoustics must be used, a technology
+expertly employed by whales. However, low frequency prop-
+agation is not problem free and it is advisable to use high
+frequencies, up to 10 000 cycles per second, for the pur-
+poses of echo sounding. As an example, at an acoustic fre-
+quency, n, of 10 000 CPS in near surface sea water at 35%o
+and 10° C, the dynamic viscosity, n, is 13.9 x 10-3, and V
+equals 1487 m/s, providing a propagation distance, d, of
+465 km. Actual measured oceanic absorption rates tend to
+be much greater than this simple theory suggests. This is
+primarily due to the scattering of acoustic energy.
+
+Again analogous to the optical case, variations in the
+
+Velocity tenis.)
+
+=e 100 480 _160 1600, 10. 1840
+
+Wace ve)
+mo 5 30 0
+
+ie
+
+Figure 2.8 a} Typical Mid-oceanic Temperature and Salinity Profiles,
+b) The Correction to Speed of Sound Due to Temperature, Salinity and
+Pressure, c) The Resultant Speed of Sound Profile (6)
+
+Depth im}
+
+speed of propagation produce a corresponding change in the
+direction of travel of acoustic waves. Acoustic refraction
+obeys Snell’s law and is given by
+
+sin(® ) _M
+
+= 11
+sin(®>) V2 mu
+
+where 6, and 8, are the incident and refracted angles in
+medium | and medium 2, respectively. Similarly, V, and V,
+are the sound velocities on medium 1 and 2, respectively.
+
+Under typical ocean conditions, with a warmer surface
+layer overlying a colder deeper layer, acoustic energy will
+be refracted downward (toward the colder water region).
+The same principles apply to horizontal acoustic propaga-
+tion through cold core eddies, with refraction of the acoustic
+waves toward colder water and away from warm water.
+
+As depth increases beyond about 1000 m, temperature
+changes very little and pressure begins to play an impor-
+tant role in the determination of the speed of sound. This
+results in the potential for the velocity of sound to increase
+with depth beyond this point. As this occurs, the sound
+waves may refract back up towards the water surface. Fig-
+ure 2.8 shows typical temperature and salinity profiles for
+a Pacific Ocean site. The center panel shows the corrections
+to the speed of sound due to temperature, salinity and pres-
+sure, and the third panel shows the speed of sound profile
+exhibiting a minimum at about 500 m of depth.
+
+The combined effects of downward refraction above and
+upward refraction below result in the potential for sound
+waves to be trapped in a “channel” and transmitted over
+very long ranges. This “channel” is referred to as the SOFAR
+(sound fixing and ranging) channel. It permits long-range
+
+
+--- Page 43 ---
+2-10 Ship Design & Construction,
+
+detection of submarines and other underwater devices de-
+signed for search and rescue.
+
+2.4 OCEAN CURRENTSAND CIRCULATION
+
+When the wind blows across the water surface, approxi-
+mately 97% of the momentum that is transferred from the
+wind into the fluid goes into generating the large-scale cir-
+culation ofthe body of fluid (currents). This leaves only 3%
+of the momentum from the wind for the generation of sur-
+face wave fields. On human standards, this mere 3% results
+in an enormous manifestation of energy capable of sinking
+ships, destroying harbors, and transporting huge quantities
+of sediment along the shorelines. We will first consider the
+generation of ocean and large lake circulation. The follow-
+ing section will consider surface wave motions.
+
+2.4.1 AirWater Interface
+
+The longer the wind blows across the water surface, the
+greater the depth of penetration of the current into the body
+of water. As can be seen schematically in Figure 2.9, the
+surface waters respond relatively quickly to the shear stress
+imparted across the air-sea interface by the motion of the
+wind. The approximate rule of thumb is that the upper few
+centimeters of fluid move at approximately 2% of the wind
+
+©
+
+Depth (neters)
+ae 2 8 6
+
+20
+Figure 2.9 Current Velocity Profile with Depth for Wind of Three Duration
+Periods
+
+Volume 1
+
+speed. Hence, a 10 m/s (20-knot) wind blowing across the
+water surface will produce a current in the general direc-
+tion of the wind of approximately 20 cm/s in magnitude.
+
+It should be noted that (wer long time periods or large
+spatial distances, the effects of the earth's rotation must also
+be considered.
+
+Objects floating at the water surface with significant
+windage (protrusion above the water surface), such as a
+human in a life vest, wreckage, or debris, generally move
+with a greater percentage of the wind. Approximately 3%
+of the wind speed is commonly used.
+
+For material moving with the water fluid, such as con-
+taminants, spills, or oil at the water surface, generally 2.0-2.5%
+of the wind speed is the accepted value for estimating motion.
+Since wind speed and direction often changes over open wIl;ter,
+the correct prediction of surface motion is the vector combi-
+nation of 10()% of the current, plus 2-3% of the wind.
+
+Momentum from the wind, which is imparted to the flpid
+surface, is transferred vertically downward into the fluid
+body primarily by turbulent motions of the fluid itself. Al-
+though the surface magnitude of the flow (upper few cm)
+will remain constant for a given wind speed, the velocity of
+the underlying flow will continue to increase until a steady
+State is obtained. In reality, this steady state is never actu-
+ally attained in the ocean, and is relatively rare in large bod-
+ies of water. Hence both the oceans and inland seas are in
+aconstant state of readjustment to varying wind conditions
+on a global scale.
+
+Since ocean and large inland sea circulation occurs over
+relatively large spatial scales, the effect of the earth's rota-
+tion is a major factor in controlling the direction of ocean
+currents. Hence, when we examine the equations of motion
+for ocean circulation, these equations will reflect sources
+and sinks of momentum, (primarily occurring at the bound-
+aries, surface, edges and bottom), terms which reflect the
+transport of momentum due to turbulent motions, and the
+effects of the earth's rotation or coriolis force.
+
+2.4.2 Equations of Motion
+
+The equations, which describe oceanic motions, originate
+from the application of Newton's second law relating force,
+mass and acceleration
+
+F=MA [12]
+
+Since, in the ocean environment, variations in the field
+of mass are extremely important, and the forces acting on
+the fluid can be numerous, it is more convenient to express
+Newton's law as
+
+
+--- Page 44 ---
+Chapter 2: The Marine Environment 211
+
+= dio
+DF=GMV [13]
+
+or the sum of the forces equals the time rate of change of
+momentum. The most general three-dimensional form of this
+equation, incorporating viscous effects, is known as the
+Navier-Stokes equations for a compressible fluid on a non-
+rotating earth and is given by Lamb (6) as
+
+au, at, yay you Lap
+
+at ax ‘oy dz pax
+ifu(a2u. da2v . aw ] ay [14]
+3[5( Se + Se |tove
+ov ov ov ov __ 1p
+ch a i a
+alfa au av aw )] boy HS)
+3| p\dxdy dy? dzdy } | Pp
+ow , OW, Ow ow __ 1 op
+a tox ay a p dz 8
+1fn (ou, av w)\] Hy 6]
++3[8( Se Re rer
+a(pu) _ A(pv) , A(pw) ap
+ox * ay) dt a7
+where
+a Cl) d
+v2 4 4 18
+ax? * dy? * oz? (18)
+
+jis the fluid viscosity, u, v, and w are the velocity compo-
+nents in the x, y and z directions, respectively, p is the pres-
+sure, g, gravity and p the fluid density.
+
+The earth is an oblate spheroid, with the equatorial ra-
+dius exceeding the polar radius, rotating on its axis in a
+counter-clockwise fashion when viewed from above the
+North Pole. The rotation rate is 1 revolution in approxi-
+mately 24 hours, or an angular rotation rate, @, of 7.29 x
+10-5 sec"!. When viewed from space, this results, at the
+equatorial radius, in a transverse, or easterly velocity of all
+particles (solid earth, fluid earth, and atmosphere near the
+earth’s surface) of approximately 1600 km per hr.
+
+Moving poleward from the equator, the radius to the
+earth’s surface from the axis of rotation decreases. Corre-
+spondingly, the transverse velocity also decreases, ap-
+
+proaching zero at both poles. Figure 2.10 shows that the
+transverse velocity of all particles are approximately 1400
+kmlhr at 30 degrees north and south latitude, and 800 km/hr
+at 60 degrees north and south latitude. A simple and useful
+way to view the effect of the earth's rotation on fluid parti-
+cles (ocean and atmosphere) is to visualize an object (parti-
+cle of water, moving ship, moving aircraft) traversing the
+earth's surface from the equator to the North Pole. As the
+object moves from the equator, with a transverse velocity of
+1600 kmlhr, to 30 degrees north latitude, it is encountering
+aregion where all particles are in equilibrium with the earth's
+rotation at a speed of 1400 kmIhr. Hence, our moving par-
+ticle (mass of water, ship, or aircraft) will possess a trans-
+verse velocity greater than those particles in the region into
+which it is moving. As viewed from space it will appear to
+move ahead of those particles at 30 degrees north latitude,
+or experience a deflection to the right of its velocity. Simi-
+larly, if we were to continue our journey poleward: ap-
+proaching particles at greater latitudes, deflection would
+again be to the right of the particles at the new location. It
+can be readily seen that the rate of decrease of transverse ve-
+locity increases with latitude and hence, the intensity of the
+Coriolis deflection to the right, also increases with latitude.
+
+Including the effects of the earth's rotation (Coriolis
+force), the Navier-Stokes equations become
+
+1000 mph
+
+866 mph
+
+Figure 2.10 Variation in Tangential Velocities of Particles at Rest on the
+Earth's Surface with Latitude
+
+
+--- Page 45 ---
+2-12 Ship Design & Construction,
+
+ou yy Hy OH yy OU
+
+‘ot Ox oy OZ
+—2@(sin ov — cos Ow) 19]
+
+=-19%
+=" 5 + F(x) + D(x)
+
+av inou =
+Ode TY ay tM Ge tO sindu =
+
+1 op [20]
+pay TPO tPM)
+ow, Ow, ow ow _
+HOOK TY ay TM Ge 2@cos gu = {21]
+1 op
+Dae Bt FR) +D@)
+A(pu) | Apv)  A(pw) __ ap
+oe ay) at (221
+
+where the terms on the right hand side, F(x) and D(x), rep-
+resent the external forces and dissipative forces, respec-
+tively, @ is the rotation rate of the earth, 7.29 x 10° sec!
+and @ is the latitude.
+
+2.4.3. Atmospheric Circulation
+
+The circulation in the atmosphere is controlled by a balance
+of the earth's rotation and thermodynamic forcing. The
+strength of the wind on our planet is controlled by the cor-
+responding strength of the equator to pole temperature dif-
+ference. Through geologic history, when the equator to pole
+temperature variance was greater, so too were the winds.
+Figure 2.11 provides a representation of the general circu-
+lation of the atmosphere.
+
+Atmospheric circulation is driven by intense solar heat-
+ing in the equatorial regions, balanced by a corresponding
+deficit of heat in the Polar Regions. The resulting surplus
+of heat in equatorial to mid latitude regions and a deficit of
+incident solar radiation in mid-latitudes to Polar Regions
+require a redistribution of heat on a global scale. Hence,
+Polar Regions receive less than the amount of heat required
+to maintain the heat budget and lower latitudes receive more
+heat than that required to maintain the heat budget. A bal-
+ance between the required amount of incoming solar radi-
+ation, to maintain the earth's heat budget and that re-radiated
+back to space, is achieved at approximately 38 degrees north
+and south latitude. Hence, enormous equatorial to polar heat
+transfers must occur to maintain the overall global heat bal-
+
+Volume 1
+
+ance of the planet. Atmospheric winds and oceanic currents
+are responsible for maintaining this heat balance.
+
+In equatorial regions, as intense solar radiation supplies
+heat to the earth surface (most of which is covered by water),
+heat is transported from the earth's surface to warm the
+lower regions of the atmosphere. Additionally, water vapor
+is evaporated from the earth's surface, and also supplied to
+the lower atmosphere (a sea to air transfer of mass).'Since
+heating is more intense in equatorial regions, the air masses
+directly above the equatorial regions of the earth become
+heated and buoyant relative to the air masses at higher lat-
+itudes. Hence, these air masses begin to rise relative to their
+surroundings. Since these air masses are heavily laden with
+water vapor, the rising air masses eventually cool and ini-
+tiate the condensation of water vapor into the formation of
+intense clouds and precipitation. The subsequent release of
+latent heat, in the form of the phase change from water vapor
+to liquid water, provides a secondary heating mechanism
+to the equatorial atmosphere. Since gravity prevents the ris-
+ing air mass from escaping from the planet, these rising air
+masses spread in the upper atmosphere towards both the
+north and south poles.
+
+Once in the upper regions of the atmosphere, (Figure
+2.11, point A and 1\), intense radiative cooling occurs in the
+atmosphere. This poleward bound air mass becomes dense
+relative to its surroundings, and sinks toward the earth's
+surface while continuing its journey. Since the air mass is
+now almost totally devoid of moisture, it is a very clear, dry
+air mass descending toward the earth's surface, creating the
+high-pressure regions associated with the mid-latitude
+deserts of the world. Continuing its journey poleward (Fig-
+ure 2.11, point Band B'), once again in contact with the
+
+Figure 2.11 General Circulation of the Atmosphere
+
+
+--- Page 46 ---
+Chapter 2: The Marine Environment 2-13
+
+Figure 2.12 Major Surface Currents of the Ocean
+
+earth's surface (again most of which is water), the air mass
+receives both heat and moisture fluxes from the earth's sur-
+face. These fluxes induce a buoyant air mass, rising at ap-
+proximately 60 degrees north and south latitude. Just as at
+equatorial regions, this rising air mass stimulates the air-
+borne phase change from water vapor to liquid water, pro-
+ducing intense cloud cover and precipitation along the region
+of the polar front. Continuing its journey poleward, the air
+mass once again sinks in polar regions and returns south-
+ward now along the earth's surface rising again at 60 de-
+grees north and south latitudes, cooling in space, and
+descending, thus completing the cycle at 30 degrees north
+and south latitude. Hence, the mass of the atmosphere is con-
+served, and this thermodynamically driven circulation re-
+sults in winds along the earth's surface flowing north and
+south, in the absence of the earth's rotation.
+
+With the addition of the effects of the earth's rotation,
+these north and south flowing winds are imparted with an
+east-west component. With rotation induced Coriolis de-
+flection, to the right in the Northern Hemisphere and to the
+left in the Southern Hemisphere, the prevailing surface wind
+patterns are derived. Between the equator and approximately
+30 degrees north and south latitude, the trade wind easter-
+lies reside (winds blowing from east to west). Between 30
+and 60 degrees north and south latitude the prevailing west-
+erlies exist. In high latitudes, the polar easterlies dominate.
+Comparison of this general atmospheric circulation pattern
+
+to the ocean surface circulation (Figure 2.12) provides a
+striking similarity between force and response.
+
+2.4.4 Geostrophic Flow
+
+The simplest theoretical form of ocean motion is referred
+to as geostrophic flow. Geostrophic flow is the balance be-
+tween the Coriolis and pressure gradient forces, all other
+forces being negligible. It is a steady horizontal flow (no
+variation with time) and closely accounts for the flow within
+the interior of the ocean, away from surface, edge and bot-
+tom boundaries and their associated effects. Hence, this
+simple flow accounts for approximately 98% of the ocean
+volume.
+
+The governing equations for this flow are:
+
+2 singv = is (23)
+20 sing = -2 = 24)
+2ocosu= 122 + g [25]
+a) . ae) - 126
+
+
+--- Page 47 ---
+2-14 Ship Design & Construction,
+
+The geostrophic balance of forces for the Northern Hemi-
+sphere is as depicted in Figure 2.13. The pressure gradient
+is directly opposed by the Coriolis force, which is to the right
+of the velocity. In this situation, the current flows parallel
+to the isobars (or lines of constant pressure) with high pres-
+sure to the right in the Northern Hemisphere. The geostro-
+phic balance in the Southern Hemisphere would again have
+Coriolis force and pressure gradient opposed (equal and op-
+posite), with the Coriolis force directed to the left of the ve-
+locity. Thus, in the Southern Hemisphere, the current again
+flows parallel to the isobars, however, high pressure is 10-
+cated to the left.
+
+In the interior of the ocean, away from the surface, edge
+and bottom boundaries, the resultant horizontal circulation
+is a large gyre continually turning to the right, or clockwise
+in the Northern Hemisphere and a corresponding left turn-
+ing or counter-clockwise gyre, in the Southern Hemisphere
+Ocean. Figure 2.12 provides a schematic of general ocean
+circulation demonstrating this effect.
+
+2.4.5 Ekman Flow and Vertical Current Structure
+
+The deflection of ocean surface currents relative to the wind
+was first observed by Fridtjof Nansen in the late 1800s.
+Nansen allowed his wooden oceanographic sailing research
+vessel, FRAM, to freeze into the Arctic pack ice (Norwe-
+gian North Polar Expedition, 1893-96), and recorded its
+drift, relative to the wind, for a period of approximately two
+years until the ship could be freed. His observations were
+placed in theory by Ekman (8), resulting in the classic trea-
+tise on oceanic wind-driven circulation. In this theoretical
+flow field, a uniform wind stress at the sea surface drives a
+
+Pressure
+Gradient
+
+Coriolis
+Force
+
+High
+
+1
+i
+H
+H
+H
+H
+H
+H
+'
+H
+H
+'
+'
+t
+'
+'
+H
+H
+'
+'
+i Low
+H
+H
+'
+H
+i
+H
+H
+H
+H
+H
+H
+
+Figure 2.13 The Geostrophic Balance of Forces for the Northern Hemisphere
+
+Volume 1
+
+flow in an unbounded ocean. This flow is subject to Corio-
+lis and frictional influences only.
+
+The most striking feature of this theory is that the wind
+induced, surface current direction is 45 degrees to the right
+of the wind direction in the Northern Hemisphere (to the
+left in the Southern Hemisphere). Ekman's theory also sug-
+gests that once the surface layer of the ocean is placed in
+motion by the frictional coupling of the wind above the
+water, each successive layer below will be affected through
+vertical turbulent mixing. There will be a corresponding de-
+crease in velocity, as well as a turning to the right in the
+Northern Hemisphere and to the left in the Southern Hemi-
+sphere with depth. The resultant current structure is de-
+picted in Figure 2.14. The velocity decreases exponentially
+with depth to the depth of frictional influence (the depth to
+which the constant wind can effectively place the ocean in
+motion).
+
+As a result of the constant turning of current direCtion
+to the right (in the Northern Hemisphere) the direction of
+flow at the bottom of the Ekman surface layer is 180 de-
+grees from that of the surface current, or 235 (45 + 180) de-
+grees from the wind.
+
+Vertically integrating this flow over the region from the
+depth of frictional influence to the surface, produces net
+flow 90 degrees to the right of the wind. Hence, passive
+contaminants mixed in this upper region of the ocean will
+be transported at right angles to the prevailing wind direc-
+tion (to the right in the Northern Hemisphere and to the left
+in the Southern Hemisphere).
+
+Below the depth of frictional influence, and hence below
+the reach of the surface layer (typically at a depth corre-
+sponding to the base of the thermocline, approximately
+
+Increasing
+Water Depth
+Surface
+
+Current
+
+Net Flow or
+Mass Transport
+
+x
+
+Figure 2.14 A Projection of the Vertical Wind Driven Surface Current
+Structure on a Horizontal Plane (8)
+
+
+--- Page 48 ---
+Chapter 2: The Marine Environment 2-15
+
+100-200 m), the flow is generally geostrophic. This mid-
+depth region of geostrophic flow extends vertically down-
+ward through the bulk of the interior of the ocean until again
+reaching a region of frictional influence near the bottom
+boundary. Just as in the case of the surface layer, an Ekman
+bottom boundary layer is also formed. The bottom layer is
+driven from above by the geostrophic flow of the interior
+of the ocean and is modified by both the increasing frictional
+influence of the approaching bottom and the earth's rota-
+tion. This combination of forces again results in turning to-
+ward the pressure gradient, as friction is increased
+(approaching the bottom boundary) and decreasing magni-
+tude of the current. A schematic view of the bottom layer
+is depicted by Figure 2.15.
+
+Combining these three components of oceanic flow, a
+bottom layer, a mid-depth interior region dominated by
+geostrophic flow, and a surface layer, results in Ekman's el-
+ementary current system (Figure 2.16). This relatively sim-
+ple flow, being driven by the wind and balanced by pressure
+gradient forces and frictional forces represents the basis of
+horizontal ocean circulation. It should be noted, as the dia-
+gram depicts, that the current experienced at the surface is
+the vector addition of the underlying geostrophic flow and
+the Ekman surface layer circulation at each particular level.
+
+As an example, along an infinite straight Northern Hemi-
+sphere coastline, as depicted in Figure 2.17, with the wind
+blowing parallel to shore (from right to left) and (a) is the
+pure drift current at the surface, (b) is the actual surface cur-
+rent, (c) is the geostrophic current, and (d) is the bottom cur-
+rent, the resulting net mass transport in the surface layer
+results in a transport of fluid onshore. This produces an off-
+shore pressure gradient resulting in a mid-depth, geostrophic
+flow also parallel to the coast (from right to left). In this ex-
+
+Geostrophic Flow
+
+Figure 2.15 A Projection of the Vertical Current Structure on the Sea
+Bottom on a Horizontal Plane (8)
+
+ample, the bottom current vvould be offshore and down
+coast.
+
+With this mid-depth g~ostrophic flow moving dOwn
+coast, and a net mean bottom transport offshore and down
+coast, objects placed at the surface of this flow would tend
+to move onshore and downcoast, contaminants floating with
+the mid-depth water would be transported shore parallel
+and similarly, objects near the bottom would be transported
+offshore. The opposite would be true in the Southern Hemi-
+sphere.
+
+,
+D< Surface current
+
+a
+
+r
+
+a Deep current >d
+S
+
+D* Bottom current
+
+Y.
+
+Figure 2.16 Vertical Distribution of Ekman’s Elementary Current System
+
+Coast
+
+Pressure gradient
+
+Figure 2.17 Vector Diagram of Ekman’s Elementary System
+
+
+--- Page 49 ---
+2-16 Ship Design & Construction,
+
+2.4.6 Upwelling, Downwelling, and Seiche
+
+One additional class of wind-induced motion is worthy of
+consideration. As the wind blows across the water surface,
+water is transported in the general direction of the wind. This
+produces a piling of water along the downwind shoreline
+and a depression in the thermocline (region of rapidly de-
+creasing temperature). To conserve fluid mass, a general
+offshore flow along the bottom boundary is created. Cor-
+respondingly, on the upwind side of the basin, subjected to
+the strong influence of the wind, one would expect to have
+onshore flow along the bottom, offshore flow at the surface,
+and an elevation of the thermocline, or the accumulation of
+cold water near the coastal region. Hence, the upwind coast
+is referred to as an upwelling coast, and the downwind coast
+as a downwelling coast.
+
+This phenomenon also exists on oceanic scales when
+the wind blows parallel to a coast producing a mass trans-
+
+Volume 1
+
+port of water perpendicular [0 shore. If the water is trans-
+ported offshore, an upwelling occurs bringing nutrient'rich
+deep water into the photic zone and enhancing biological
+productivity.
+
+In the case of a wind event over an enclosed basin, when
+the wind weakens, the water, which has been forced to! one
+end of the basin, is released and the basin effectively sloshes
+back and forth at its natural period of oscillation. This phe-
+nomenon is referred to as a seiche. As an example, Lake
+Erie located in the temperate region of North America, which
+is relatively shallow in mean depth and has its long axis ori-
+ented into the prevailing westerlies, is noted for experienc-
+ing great seiches. The longitudinal seiche period (natural
+period of oscillation) of Lake Erie is approximately 14.2
+hours. The maximum water level elevation difference,
+recorded between Buffalo, New York on the east end of the
+basin and Toledo, Ohio on the west end of the basin. of
+some 5m occurred during a December storm.
+
+Direction of Wave Propagation
+
+Cc
+z
+Crest
+SWL
+°| 7 nd
+“IF OOQO
+u=+,w=0 u=0,w=+ uU=~, w=- u=+,w=0] 4
+
+Acceleration
+
+ax=0, az=- ax=+
+
+OOO © ©
+
+az=0 ax=0, az=+ ax=-,az=O ax=0, az=-
+
+9 0 n2
+
+3x/2 2a
+
+Bottom, z=-¢ —— ____
+
+71 = A cos (kx - ot)
+n= A = H/2 at wave crest
+1) = -A = -H/2 at wave trough
+
+Figure 2.18 A Sinusoidal Surface Wave Propagating in the Positive x Direction with Underlying Particle Velocities and Acceleration Shown
+
+
+--- Page 50 ---
+Chapter 2: The Marine Environment 217
+
+2.5 WAVE MECHANICS
+
+As the wind blows across the sea surface, large lake or bay,
+momentum is imparted from the wind to the sea surface.
+As previously discussed, approximately 97% of this mo-
+mentum is used to generate the general circulation (cur-
+rents) of the water body and the remainder supplies the
+development of the surface wave field. Although this sur-
+face wave momentum represents a small percentage of the
+total momentum, it results in an enormous quantity of en-
+ergy on human scales.
+
+Waves on the free surface of a body of water are the
+combined result of a disturbing force (that which is re-
+sponsible for the creation of the deformation), and a restor-
+ing force (which attempts to restore the surface back to
+equilibrium). Surface waves are generally characterized by
+their height, length, period and by the total water depth in
+which they are traveling. A two-dimensional _ sketch of a si-
+nusoidal surface wave propagating in the x-direction can be
+seen in Figure 2.18. The wave height, H, is the vertical dis-
+tance between the crest and trough of the wave. The wave-
+length, L, is the horizontal distance between any two
+corresponding points on successive waves and the wave pe-
+riod, T, is the time required for the passage between two
+successive crests or troughs. The equilibrium'position used
+to reference surface wave motion, still water level (SWL),
+is at z = 0 and the bottom is located at z = -<1, where d is
+the local water depth. The celerity of a wave, C, is the speed
+of propagation of the wave form (phase speed), defined as
+C=L/T.
+
+Most ocean waves are progressive, which implies that
+their wave form travels at celerity, C, relative to a back-
+ground. In contrast, standing waves, whose wave form re-
+mains stationary relative to a background, occur in the
+simplest case from the interaction of two progressive waves
+traveling in opposite directions and are often observed near
+reflective barriers. Progressive, deep ocean waves are os-
+cillatory, meaning that the water particles making up the
+wave do not exhibit a net motion in the direction of wave
+propagation. However, as waves enter shallow water, they
+begin to exhibit a net displacement of water in the direction
+of wave propagation and are classified as translational.
+
+2.5.1 Linear Wave Theory
+
+The free surface water elevation, 11, for a real water wave
+propagating over an irregular, permeable bottom is quite
+complex. However, by employing several simplifying as-
+sumptions, the mathematical problem becomes much more
+tenable. In general, viscous effects are assumed negligible
+
+(concentrated near the bottom), the flow is assumed irrota-
+
+tional and incompressible, and the wave heights are as-
+sumed small compared to wavelength. Given this set of as-
+sumptions, a remarkably simple solution can be obtained
+
+for the surface wave boundary value problem.
+
+This simplification, which is referred to as linear, small-
+amplitude wave theory, is remarkably accurate and is the
+standard for many naval architecture, ocean and coastal en-
+gineering applications. Furthermore, the linear nature of
+this formulation allows for the free surface to be represented
+by the superposition of sinusoids of different amplitudes
+and frequencies, which facilitates the application of Fourier
+decomposition and associated spectral analysis techniques.
+Hence, we will now concentrate on characteristics of lin-
+ear, progressive, small-amplitude waves.
+
+The equation for the free surface displacement of a pro-
+gressive wave is given by
+
+1 = Acos(kx — ot) 27)
+
+where the wave amplitude, A = H/2, the wave number, k =
+2n/L, and wave frequency 6 = 2n/T. The dispersion rela-
+tion, which relates individual wave properties and local
+water depth, d, to wave propagation behavior is given by
+
+6? = gk tanh(kd) [28]
+
+where g is the acceleration of gravity.
+
+From equation 28 and the definition of wave celerity C,
+it can be shown that the wave propagation speed as a func-
+tion of local water depth is given by
+
+Cc
+
+o_ et
+kon tanh(kd) [29]
+
+and similarly, the wave length by
+
+0
+L=55 tanh(kd) [30]
+The hyperbolic function approaches useful simplifying
+limits for both large values of kd (deep water) and for small
+values of kd (shallow water). Applying these limits to 29
+and 30 results in expressions for deep water (tanh (kd) = 1)
+of:
+
+C= Bu
+and
+T?
+Lo = 5 [32]
+
+where the subscript, 0, denotes deep water.
+

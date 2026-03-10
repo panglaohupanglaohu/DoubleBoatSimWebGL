@@ -25,12 +25,12 @@ export class AgentBase extends EventEmitter {
     // 尝试从 localStorage 加载配置
     const savedConfig = this._loadConfig();
 
-    // LLM 配置
+    // LLM 配置（优先使用 localStorage，其次使用传入配置，最后使用默认值）
     this.llmConfig = {
-      provider: savedConfig?.llmProvider || config.llmProvider || 'minimax',
+      provider: savedConfig?.llmProvider || config.llmProvider || 'deepseek',
       apiKey: savedConfig?.apiKey || config.apiKey || '',
-      apiEndpoint: savedConfig?.apiEndpoint || config.apiEndpoint || 'https://api.minimax.chat/v1',
-      model: savedConfig?.model || config.model || 'MiniMax-M2.5',
+      apiEndpoint: savedConfig?.apiEndpoint || config.apiEndpoint || 'https://api.deepseek.com/v1',
+      model: savedConfig?.model || config.model || 'deepseek-chat',
       temperature: config.temperature || 0.7,
       maxTokens: config.maxTokens || 4096
     };

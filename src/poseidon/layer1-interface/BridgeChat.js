@@ -61,21 +61,10 @@ export class BridgeChat extends EventEmitter {
       ...config
     };
     
-    // 创建 LLM Client（使用真实 API）
-    this.llmClient = new LLMClient({
-      provider: this.config.llmProvider,
-      apiKey: this.config.apiKey,
-      apiEndpoint: this.config.apiEndpoint,
-      model: this.config.model,
-      temperature: this.config.temperature,
-      maxTokens: 4096
-    });
+    // 创建 LLM Client（配置由用户通过 poseidon-config.html 热插拔）
+    this.llmClient = new LLMClient({});
     
-    console.log('🧠 LLM Client initialized:', {
-      provider: this.config.llmProvider,
-      model: this.config.model,
-      hasApiKey: !!this.config.apiKey
-    });
+    console.log('🧠 LLM Client initialized (hot-swappable via config page)');
     
     // 对话历史（作为 LLM 的上下文）
     this.conversationHistory = [];
@@ -188,10 +177,15 @@ export class BridgeChat extends EventEmitter {
       gap: 12px;
     `;
     
-    // 添加欢迎消息（未配置 API Key 时提示去配置）
-    const welcomeText = this.config.apiKey
-      ? `✅ 已配置 ${this.config.llmProvider || 'LLM'} API Key。我是您的 AI 领航员，已接入大模型。您可以通过语音或文字向我提问，我会协调全船的智能体为您服务。`
-      : '欢迎登上 Poseidon-X 智能舰桥。请先打开 poseidon-config.html 配置 LLM API Key（支持 DeepSeek、OpenAI、MiniMax 等），即可使用真实大模型对话。';
+    // 添加欢迎消息（明确说明配置逻辑）
+    const savedConfig = this._loadConfig();
+    const providerName = savedConfig.llmProvider || 'LLM';
+    const hasApiKey = !!savedConfig.apiKey;
+    
+    const welcomeText = hasApiKey
+      ? `✅ 已配置 ${providerName} API Key。我是您的 AI 领航员，已接入大模型。\n\n📌 功能说明：\n• 语音/文字问答：使用 ${providerName} 大模型\n• 菜单功能：无需 LLM，直接执行\n• 切换模型：在 poseidon-config.html 随时更换提供商`
+      : '欢迎登上 Poseidon-X 智能舰桥。\n\n📌 功能说明：\n• 菜单功能：✅ 可用（无需 LLM）\n• 语音/文字问答：需配置 API Key\n• 配置入口：打开 poseidon-config.html 选择 LLM 提供商（DeepSeek/OpenAI/MiniMax 等）';
+    
     this._addMessage('system', welcomeText);
     
     // 输入区域
@@ -205,9 +199,9 @@ export class BridgeChat extends EventEmitter {
     
     this.inputBox = document.createElement('input');
     this.inputBox.type = 'text';
-    this.inputBox.placeholder = this.config.apiKey
+    this.inputBox.placeholder = hasApiKey
       ? '输入指令或问题... (例如: 右舷那艘船有碰撞风险吗？)'
-      : '请先配置 API Key → poseidon-config.html';
+      : '输入菜单指令或先配置 API Key → poseidon-config.html';
     this.inputBox.style.cssText = `
       flex: 1;
       padding: 10px 12px;
@@ -369,6 +363,10 @@ export class BridgeChat extends EventEmitter {
   async sendMessage(message) {
     if (!message || !message.trim()) return;
     
+    // 每次发送消息前重新加载配置，支持热插拔
+    const savedConfig = this._loadConfig();
+    const providerName = savedConfig.llmProvider || 'LLM';
+    
     // 添加用户消息到 UI
     this._addMessage('user', message);
     
@@ -379,8 +377,8 @@ export class BridgeChat extends EventEmitter {
       timestamp: new Date().toISOString()
     });
     
-    // 显示"思考中"状态
-    const thinkingId = this._addMessage('assistant', '正在分析...', true);
+    // 显示"思考中"状态（显示当前使用的模型）
+    const thinkingId = this._addMessage('assistant', `正在分析 [${providerName}]...`, true);
     
     try {
       // 1. 先识别是否为菜单操作并执行（与 GUI 一致），再走 LLM；若已执行菜单则让 LLM 只做简短确认
@@ -945,6 +943,30 @@ export class BridgeChat extends EventEmitter {
     this.conversationHistory = [];
     this.messagesContainer.innerHTML = '';
     this._addMessage('system', '对话已清空。');
+  }
+
+  /**
+   * 重新加载配置（热插拔）
+   * 用户在配置页面更改后调用此方法
+   */
+  reloadConfig() {
+    const savedConfig = this._loadConfig();
+    const providerName = savedConfig.llmProvider || 'LLM';
+    const hasApiKey = !!savedConfig.apiKey;
+    
+    // 更新输入框 placeholder
+    this.inputBox.placeholder = hasApiKey
+      ? `输入指令... (例如：右舷那艘船有碰撞风险吗？) [${providerName}]`
+      : '输入菜单指令或先配置 API Key → poseidon-config.html';
+    
+    // 通知用户
+    this._addMessage('system', `✅ 配置已更新 | 当前使用：${providerName}`);
+    
+    console.log('🔌 BridgeChat config reloaded:', {
+      provider: savedConfig.llmProvider,
+      model: savedConfig.model,
+      hasApiKey
+    });
   }
   
   /**

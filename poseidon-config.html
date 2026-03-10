@@ -531,6 +531,16 @@
       // 保存到 localStorage
       localStorage.setItem('poseidon_config', JSON.stringify(config));
       
+      // 通知 BridgeChat 重新加载配置
+      try {
+        if (window.poseidonSystem?.bridgeChat?.reloadConfig) {
+          window.poseidonSystem.bridgeChat.reloadConfig();
+        }
+        window.dispatchEvent(new Event('poseidon_config_updated'));
+      } catch (e) {
+        console.log('通知 BridgeChat: '', e);
+      }
+      
       showMessage('success', '✅ 配置已保存！正在跳转到主页面...');
       
       console.log('💾 配置已保存:', config);

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poseidon 数字孪生 - 智能体集成测试</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #eee;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2.5em;
+    }
+    .status-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .status-item {
+      background: rgba(255,255,255,0.1);
+      padding: 12px 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #666;
+    }
+    .status-indicator.online { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+    .status-indicator.offline { background: #ff4444; }
+    
+    .panel {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+    }
+    .panel h2 {
+      margin-bottom: 15px;
+      color: #00d4ff;
+      font-size: 1.3em;
+    }
+    
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      color: #fff;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0,212,255,0.3);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .result {
+      background: rgba(0,0,0,0.4);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #333;
+    }
+    .result.success { border-color: #00ff88; }
+    .result.error { border-color: #ff4444; }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    .card {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #00d4ff;
+    }
+    .card h3 { color: #00d4ff; margin-bottom: 10px; font-size: 1em; }
+    .card p { font-size: 0.9em; color: #aaa; }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #00d4ff;
+    }
+    
+    .log-entry {
+      padding: 5px 0;
+      border-bottom: 1px solid #333;
+      font-size: 12px;
+    }
+    .log-entry.info { color: #00d4ff; }
+    .log-entry.success { color: #00ff88; }
+    .log-entry.error { color: #ff4444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌊 Poseidon 数字孪生 - 智能体集成测试</h1>
+    
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <div class="status-item">
+        <div class="status-indicator" id="serviceIndicator"></div>
+        <span>服务：<span id="serviceStatus">检查中...</span></span>
+      </div>
+      <div class="status-item">
+        <span>API: <span id="apiUrl">-</span></span>
+      </div>
+      <div class="status-item">
+        <span>技能：<span id="skillsCount">-</span></span>
+      </div>
+    </div>
+    
+    <!-- 服务信息 -->
+    <div class="panel">
+      <h2>📊 服务信息</h2>
+      <div class="grid" id="serviceInfo">
+        <div class="card"><h3>加载中...</h3></div>
+      </div>
+    </div>
+    
+    <!-- 场景预设 -->
+    <div class="panel">
+      <h2>🎨 场景预设</h2>
+      <div class="btn-group">
+        <button onclick="testApplyPreset('calm')">平静海面</button>
+        <button onclick="testApplyPreset('stormy')">暴风雨</button>
+        <button onclick="testApplyPreset('sunset')">日落</button>
+        <button onclick="testApplyPreset('night')">夜晚</button>
+        <button onclick="testResetScene()">重置场景</button>
+      </div>
+    </div>
+    
+    <!-- 传感器数据 -->
+    <div class="panel">
+      <h2>📡 传感器数据</h2>
+      <div class="btn-group">
+        <button onclick="testSensorQuery('all')">查询所有</button>
+        <button onclick="testSensorQuery('gps')">GPS</button>
+        <button onclick="testSensorQuery('imu')">IMU</button>
+        <button onclick="testSensorQuery('weather')">气象</button>
+        <button onclick="testSensorQuery('engine')">主机</button>
+      </div>
+    </div>
+    
+    <!-- 故障诊断 -->
+    <div class="panel">
+      <h2>🔧 故障诊断</h2>
+      <input type="text" id="diagnosisInput" placeholder="输入故障现象，如：主机转速异常下降">
+      <div class="btn-group">
+        <button onclick="testDiagnosis()">开始诊断</button>
+      </div>
+    </div>
+    
+    <!-- 决策支持 -->
+    <div class="panel">
+      <h2>🧠 决策支持</h2>
+      <input type="text" id="decisionInput" placeholder="输入决策问题，如：当前海况适合继续航行吗？">
+      <div class="btn-group">
+        <button onclick="testDecision()">获取建议</button>
+      </div>
+    </div>
+    
+    <!-- AI 对话 -->
+    <div class="panel">
+      <h2>💬 AI 对话</h2>
+      <textarea id="chatInput" placeholder="输入自然语言指令，如：把波浪调大，切换到暴风雨模式" rows="3"></textarea>
+      <div class="btn-group">
+        <button onclick="testChat()">发送</button>
+      </div>
+    </div>
+    
+    <!-- 执行结果 -->
+    <div class="panel">
+      <h2>📝 执行结果</h2>
+      <div class="result" id="result">等待操作...</div>
+    </div>
+    
+    <!-- 日志 -->
+    <div class="panel">
+      <h2>📜 操作日志</h2>
+      <div class="result" id="log" style="max-height: 200px;"></div>
+    </div>
+  </div>
+  
+  <script src="ai-controller.js"></script>
+  <script>
+    const API = window.aiController.apiBaseUrl;
+    
+    // 日志函数
+    function addLog(message, type = 'info') {
+      const log = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${time}] ${message}`;
+      log.insertBefore(entry, log.firstChild);
+    }
+    
+    // 显示结果
+    function showResult(data, type = 'info') {
+      const result = document.getElementById('result');
+      result.className = `result ${type}`;
+      result.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+    }
+    
+    // 初始化
+    async function init() {
+      addLog('正在连接 Poseidon 服务...');
+      
+      try {
+        const health = await window.aiController.checkHealth();
+        document.getElementById('serviceIndicator').className = 'status-indicator online';
+        document.getElementById('serviceStatus').textContent = '🟢 在线';
+        document.getElementById('apiUrl').textContent = API;
+        addLog('服务连接成功', 'success');
+        
+        const skills = await window.aiController.getSkills();
+        const skillCount = skills.data.skills.length;
+        document.getElementById('skillsCount').textContent = `${skillCount} 个技能`;
+        
+        document.getElementById('serviceInfo').innerHTML = `
+          <div class="card"><h3>服务名称</h3><p>${health.service}</p></div>
+          <div class="card"><h3>版本</h3><p>${health.version}</p></div>
+          <div class="card"><h3>技能</h3><p>${health.skills.join(', ') || '无'}</p></div>
+          <div class="card"><h3>状态</h3><p>${health.status}</p></div>
+        `;
+        
+        addLog(`获取技能列表：${skillCount} 个`, 'success');
+      } catch (e) {
+        document.getElementById('serviceIndicator').className = 'status-indicator offline';
+        document.getElementById('serviceStatus').textContent = '🔴 离线';
+        addLog(`连接失败：${e.message}`, 'error');
+        showResult(`错误：${e.message}`, 'error');
+      }
+    }
+    
+    // 测试场景预设
+    async function testApplyPreset(preset) {
+      addLog(`应用场景预设：${preset}`);
+      try {
+        const result = await window.aiController.applyPreset(preset);
+        showResult(result, result.success ? 'success' : 'error');
+        addLog(result.message, result.success ? 'success' : 'error');
+      } catch (e) {
+        showResult(`错误：${e.message}`, 'error');
+        addLog(`失败：${e.message}`, 'error');
+      }
+    }
+    
+    // 测试重置场景
+    async function testResetScene() {
+      addLog('重置场景');
+      try {
+        const result = await window.aiController.resetScene();
+        showResult(result, result.success ? 'success' : 'error');
+        addLog(result.message, result.success ? 'success' : 'error');
+      } catch (e) {
+        showResult(`错误：${e.message}`, 'error');
+        addLog(`失败：${e.message}`, 'error');
+      }
+    }
+    
+    // 测试传感器查询
+    async function testSensorQuery(type) {
+      addLog(`查询传感器：${type}`);
+      try {
+        const result = await window.aiController.querySensors(type, 1);
+        showResult(result, result.success ? 'success' : 'error');
+        addLog(`获取 ${result.data?.length || 0} 个传感器数据`, 'success');
+      } catch (e) {
+        showResult(`错误：${e.message}`, 'error');
+        addLog(`失败：${e.message}`, 'error');
+      }
+    }
+    
+    // 测试故障诊断
+    async function testDiagnosis() {
+      const symptom = document.getElementById('diagnosisInput').value;
+      if (!symptom) return alert('请输入故障现象');
+      
+      addLog(`开始诊断：${symptom}`);
+      try {
+        const result = await window.aiController.diagnose(symptom);
+        showResult(result, result.success ? 'success' : 'error');
+        addLog(result.message, result.success ? 'success' : 'error');
+      } catch (e) {
+        showResult(`错误：${e.message}`, 'error');
+        addLog(`失败：${e.message}`, 'error');
+      }
+    }
+    
+    // 测试决策支持
+    async function testDecision() {
+      const query = document.getElementById('decisionInput').value;
+      if (!query) return alert('请输入决策问题');
+      
+      addLog(`获取决策建议：${query}`);
+      try {
+        const result = await window.aiController.getDecision(query);
+        showResult(result, result.success ? 'success' : 'error');
+        addLog(result.message, result.success ? 'success' : 'error');
+      } catch (e) {
+        showResult(`错误：${e.message}`, 'error');
+        addLog(`失败：${e.message}`, 'error');
+      }
+    }
+    
+    // 测试 AI 对话
+    async function testChat() {
+      const message = document.getElementById('chatInput').value;
+      if (!message) return alert('请输入消息');
+      
+      addLog(`AI 对话：${message}`);
+      try {
+        const result = await window.aiController.chat(message);
+        showResult(result, result.success ? 'success' : 'error');
+        addLog(result.message, result.success ? 'success' : 'error');
+      } catch (e) {
+        showResult(`错误：${e.message}`, 'error');
+        addLog(`失败：${e.message}`, 'error');
+      }
+    }
+    
+    // 回车发送
+    document.getElementById('chatInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        testChat();
+      }
+    });
+    
+    // 启动
+    init();
+  </script>
+</body>
+</html>

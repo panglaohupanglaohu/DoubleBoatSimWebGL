@@ -31,18 +31,40 @@ import { EventEmitter } from '../utils/EventEmitter.js';
  * Poseidon-X 主系统类
  */
 export class PoseidonX extends EventEmitter {
+  /**
+   * 从 localStorage 加载配置
+   * @private
+   */
+  _loadConfigFromStorage() {
+    if (typeof localStorage === 'undefined') return {};
+    try {
+      const saved = localStorage.getItem('poseidon_config');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.warn('⚠️ 加载配置失败:', error);
+    }
+    return {};
+  }
   constructor(scene, camera, config = {}) {
     super();
     
     this.scene = scene;
     this.camera = camera;
     
+    // 优先从 localStorage 加载用户配置（避免被默认值覆盖）
+    const savedConfig = this._loadConfigFromStorage();
+    
     this.config = {
       enableBridgeChat: config.enableBridgeChat !== false,
       enableDigitalTwin: config.enableDigitalTwin !== false,
       enableVoice: config.enableVoice || false,
-      llmProvider: config.llmProvider || 'minimax',
-      model: config.model || 'MiniMax-M2.5',
+      llmProvider: savedConfig.llmProvider || config.llmProvider || 'deepseek',
+      model: savedConfig.model || config.model || 'deepseek-chat',
+      apiKey: savedConfig.apiKey || config.apiKey || '',
+      apiEndpoint: savedConfig.apiEndpoint || config.apiEndpoint || 'https://api.deepseek.com/v1',
+      temperature: savedConfig.temperature || config.temperature || 0.7,
       ...config
     };
     
@@ -163,12 +185,9 @@ export class PoseidonX extends EventEmitter {
       console.log('  ✅ Digital Twin Map initialized');
     }
     
-    // Bridge Chat（舰桥对话中心）
+    // Bridge Chat（舰桥对话中心）- 配置由 BridgeChat 自己从 localStorage 加载
     if (this.config.enableBridgeChat) {
       this.bridgeChat = new BridgeChat({
-        llmProvider: this.config.llmProvider,
-        model: this.config.model,
-        voiceEnabled: this.config.enableVoice,
         vibe: `你是 Poseidon-X 的核心 AI 助手，协调全船的智能体团队。`
       });
       
@@ -213,25 +232,33 @@ export class PoseidonX extends EventEmitter {
       timeout: 30000
     });
     
-    // 创建各个专业智能体
+    // 创建各个专业智能体（使用从 localStorage 加载的配置）
     this.agents.navigator = new NavigatorAgent({
       llmProvider: this.config.llmProvider,
-      model: this.config.model
+      model: this.config.model,
+      apiKey: this.config.apiKey,
+      apiEndpoint: this.config.apiEndpoint
     });
     
     this.agents.engineer = new EngineerAgent({
       llmProvider: this.config.llmProvider,
-      model: this.config.model
+      model: this.config.model,
+      apiKey: this.config.apiKey,
+      apiEndpoint: this.config.apiEndpoint
     });
     
     this.agents.steward = new StewardAgent({
       llmProvider: this.config.llmProvider,
-      model: this.config.model
+      model: this.config.model,
+      apiKey: this.config.apiKey,
+      apiEndpoint: this.config.apiEndpoint
     });
     
     this.agents.safety = new SafetyAgent({
       llmProvider: this.config.llmProvider,
-      model: this.config.model
+      model: this.config.model,
+      apiKey: this.config.apiKey,
+      apiEndpoint: this.config.apiEndpoint
     });
     
     // 注册到 Orchestrator

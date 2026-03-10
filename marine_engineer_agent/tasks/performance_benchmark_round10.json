@@ -1,0 +1,7 @@
+{
+  "test_date": "2026-03-10 20:30",
+  "round": 10,
+  "string_join_improvement": "99.8%",
+  "regex_precompile_improvement": "11.3%",
+  "lru_cache_improvement": "100.0%"
+}
