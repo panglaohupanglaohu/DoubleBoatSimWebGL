@@ -1,452 +1,525 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Poseidon Service - 智能船舶工程服务 API (轻量版)
+Poseidon Server - Poseidon 数字孪生服务器.
 
-基于 Python 内置 http.server 模块，无需外部依赖。
-支持故障诊断、知识查询等功能。
+提供 REST API 和 WebSocket 接口，用于访问和管理 Marine Channel 数据。
 
-:author: marine_engineer_agent
-:version: 1.0.0
-:since: 2026-03-10
+功能:
+- REST API 路由
+- Channel 数据管理
+- WebSocket 实时推送
+- 数据持久化
+- 系统监控
+
+示例用法:
+    >>> # 启动服务器
+    >>> python poseidon_server.py --port 8080 --ws-port 8765
+    >>>
+    >>> # API 访问
+    >>> curl http://localhost:8080/api/channels
+    >>> curl http://localhost:8080/api/data/engine_monitor
+    >>> curl http://localhost:8080/api/events
 """
 
-import sys
-import os
+import argparse
 import json
 import logging
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+import os
+import sys
 from datetime import datetime
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
+from typing import Any, Optional
+from urllib.parse import parse_qs, urlparse
 
-# 添加 skills 目录到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'skills'))
+# 添加父目录到路径以支持导入
+sys.path.insert(0, str(Path(__file__).parent))
 
-# 导入技能模块
-try:
-    from fault_diagnosis import fault_diagnosis_skill
-    from query_answer import query_answer_skill
-    from marine_config import MarineEngineerConfig
-    from twins_controller import (
-        twins_scene_control,
-        twins_boat_control,
-        twins_sensor_query,
-        twins_diagnosis,
-        twins_decision_support,
-        list_twins_skills
-    )
-    from hydrodynamics import (
-        hydrodynamics_analysis,
-        calculate_hull_coefficients,
-        calculate_total_resistance,
-        calculate_required_power,
-        calculate_initial_gm,
-        list_hydro_skills
-    )
-    SKILLS_AVAILABLE = True
-    TWINS_AVAILABLE = True
-    HYDRO_AVAILABLE = True
-except ImportError as e:
-    print(f"⚠️  技能模块导入失败：{e}")
-    SKILLS_AVAILABLE = False
-    TWINS_AVAILABLE = False
-    HYDRO_AVAILABLE = False
+from .channels_integration import (
+    ChannelsIntegration,
+    ChannelData,
+    Event,
+    DataType,
+)
+from .realtime_data_bridge import RealtimeDataBridge
+
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger("poseidon_server")
+logger = logging.getLogger("PoseidonServer")
 
 
-class PoseidonHandler(BaseHTTPRequestHandler):
-    """HTTP 请求处理器"""
-    
-    def _set_headers(self, status_code=200, content_type="application/json"):
-        """设置响应头"""
-        self.send_response(status_code)
+class PoseidonAPIHandler(BaseHTTPRequestHandler):
+    """Poseidon REST API 处理器."""
+
+    # 类变量，由服务器设置
+    server_instance: Optional["PoseidonServer"] = None
+
+    def log_message(self, format: str, *args) -> None:
+        """自定义日志格式."""
+        logger.info(f"{self.address_string()} - {format % args}")
+
+    def _set_headers(self, status: int = 200, content_type: str = "application/json") -> None:
+        """设置响应头.
+
+        Args:
+            status: HTTP 状态码.
+            content_type: 内容类型.
+        """
+        self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
-    
-    def _send_json(self, data, status_code=200):
-        """发送 JSON 响应"""
-        self._set_headers(status_code)
-        response = json.dumps(data, ensure_ascii=False, indent=2)
+
+    def _send_json(self, data: Any, status: int = 200) -> None:
+        """发送 JSON 响应.
+
+        Args:
+            data: 数据.
+            status: HTTP 状态码.
+        """
+        self._set_headers(status)
+        response = json.dumps(data, ensure_ascii=False, default=str)
         self.wfile.write(response.encode("utf-8"))
-    
-    def do_OPTIONS(self):
-        """处理 CORS 预检请求"""
+
+    def _send_error(self, message: str, status: int = 400) -> None:
+        """发送错误响应.
+
+        Args:
+            message: 错误消息.
+            status: HTTP 状态码.
+        """
+        self._send_json({"error": message}, status)
+
+    def do_OPTIONS(self) -> None:
+        """处理 CORS 预检请求."""
         self._set_headers(204)
-    
-    def do_GET(self):
-        """处理 GET 请求"""
-        parsed_path = urlparse(self.path)
-        path = parsed_path.path
-        
+
+    def do_GET(self) -> None:
+        """处理 GET 请求."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+        query = parse_qs(parsed.query)
+
+        # 路由匹配
         if path == "/":
-            self._send_json({
-                "success": True,
-                "data": {
-                    "name": "Poseidon Service",
-                    "version": "1.0.0",
-                    "description": "智能船舶工程服务 API"
-                },
-                "timestamp": datetime.now().isoformat(),
-                "message": "欢迎使用 Poseidon 服务"
-            })
-        
-        elif path == "/health":
-            self._send_json({
-                "status": "healthy",
-                "service": "poseidon",
-                "version": "1.0.0",
-                "timestamp": datetime.now().isoformat(),
-                "skills": ["fault_diagnosis", "query_answer"] if SKILLS_AVAILABLE else [],
-                "skills_available": SKILLS_AVAILABLE
-            })
-        
-        elif path == "/api/v1/config":
-            if SKILLS_AVAILABLE:
-                config = MarineEngineerConfig()
-                self._send_json({
-                    "success": True,
-                    "data": config.to_dict(),
-                    "timestamp": datetime.now().isoformat()
-                })
-            else:
-                self._send_json({"error": "Skills not available"}, 503)
-        
-        elif path == "/api/v1/skills":
-            skills_list = [
-                {
-                    "name": "fault_diagnosis",
-                    "endpoint": "/api/v1/fault_diagnosis",
-                    "method": "POST"
-                },
-                {
-                    "name": "query_answer",
-                    "endpoint": "/api/v1/query_answer",
-                    "method": "POST"
-                }
-            ]
-            if TWINS_AVAILABLE:
-                skills_list.extend([
-                    {
-                        "name": "twins_scene_control",
-                        "endpoint": "/api/v1/twins/scene/control",
-                        "method": "POST"
-                    },
-                    {
-                        "name": "twins_boat_control",
-                        "endpoint": "/api/v1/twins/boat/control",
-                        "method": "POST"
-                    },
-                    {
-                        "name": "twins_sensor_query",
-                        "endpoint": "/api/v1/twins/sensor/query",
-                        "method": "POST"
-                    },
-                    {
-                        "name": "twins_diagnosis",
-                        "endpoint": "/api/v1/twins/diagnosis",
-                        "method": "POST"
-                    },
-                    {
-                        "name": "twins_decision_support",
-                        "endpoint": "/api/v1/twins/decision",
-                        "method": "POST"
-                    }
-                ])
-            self._send_json({
-                "success": True,
-                "data": {
-                    "available": SKILLS_AVAILABLE,
-                    "twins_available": TWINS_AVAILABLE,
-                    "skills": skills_list
-                },
-                "timestamp": datetime.now().isoformat()
-            })
-        
-        elif path == "/api/v1/twins/skills":
-            if TWINS_AVAILABLE:
-                self._send_json({
-                    "success": True,
-                    "data": {
-                        "available": TWINS_AVAILABLE,
-                        "skills": list_twins_skills()
-                    },
-                    "timestamp": datetime.now().isoformat()
-                })
-            else:
-                self._send_json({"error": "Twins skills not available"}, 503)
-        
+            self._handle_root()
+        elif path == "/api/health":
+            self._handle_health()
+        elif path == "/api/channels":
+            self._handle_get_channels()
+        elif path.startswith("/api/data/"):
+            channel_name = path.split("/api/data/")[1]
+            self._handle_get_data(channel_name)
+        elif path == "/api/data":
+            self._handle_get_all_data()
+        elif path == "/api/timeseries":
+            self._handle_get_timeseries(query)
+        elif path == "/api/events":
+            self._handle_get_events(query)
+        elif path == "/api/status":
+            self._handle_get_status()
         else:
-            self._send_json({"error": "Not Found", "path": path}, 404)
-    
-    def do_POST(self):
-        """处理 POST 请求"""
-        parsed_path = urlparse(self.path)
-        path = parsed_path.path
-        
-        # 读取请求体
+            self._send_error("Not Found", 404)
+
+    def do_POST(self) -> None:
+        """处理 POST 请求."""
+        parsed = urlparse(self.path)
+        path = parsed.path
+
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
-        
+
         try:
             data = json.loads(body) if body else {}
         except json.JSONDecodeError:
-            self._send_json({"error": "Invalid JSON"}, 400)
+            self._send_error("Invalid JSON")
             return
-        
-        if path == "/api/v1/fault_diagnosis":
-            if not SKILLS_AVAILABLE:
-                self._send_json({"error": "Skills not available"}, 503)
-                return
-            
-            user_input = data.get("user_input", "")
-            relevant_docs = data.get("relevant_docs", [])
-            config = data.get("config", None)
-            
-            if not user_input:
-                self._send_json({"error": "user_input is required"}, 400)
-                return
-            
-            try:
-                logger.info(f"故障诊断请求：{user_input}")
-                result = fault_diagnosis_skill(
-                    user_input=user_input,
-                    relevant_docs=relevant_docs,
-                    config=config
-                )
-                self._send_json({
-                    "success": True,
-                    "data": {"diagnosis": result},
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"故障诊断失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        elif path == "/api/v1/query_answer":
-            if not SKILLS_AVAILABLE:
-                self._send_json({"error": "Skills not available"}, 503)
-                return
-            
-            question = data.get("question", "")
-            context = data.get("context", "")
-            config = data.get("config", None)
-            
-            if not question:
-                self._send_json({"error": "question is required"}, 400)
-                return
-            
-            try:
-                logger.info(f"知识查询请求：{question}")
-                result = query_answer_skill(
-                    question=question,
-                    context=context,
-                    config=config
-                )
-                self._send_json({
-                    "success": True,
-                    "data": {"answer": result},
-                    "timestamp": datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"知识查询失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        # ===== 数字孪生 API 端点 =====
-        
-        elif path == "/api/v1/twins/scene/control":
-            if not TWINS_AVAILABLE:
-                self._send_json({"error": "Twins skills not available"}, 503)
-                return
-            
-            action = data.get("action", "")
-            params = data.get("params", {})
-            config = data.get("config", None)
-            
-            if not action:
-                self._send_json({"error": "action is required"}, 400)
-                return
-            
-            try:
-                logger.info(f"场景控制请求：{action}")
-                result = twins_scene_control(
-                    action=action,
-                    params=params,
-                    config=config
-                )
-                self._send_json(result)
-            except Exception as e:
-                logger.error(f"场景控制失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        elif path == "/api/v1/twins/boat/control":
-            if not TWINS_AVAILABLE:
-                self._send_json({"error": "Twins skills not available"}, 503)
-                return
-            
-            boat_id = data.get("boat_id", "")
-            action = data.get("action", "")
-            params = data.get("params", {})
-            
-            if not boat_id or not action:
-                self._send_json({"error": "boat_id and action are required"}, 400)
-                return
-            
-            try:
-                logger.info(f"船只控制请求：boat={boat_id}, action={action}")
-                result = twins_boat_control(
-                    boat_id=boat_id,
-                    action=action,
-                    params=params
-                )
-                self._send_json(result)
-            except Exception as e:
-                logger.error(f"船只控制失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        elif path == "/api/v1/twins/sensor/query":
-            if not TWINS_AVAILABLE:
-                self._send_json({"error": "Twins skills not available"}, 503)
-                return
-            
-            sensor_type = data.get("sensor_type", "all")
-            count = data.get("count", 1)
-            
-            try:
-                logger.info(f"传感器查询：{sensor_type}, count={count}")
-                result = twins_sensor_query(
-                    sensor_type=sensor_type,
-                    count=count
-                )
-                self._send_json(result)
-            except Exception as e:
-                logger.error(f"传感器查询失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        elif path == "/api/v1/twins/diagnosis":
-            if not TWINS_AVAILABLE:
-                self._send_json({"error": "Twins skills not available"}, 503)
-                return
-            
-            symptom = data.get("symptom", "")
-            sensor_data = data.get("sensor_data", {})
-            
-            if not symptom:
-                self._send_json({"error": "symptom is required"}, 400)
-                return
-            
-            try:
-                logger.info(f"故障诊断请求：{symptom}")
-                result = twins_diagnosis(
-                    symptom=symptom,
-                    sensor_data=sensor_data
-                )
-                self._send_json(result)
-            except Exception as e:
-                logger.error(f"故障诊断失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        elif path == "/api/v1/twins/decision":
-            if not TWINS_AVAILABLE:
-                self._send_json({"error": "Twins skills not available"}, 503)
-                return
-            
-            query = data.get("query", "")
-            context = data.get("context", {})
-            
-            if not query:
-                self._send_json({"error": "query is required"}, 400)
-                return
-            
-            try:
-                logger.info(f"决策支持请求：{query}")
-                result = twins_decision_support(
-                    query=query,
-                    context=context
-                )
-                self._send_json(result)
-            except Exception as e:
-                logger.error(f"决策支持失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
-        # ===== 水动力学 API 端点 =====
-        
-        elif path == "/api/v1/hydro/analysis":
-            if not HYDRO_AVAILABLE:
-                self._send_json({"error": "Hydrodynamics skills not available"}, 503)
-                return
-            
-            length = data.get("length", 0)
-            beam = data.get("beam", 0)
-            draft = data.get("draft", 0)
-            displacement = data.get("displacement", 0)
-            speed = data.get("speed", 0)
-            kg = data.get("kg", None)
-            
-            if not all([length, beam, draft, displacement, speed]):
-                self._send_json({"error": "Missing required parameters"}, 400)
-                return
-            
-            try:
-                logger.info(f"水动力分析请求：L={length}m, B={beam}m, T={draft}m, V={speed}kn")
-                result = hydrodynamics_analysis(
-                    length=length,
-                    beam=beam,
-                    draft=draft,
-                    displacement=displacement,
-                    speed=speed,
-                    kg=kg
-                )
-                self._send_json(result)
-            except Exception as e:
-                logger.error(f"水动力分析失败：{e}")
-                self._send_json({"error": str(e)}, 500)
-        
+
+        # 路由匹配
+        if path.startswith("/api/data/"):
+            channel_name = path.split("/api/data/")[1]
+            self._handle_update_data(channel_name, data)
+        elif path == "/api/events":
+            self._handle_create_event(data)
+        elif path == "/api/events/acknowledge":
+            event_id = data.get("event_id")
+            if event_id:
+                self._handle_acknowledge_event(event_id)
+            else:
+                self._send_error("Missing event_id")
         else:
-            self._send_json({"error": "Not Found", "path": path}, 404)
-    
-    def log_message(self, format, *args):
-        """自定义日志格式"""
-        logger.info(f"{self.address_string()} - {format % args}")
+            self._send_error("Not Found", 404)
+
+    def _handle_root(self) -> None:
+        """处理根路径请求."""
+        self._send_json({
+            "name": "Poseidon Server",
+            "version": "1.0.0",
+            "description": "Marine Channels Integration Server",
+            "endpoints": {
+                "GET /api/health": "健康检查",
+                "GET /api/channels": "获取所有 Channel",
+                "GET /api/data": "获取所有数据",
+                "GET /api/data/{channel}": "获取特定 Channel 数据",
+                "POST /api/data/{channel}": "更新 Channel 数据",
+                "GET /api/timeseries": "查询时序数据",
+                "GET /api/events": "查询事件",
+                "POST /api/events": "创建事件",
+                "POST /api/events/acknowledge": "确认事件",
+                "GET /api/status": "获取服务器状态",
+            },
+            "websocket": f"ws://{self.server.host}:{self.server.ws_port}",
+        })
+
+    def _handle_health(self) -> None:
+        """处理健康检查."""
+        self._send_json({
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "uptime": datetime.now() - self.server.start_time if hasattr(self.server, "start_time") else None,
+        })
+
+    def _handle_get_channels(self) -> None:
+        """处理获取所有 Channel."""
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        channels = list(self.server_instance.integration.channels.keys())
+        self._send_json({
+            "channels": channels,
+            "count": len(channels),
+        })
+
+    def _handle_get_data(self, channel_name: str) -> None:
+        """处理获取 Channel 数据.
+
+        Args:
+            channel_name: Channel 名称.
+        """
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        data = self.server_instance.integration.get_channel_data(channel_name)
+        if data:
+            self._send_json(data.to_dict())
+        else:
+            self._send_error(f"Channel '{channel_name}' 无数据", 404)
+
+    def _handle_get_all_data(self) -> None:
+        """处理获取所有数据."""
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        data = self.server_instance.integration.get_aggregated_data()
+        self._send_json({
+            "data": data,
+            "timestamp": datetime.now().isoformat(),
+        })
+
+    def _handle_get_timeseries(self, query: dict) -> None:
+        """处理查询时序数据.
+
+        Args:
+            query: 查询参数.
+        """
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        channel_name = query.get("channel", [None])[0]
+        metric_name = query.get("metric", [None])[0]
+        limit = int(query.get("limit", [1000])[0])
+
+        data = self.server_instance.integration.get_time_series(
+            channel_name=channel_name,
+            metric_name=metric_name,
+            limit=limit,
+        )
+
+        self._send_json({
+            "data": [point.to_dict() for point in data],
+            "count": len(data),
+        })
+
+    def _handle_get_events(self, query: dict) -> None:
+        """处理查询事件.
+
+        Args:
+            query: 查询参数.
+        """
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        channel_name = query.get("channel", [None])[0]
+        event_type = query.get("type", [None])[0]
+        severity = query.get("severity", [None])[0]
+        limit = int(query.get("limit", [100])[0])
+
+        events = self.server_instance.integration.get_events(
+            channel_name=channel_name,
+            event_type=event_type,
+            severity=severity,
+            limit=limit,
+        )
+
+        self._send_json({
+            "events": [event.to_dict() for event in events],
+            "count": len(events),
+        })
+
+    def _handle_update_data(self, channel_name: str, data: dict) -> None:
+        """处理更新 Channel 数据.
+
+        Args:
+            channel_name: Channel 名称.
+            data: 数据内容.
+        """
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        try:
+            # 检查 Channel 是否存在
+            if channel_name not in self.server_instance.integration.channels:
+                self._send_error(f"未知的 Channel: {channel_name}", 404)
+                return
+
+            # 更新数据
+            channel_data = self.server_instance.integration.update_data(
+                channel_name=channel_name,
+                data=data,
+            )
+
+            self._send_json({
+                "success": True,
+                "data": channel_data.to_dict(),
+            })
+        except Exception as e:
+            self._send_error(str(e), 500)
+
+    def _handle_create_event(self, data: dict) -> None:
+        """处理创建事件.
+
+        Args:
+            data: 事件数据.
+        """
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        try:
+            event = Event(
+                event_type=data.get("event_type", "custom"),
+                channel_name=data.get("channel_name", "unknown"),
+                severity=data.get("severity", "info"),
+                message=data.get("message", ""),
+                data=data.get("data"),
+            )
+
+            self.server_instance.integration.record_event(event)
+
+            # 通过 WebSocket 广播
+            if self.server_instance.bridge:
+                self.server_instance.bridge.broadcast_event(event)
+
+            self._send_json({
+                "success": True,
+                "event": event.to_dict(),
+            })
+        except Exception as e:
+            self._send_error(str(e), 500)
+
+    def _handle_acknowledge_event(self, event_id: int) -> None:
+        """处理确认事件.
+
+        Args:
+            event_id: 事件 ID.
+        """
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        success = self.server_instance.integration.acknowledge_event(event_id)
+        if success:
+            self._send_json({"success": True, "message": "事件已确认"})
+        else:
+            self._send_error("事件不存在", 404)
+
+    def _handle_get_status(self) -> None:
+        """处理获取服务器状态."""
+        if not self.server_instance:
+            self._send_error("Server not initialized", 500)
+            return
+
+        status = {
+            "integration": self.server_instance.integration.get_status(),
+            "bridge": self.server_instance.bridge.get_status() if self.server_instance.bridge else None,
+            "server": {
+                "start_time": self.server_instance.start_time.isoformat() if hasattr(self.server_instance, "start_time") else None,
+                "http_port": self.server_instance.http_port,
+                "ws_port": self.server_instance.ws_port,
+            },
+        }
+
+        self._send_json(status)
 
 
-def run_server(host="127.0.0.1", port=8080):
-    """启动服务器"""
-    server_address = (host, port)
-    httpd = HTTPServer(server_address, PoseidonHandler)
-    
-    print(f"""
-╔══════════════════════════════════════════════════════════╗
-║           🌊 Poseidon Service 已启动                     ║
-╠══════════════════════════════════════════════════════════╣
-║  地址：http://{host}:{port}
-║  文档：http://{host}:{port}/api/v1/skills
-║  健康：http://{host}:{port}/health
-║  技能：{ '✅ 已加载' if SKILLS_AVAILABLE else '⚠️  未加载' }
-║  数字孪生：{ '✅ 已启用' if TWINS_AVAILABLE else '⚠️  未启用' }
-║  水动力学：{ '✅ 已启用' if HYDRO_AVAILABLE else '⚠️  未启用' }
-╚══════════════════════════════════════════════════════════╝
-    """)
-    
-    logger.info(f"Poseidon 服务运行在 http://{host}:{port}")
-    httpd.serve_forever()
+class PoseidonServer:
+    """Poseidon 服务器.
+
+    整合 ChannelsIntegration 和 RealtimeDataBridge，
+    提供统一的 REST API 和 WebSocket 接口。
+
+    示例用法:
+        >>> server = PoseidonServer(http_port=8080, ws_port=8765)
+        >>> server.start()
+        >>> # 服务器运行中...
+        >>> server.stop()
+    """
+
+    def __init__(
+        self,
+        db_path: str = "poseidon.db",
+        http_port: int = 8080,
+        ws_port: int = 8765,
+        host: str = "0.0.0.0",
+        cache_size: int = 10000,
+        enable_ws: bool = True,
+    ):
+        """初始化 Poseidon 服务器.
+
+        Args:
+            db_path: 数据库路径.
+            http_port: HTTP 端口.
+            ws_port: WebSocket 端口.
+            host: 监听地址.
+            cache_size: 缓存大小.
+            enable_ws: 是否启用 WebSocket.
+        """
+        self.db_path = db_path
+        self.http_port = http_port
+        self.ws_port = ws_port
+        self.host = host
+        self.cache_size = cache_size
+        self.enable_ws = enable_ws
+
+        # 创建集成实例
+        self.integration = ChannelsIntegration(
+            db_path=db_path,
+            cache_size=cache_size,
+        )
+
+        # 创建 WebSocket 桥接
+        self.bridge: Optional[RealtimeDataBridge] = None
+        if enable_ws:
+            self.bridge = RealtimeDataBridge(
+                self.integration,
+                host=host,
+                port=ws_port,
+            )
+
+        # HTTP 服务器
+        self.http_server: Optional[HTTPServer] = None
+
+        # 启动时间
+        self.start_time = datetime.now()
+
+        # 设置 API 处理器的服务器实例
+        PoseidonAPIHandler.server_instance = self
+
+    def register_channel(self, name: str, channel: Any) -> None:
+        """注册 Channel.
+
+        Args:
+            name: Channel 名称.
+            channel: Channel 实例.
+        """
+        self.integration.register_channel(name, channel)
+        logger.info(f"✅ Channel '{name}' 已注册到 Poseidon Server")
+
+    def start(self) -> None:
+        """启动服务器."""
+        logger.info("🚀 启动 Poseidon Server...")
+
+        # 启动 WebSocket 服务器
+        if self.enable_ws and self.bridge:
+            self.bridge.start()
+            logger.info(f"📡 WebSocket 服务器：ws://{self.host}:{self.ws_port}")
+
+        # 启动 HTTP 服务器
+        self.http_server = HTTPServer((self.host, self.http_port), PoseidonAPIHandler)
+        logger.info(f"🌐 HTTP API 服务器：http://{self.host}:{self.http_port}")
+
+        logger.info("✅ Poseidon Server 启动完成")
+        logger.info(f"📊 访问 http://{self.host}:{self.http_port} 查看 API 文档")
+
+        # 运行 HTTP 服务器
+        try:
+            self.http_server.serve_forever()
+        except KeyboardInterrupt:
+            logger.info("\n🛑 收到中断信号，正在关闭...")
+            self.stop()
+
+    def stop(self) -> None:
+        """停止服务器."""
+        logger.info("🛑 停止 Poseidon Server...")
+
+        # 停止 HTTP 服务器
+        if self.http_server:
+            self.http_server.shutdown()
+            self.http_server.server_close()
+
+        # 停止 WebSocket 服务器
+        if self.bridge:
+            self.bridge.stop()
+
+        logger.info("✅ Poseidon Server 已停止")
+
+
+def main():
+    """主函数."""
+    parser = argparse.ArgumentParser(description="Poseidon Server - Marine Channels Integration")
+    parser.add_argument("--db", default="poseidon.db", help="数据库路径")
+    parser.add_argument("--http-port", type=int, default=8080, help="HTTP 端口")
+    parser.add_argument("--ws-port", type=int, default=8765, help="WebSocket 端口")
+    parser.add_argument("--host", default="0.0.0.0", help="监听地址")
+    parser.add_argument("--cache-size", type=int, default=10000, help="缓存大小")
+    parser.add_argument("--no-ws", action="store_true", help="禁用 WebSocket")
+    parser.add_argument("--demo", action="store_true", help="运行演示模式")
+
+    args = parser.parse_args()
+
+    # 创建服务器
+    server = PoseidonServer(
+        db_path=args.db,
+        http_port=args.http_port,
+        ws_port=args.ws_port,
+        host=args.host,
+        cache_size=args.cache_size,
+        enable_ws=not args.no_ws,
+    )
+
+    # 演示模式：注册一些测试 Channel
+    if args.demo:
+        logger.info("🎭 运行演示模式...")
+        # 这里可以注册实际的 Channel
+        # 例如：from channels.engine_monitor import EngineMonitorChannel
+        # server.register_channel("engine_monitor", EngineMonitorChannel())
+
+    # 启动服务器
+    server.start()
 
 
 if __name__ == "__main__":
-    HOST = os.getenv("POSEIDON_HOST", "127.0.0.1")
-    PORT = int(os.getenv("POSEIDON_PORT", "8080"))
-    
-    try:
-        run_server(HOST, PORT)
-    except KeyboardInterrupt:
-        print("\n👋 服务已停止")
-    except Exception as e:
-        print(f"❌ 服务启动失败：{e}")
-        sys.exit(1)
+    main()
