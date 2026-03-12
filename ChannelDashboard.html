@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marine Engineer - Channel 数据监控仪表盘</title>
+  <style>
+    :root {
+      --bg-primary: #0a192f;
+      --bg-secondary: #112240;
+      --bg-card: #1a2f4a;
+      --text-primary: #e6f1ff;
+      --text-secondary: #8892b0;
+      --accent: #64ffda;
+      --warning: #ffb347;
+      --critical: #ff6b6b;
+      --emergency: #ff0000;
+      --info: #4fc3f7;
+      --success: #4caf50;
+      --border: #233554;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    h1 {
+      font-size: 28px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+
+    .status-dot.disconnected {
+      background: var(--critical);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 18px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-status {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-ok {
+      background: rgba(76, 175, 80, 0.2);
+      color: var(--success);
+    }
+
+    .status-warning {
+      background: rgba(255, 179, 71, 0.2);
+      color: var(--warning);
+    }
+
+    .status-critical {
+      background: rgba(255, 107, 107, 0.2);
+      color: var(--critical);
+    }
+
+    .status-emergency {
+      background: rgba(255, 0, 0, 0.2);
+      color: var(--emergency);
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .data-item {
+      background: var(--bg-secondary);
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .data-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .data-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .data-unit {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+
+    .alarm-panel {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      margin-bottom: 30px;
+    }
+
+    .alarm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .alarm-count {
+      display: flex;
+      gap: 15px;
+    }
+
+    .alarm-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .alarm-badge.critical {
+      background: rgba(255, 107, 107, 0.2);
+      color: var(--critical);
+    }
+
+    .alarm-badge.warning {
+      background: rgba(255, 179, 71, 0.2);
+      color: var(--warning);
+    }
+
+    .alarm-badge.info {
+      background: rgba(79, 195, 247, 0.2);
+      color: var(--info);
+    }
+
+    .alarm-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .alarm-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      border-left: 4px solid var(--border);
+    }
+
+    .alarm-item.critical {
+      border-left-color: var(--critical);
+    }
+
+    .alarm-item.warning {
+      border-left-color: var(--warning);
+    }
+
+    .alarm-item.info {
+      border-left-color: var(--info);
+    }
+
+    .alarm-info {
+      flex: 1;
+    }
+
+    .alarm-code {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .alarm-message {
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .alarm-time {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .alarm-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-acknowledge {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .btn-acknowledge:hover {
+      background: #4cdbb9;
+    }
+
+    .chart-container {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .chart-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .chart-placeholder {
+      height: 200px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .health-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .health-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .health-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--critical), var(--warning), var(--success));
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .data-grid {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <span>🚢</span>
+        Marine Engineer - Channel 数据监控
+      </h1>
+      <div class="status-bar">
+        <div class="connection-status">
+          <div class="status-dot" id="connectionDot"></div>
+          <span id="connectionText">连接中...</span>
+        </div>
+        <div id="currentTime"></div>
+      </div>
+    </header>
+
+    <!-- 报警面板 -->
+    <div class="alarm-panel">
+      <div class="alarm-header">
+        <h2 style="color: var(--accent);">🚨 实时报警</h2>
+        <div class="alarm-count">
+          <div class="alarm-badge critical">
+            <span>🔴</span>
+            <span id="criticalCount">0</span>
+          </div>
+          <div class="alarm-badge warning">
+            <span>🟡</span>
+            <span id="warningCount">0</span>
+          </div>
+          <div class="alarm-badge info">
+            <span>🔵</span>
+            <span id="infoCount">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="alarm-list" id="alarmList">
+        <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+          暂无报警
+        </div>
+      </div>
+    </div>
+
+    <!-- 主仪表盘 -->
+    <div class="dashboard-grid">
+      <!-- 导航数据 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🧭</span>
+            导航数据
+          </div>
+          <div class="card-status status-ok" id="navStatus">正常</div>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <div class="data-label">位置 (LAT)</div>
+            <div class="data-value" id="navLat">--<span class="data-unit">°</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">位置 (LON)</div>
+            <div class="data-value" id="navLon">--<span class="data-unit">°</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">航速</div>
+            <div class="data-value" id="navSpeed">--<span class="data-unit">kn</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">航向</div>
+            <div class="data-value" id="navHeading">--<span class="data-unit">°</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">水深</div>
+            <div class="data-value" id="navDepth">--<span class="data-unit">m</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">AIS 目标</div>
+            <div class="data-value" id="navAisTargets">0</div>
+          </div>
+        </div>
+        <div class="health-indicator">
+          <span style="font-size: 12px;">健康度:</span>
+          <div class="health-bar">
+            <div class="health-fill" id="navHealth" style="width: 100%;"></div>
+          </div>
+          <span id="navHealthText" style="font-size: 12px;">100%</span>
+        </div>
+      </div>
+
+      <!-- 发动机数据 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>⚙️</span>
+            发动机监控
+          </div>
+          <div class="card-status status-ok" id="engineStatus">正常</div>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <div class="data-label">转速</div>
+            <div class="data-value" id="engRpm">--<span class="data-unit">rpm</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">负载</div>
+            <div class="data-value" id="engLoad">--<span class="data-unit">%</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">冷却水温度</div>
+            <div class="data-value" id="engTemp">--<span class="data-unit">°C</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">机油压力</div>
+            <div class="data-value" id="engOilPressure">--<span class="data-unit">bar</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">燃油油位</div>
+            <div class="data-value" id="engFuel">--<span class="data-unit">%</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">状态</div>
+            <div class="data-value" id="engStatus" style="font-size: 16px;">--</div>
+          </div>
+        </div>
+        <div class="health-indicator">
+          <span style="font-size: 12px;">健康度:</span>
+          <div class="health-bar">
+            <div class="health-fill" id="engHealth" style="width: 100%;"></div>
+          </div>
+          <span id="engHealthText" style="font-size: 12px;">100%</span>
+        </div>
+      </div>
+
+      <!-- 货物数据 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>📦</span>
+            货物监控
+          </div>
+          <div class="card-status status-ok" id="cargoStatus">正常</div>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <div class="data-label">液货舱数量</div>
+            <div class="data-value" id="cargoTanks">0</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">集装箱数量</div>
+            <div class="data-value" id="cargoContainers">0</div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">稳性 (GM)</div>
+            <div class="data-value" id="cargoGM">--<span class="data-unit">m</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">吃水</div>
+            <div class="data-value" id="cargoDraft">--<span class="data-unit">m</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">排水量</div>
+            <div class="data-value" id="cargoDisplacement">--<span class="data-unit">t</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">稳性状态</div>
+            <div class="data-value" id="cargoStabilityStatus" style="font-size: 16px;">--</div>
+          </div>
+        </div>
+        <div class="health-indicator">
+          <span style="font-size: 12px;">健康度:</span>
+          <div class="health-bar">
+            <div class="health-fill" id="cargoHealth" style="width: 100%;"></div>
+          </div>
+          <span id="cargoHealthText" style="font-size: 12px;">100%</span>
+        </div>
+      </div>
+
+      <!-- 气象数据 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🌤️</span>
+            气象导航
+          </div>
+          <div class="card-status status-ok" id="weatherStatus">正常</div>
+        </div>
+        <div class="data-grid">
+          <div class="data-item">
+            <div class="data-label">风速</div>
+            <div class="data-value" id="weatherWindSpeed">--<span class="data-unit">m/s</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">风向</div>
+            <div class="data-value" id="weatherWindDir">--<span class="data-unit">°</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">浪高</div>
+            <div class="data-value" id="weatherWaveHeight">--<span class="data-unit">m</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">能见度</div>
+            <div class="data-value" id="weatherVisibility">--<span class="data-unit">m</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">温度</div>
+            <div class="data-value" id="weatherTemp">--<span class="data-unit">°C</span></div>
+          </div>
+          <div class="data-item">
+            <div class="data-label">气压</div>
+            <div class="data-value" id="weatherPressure">--<span class="data-unit">hPa</span></div>
+          </div>
+        </div>
+        <div class="health-indicator">
+          <span style="font-size: 12px;">健康度:</span>
+          <div class="health-bar">
+            <div class="health-fill" id="weatherHealth" style="width: 100%;"></div>
+          </div>
+          <span id="weatherHealthText" style="font-size: 12px;">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 时序图表 -->
+    <div class="chart-container">
+      <div class="chart-header">
+        <h3 style="color: var(--accent);">📈 关键参数趋势</h3>
+        <div class="chart-controls">
+          <button class="btn" onclick="selectChartMetric('rpm')">转速</button>
+          <button class="btn" onclick="selectChartMetric('temperature')">温度</button>
+          <button class="btn" onclick="selectChartMetric('speed')">航速</button>
+          <button class="btn" onclick="selectChartMetric('fuel')">燃油</button>
+        </div>
+      </div>
+      <div class="chart-placeholder" id="chartPlaceholder">
+        图表组件 - 需要集成 Chart.js 或类似库
+      </div>
+    </div>
+
+    <footer>
+      <p>Marine Engineer System v1.0.0 | Phase 3 - 数字孪生体集成</p>
+      <p>最后更新：<span id="lastUpdate">--</span></p>
+    </footer>
+  </div>
+
+  <!-- 引入 PoseidonXChannels 和 MarineEngineeringChannels -->
+  <script src="PoseidonXChannels.js"></script>
+  <script src="MarineEngineeringChannels.js"></script>
+
+  <script>
+    // 全局状态
+    let poseidonX = null;
+    let marineEngineering = null;
+    let chartData = {
+      labels: [],
+      datasets: [],
+    };
+    let currentMetric = 'rpm';
+
+    // 初始化
+    async function init() {
+      updateCurrentTime();
+      setInterval(updateCurrentTime, 1000);
+
+      try {
+        // 创建 PoseidonXChannels 实例
+        poseidonX = new PoseidonXChannels({
+          wsUrl: 'ws://localhost:8765',
+          apiUrl: 'http://localhost:8080',
+        });
+
+        // 创建 MarineEngineeringChannels 实例
+        marineEngineering = new MarineEngineeringChannels({
+          poseidonX: poseidonX,
+        });
+
+        // 注册报警监听器
+        marineEngineering.onAlarm((alarm) => {
+          displayAlarm(alarm);
+          updateAlarmCounts();
+        });
+
+        // 连接到服务器
+        await poseidonX.connect();
+
+        // 更新连接状态
+        updateConnectionStatus(true);
+
+        // 启动数据刷新
+        startDataRefresh();
+
+        console.log('✅ 仪表盘初始化完成');
+      } catch (error) {
+        console.error('❌ 初始化失败:', error);
+        updateConnectionStatus(false);
+      }
+    }
+
+    // 更新当前时间
+    function updateCurrentTime() {
+      const now = new Date();
+      document.getElementById('currentTime').textContent = now.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+    }
+
+    // 更新连接状态
+    function updateConnectionStatus(connected) {
+      const dot = document.getElementById('connectionDot');
+      const text = document.getElementById('connectionText');
+
+      if (connected) {
+        dot.className = 'status-dot connected';
+        text.textContent = '已连接';
+      } else {
+        dot.className = 'status-dot disconnected';
+        text.textContent = '未连接';
+      }
+    }
+
+    // 启动数据刷新
+    function startDataRefresh() {
+      setInterval(() => {
+        if (marineEngineering) {
+          const data = marineEngineering.getAllData();
+          updateDashboard(data);
+          updateLastUpdateTime();
+        }
+      }, 1000); // 每秒刷新
+    }
+
+    // 更新仪表盘显示
+    function updateDashboard(data) {
+      // 导航数据
+      if (data.navigation) {
+        document.getElementById('navLat').innerHTML = 
+          data.navigation.position?.latitude?.toFixed(4) || '--' + '<span class="data-unit">°</span>';
+        document.getElementById('navLon').innerHTML = 
+          data.navigation.position?.longitude?.toFixed(4) || '--' + '<span class="data-unit">°</span>';
+        document.getElementById('navSpeed').innerHTML = 
+          (data.navigation.speed ?? '--') + '<span class="data-unit">kn</span>';
+        document.getElementById('navHeading').innerHTML = 
+          (data.navigation.heading ?? '--') + '<span class="data-unit">°</span>';
+        document.getElementById('navDepth').innerHTML = 
+          (data.navigation.depth ?? '--') + '<span class="data-unit">m</span>';
+        document.getElementById('navAisTargets').textContent = 
+          data.navigation.aisTargets?.length || 0;
+
+        updateHealthStatus('nav', data.diagnostics?.navigation?.status);
+      }
+
+      // 发动机数据
+      if (data.engine) {
+        document.getElementById('engRpm').innerHTML = 
+          (data.engine.rpm ?? '--') + '<span class="data-unit">rpm</span>';
+        document.getElementById('engLoad').innerHTML = 
+          (data.engine.load ?? '--') + '<span class="data-unit">%</span>';
+        document.getElementById('engTemp').innerHTML = 
+          (data.engine.temperature ?? '--') + '<span class="data-unit">°C</span>';
+        document.getElementById('engOilPressure').innerHTML = 
+          (data.engine.oilPressure ?? '--') + '<span class="data-unit">bar</span>';
+        document.getElementById('engFuel').innerHTML = 
+          (data.engine.fuelLevel ?? '--') + '<span class="data-unit">%</span>';
+        document.getElementById('engStatus').textContent = 
+          data.engine.status || '--';
+
+        updateHealthStatus('eng', data.diagnostics?.engine?.status);
+      }
+
+      // 货物数据
+      if (data.cargo) {
+        document.getElementById('cargoTanks').textContent = data.cargo.tanks?.length || 0;
+        document.getElementById('cargoContainers').textContent = data.cargo.containers?.length || 0;
+        document.getElementById('cargoGM').innerHTML = 
+          (data.cargo.stability?.GM?.toFixed(2) ?? '--') + '<span class="data-unit">m</span>';
+        document.getElementById('cargoDraft').innerHTML = 
+          (data.cargo.buoyancy?.draft?.toFixed(2) ?? '--') + '<span class="data-unit">m</span>';
+        document.getElementById('cargoDisplacement').innerHTML = 
+          (data.cargo.buoyancy?.displacement?.toFixed(1) ?? '--') + '<span class="data-unit">t</span>';
+        document.getElementById('cargoStabilityStatus').textContent = 
+          data.cargo.stability?.status || '--';
+
+        updateHealthStatus('cargo', data.diagnostics?.cargo?.status);
+      }
+
+      // 气象数据
+      if (data.weather) {
+        document.getElementById('weatherWindSpeed').innerHTML = 
+          (data.weather.windSpeed ?? '--') + '<span class="data-unit">m/s</span>';
+        document.getElementById('weatherWindDir').innerHTML = 
+          (data.weather.windDirection ?? '--') + '<span class="data-unit">°</span>';
+        document.getElementById('weatherWaveHeight').innerHTML = 
+          (data.weather.waveHeight ?? '--') + '<span class="data-unit">m</span>';
+        document.getElementById('weatherVisibility').innerHTML = 
+          (data.weather.visibility ?? '--') + '<span class="data-unit">m</span>';
+        document.getElementById('weatherTemp').innerHTML = 
+          (data.weather.temperature ?? '--') + '<span class="data-unit">°C</span>';
+        document.getElementById('weatherPressure').innerHTML = 
+          (data.weather.pressure ?? '--') + '<span class="data-unit">hPa</span>';
+
+        updateHealthStatus('weather', data.diagnostics?.weather?.status);
+      }
+    }
+
+    // 更新健康状态
+    function updateHealthStatus(system, status) {
+      const statusEl = document.getElementById(`${system}Status`);
+      const healthEl = document.getElementById(`${system}Health`);
+      const healthTextEl = document.getElementById(`${system}HealthText`);
+
+      // 更新状态标签
+      statusEl.className = 'card-status';
+      switch (status) {
+        case 'ok':
+          statusEl.classList.add('status-ok');
+          statusEl.textContent = '正常';
+          healthEl.style.width = '100%';
+          healthTextEl.textContent = '100%';
+          break;
+        case 'warning':
+          statusEl.classList.add('status-warning');
+          statusEl.textContent = '警告';
+          healthEl.style.width = '60%';
+          healthTextEl.textContent = '60%';
+          break;
+        case 'critical':
+          statusEl.classList.add('status-critical');
+          statusEl.textContent = '严重';
+          healthEl.style.width = '30%';
+          healthTextEl.textContent = '30%';
+          break;
+        default:
+          statusEl.classList.add('status-ok');
+          statusEl.textContent = '未知';
+          healthEl.style.width = '100%';
+          healthTextEl.textContent = '--';
+      }
+    }
+
+    // 显示报警
+    function displayAlarm(alarm) {
+      const alarmList = document.getElementById('alarmList');
+      
+      // 清除"暂无报警"提示
+      if (alarmList.children.length === 1 && alarmList.children[0].textContent.includes('暂无')) {
+        alarmList.innerHTML = '';
+      }
+
+      const alarmEl = document.createElement('div');
+      alarmEl.className = `alarm-item ${alarm.severity}`;
+      alarmEl.innerHTML = `
+        <div class="alarm-info">
+          <div class="alarm-code">${alarm.code}</div>
+          <div class="alarm-message">${alarm.message}</div>
+        </div>
+        <div class="alarm-time">${new Date(alarm.timestamp).toLocaleTimeString()}</div>
+        <div class="alarm-actions">
+          <button class="btn btn-acknowledge" onclick="acknowledgeAlarm('${alarm.id}')">确认</button>
+        </div>
+      `;
+
+      alarmList.insertBefore(alarmEl, alarmList.firstChild);
+
+      // 限制显示数量
+      while (alarmList.children.length > 50) {
+        alarmList.removeChild(alarmList.lastChild);
+      }
+    }
+
+    // 更新报警计数
+    function updateAlarmCounts() {
+      if (!marineEngineering) return;
+
+      const alarms = marineEngineering.getAlarms({ acknowledged: false });
+      const critical = alarms.filter(a => a.severity === 'critical').length;
+      const warning = alarms.filter(a => a.severity === 'warning').length;
+      const info = alarms.filter(a => a.severity === 'info').length;
+
+      document.getElementById('criticalCount').textContent = critical;
+      document.getElementById('warningCount').textContent = warning;
+      document.getElementById('infoCount').textContent = info;
+    }
+
+    // 确认报警
+    function acknowledgeAlarm(alarmId) {
+      if (marineEngineering) {
+        marineEngineering.acknowledgeAlarm(alarmId);
+        updateAlarmCounts();
+        
+        // 从界面移除
+        const alarmList = document.getElementById('alarmList');
+        Array.from(alarmList.children).forEach(child => {
+          if (child.innerHTML.includes(alarmId)) {
+            child.style.opacity = '0.5';
+            child.querySelector('.btn-acknowledge').textContent = '已确认';
+            child.querySelector('.btn-acknowledge').disabled = true;
+          }
+        });
+      }
+    }
+
+    // 更新最后更新时间
+    function updateLastUpdateTime() {
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleString('zh-CN');
+    }
+
+    // 选择图表指标
+    function selectChartMetric(metric) {
+      currentMetric = metric;
+      console.log('切换到指标:', metric);
+      // TODO: 集成 Chart.js 实现图表绘制
+    }
+
+    // 页面加载完成后初始化
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
