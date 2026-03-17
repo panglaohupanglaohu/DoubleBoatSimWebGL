@@ -7,6 +7,7 @@ Compliance Digital Expert Channel - 船舶合规数字专家
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -179,6 +180,14 @@ class ComplianceDigitalExpertChannel(MarineChannel):
             "evidence_count": len(cognitive["evidence"]),
             "recommended_actions_count": len(cognitive["recommended_actions"]),
         }
+
+    async def build_cognitive_snapshot_async(self) -> Dict[str, Any]:
+        """异步构建认知快照."""
+        return await asyncio.get_event_loop().run_in_executor(None, self.build_cognitive_snapshot)
+
+    async def query_compliance_status_async(self, query: str = "") -> Dict[str, Any]:
+        """异步查询合规状态."""
+        return await asyncio.get_event_loop().run_in_executor(None, self.query_compliance_status, query)
 
 
 __all__ = ["ComplianceDigitalExpertChannel"]

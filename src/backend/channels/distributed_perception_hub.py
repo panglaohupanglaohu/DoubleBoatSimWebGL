@@ -7,10 +7,11 @@ Distributed Perception Hub Channel - 分布式感知网络骨架
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, asdict
-import logging
 
 from .marine_base import MarineChannel, ChannelPriority, ChannelStatus, get_default_registry
 
@@ -436,7 +437,13 @@ class DistributedPerceptionHubChannel(MarineChannel):
             },
         }
 
+    async def capture_system_snapshot_async(self) -> List[FusionEvent]:
+        """异步捕获系统快照."""
+        return await asyncio.get_event_loop().run_in_executor(None, self.capture_system_snapshot)
 
+    async def append_event_async(self, event_type: str, payload: Dict[str, Any], source: str, confidence: float = 1.0) -> FusionEvent:
+        """异步添加事件."""
+        return await asyncio.get_event_loop().run_in_executor(None, self.append_event, event_type, payload, source, confidence)
 
 
 __all__ = ["DistributedPerceptionHubChannel"]

@@ -5,6 +5,7 @@ Decision Orchestrator Channel - 全场景决策与运维生成骨架
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -88,6 +89,14 @@ class DecisionOrchestratorChannel(MarineChannel):
             "recommended_actions_count": len(package["recommended_actions"]),
             "feedback_records_count": len(self.feedback_records),
         }
+
+    async def build_decision_package_async(self) -> Dict[str, Any]:
+        """异步构建决策包."""
+        return await asyncio.get_event_loop().run_in_executor(None, self.build_decision_package)
+
+    async def record_feedback_async(self, action: str, outcome: str, confirmed_by: str = "system") -> Dict[str, Any]:
+        """异步记录反馈."""
+        return await asyncio.get_event_loop().run_in_executor(None, self.record_feedback, action, outcome, confirmed_by)
 
 
 __all__ = ["DecisionOrchestratorChannel"]
