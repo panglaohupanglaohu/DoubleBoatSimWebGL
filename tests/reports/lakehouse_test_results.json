@@ -1,0 +1,36 @@
+{
+  "test_timestamp": "2026-03-17T08:01:00+08:00",
+  "test_version": "v1.1.0",
+  "summary": {
+    "total_lakehouse_tests": 2,
+    "passed": 2,
+    "failed": 0,
+    "success_rate": 100.0
+  },
+  "test_results": [
+    {
+      "test_name": "test_data_lakehouse",
+      "status": "passed",
+      "details": {
+        "sqlite_instance": "available",
+        "local_store_type": "SQLiteStore",
+        "events_saved": 2,
+        "events_loaded": 2,
+        "event_types": ["navigation_event", "engine_event"]
+      }
+    },
+    {
+      "test_name": "test_lakehouse_status",
+      "status": "passed",
+      "details": {
+        "local_store_type": "JSONLStore",
+        "cloud_adapter": "none",
+        "buffer_size": 0
+      }
+    }
+  ],
+  "integration_test": {
+    "status": "passed",
+    "description": "DataLakehouse instance instantiated and configured with SQLite backend"
+  }
+}

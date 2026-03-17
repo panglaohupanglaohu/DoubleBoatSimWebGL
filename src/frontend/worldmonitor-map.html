@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorldMonitor - 全球船舶监控平台</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* 顶部状态栏 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(180deg, rgba(10,14,26,0.95) 0%, rgba(10,14,26,0.8) 100%);
+            border-bottom: 1px solid rgba(79,195,247,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #4fc3f7 0%, #29b6f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-status {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            height: 100vh;
+            padding-top: 60px;
+        }
+
+        /* 地图容器 */
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* 左侧面板 */
+        .sidebar {
+            width: 380px;
+            background: rgba(10,14,26,0.95);
+            border-right: 1px solid rgba(79,195,247,0.2);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .panel {
+            background: rgba(16,24,48,0.8);
+            border: 1px solid rgba(79,195,247,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .panel h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4fc3f7;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* AIS 目标列表 */
+        .ais-target {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid #48bb78;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ais-target:hover {
+            background: rgba(79,195,247,0.1);
+            transform: translateX(4px);
+        }
+
+        .ais-target.high-risk {
+            border-left-color: #f56565;
+        }
+
+        .ais-target-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .ais-target-type {
+            font-weight: 600;
+            color: #4fc3f7;
+            font-size: 13px;
+        }
+
+        .ais-target-mmsi {
+            color: #718096;
+            font-size: 11px;
+        }
+
+        .ais-target-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 11px;
+            color: #a0aec0;
+        }
+
+        /* 气象面板 */
+        .weather-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .weather-item {
+            background: rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .weather-label {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .weather-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #48bb78;
+        }
+
+        /* 港口列表 */
+        .port-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .port-name {
+            font-weight: 600;
+            color: #f6ad55;
+        }
+
+        .port-distance {
+            font-size: 11px;
+            color: #718096;
+        }
+
+        /* 右侧面板 */
+        .right-panel {
+            width: 320px;
+            background: rgba(10,14,26,0.95);
+            border-left: 1px solid rgba(79,195,247,0.2);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* 监控图像 */
+        .camera-feed {
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .camera-feed img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .camera-info {
+            padding: 12px;
+        }
+
+        .camera-name {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .camera-status {
+            font-size: 11px;
+            color: #48bb78;
+        }
+
+        /* 航线信息 */
+        .route-info {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .route-point {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(79,195,247,0.2);
+        }
+
+        .route-point:last-child {
+            border-bottom: none;
+        }
+
+        .route-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4fc3f7;
+        }
+
+        .route-dot.waypoint {
+            background: #f6ad55;
+        }
+
+        .route-label {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        /* MapLibre 自定义样式 */
+        .maplibregl-map {
+            background: #0a0e1a;
+        }
+
+        .maplibregl-ctrl-bottom-left,
+        .maplibregl-ctrl-bottom-right {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部状态栏 -->
+    <div class="header">
+        <h1>🌍 WorldMonitor - 全球船舶监控平台</h1>
+        <div class="header-status">
+            <div class="status-item">
+                <span class="status-dot"></span>
+                <span>实时数据</span>
+            </div>
+            <div class="status-item">
+                <span>本船位置：</span>
+                <span style="color: #4fc3f7;" id="own-ship-position">三亚附近</span>
+            </div>
+            <div class="status-item">
+                <span>AIS 目标：</span>
+                <span style="color: #48bb78;" id="ais-count">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧面板 -->
+        <div class="sidebar">
+            <!-- AIS 目标列表 -->
+            <div class="panel">
+                <h3>🚢 AIS 目标列表</h3>
+                <div id="ais-targets-list">
+                    <div style="color: #718096; text-align: center; padding: 20px;">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 气象详情 -->
+            <div class="panel">
+                <h3>🌤️ 气象详情</h3>
+                <div class="weather-grid" id="weather-grid">
+                    <div class="weather-item">
+                        <div class="weather-label">风速</div>
+                        <div class="weather-value" id="wind-speed">--</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-label">风向</div>
+                        <div class="weather-value" id="wind-dir">--</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-label">浪高</div>
+                        <div class="weather-value" id="wave-height">--</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-label">流向</div>
+                        <div class="weather-value" id="current-dir">--</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-label">能见度</div>
+                        <div class="weather-value" id="visibility">--</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-label">更新时间</div>
+                        <div class="weather-value" id="weather-time" style="font-size: 12px;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 附近港口 -->
+            <div class="panel">
+                <h3>⚓ 附近港口</h3>
+                <div id="ports-list">
+                    <div class="port-item">
+                        <span class="port-name">三亚港</span>
+                        <span class="port-distance">5 km</span>
+                    </div>
+                    <div class="port-item">
+                        <span class="port-name">榆林港</span>
+                        <span class="port-distance">15 km</span>
+                    </div>
+                    <div class="port-item">
+                        <span class="port-name">八所港</span>
+                        <span class="port-distance">120 km</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地图容器 -->
+        <div id="map"></div>
+
+        <!-- 右侧面板 -->
+        <div class="right-panel">
+            <!-- 本船信息 -->
+            <div class="panel">
+                <h3>🚢 本船信息</h3>
+                <div class="route-info">
+                    <div class="route-point">
+                        <div class="route-dot"></div>
+                        <div class="route-label">位置：18.25°N, 109.50°E</div>
+                    </div>
+                    <div class="route-point">
+                        <div class="route-dot"></div>
+                        <div class="route-label">航向：045°</div>
+                    </div>
+                    <div class="route-point">
+                        <div class="route-dot"></div>
+                        <div class="route-label">航速：12.5 kn</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 监控摄像头 -->
+            <div class="panel">
+                <h3>📹 监控摄像头</h3>
+                <div class="camera-feed">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=200&fit=crop" alt="前视摄像头" />
+                    <div class="camera-info">
+                        <div class="camera-name">前视摄像头</div>
+                        <div class="camera-status">🟢 实时直播</div>
+                    </div>
+                </div>
+                <div class="camera-feed">
+                    <img src="https://images.unsplash.com/photo-1544644171-1c107c7c29e4?w=400&h=200&fit=crop" alt="后视摄像头" />
+                    <div class="camera-info">
+                        <div class="camera-name">后视摄像头</div>
+                        <div class="camera-status">🟢 实时直播</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 航线规划 -->
+            <div class="panel">
+                <h3>🗺️ 航线规划</h3>
+                <div class="route-info">
+                    <div class="route-point">
+                        <div class="route-dot"></div>
+                        <div class="route-label">起点：三亚港</div>
+                    </div>
+                    <div class="route-point">
+                        <div class="route-dot waypoint"></div>
+                        <div class="route-label">航点 1：18.50°N, 110.00°E</div>
+                    </div>
+                    <div class="route-point">
+                        <div class="route-dot waypoint"></div>
+                        <div class="route-label">航点 2：19.00°N, 110.50°E</div>
+                    </div>
+                    <div class="route-point">
+                        <div class="route-dot" style="background: #48bb78;"></div>
+                        <div class="route-label">终点：深圳港</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化地图（三亚附近）
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: {
+                version: 8,
+                sources: {
+                    'osm': {
+                        type: 'raster',
+                        tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tileSize: 256,
+                        attribution: '© OpenStreetMap Contributors'
+                    }
+                },
+                layers: [
+                    {
+                        id: 'osm-tiles',
+                        type: 'raster',
+                        source: 'osm',
+                        minzoom: 0,
+                        maxzoom: 19
+                    }
+                ]
+            },
+            center: [109.50, 18.25], // 三亚附近
+            zoom: 10,
+            pitch: 45,
+            bearing: 0
+        });
+
+        map.on('load', () => {
+            console.log('✅ Map loaded');
+            loadAISData();
+            loadWeatherData();
+        });
+
+        // 加载 AIS 数据
+        async function loadAISData() {
+            try {
+                const response = await fetch('/api/v1/worldmonitor/ais');
+                const data = await response.json();
+                
+                if (data.targets && data.targets.length > 0) {
+                    // 更新计数
+                    document.getElementById('ais-count').textContent = data.targets.length;
+                    
+                    // 更新列表
+                    const aisList = document.getElementById('ais-targets-list');
+                    aisList.innerHTML = data.targets.slice(0, 10).map((target, index) => `
+                        <div class="ais-target ${target.risk_level === 'high' ? 'high-risk' : ''}" 
+                             onclick="focusOnTarget(${target.latitude}, ${target.longitude})">
+                            <div class="ais-target-header">
+                                <span class="ais-target-type">${target.vessel_type || 'Unknown'}</span>
+                                <span class="ais-target-mmsi">MMSI: ${target.mmsi}</span>
+                            </div>
+                            <div class="ais-target-info">
+                                <span>位置：${target.latitude?.toFixed(4) || '--'}, ${target.longitude?.toFixed(4) || '--'}</span>
+                                <span>航向：${target.course?.toFixed(0) || '--'}°</span>
+                                <span>航速：${target.speed?.toFixed(1) || '--'} kn</span>
+                                <span>风险：${target.risk_level || 'low'}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // 在地图上添加 AIS 目标标记
+                    data.targets.forEach((target, index) => {
+                        if (target.latitude && target.longitude) {
+                            // 创建标记元素
+                            const el = document.createElement('div');
+                            el.className = 'ais-marker';
+                            el.style.cssText = `
+                                width: 16px;
+                                height: 16px;
+                                background: ${target.risk_level === 'high' ? '#f56565' : '#48bb78'};
+                                border: 2px solid #fff;
+                                border-radius: 50%;
+                                cursor: pointer;
+                            `;
+                            el.onclick = () => focusOnTarget(target.latitude, target.longitude);
+                            
+                            // 添加标记到地图
+                            new maplibregl.Marker({ element: el })
+                                .setLngLat([target.longitude, target.latitude])
+                                .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
+                                    <div style="padding: 8px;">
+                                        <div style="font-weight: 600; color: #4fc3f7;">${target.vessel_type || 'Unknown'}</div>
+                                        <div style="font-size: 11px; color: #a0aec0;">MMSI: ${target.mmsi}</div>
+                                        <div style="font-size: 11px; color: #a0aec0;">航速：${target.speed?.toFixed(1) || '--'} kn</div>
+                                        <div style="font-size: 11px; color: #a0aec0;">航向：${target.course?.toFixed(0) || '--'}°</div>
+                                    </div>
+                                `))
+                                .addTo(map);
+                        }
+                    });
+                    
+                    // 添加本船标记（三亚附近）
+                    const ownShipEl = document.createElement('div');
+                    ownShipEl.style.cssText = `
+                        width: 20px;
+                        height: 20px;
+                        background: #4fc3f7;
+                        border: 3px solid #fff;
+                        border-radius: 50%;
+                        box-shadow: 0 0 20px rgba(79,195,247,0.8);
+                    `;
+                    
+                    new maplibregl.Marker({ element: ownShipEl })
+                        .setLngLat([109.50, 18.25])
+                        .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
+                            <div style="padding: 8px;">
+                                <div style="font-weight: 600; color: #4fc3f7;">🚢 本船</div>
+                                <div style="font-size: 11px; color: #a0aec0;">位置：18.25°N, 109.50°E</div>
+                                <div style="font-size: 11px; color: #a0aec0;">航向：045°</div>
+                                <div style="font-size: 11px; color: #a0aec0;">航速：12.5 kn</div>
+                            </div>
+                        `))
+                        .addTo(map);
+                }
+            } catch (error) {
+                console.error('Failed to load AIS data:', error);
+            }
+        }
+
+        // 加载气象数据
+        async function loadWeatherData() {
+            try {
+                const response = await fetch('/api/v1/worldmonitor/weather?lat=18.25&lng=109.50');
+                const data = await response.json();
+                
+                if (data.weather) {
+                    const weather = data.weather;
+                    document.getElementById('wind-speed').textContent = weather.wind?.speed?.toFixed(1) ? `${weather.wind.speed.toFixed(1)} m/s` : '--';
+                    document.getElementById('wind-dir').textContent = weather.wind?.direction?.toFixed(0) ? `${weather.wind.direction.toFixed(0)}°` : '--';
+                    document.getElementById('wave-height').textContent = weather.wave?.height?.toFixed(1) ? `${weather.wave.height.toFixed(1)} m` : '--';
+                    document.getElementById('current-dir').textContent = weather.current?.direction?.toFixed(0) ? `${weather.current.direction.toFixed(0)}°` : '--';
+                    document.getElementById('visibility').textContent = weather.visibility?.toFixed(1) ? `${weather.visibility.toFixed(1)} km` : '--';
+                    document.getElementById('weather-time').textContent = weather.timestamp ? new Date(weather.timestamp).toLocaleTimeString('zh-CN') : '--';
+                }
+            } catch (error) {
+                console.error('Failed to load weather data:', error);
+            }
+        }
+
+        // 聚焦到目标
+        function focusOnTarget(lat, lng) {
+            map.flyTo({
+                center: [lng, lat],
+                zoom: 14,
+                duration: 2000
+            });
+        }
+
+        // 每 15 秒刷新数据
+        setInterval(loadAISData, 15000);
+        setInterval(loadWeatherData, 15000);
+    </script>
+</body>
+</html>

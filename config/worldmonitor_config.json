@@ -1,0 +1,21 @@
+{
+  "enabled": false,
+  "mode": "placeholder",
+  "baseUrl": "https://api.worldmonitor.app/api/v1",
+  "features": {
+    "ais": true,
+    "marineWeather": true,
+    "ports": true,
+    "shippingRoutes": true,
+    "globeView": false,
+    "deckView": false
+  },
+  "frontend": {
+    "containerId": "navigation-monitor",
+    "refreshIntervalMs": 15000
+  },
+  "notes": [
+    "当前为方案层配置，等待真实接入。",
+    "4 小时后推进真实 WorldMonitor API / 前端地图引擎接入。"
+  ]
+}

@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoubleBoatClawSystem - 数字孪生监控平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* 顶部状态栏 */
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        .status-bar h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .status-bar a {
+            color: #4fc3f7;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: rgba(79,195,247,0.1);
+            transition: all 0.2s;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .status-bar a:hover {
+            background: rgba(79,195,247,0.2);
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #4caf50;
+        }
+
+        .status-dot.disconnected {
+            background: #f44336;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 3D 容器 */
+        #canvas-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        #three-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 左侧数据面板 */
+        .data-panel {
+            position: fixed;
+            left: 20px;
+            top: 70px;
+            width: 320px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+        }
+
+        .data-panel h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #4a90e2;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 8px;
+        }
+
+        .data-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4a90e2;
+        }
+
+        .data-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #a0a0a0;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 13px;
+        }
+
+        .data-label {
+            color: #a0a0a0;
+        }
+
+        .data-value {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .data-value.warning {
+            color: #ffb347;
+        }
+
+        .data-value.critical {
+            color: #ff6b6b;
+        }
+        
+        .data-value.ok {
+            color: #81c784;
+        }
+        
+        .wm-details {
+            display: none;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            border-left: 3px solid #4a90e2;
+        }
+
+        /* 右侧报警面板 */
+        .alarm-panel {
+            position: fixed;
+            right: 20px;
+            top: 70px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+        }
+
+        .alarm-panel h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 8px;
+        }
+
+        .alarm-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .alarm-item.level-INFO {
+            border-left-color: #4caf50;
+        }
+
+        .alarm-item.level-WARNING {
+            border-left-color: #ffb347;
+        }
+
+        .alarm-item.level-CRITICAL {
+            border-left-color: #ff6b6b;
+        }
+
+        .alarm-item.level-EMERGENCY {
+            border-left-color: #ff0000;
+        }
+
+        .alarm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .alarm-level {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .alarm-level.INFO {
+            background: #4caf50;
+            color: white;
+        }
+
+        .alarm-level.WARNING {
+            background: #ffb347;
+            color: black;
+        }
+
+        .alarm-level.CRITICAL {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .alarm-level.EMERGENCY {
+            background: #ff0000;
+            color: white;
+        }
+
+        .alarm-time {
+            font-size: 11px;
+            color: #a0a0a0;
+        }
+
+        .alarm-message {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .alarm-source {
+            font-size: 11px;
+            color: #a0a0a0;
+            margin-top: 5px;
+        }
+
+        /* 底部 AIS 目标列表 */
+        .ais-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ais-panel h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #4a90e2;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 8px;
+        }
+
+        .ais-target {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .ais-mmsi {
+            font-weight: 600;
+            color: #4a90e2;
+        }
+
+        .ais-info {
+            display: flex;
+            gap: 15px;
+            color: #a0a0a0;
+        }
+
+        /* 搜索面板 */
+        .search-panel {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid #4a90e2;
+            z-index: 1001;
+        }
+
+        .search-panel input {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-panel input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .search-results {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .search-result-item:hover {
+            background: rgba(74, 144, 226, 0.3);
+        }
+
+        /* 加载动画 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4a90e2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部状态栏 -->
+    <div class="status-bar">
+        <h1>🚢 DoubleBoatClawSystem - 数字孪生监控平台</h1>
+        <div class="status-indicators">
+            <div class="status-item">
+                <div class="status-dot" id="ws-status"></div>
+                <span id="ws-status-text">连接中...</span>
+            </div>
+            <div class="status-item">
+                <span>🕐</span>
+                <span id="clock">--:--:--</span>
+            </div>
+            <a href="/poseidon-config.html" target="_blank">⚙️ LLM 配置</a>
+            <div class="status-item" id="llm-status" style="font-size: 12px; color: #888;">
+                🧠 LLM: 未配置
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索面板 -->
+    <div class="search-panel">
+        <input 
+            type="text" 
+            id="search-input" 
+            placeholder="🔍 搜索舱室、设备或区域 (支持模糊搜索)..."
+        />
+        <div class="search-results" id="search-results"></div>
+    </div>
+
+    <!-- 3D 容器 -->
+    <div id="canvas-container">
+        <canvas id="three-canvas"></canvas>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>正在加载数字孪生系统...</div>
+        </div>
+    </div>
+
+    <!-- 左侧数据面板 -->
+    <div class="data-panel">
+        <h2>📊 实时数据</h2>
+        
+        <!-- 导航数据 -->
+        <div class="data-card">
+            <h3>🧭 导航数据</h3>
+            <div class="data-row">
+                <span class="data-label">纬度</span>
+                <span class="data-value" id="nav-lat">--.----</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">经度</span>
+                <span class="data-value" id="nav-lon">--.----</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">航向</span>
+                <span class="data-value" id="nav-course">--.-°</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">航速</span>
+                <span class="data-value" id="nav-speed">--.- kn</span>
+            </div>
+        </div>
+
+        <!-- 主机数据 -->
+        <div class="data-card">
+            <h3>⚙️ 主机状态</h3>
+            <div class="data-row">
+                <span class="data-label">转速</span>
+                <span class="data-value" id="eng-rpm">--- RPM</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">负载</span>
+                <span class="data-value" id="eng-load">--- %</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">冷却水温度</span>
+                <span class="data-value" id="eng-temp">--.- °C</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">滑油压力</span>
+                <span class="data-value" id="eng-pressure">-.- bar</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">燃油消耗</span>
+                <span class="data-value" id="eng-fuel">--- kg/h</span>
+            </div>
+        </div>
+
+        <!-- AIS 统计 -->
+        <div class="data-card">
+            <h3>📡 AIS 目标</h3>
+            <div class="data-row">
+                <span class="data-label">追踪目标数</span>
+                <span class="data-value" id="ais-count">0</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">最高风险</span>
+                <span class="data-value" id="nav-risk">SAFE</span>
+            </div>
+        </div>
+
+        <!-- 智能机舱 -->
+        <div class="data-card">
+            <h3>🛠️ 智能机舱</h3>
+            <div class="data-row">
+                <span class="data-label">健康评分</span>
+                <span class="data-value" id="engine-health">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">趋势</span>
+                <span class="data-value" id="engine-trend">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">维护建议</span>
+                <span class="data-value" id="engine-advice" style="font-size:11px;">--</span>
+            </div>
+        </div>
+
+        <!-- 智能能效 -->
+        <div class="data-card">
+            <h3>🌱 智能能效</h3>
+            <div class="data-row">
+                <span class="data-label">状态</span>
+                <span class="data-value" id="eff-health">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">船舶</span>
+                <span class="data-value" id="eff-vessel">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">建议数</span>
+                <span class="data-value" id="eff-rec-count">--</span>
+            </div>
+        </div>
+
+        <!-- AI Native 认知摘要 -->
+        <div class="data-card">
+            <h3>🧠 AI Native 认知摘要</h3>
+            <div class="data-row">
+                <span class="data-label">综合风险</span>
+                <span class="data-value" id="ai-risk-level">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">合规状态</span>
+                <span class="data-value" id="ai-compliance-status">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">事件数量</span>
+                <span class="data-value" id="ai-event-count">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">建议动作</span>
+                <span class="data-value" id="ai-action-count">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">认知摘要</span>
+                <span class="data-value" id="ai-summary" style="font-size:11px; max-width:170px; text-align:right;">--</span>
+            </div>
+        </div>
+
+        <!-- WorldMonitor 方案层 -->
+        <div class="data-card" id="worldmonitor-card">
+            <h3>🌍 WorldMonitor</h3>
+            
+            <!-- 1. AIS 目标详细列表 -->
+            <div style="margin-bottom:15px;">
+                <div style="font-weight:600; color:#4fc3f7; margin-bottom:8px; font-size:13px;">🚢 AIS 目标列表</div>
+                <div id="wm-ais-list" style="max-height:200px; overflow-y:auto; font-size:11px;">
+                    <div style="color:#888; text-align:center; padding:10px;">加载中...</div>
+                </div>
+            </div>
+            
+            <!-- 2. 气象详情 -->
+            <div style="margin-bottom:15px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">
+                <div style="font-weight:600; color:#81c784; margin-bottom:8px; font-size:13px;">🌤️ 气象详情</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px;">
+                    <div><span style="color:#888;">风速:</span> <span id="wm-wind" style="color:#fff;">--</span></div>
+                    <div><span style="color:#888;">风向:</span> <span id="wm-wind-dir" style="color:#fff;">--</span></div>
+                    <div><span style="color:#888;">浪高:</span> <span id="wm-wave" style="color:#fff;">--</span></div>
+                    <div><span style="color:#888;">流向:</span> <span id="wm-current" style="color:#fff;">--</span></div>
+                    <div><span style="color:#888;">能见度:</span> <span id="wm-visibility" style="color:#fff;">--</span></div>
+                    <div><span style="color:#888;">更新时间:</span> <span id="wm-weather-time" style="color:#fff;">--</span></div>
+                </div>
+            </div>
+            
+            <!-- 3. 港口信息 -->
+            <div style="margin-bottom:15px;">
+                <div style="font-weight:600; color:#ffb74d; margin-bottom:8px; font-size:13px;">⚓ 附近港口</div>
+                <div id="wm-ports-list" style="max-height:120px; overflow-y:auto; font-size:11px;">
+                    <div style="color:#888; text-align:center; padding:10px;">加载中...</div>
+                </div>
+            </div>
+            
+            <!-- 4. 航线规划 -->
+            <div>
+                <div style="font-weight:600; color:#ba68c8; margin-bottom:8px; font-size:13px;">🗺️ 航线规划</div>
+                <div id="wm-route-info" style="font-size:11px; color:#888; text-align:center; padding:10px;">
+                    航线规划功能开发中...
+                </div>
+            </div>
+        </div>
+
+        <!-- Channel 状态 -->
+        <div class="data-card">
+            <h3>🤖 Channel 状态</h3>
+            <div id="channel-status-list" style="display:flex; flex-direction:column; gap:8px;">
+                <div style="text-align:center; color:#a0a0a0; padding:10px;">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧报警面板 -->
+    <div class="alarm-panel">
+        <h2>🚨 报警信息</h2>
+        <div id="alarm-list">
+            <div style="text-align: center; color: #a0a0a0; padding: 20px;">
+                暂无报警
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 AIS 目标列表 -->
+    <div class="ais-panel">
+        <h2>🎯 AIS 目标列表</h2>
+        <div id="ais-list">
+            <div style="text-align: center; color: #a0a0a0; padding: 10px;">
+                暂无 AIS 目标
+            </div>
+        </div>
+    </div>
+
+    <!-- 数字孪生主程序 (ES Module) -->
+    <script type="module" src="./digital-twin/main.js"></script>
+    
+    <!-- Poseidon-X Integration -->
+    <script type="module" src="./digital-twin/simple-bridge-chat.js"></script>
+    
+    <!-- WorldMonitor Integration -->
+    <script type="module">
+      import NavigationMonitor from './digital-twin/NavigationMonitor.js';
+      import DataAggregator from './digital-twin/DataAggregator.js';
+      
+      // Initialize WorldMonitor components
+      let navMonitor = null;
+      let dataAggregator = null;
+      
+      async function initWorldMonitor() {
+        try {
+          // Initialize DataAggregator
+          dataAggregator = new DataAggregator({
+            dashboardUrl: '/api/v1/dashboard',
+            worldmonitorAisUrl: '/api/v1/worldmonitor/ais',
+            worldmonitorWeatherUrl: '/api/v1/worldmonitor/weather',
+            refreshIntervalMs: 15000
+          });
+          
+          // Initialize NavigationMonitor
+          navMonitor = new NavigationMonitor('worldmonitor-card', {
+            mode: 'connected'
+          });
+          
+          console.log('🌍 WorldMonitor components initialized');
+          
+          // Fetch initial data
+          await refreshWorldMonitorData();
+          
+        } catch (error) {
+          console.error('❌ WorldMonitor initialization failed:', error);
+        }
+      }
+      
+      async function refreshWorldMonitorData() {
+        if (!dataAggregator || !navMonitor) return;
+        
+        try {
+          // 1. Get WorldMonitor AIS data
+          const aisData = await dataAggregator.getWorldMonitorAis();
+          if (aisData && aisData.targets) {
+            navMonitor.setAISTargets(aisData.targets);
+            updateAisList(aisData.targets);
+            console.log(`📡 Updated ${aisData.targets.length} AIS targets`);
+          }
+          
+          // 2. Get WorldMonitor weather data
+          const weatherData = await dataAggregator.getWorldMonitorWeather(31.2304, 121.4737);
+          if (weatherData && weatherData.weather) {
+            updateWeatherDisplay(weatherData.weather);
+            console.log('🌤️ Updated weather data:', weatherData.weather);
+          }
+          
+          // 3. Get ports info (placeholder)
+          updatePortsList();
+          
+        } catch (error) {
+          console.error('❌ Failed to refresh WorldMonitor data:', error);
+        }
+      }
+      
+      function updateAisList(targets) {
+        const container = document.getElementById('wm-ais-list');
+        if (!container) return;
+        
+        if (!targets || targets.length === 0) {
+          container.innerHTML = '<div style="color:#888; text-align:center; padding:10px;">暂无 AIS 目标</div>';
+          return;
+        }
+        
+        container.innerHTML = targets.slice(0, 5).map(t => `
+          <div style="padding:6px; margin-bottom:4px; background:rgba(0,0,0,0.3); border-radius:4px; border-left:3px solid ${t.risk_level === 'high' ? '#ef5350' : '#81c784'};">
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:#4fc3f7; font-weight:600;">${t.vessel_type || 'Unknown'}</span>
+              <span style="color:#888;">MMSI: ${t.mmsi}</span>
+            </div>
+            <div style="color:#aaa; font-size:10px; margin-top:4px;">
+              位置：${t.latitude?.toFixed(4) || '--'}, ${t.longitude?.toFixed(4) || '--'} | 
+              航向：${t.course?.toFixed(0) || '--'}° | 
+              航速：${t.speed?.toFixed(1) || '--'} kn
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      function updateWeatherDisplay(weather) {
+        if (!weather) return;
+        
+        const windEl = document.getElementById('wm-wind');
+        const windDirEl = document.getElementById('wm-wind-dir');
+        const waveEl = document.getElementById('wm-wave');
+        const currentEl = document.getElementById('wm-current');
+        const visibilityEl = document.getElementById('wm-visibility');
+        const timeEl = document.getElementById('wm-weather-time');
+        
+        if (windEl) windEl.textContent = weather.wind?.speed?.toFixed(1) ? `${weather.wind.speed.toFixed(1)} m/s` : '--';
+        if (windDirEl) windDirEl.textContent = weather.wind?.direction?.toFixed(0) ? `${weather.wind.direction.toFixed(0)}°` : '--';
+        if (waveEl) waveEl.textContent = weather.wave?.height?.toFixed(1) ? `${weather.wave.height.toFixed(1)} m` : '--';
+        if (currentEl) currentEl.textContent = weather.current?.speed?.toFixed(1) ? `${weather.current.speed.toFixed(1)} kn` : '--';
+        if (visibilityEl) visibilityEl.textContent = weather.visibility?.toFixed(1) ? `${weather.visibility.toFixed(1)} km` : '--';
+        if (timeEl) timeEl.textContent = weather.timestamp ? new Date(weather.timestamp).toLocaleTimeString('zh-CN') : '--';
+      }
+      
+      function updatePortsList() {
+        const container = document.getElementById('wm-ports-list');
+        if (!container) return;
+        
+        // Placeholder data for nearby ports
+        const ports = [
+          { name: '上海港', distance: '15 km', type: '集装箱' },
+          { name: '洋山深水港', distance: '45 km', type: '深水港' },
+          { name: '宁波舟山港', distance: '120 km', type: '综合性' }
+        ];
+        
+        container.innerHTML = ports.map(p => `
+          <div style="padding:6px; margin-bottom:4px; background:rgba(0,0,0,0.3); border-radius:4px; display:flex; justify-content:space-between;">
+            <span style="color:#ffb74d; font-weight:600;">${p.name}</span>
+            <span style="color:#888;">${p.distance} - ${p.type}</span>
+          </div>
+        `).join('');
+      }
+      
+      // Initialize after DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWorldMonitor);
+      } else {
+        initWorldMonitor();
+      }
+      
+      // Refresh data every 15 seconds
+      setInterval(refreshWorldMonitorData, 15000);
+    </script>
+    <script type="module">
+      // 延迟加载 LLM 状态检查
+      setTimeout(() => {
+        try {
+          const config = JSON.parse(localStorage.getItem('poseidon_config') || '{}');
+          const llmStatus = document.getElementById('llm-status');
+          if (config.apiKey) {
+            llmStatus.textContent = `🧠 LLM: ${config.llmProvider || 'minimax'} (${config.model || 'M2.5'})`;
+            llmStatus.style.color = '#81c784';
+          } else {
+            llmStatus.textContent = '🧠 LLM: 未配置 (点击配置)';
+            llmStatus.style.color = '#ffb74d';
+          }
+        } catch (error) {
+          console.warn('⚠️ LLM status check failed:', error);
+        }
+      }, 1000);
+    </script>
+    
+    <!-- 页面逻辑 -->
+    <script>
+        // ==================== 时钟 ====================
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('zh-CN');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ==================== 搜索功能 ====================
+        let searchTimeout = null;
+        
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            
+            searchTimeout = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query.length > 0 && window.DigitalTwin) {
+                    const results = window.DigitalTwin.searchAndFocus(query);
+                    displaySearchResults(results);
+                } else {
+                    document.getElementById('search-results').innerHTML = '';
+                }
+            }, 300);
+        });
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('search-results');
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #a0a0a0; padding: 10px;">未找到匹配项</div>';
+                return;
+            }
+            
+            container.innerHTML = results.map(result => `
+                <div class="search-result-item" onclick="focusOnTarget('${result.id}')">
+                    📍 ${result.name}
+                </div>
+            `).join('');
+        }
+
+        function focusOnTarget(id) {
+            if (window.DigitalTwin) {
+                window.DigitalTwin.searchAndFocus(id);
+            }
+        }
+
+        // ==================== Channel/Engine 实时状态 ====================
+        async function updateChannelStatus() {
+            try {
+                const response = await fetch('/api/v1/channels');
+                const data = await response.json();
+                const container = document.getElementById('channel-status-list');
+                if (!data.channels || data.channels.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; color:#a0a0a0; padding:10px;">暂无 Channel</div>';
+                    return;
+                }
+                container.innerHTML = data.channels.map(ch => {
+                    const good = ch.health === 'ok';
+                    return `
+                        <div style="padding:8px; border-radius:6px; background:${good ? 'rgba(76,175,80,0.15)' : 'rgba(255,167,38,0.15)'}; border-left:3px solid ${good ? '#4caf50' : '#ffa726'};">
+                            <div style="font-weight:600; color:#fff;">${ch.name}</div>
+                            <div style="font-size:11px; color:#a0a0a0;">${ch.description}</div>
+                            <div style="font-size:11px; color:${good ? '#81c784' : '#ffb74d'}; margin-top:4px;">${good ? '✅' : '⚠️'} ${ch.health}</div>
+                        </div>`;
+                }).join('');
+
+                const nav = data.channels.find(ch => ch.name === 'intelligent_navigation');
+                if (nav) {
+                    const riskStatus = nav.status?.risk_thresholds ? 'MONITOR' : 'SAFE';
+                    document.getElementById('nav-risk').textContent = riskStatus;
+                }
+
+                const engine = data.channels.find(ch => ch.name === 'intelligent_engine');
+                if (engine) {
+                    document.getElementById('engine-health').textContent = `${engine.status?.engine_health_score ?? '--'}/100`;
+                    const trend = engine.status?.trend || {};
+                    document.getElementById('engine-trend').textContent = `RPM ${trend.rpm || '--'}`;
+                }
+            } catch (error) {
+                console.error('Failed to update channel status:', error);
+            }
+        }
+
+        async function updateDashboard() {
+            try {
+                const response = await fetch('/api/v1/dashboard');
+                const data = await response.json();
+                const own = data.navigation?.own_ship || {};
+                if (own.latitude != null) document.getElementById('nav-lat').textContent = Number(own.latitude).toFixed(4);
+                if (own.longitude != null) document.getElementById('nav-lon').textContent = Number(own.longitude).toFixed(4);
+                if (own.course != null) document.getElementById('nav-course').textContent = `${Number(own.course).toFixed(1)}°`;
+                if (own.speed != null) document.getElementById('nav-speed').textContent = `${Number(own.speed).toFixed(1)} kn`;
+
+                const report = data.navigation?.report || {};
+                document.getElementById('ais-count').textContent = report.ais_targets_total ?? 0;
+                document.getElementById('nav-risk').textContent = (report.overall_status || 'safe').toUpperCase();
+
+                const engine = data.engine || {};
+                const latest = engine.latest || {};
+                if (latest.rpm != null) document.getElementById('eng-rpm').textContent = `${Math.round(latest.rpm)} RPM`;
+                if (latest.load != null) document.getElementById('eng-load').textContent = `${latest.load.toFixed(1)} %`;
+                if (latest.coolant_temp != null) document.getElementById('eng-temp').textContent = `${latest.coolant_temp.toFixed(1)} °C`;
+                if (latest.oil_pressure != null) document.getElementById('eng-pressure').textContent = `${latest.oil_pressure.toFixed(2)} bar`;
+                if (latest.fuel_rate != null) document.getElementById('eng-fuel').textContent = `${latest.fuel_rate.toFixed(1)} kg/h`;
+                document.getElementById('engine-health').textContent = `${engine.health_score ?? '--'}/100`;
+                document.getElementById('engine-trend').textContent = `RPM ${engine.trend?.rpm || '--'}`;
+                document.getElementById('engine-advice').textContent = (engine.maintenance_advice || ['--'])[0];
+
+                const eff = data.efficiency || {};
+                document.getElementById('eff-health').textContent = (eff.health || '--').toUpperCase();
+                document.getElementById('eff-vessel').textContent = eff.vessel?.name || '--';
+                document.getElementById('eff-rec-count').textContent = eff.recommendations_count ?? '--';
+
+                const compliance = data.compliance || {};
+                const perception = data.perception || {};
+                const decision = data.decision || {};
+                const worldmonitor = data.worldmonitor || {};
+                const aiRiskEl = document.getElementById('ai-risk-level');
+                const aiComplianceEl = document.getElementById('ai-compliance-status');
+                const riskValue = (decision.risk_level || compliance.risk_level || '--').toUpperCase();
+                const complianceValue = (decision.compliance_status || compliance.compliance_status || '--').toUpperCase();
+                aiRiskEl.textContent = riskValue;
+                aiComplianceEl.textContent = complianceValue;
+                document.getElementById('ai-event-count').textContent = perception.event_count ?? '--';
+                document.getElementById('ai-action-count').textContent = Array.isArray(decision.recommended_actions) ? decision.recommended_actions.length : '--';
+                document.getElementById('ai-summary').textContent = decision.summary || (Array.isArray(compliance.recommended_actions) ? compliance.recommended_actions[0] : '--');
+                const wmModeEl = document.getElementById('wm-mode');
+                if (wmModeEl) {
+                    wmModeEl.textContent = (worldmonitor.mode || '--').toUpperCase();
+                    wmModeEl.className = 'data-value';
+                    if ((worldmonitor.mode || '').toLowerCase() === 'placeholder') {
+                        wmModeEl.classList.add('warning');
+                    } else if ((worldmonitor.mode || '').toLowerCase() === 'connected') {
+                        wmModeEl.classList.add('ok');
+                    }
+                }
+                const wmAis = document.getElementById('wm-ais-endpoint');
+                const wmWeather = document.getElementById('wm-weather-endpoint');
+                if (wmAis) wmAis.textContent = worldmonitor.endpoints?.ais || '--';
+                if (wmWeather) wmWeather.textContent = worldmonitor.endpoints?.weather || '--';
+                
+                // WorldMonitor 卡片点击展开逻辑
+                const wmCard = document.getElementById('worldmonitor-card');
+                if (wmCard && worldmonitor.mode) {
+                    wmCard.onclick = (e) => {
+                        if (e.target.tagName === 'H3') {  // 只有点击标题才展开
+                            const details = wmCard.querySelector('.wm-details');
+                            if (details) {
+                                details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                            }
+                        }
+                    };
+                    
+                    // 更新详情区
+                    const wmStatus = document.getElementById('wm-status');
+                    const wmDataSource = document.getElementById('wm-data-source');
+                    const wmLastUpdate = document.getElementById('wm-last-update');
+                    if (wmStatus) wmStatus.textContent = worldmonitor.status || '--';
+                    if (wmDataSource) wmDataSource.textContent = worldmonitor.data_source || '--';
+                    if (wmLastUpdate) wmLastUpdate.textContent = worldmonitor.last_update || '--';
+                }
+                aiRiskEl.className = 'data-value';
+                aiComplianceEl.className = 'data-value';
+                if (riskValue === 'HIGH' || riskValue === 'DANGER') aiRiskEl.classList.add('critical');
+                else if (riskValue === 'MEDIUM' || riskValue === 'WARNING') aiRiskEl.classList.add('warning');
+                if (complianceValue.includes('ATTENTION')) aiComplianceEl.classList.add('warning');
+            } catch (error) {
+                console.error('Failed to update dashboard:', error);
+            }
+        }
+
+        // ==================== UI 辅助函数 ====================
+        function updateUI(data) {
+            // 这个函数已经在 main.js 中实现了
+        }
+
+        updateChannelStatus();
+        updateDashboard();
+        setInterval(updateChannelStatus, 10000);
+        setInterval(updateDashboard, 5000);
+    </script>
+</body>
+</html>
