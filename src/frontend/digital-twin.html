@@ -272,6 +272,203 @@
             margin-top: 5px;
         }
 
+        .cockpit-panel {
+            position: fixed;
+            right: 340px;
+            top: 70px;
+            width: 460px;
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+            background: linear-gradient(180deg, rgba(7, 18, 32, 0.94) 0%, rgba(9, 14, 26, 0.92) 100%);
+            border-radius: 14px;
+            padding: 18px;
+            border: 1px solid rgba(115, 230, 255, 0.18);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(12px);
+        }
+
+        .cockpit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .cockpit-header h2 {
+            font-size: 16px;
+            color: #73e6ff;
+            letter-spacing: 0.04em;
+        }
+
+        .cockpit-meta {
+            font-size: 11px;
+            color: #8ca2bd;
+            text-align: right;
+        }
+
+        .cockpit-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .cockpit-controls select,
+        .cockpit-controls button,
+        .feedback-form button {
+            border: 1px solid rgba(115, 230, 255, 0.18);
+            background: rgba(115, 230, 255, 0.08);
+            color: #d8f7ff;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+
+        .cockpit-controls button,
+        .feedback-form button {
+            cursor: pointer;
+        }
+
+        .cockpit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .cockpit-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .cockpit-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .cockpit-card h3 {
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #9ed9ff;
+        }
+
+        .cockpit-kpi {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .cockpit-kpi-item {
+            background: rgba(0, 0, 0, 0.18);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .cockpit-kpi-label {
+            color: #7f93ad;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .cockpit-kpi-value {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .cockpit-summary {
+            color: #d9e6f2;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .cockpit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cockpit-list-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.16);
+            font-size: 12px;
+        }
+
+        .cockpit-list-item span:first-child {
+            color: #edf6ff;
+            flex: 1;
+        }
+
+        .cockpit-list-item span:last-child {
+            color: #7f93ad;
+            white-space: nowrap;
+        }
+
+        .memory-stream {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .memory-event {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(2, 10, 22, 0.6);
+            border-left: 3px solid #4fc3f7;
+        }
+
+        .memory-event-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 11px;
+            color: #7f93ad;
+            margin-bottom: 6px;
+        }
+
+        .memory-event strong {
+            color: #ffffff;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        .memory-event p {
+            color: #c7d6e5;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .feedback-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feedback-form input,
+        .feedback-form textarea {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.24);
+            color: #ffffff;
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+
+        .feedback-status {
+            min-height: 18px;
+            font-size: 12px;
+            color: #81c784;
+        }
+
         /* 底部 AIS 目标列表 */
         .ais-panel {
             position: fixed;
@@ -406,6 +603,38 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 1600px) {
+            .cockpit-panel {
+                right: 20px;
+                top: auto;
+                bottom: 190px;
+                width: 420px;
+                max-height: 360px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .data-panel,
+            .alarm-panel,
+            .cockpit-panel,
+            .ais-panel {
+                position: static;
+                width: calc(100% - 24px);
+                margin: 12px;
+                max-height: none;
+                transform: none;
+            }
+
+            body {
+                overflow: auto;
+                height: auto;
+            }
+
+            .cockpit-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -565,6 +794,14 @@
                 <span class="data-value" id="ai-action-count">--</span>
             </div>
             <div class="data-row">
+                <span class="data-label">船长协调</span>
+                <span class="data-value" id="ai-captain-cycle">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">记忆层</span>
+                <span class="data-value" id="ai-memory-store">--</span>
+            </div>
+            <div class="data-row">
                 <span class="data-label">认知摘要</span>
                 <span class="data-value" id="ai-summary" style="font-size:11px; max-width:170px; text-align:right;">--</span>
             </div>
@@ -627,6 +864,73 @@
         <div id="alarm-list">
             <div style="text-align: center; color: #a0a0a0; padding: 20px;">
                 暂无报警
+            </div>
+        </div>
+    </div>
+
+    <div class="cockpit-panel">
+        <div class="cockpit-header">
+            <div>
+                <h2>CAPTAIN-AGENT COCKPIT</h2>
+                <div class="cockpit-meta">协调节奏、决策摘要、记忆回放</div>
+            </div>
+            <div class="cockpit-meta" id="cockpit-last-sync">等待同步</div>
+        </div>
+        <div class="cockpit-controls">
+            <select id="cockpit-replay-filter">
+                <option value="decision_package_event,decision_feedback_event">决策与反馈</option>
+                <option value="decision_package_event">仅决策包</option>
+                <option value="decision_feedback_event">仅反馈</option>
+                <option value="navigation_event,engine_event,efficiency_event">导航/机舱/能效</option>
+            </select>
+            <button type="button" id="cockpit-replay-refresh">刷新 Replay</button>
+        </div>
+        <div class="cockpit-grid">
+            <div class="cockpit-card">
+                <h3>协调节奏</h3>
+                <div class="cockpit-kpi">
+                    <div class="cockpit-kpi-item">
+                        <div class="cockpit-kpi-label">协调状态</div>
+                        <div class="cockpit-kpi-value" id="captain-loop-state">--</div>
+                    </div>
+                    <div class="cockpit-kpi-item">
+                        <div class="cockpit-kpi-label">总轮次</div>
+                        <div class="cockpit-kpi-value" id="captain-runs">--</div>
+                    </div>
+                    <div class="cockpit-kpi-item">
+                        <div class="cockpit-kpi-label">最近回合</div>
+                        <div class="cockpit-kpi-value" id="captain-last-cycle">--</div>
+                    </div>
+                    <div class="cockpit-kpi-item">
+                        <div class="cockpit-kpi-label">记忆层</div>
+                        <div class="cockpit-kpi-value" id="captain-memory-availability">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cockpit-card">
+                <h3>决策摘要</h3>
+                <div class="cockpit-summary" id="captain-decision-summary">等待决策包...</div>
+                <div class="cockpit-list" id="captain-actions-list"></div>
+            </div>
+            <div class="cockpit-card full-width">
+                <h3>运维动作与证据</h3>
+                <div class="cockpit-list" id="captain-maintenance-list"></div>
+            </div>
+            <div class="cockpit-card full-width">
+                <h3>Recent Memory Replay</h3>
+                <div class="memory-stream" id="captain-memory-stream">
+                    <div class="memory-event"><strong>等待记忆回放</strong><p>正在加载 AI Native 事件流...</p></div>
+                </div>
+            </div>
+            <div class="cockpit-card full-width">
+                <h3>Decision Feedback Writeback</h3>
+                <form class="feedback-form" id="cockpit-feedback-form">
+                    <input type="text" id="feedback-action" placeholder="动作，例如：hold course / reduce speed" required>
+                    <textarea id="feedback-outcome" rows="3" placeholder="反馈结果，例如：驾驶员接受建议并保持监控" required></textarea>
+                    <input type="text" id="feedback-confirmed-by" placeholder="确认人，例如：captain / operator" value="captain">
+                    <button type="submit">写回反馈到 AI Native Memory</button>
+                    <div class="feedback-status" id="feedback-status"></div>
+                </form>
             </div>
         </div>
     </div>
@@ -916,6 +1220,8 @@
                 const compliance = data.compliance || {};
                 const perception = data.perception || {};
                 const decision = data.decision || {};
+                const captain = data.captain_agent || {};
+                const memory = data.memory || {};
                 const worldmonitor = data.worldmonitor || {};
                 const aiRiskEl = document.getElementById('ai-risk-level');
                 const aiComplianceEl = document.getElementById('ai-compliance-status');
@@ -925,6 +1231,10 @@
                 aiComplianceEl.textContent = complianceValue;
                 document.getElementById('ai-event-count').textContent = perception.event_count ?? '--';
                 document.getElementById('ai-action-count').textContent = Array.isArray(decision.recommended_actions) ? decision.recommended_actions.length : '--';
+                const lastCycle = captain.coordination?.last_cycle || {};
+                const memoryStoreType = memory.local_store?.type || '--';
+                document.getElementById('ai-captain-cycle').textContent = lastCycle.timestamp ? `RUN ${lastCycle.coordination_runs || 0}` : 'IDLE';
+                document.getElementById('ai-memory-store').textContent = memoryStoreType.toUpperCase();
                 document.getElementById('ai-summary').textContent = decision.summary || (Array.isArray(compliance.recommended_actions) ? compliance.recommended_actions[0] : '--');
                 const wmModeEl = document.getElementById('wm-mode');
                 if (wmModeEl) {
@@ -963,9 +1273,16 @@
                 }
                 aiRiskEl.className = 'data-value';
                 aiComplianceEl.className = 'data-value';
+                const aiCaptainEl = document.getElementById('ai-captain-cycle');
+                const aiMemoryEl = document.getElementById('ai-memory-store');
+                aiCaptainEl.className = 'data-value';
+                aiMemoryEl.className = 'data-value';
                 if (riskValue === 'HIGH' || riskValue === 'DANGER') aiRiskEl.classList.add('critical');
                 else if (riskValue === 'MEDIUM' || riskValue === 'WARNING') aiRiskEl.classList.add('warning');
                 if (complianceValue.includes('ATTENTION')) aiComplianceEl.classList.add('warning');
+                if (lastCycle.timestamp) aiCaptainEl.classList.add('ok');
+                if (memory.local_store?.available) aiMemoryEl.classList.add('ok');
+                renderCaptainCockpit(data);
             } catch (error) {
                 console.error('Failed to update dashboard:', error);
             }
@@ -976,10 +1293,137 @@
             // 这个函数已经在 main.js 中实现了
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '--')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatTime(value) {
+            if (!value) return '--';
+            try {
+                return new Date(value).toLocaleTimeString('zh-CN', { hour12: false });
+            } catch {
+                return value;
+            }
+        }
+
+        function renderCaptainCockpit(data) {
+            const captain = data.captain_agent || {};
+            const decision = data.decision || {};
+            const memory = data.memory || {};
+            const coordination = captain.coordination || {};
+            const lastCycle = coordination.last_cycle || {};
+            const maintenanceActions = decision.maintenance_report?.actions || [];
+            const recommendedActions = decision.recommended_actions || [];
+
+            document.getElementById('captain-loop-state').textContent = coordination.running ? 'RUN' : 'IDLE';
+            document.getElementById('captain-runs').textContent = coordination.runs ?? '--';
+            document.getElementById('captain-last-cycle').textContent = formatTime(lastCycle.timestamp);
+            document.getElementById('captain-memory-availability').textContent = memory.local_store?.available ? (memory.local_store?.type || 'READY') : 'OFF';
+            document.getElementById('captain-decision-summary').textContent = decision.summary || '等待决策包...';
+            document.getElementById('cockpit-last-sync').textContent = `最近同步 ${formatTime(lastCycle.timestamp || new Date().toISOString())}`;
+
+            const actionsList = document.getElementById('captain-actions-list');
+            actionsList.innerHTML = recommendedActions.length
+                ? recommendedActions.slice(0, 4).map((action, index) => `
+                    <div class="cockpit-list-item">
+                        <span>${escapeHtml(action)}</span>
+                        <span>A${index + 1}</span>
+                    </div>
+                `).join('')
+                : '<div class="cockpit-list-item"><span>当前无高优先动作，维持监控。</span><span>OK</span></div>';
+
+            const maintenanceList = document.getElementById('captain-maintenance-list');
+            maintenanceList.innerHTML = maintenanceActions.length
+                ? maintenanceActions.slice(0, 4).map((action, index) => `
+                    <div class="cockpit-list-item">
+                        <span>${escapeHtml(action)}</span>
+                        <span>M${index + 1}</span>
+                    </div>
+                `).join('')
+                : '<div class="cockpit-list-item"><span>暂无新增运维动作。</span><span>STANDBY</span></div>';
+        }
+
+        function renderReplayEvents(events) {
+            const container = document.getElementById('captain-memory-stream');
+            if (!events || events.length === 0) {
+                container.innerHTML = '<div class="memory-event"><strong>暂无事件</strong><p>当前筛选条件下没有 replay 数据。</p></div>';
+                return;
+            }
+
+            container.innerHTML = events.map((event) => {
+                const payload = event.payload || {};
+                const summary = payload.summary || payload.outcome || payload.action || payload.health_message || payload.name || '事件已记录';
+                return `
+                    <div class="memory-event">
+                        <div class="memory-event-header">
+                            <span>${escapeHtml(event.event_type)}</span>
+                            <span>${formatTime(event.timestamp)}</span>
+                        </div>
+                        <strong>${escapeHtml(event.source || 'system')}</strong>
+                        <p>${escapeHtml(summary)}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function refreshReplayTimeline() {
+            try {
+                const filter = document.getElementById('cockpit-replay-filter').value;
+                const params = new URLSearchParams({ limit: '12', event_types: filter });
+                const response = await fetch(`/api/v1/ai-native/memory/replay?${params.toString()}`);
+                const data = await response.json();
+                renderReplayEvents(data.events || []);
+            } catch (error) {
+                console.error('Failed to refresh replay timeline:', error);
+            }
+        }
+
+        async function submitDecisionFeedback(event) {
+            event.preventDefault();
+            const statusEl = document.getElementById('feedback-status');
+            statusEl.textContent = '正在写回反馈...';
+
+            const payload = {
+                action: document.getElementById('feedback-action').value.trim(),
+                outcome: document.getElementById('feedback-outcome').value.trim(),
+                confirmed_by: document.getElementById('feedback-confirmed-by').value.trim() || 'captain',
+            };
+
+            try {
+                const response = await fetch('/api/v1/ai-native/decision/feedback/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) {
+                    const detail = await response.text();
+                    throw new Error(detail || 'feedback writeback failed');
+                }
+                statusEl.textContent = '反馈已写回记忆层。';
+                document.getElementById('cockpit-feedback-form').reset();
+                document.getElementById('feedback-confirmed-by').value = 'captain';
+                await updateDashboard();
+                await refreshReplayTimeline();
+            } catch (error) {
+                statusEl.textContent = `写回失败: ${error.message}`;
+            }
+        }
+
         updateChannelStatus();
         updateDashboard();
+        refreshReplayTimeline();
         setInterval(updateChannelStatus, 10000);
         setInterval(updateDashboard, 5000);
+        setInterval(refreshReplayTimeline, 8000);
+
+        document.getElementById('cockpit-feedback-form').addEventListener('submit', submitDecisionFeedback);
+        document.getElementById('cockpit-replay-refresh').addEventListener('click', refreshReplayTimeline);
+        document.getElementById('cockpit-replay-filter').addEventListener('change', refreshReplayTimeline);
     </script>
 </body>
 </html>

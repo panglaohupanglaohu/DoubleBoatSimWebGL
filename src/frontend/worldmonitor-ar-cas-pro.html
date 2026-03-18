@@ -34,12 +34,50 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
         .header-status { display: flex; gap: 20px; align-items: center; }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         .status-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #a0aec0; }
         .status-dot {
             width: 8px; height: 8px; border-radius: 50%;
             background: #48bb78;
             animation: pulse 2s infinite;
+        }
+        .action-button,
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 36px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(79,195,247,0.28);
+            background: rgba(79,195,247,0.12);
+            color: #d9f6ff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        }
+        .action-button:hover,
+        .action-link:hover {
+            background: rgba(79,195,247,0.2);
+            border-color: rgba(79,195,247,0.45);
+            transform: translateY(-1px);
+        }
+        .action-button.active {
+            background: linear-gradient(135deg, rgba(79,195,247,0.34) 0%, rgba(41,182,246,0.16) 100%);
+            color: #ffffff;
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .main-container { display: flex; height: 100vh; padding-top: 60px; }
@@ -275,11 +313,152 @@
             gap: 10px;
             font-size: 14px;
         }
+        .integrated-twin {
+            position: fixed;
+            right: 388px;
+            bottom: 18px;
+            width: min(42vw, 680px);
+            height: min(42vh, 360px);
+            min-width: 460px;
+            min-height: 280px;
+            background: linear-gradient(180deg, rgba(8,16,30,0.96) 0%, rgba(6,10,20,0.94) 100%);
+            border: 1px solid rgba(79,195,247,0.3);
+            border-radius: 16px;
+            overflow: hidden;
+            z-index: 990;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(14px);
+        }
+        .integrated-twin.collapsed {
+            height: 68px;
+            min-height: 68px;
+        }
+        .integrated-twin.hidden {
+            display: none;
+        }
+        .twin-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(79,195,247,0.18);
+            background: linear-gradient(90deg, rgba(14,26,44,0.98) 0%, rgba(11,19,35,0.92) 100%);
+        }
+        .twin-toolbar-title {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .twin-toolbar-title strong {
+            color: #dff7ff;
+            font-size: 13px;
+            letter-spacing: 0.04em;
+        }
+        .twin-toolbar-title span {
+            color: #7fa0b5;
+            font-size: 11px;
+        }
+        .twin-toolbar-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9ec7d9;
+            font-size: 11px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .twin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(79,195,247,0.1);
+            border: 1px solid rgba(79,195,247,0.2);
+        }
+        .twin-badge strong {
+            color: #e9fbff;
+            font-size: 11px;
+        }
+        .twin-toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .twin-frame-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            background: rgba(4,8,16,0.94);
+        }
+        .integrated-twin.collapsed .twin-frame-wrap {
+            display: none;
+        }
+        .twin-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #08101b;
+        }
+        .twin-overlay-note {
+            position: absolute;
+            left: 14px;
+            bottom: 12px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: rgba(5,10,18,0.72);
+            color: #9cb8c7;
+            font-size: 11px;
+            border: 1px solid rgba(79,195,247,0.14);
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+        }
+        @media (max-width: 1400px) {
+            .integrated-twin {
+                right: 20px;
+                width: min(46vw, 620px);
+            }
+        }
+        @media (max-width: 1100px) {
+            .header {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px 16px;
+                gap: 10px;
+            }
+            .main-container {
+                padding-top: 96px;
+            }
+            .header-title,
+            .header-status,
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            .sidebar,
+            .right-panel {
+                display: none;
+            }
+            .integrated-twin {
+                right: 12px;
+                left: 12px;
+                width: auto;
+                min-width: 0;
+                height: 46vh;
+                bottom: 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🌍 WorldMonitor AR-CAS Pro - 船舶避免碰撞增强现实系统（专业版）</h1>
+        <div class="header-title">
+            <h1>🌍 WorldMonitor AR-CAS Pro - 船舶避免碰撞增强现实系统（专业版）</h1>
+        </div>
         <div class="header-status">
             <div class="status-item">
                 <span class="status-dot"></span>
@@ -297,6 +476,14 @@
                 <span>碰撞风险：</span>
                 <span style="color: #48bb78;" id="collision-risk">低</span>
             </div>
+        </div>
+        <div class="header-actions">
+            <div class="status-item">
+                <span>驾驶台：</span>
+                <span style="color: #81c784;" id="twin-status-label">已集成</span>
+            </div>
+            <button type="button" class="action-button active" id="toggle-twin-panel">隐藏数字孪生</button>
+            <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">独立打开驾驶台</a>
         </div>
     </div>
 
@@ -459,7 +646,42 @@
         </div>
     </div>
 
+    <div class="integrated-twin" id="integrated-twin-panel">
+        <div class="twin-toolbar">
+            <div class="twin-toolbar-title">
+                <strong>数字孪生驾驶台</strong>
+                <span>在 WorldMonitor 主平台内直接联动 3D 船体、机舱与 AI Native 驾驶舱</span>
+            </div>
+            <div class="twin-toolbar-meta">
+                <div class="twin-badge">本船 <strong id="twin-own-ship">--</strong></div>
+                <div class="twin-badge">AIS <strong id="twin-ais-count">0</strong></div>
+                <div class="twin-badge">同步 <strong id="twin-sync-time">等待中</strong></div>
+                <div class="twin-toolbar-controls">
+                    <button type="button" class="action-button" id="collapse-twin-panel">折叠</button>
+                    <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">全屏</a>
+                </div>
+            </div>
+        </div>
+        <div class="twin-frame-wrap">
+            <iframe class="twin-frame" src="/digital-twin.html" title="数字孪生驾驶台"></iframe>
+            <div class="twin-overlay-note">当前为同页集成视图，保留独立驾驶台入口用于全屏操作。</div>
+        </div>
+    </div>
+
     <script>
+        const twinPanel = document.getElementById('integrated-twin-panel');
+        const toggleTwinButton = document.getElementById('toggle-twin-panel');
+        const collapseTwinButton = document.getElementById('collapse-twin-panel');
+        const twinStatusLabel = document.getElementById('twin-status-label');
+        const twinFrame = document.querySelector('.twin-frame');
+        const bridgeState = {
+            ownShip: null,
+            selectedTarget: null,
+            alarms: [],
+            weather: null,
+            updatedAt: null
+        };
+
         const map = new maplibregl.Map({
             container: 'map',
             style: {
@@ -491,7 +713,113 @@
             loadAISData();
             loadWeatherData();
             checkSpecialScenarios();
+            syncIntegratedTwinState();
         });
+
+        function updateTwinPanelButtons() {
+            const isHidden = twinPanel.classList.contains('hidden');
+            const isCollapsed = twinPanel.classList.contains('collapsed');
+
+            if (isHidden) {
+                toggleTwinButton.textContent = '显示数字孪生';
+                toggleTwinButton.classList.remove('active');
+                twinStatusLabel.textContent = '已隐藏';
+                twinStatusLabel.style.color = '#f6ad55';
+                return;
+            }
+
+            toggleTwinButton.textContent = '隐藏数字孪生';
+            toggleTwinButton.classList.add('active');
+            twinStatusLabel.textContent = isCollapsed ? '已折叠' : '已集成';
+            twinStatusLabel.style.color = isCollapsed ? '#f6ad55' : '#81c784';
+            collapseTwinButton.textContent = isCollapsed ? '展开' : '折叠';
+        }
+
+        toggleTwinButton.addEventListener('click', () => {
+            twinPanel.classList.toggle('hidden');
+            if (!twinPanel.classList.contains('hidden')) {
+                twinPanel.classList.remove('collapsed');
+            }
+            updateTwinPanelButtons();
+        });
+
+        collapseTwinButton.addEventListener('click', () => {
+            twinPanel.classList.toggle('collapsed');
+            twinPanel.classList.remove('hidden');
+            updateTwinPanelButtons();
+        });
+
+        function postTwinMessage(payload) {
+            if (!twinFrame?.contentWindow) {
+                return;
+            }
+
+            twinFrame.contentWindow.postMessage({
+                source: 'worldmonitor-ar-cas-pro',
+                type: 'bridge_sync',
+                payload
+            }, window.location.origin);
+        }
+
+        function syncTwinBridge(overrides = {}) {
+            Object.assign(bridgeState, overrides, {
+                updatedAt: new Date().toISOString()
+            });
+
+            postTwinMessage({
+                ownShip: bridgeState.ownShip,
+                selectedTarget: bridgeState.selectedTarget,
+                alarms: bridgeState.alarms,
+                weather: bridgeState.weather,
+                source: 'worldmonitor-ar-cas-pro',
+                updatedAt: bridgeState.updatedAt
+            });
+        }
+
+        function buildTwinAlarms(cpaResults = [], targets = []) {
+            const alarms = [];
+
+            cpaResults.forEach((result, index) => {
+                if (result.risk === 'low') {
+                    return;
+                }
+
+                const target = targets[index] || {};
+                alarms.push({
+                    level: result.risk === 'high' ? 'CRITICAL' : 'WARNING',
+                    source: 'worldmonitor',
+                    message: `${result.colregsRule || 'AIS 接近风险'}: ${target.vessel_type || 'Unknown'} / MMSI ${target.mmsi || '--'} / CPA ${result.cpa.toFixed(2)} NM / TCPA ${result.tcpa.toFixed(0)} min`,
+                    timestamp: new Date().toISOString()
+                });
+            });
+
+            const scenario = getSpecialScenario();
+            if (scenario.inCanyon) {
+                alarms.push({
+                    level: 'WARNING',
+                    source: 'worldmonitor',
+                    message: '峡谷航行预警: 当前处于狭窄航道，需要严格保持航道与速度控制。',
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            if (scenario.hasIceberg) {
+                alarms.push({
+                    level: 'CRITICAL',
+                    source: 'worldmonitor',
+                    message: `冰山预警: 前方检测到 ${scenario.icebergs.length} 个冰山目标，请立即规避。`,
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            return alarms;
+        }
+
+        twinFrame?.addEventListener('load', () => {
+            syncTwinBridge();
+        });
+
+        updateTwinPanelButtons();
 
         async function loadAISData() {
             try {
@@ -500,8 +828,15 @@
                 
                 if (data.targets && data.targets.length > 0) {
                     document.getElementById('ais-count').textContent = data.targets.length;
+                    document.getElementById('twin-ais-count').textContent = data.targets.length;
                     
-                    const ownShip = { lat: 18.25, lng: 109.50, course: 45, speed: 12.5 };
+                    const syncedOwnShip = bridgeState.ownShip || {};
+                    const ownShip = {
+                        lat: Number(syncedOwnShip.latitude ?? syncedOwnShip.lat ?? 18.25),
+                        lng: Number(syncedOwnShip.longitude ?? syncedOwnShip.lng ?? 109.50),
+                        course: Number(syncedOwnShip.course ?? syncedOwnShip.heading ?? 45),
+                        speed: Number(syncedOwnShip.speed ?? 12.5)
+                    };
                     const targets = data.targets.slice(0, 10);
                     
                     const cpaResults = targets.map(t => calculateCPA_TCPA(ownShip, t));
@@ -575,9 +910,48 @@
                     });
                     
                     updateAROverlays(targets, cpaResults);
+                    syncTwinBridge({
+                        alarms: buildTwinAlarms(cpaResults, targets)
+                    });
                 }
             } catch (error) {
                 console.error('Failed to load AIS data:', error);
+            }
+        }
+
+        async function syncIntegratedTwinState() {
+            try {
+                const response = await fetch('/api/v1/dashboard');
+                const data = await response.json();
+                const ownShip = data.navigation?.own_ship || {};
+                const latitude = Number(ownShip.latitude ?? 18.25);
+                const longitude = Number(ownShip.longitude ?? 109.50);
+                const course = Number(ownShip.course ?? 45);
+                const speed = Number(ownShip.speed ?? 12.5);
+
+                const headerPosition = `${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E`;
+                document.getElementById('own-ship-position').textContent = headerPosition;
+                document.getElementById('twin-own-ship').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+                const ownShipInfo = document.querySelectorAll('.route-label');
+                if (ownShipInfo.length >= 3) {
+                    ownShipInfo[0].textContent = `位置：${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E`;
+                    ownShipInfo[1].textContent = `航向：${course.toFixed(0)}°`;
+                    ownShipInfo[2].textContent = `航速：${speed.toFixed(1)} kn`;
+                }
+
+                document.getElementById('twin-sync-time').textContent = new Date().toLocaleTimeString('zh-CN');
+                syncTwinBridge({
+                    ownShip: {
+                        latitude,
+                        longitude,
+                        course,
+                        speed
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to sync digital twin state:', error);
+                document.getElementById('twin-sync-time').textContent = '失败';
             }
         }
 
@@ -745,6 +1119,7 @@
                     document.getElementById('current-dir').textContent = weather.current?.direction?.toFixed(0) ? `${weather.current.direction.toFixed(0)}°` : '--';
                     document.getElementById('visibility').textContent = weather.visibility?.toFixed(1) ? `${weather.visibility.toFixed(1)} km` : '--';
                     document.getElementById('weather-time').textContent = weather.timestamp ? new Date(weather.timestamp).toLocaleTimeString('zh-CN') : '--';
+                    syncTwinBridge({ weather });
                 }
             } catch (error) {
                 console.error('Failed to load weather data:', error);
@@ -757,11 +1132,19 @@
                 zoom: 14,
                 duration: 2000
             });
+
+            syncTwinBridge({
+                selectedTarget: {
+                    latitude: Number(lat),
+                    longitude: Number(lng)
+                }
+            });
         }
 
         setInterval(loadAISData, 15000);
         setInterval(loadWeatherData, 15000);
         setInterval(checkSpecialScenarios, 10000);
+        setInterval(syncIntegratedTwinState, 15000);
     </script>
 </body>
 </html>

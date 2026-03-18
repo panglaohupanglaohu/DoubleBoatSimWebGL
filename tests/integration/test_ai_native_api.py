@@ -7,7 +7,7 @@ AI Native API 集成测试
 import pytest
 import requests
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8080"
 
 
 class TestAINativeDashboard:
@@ -15,9 +15,28 @@ class TestAINativeDashboard:
         response = requests.get(f"{BASE_URL}/api/v1/dashboard")
         assert response.status_code == 200
         data = response.json()
+        assert "captain_agent" in data
+        assert "memory" in data
         assert "compliance" in data
         assert "perception" in data
         assert "decision" in data
+
+    def test_coordination_status_endpoint(self):
+        response = requests.get(f"{BASE_URL}/api/v1/ai-native/coordination/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert "coordination" in data
+        assert "memory" in data
+
+    def test_memory_replay_endpoint(self):
+        response = requests.get(
+            f"{BASE_URL}/api/v1/ai-native/memory/replay",
+            params={"limit": 5, "event_types": "decision_package_event,decision_feedback_event"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "events" in data
+        assert "event_types" in data
 
     def test_compliance_structure(self):
         response = requests.get(f"{BASE_URL}/api/v1/dashboard")

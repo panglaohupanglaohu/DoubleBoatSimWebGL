@@ -1,7 +1,7 @@
 {
   "name": "double-boat-claw-system",
   "version": "1.0.0",
-  "description": "Double Boat CLAW System - Digital Twin for Deep-Sea Scientific Facilities",
+  "description": "AI Native deep-sea intelligent vessel system with a unified digital twin cockpit and captain-agent orchestration",
   "main": "src/frontend/main.js",
   "scripts": {
     "dev": "vite",
@@ -11,9 +11,11 @@
     "lint": "eslint src/"
   },
   "keywords": [
+    "ai-native",
     "digital-twin",
     "marine",
     "vessel",
+    "agent-orchestration",
     "threejs",
     "webgl"
   ],

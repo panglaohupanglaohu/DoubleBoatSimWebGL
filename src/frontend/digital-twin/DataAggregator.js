@@ -9,6 +9,8 @@ export class DataAggregator {
   constructor(config = {}) {
     this.config = {
       dashboardUrl: '/api/v1/dashboard',
+      coordinationUrl: '/api/v1/ai-native/coordination/status',
+      missionBriefUrl: '/api/v1/ai-native/cps/mission-brief',
       worldmonitorAisUrl: '/api/v1/worldmonitor/ais',
       worldmonitorWeatherUrl: '/api/v1/worldmonitor/weather',
       refreshIntervalMs: 15000,
@@ -31,6 +33,18 @@ export class DataAggregator {
     return data;
   }
 
+  async getCoordinationStatus() {
+    const data = await this.fetchJson(this.config.coordinationUrl);
+    this.cache.set('ai-native:coordination', { ts: Date.now(), data });
+    return data;
+  }
+
+  async getMissionBrief() {
+    const data = await this.fetchJson(this.config.missionBriefUrl);
+    this.cache.set('ai-native:mission-brief', { ts: Date.now(), data });
+    return data;
+  }
+
   async getWorldMonitorAis() {
     const data = await this.fetchJson(this.config.worldmonitorAisUrl);
     this.cache.set('worldmonitor:ais', { ts: Date.now(), data });
@@ -45,7 +59,14 @@ export class DataAggregator {
   }
 
   async buildUnifiedView() {
-    const dashboard = await this.getLocalDashboard();
+    const [dashboardResult, coordinationResult, missionResult] = await Promise.allSettled([
+      this.getLocalDashboard(),
+      this.getCoordinationStatus(),
+      this.getMissionBrief(),
+    ]);
+    const dashboard = dashboardResult.status === 'fulfilled' ? dashboardResult.value : null;
+    const coordination = coordinationResult.status === 'fulfilled' ? coordinationResult.value : null;
+    const missionBrief = missionResult.status === 'fulfilled' ? missionResult.value : null;
     
     // Try to get real WorldMonitor data
     let wmAis = null;
@@ -74,6 +95,10 @@ export class DataAggregator {
       generatedAt: new Date().toISOString(),
       source: wmStatus === 'connected' ? 'real' : 'hybrid',
       local: dashboard,
+      aiNative: {
+        coordination,
+        missionBrief,
+      },
       worldmonitor: {
         ais: wmAis,
         weather: wmWeather,

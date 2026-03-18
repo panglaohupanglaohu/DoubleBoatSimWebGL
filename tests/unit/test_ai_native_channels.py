@@ -105,6 +105,47 @@ class TestDecisionOrchestratorChannel:
         assert record["action"] == "check engine"
         assert ch.get_status()["feedback_records_count"] >= 1
 
+    def test_coordinate_agents(self):
+        registry = bootstrap_all_channels()
+        ch = registry.get("decision_orchestrator")
+
+        class InMemorySink:
+            def __init__(self):
+                self.events = []
+
+            def save_event(self, event):
+                self.events.append(event)
+                return True
+
+            def save_batch(self, events):
+                self.events.extend(events)
+                return True
+
+        sink = InMemorySink()
+        summary = ch.coordinate_agents(event_sink=sink)
+        assert summary["captured_events"] >= 3
+        assert summary["coordination_runs"] >= 1
+        assert ch.get_status()["coordination_runs"] >= 1
+        assert any(event.get("event_type") == "decision_package_event" for event in sink.events)
+
+    def test_feedback_persists_into_sink(self):
+        registry = bootstrap_all_channels()
+        ch = registry.get("decision_orchestrator")
+
+        class InMemorySink:
+            def __init__(self):
+                self.events = []
+
+            def save_event(self, event):
+                self.events.append(event)
+                return True
+
+        sink = InMemorySink()
+        ch.set_event_sink(sink)
+        record = ch.record_feedback("hold course", "accepted", confirmed_by="captain")
+        assert record["action"] == "hold course"
+        assert any(event.get("event_type") == "decision_feedback_event" for event in sink.events)
+
 
 def test_registry_contains_ai_native_channels():
     registry = bootstrap_all_channels()

@@ -183,6 +183,9 @@ class SQLiteStore(EventStore):
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.db_path = config.get("db_path", "./storage/events.db")
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         self.logger = logging.getLogger(f"{self.__class__.__name__}")
         self.logger.info(f"SQLite Store initialized: {self.db_path}")
         self._init_db()

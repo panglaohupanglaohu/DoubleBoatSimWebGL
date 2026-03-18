@@ -13,8 +13,8 @@ from pathlib import Path
 import sys
 
 # 测试配置
-BASE_URL = "http://localhost:8081"
-WS_URL = "ws://localhost:8081/ws"
+BASE_URL = "http://localhost:8080"
+WS_URL = "ws://localhost:8080/ws"
 
 
 class TestBackendAPI:

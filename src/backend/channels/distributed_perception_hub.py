@@ -50,10 +50,15 @@ class DistributedPerceptionHubChannel(MarineChannel):
         self.config = config or {}
         self._config = self.config
         self.max_events = self.config.get("max_events", 500)
+        self.event_sink = self.config.get("event_sink")
         self.events: List[FusionEvent] = []
         self.fusion_rules = self._load_fusion_rules()
         self.risk_correlations = self._load_risk_correlations()
         self.logger = logging.getLogger(f"{self.__class__.__name__}.{self.name}")
+
+    def set_event_sink(self, event_sink: Any) -> None:
+        """设置事件持久化目标。"""
+        self.event_sink = event_sink
 
     def _load_fusion_rules(self) -> Dict[str, Any]:
         """加载多源感知融合规则"""
@@ -112,6 +117,11 @@ class DistributedPerceptionHubChannel(MarineChannel):
         self.events.append(event)
         if len(self.events) > self.max_events:
             self.events = self.events[-self.max_events:]
+        if self.event_sink:
+            try:
+                self.event_sink.save_event(event.to_dict())
+            except Exception as exc:
+                self.logger.warning(f"Failed to persist event {event.id}: {exc}")
         return event
 
     def fuse_ais_with_navigation(self, ais_payload: Dict[str, Any], nav_payload: Dict[str, Any]) -> Optional[FusionEvent]:
@@ -165,6 +175,11 @@ class DistributedPerceptionHubChannel(MarineChannel):
             self.events.append(fusion_event)
             if len(self.events) > self.max_events:
                 self.events = self.events[-self.max_events:]
+            if self.event_sink:
+                try:
+                    self.event_sink.save_event(fusion_event.to_dict())
+                except Exception as exc:
+                    self.logger.warning(f"Failed to persist fusion event {fusion_event.id}: {exc}")
             
             self.logger.debug(f"🔗 Fused AIS+NAV event, distance: {distance_nm}nm, confidence: {fusion_event.confidence}")
             return fusion_event
@@ -235,6 +250,11 @@ class DistributedPerceptionHubChannel(MarineChannel):
             self.events.append(fusion_event)
             if len(self.events) > self.max_events:
                 self.events = self.events[-self.max_events:]
+            if self.event_sink:
+                try:
+                    self.event_sink.save_event(fusion_event.to_dict())
+                except Exception as exc:
+                    self.logger.warning(f"Failed to persist fusion event {fusion_event.id}: {exc}")
             
             self.logger.debug(f"🔗 Fused Weather+Efficiency event, impact: {(1-efficiency_factor)*100:+.1f}%, confidence: {fusion_event.confidence}")
             return fusion_event
@@ -402,6 +422,11 @@ class DistributedPerceptionHubChannel(MarineChannel):
             self.events.append(fusion_event)
             if len(self.events) > self.max_events:
                 self.events = self.events[-self.max_events:]
+            if self.event_sink:
+                try:
+                    self.event_sink.save_event(fusion_event.to_dict())
+                except Exception as exc:
+                    self.logger.warning(f"Failed to persist fusion event {fusion_event.id}: {exc}")
             
             self.logger.debug(f"🔗 Fused NMEA2000+WorldMonitor AIS, delta: {position_delta_nm}nm, conf: {fusion_event.confidence}")
             return fusion_event
@@ -431,9 +456,9 @@ class DistributedPerceptionHubChannel(MarineChannel):
                 "engine_nav_fusion": True,
             },
             "cloud_sync": {
-                "enabled": False,
-                "mode": "placeholder",
-                "message": "已预留云同步接口，当前使用本地事件流。",
+                "enabled": self.event_sink is not None,
+                "mode": "active" if self.event_sink is not None else "placeholder",
+                "message": "感知事件已接入记忆层。" if self.event_sink is not None else "已预留云同步接口，当前使用本地事件流。",
             },
         }
 

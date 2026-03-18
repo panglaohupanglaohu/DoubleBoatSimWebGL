@@ -24,6 +24,14 @@ const state = {
     latestData: null,
     heatmapMaterials: [],
     semanticLabels: [],
+    externalSync: {
+        ownShip: null,
+        selectedTarget: null,
+        alarms: [],
+        weather: null,
+        source: null,
+        updatedAt: null,
+    },
 };
 
 // ==================== 初始化 ====================
@@ -370,8 +378,20 @@ function updateHeatmap(sensors) {
 // ==================== UI 更新 ====================
 
 function updateUI(data) {
+    const mergedOwnShip = state.externalSync.ownShip;
+
     // 更新导航数据
-    if (data.sensors) {
+    if (mergedOwnShip) {
+        const navLatEl = document.getElementById('nav-lat');
+        const navLonEl = document.getElementById('nav-lon');
+        const navCourseEl = document.getElementById('nav-course');
+        const navSpeedEl = document.getElementById('nav-speed');
+
+        if (navLatEl && mergedOwnShip.latitude != null) navLatEl.textContent = Number(mergedOwnShip.latitude).toFixed(4);
+        if (navLonEl && mergedOwnShip.longitude != null) navLonEl.textContent = Number(mergedOwnShip.longitude).toFixed(4);
+        if (navCourseEl && mergedOwnShip.course != null) navCourseEl.textContent = `${Number(mergedOwnShip.course).toFixed(1)}°`;
+        if (navSpeedEl && mergedOwnShip.speed != null) navSpeedEl.textContent = `${Number(mergedOwnShip.speed).toFixed(1)} kn`;
+    } else if (data.sensors) {
         const gps = data.sensors['GPS-001'];
         if (gps) {
             // 这里可以从传感器数据更新
@@ -394,8 +414,13 @@ function updateUI(data) {
     }
     
     // 更新报警列表
-    if (data.alarms && data.alarms.length > 0) {
-        updateAlarmPanel(data.alarms);
+    const mergedAlarms = [
+        ...(Array.isArray(data.alarms) ? data.alarms : []),
+        ...(Array.isArray(state.externalSync.alarms) ? state.externalSync.alarms : []),
+    ];
+
+    if (mergedAlarms.length > 0) {
+        updateAlarmPanel(mergedAlarms);
     }
     
     // 隐藏加载动画
@@ -426,6 +451,75 @@ function updateConnectionStatus(status) {
     if (dot && text) {
         dot.className = `status-dot ${status}`;
         text.textContent = status === 'connected' ? '已连接' : '已断开';
+    }
+}
+
+function normalizeExternalAlarm(alarm) {
+    return {
+        level: alarm.level || 'INFO',
+        message: alarm.message || '外部告警',
+        source: alarm.source || 'worldmonitor',
+        timestamp: alarm.timestamp || new Date().toISOString(),
+    };
+}
+
+function focusOnCoordinates(target = {}) {
+    if (!state.camera || !state.controls) return;
+
+    const latitude = Number(target.latitude ?? target.lat ?? 0);
+    const longitude = Number(target.longitude ?? target.lng ?? 0);
+    const heading = Number(target.course ?? target.heading ?? 0);
+
+    const relativeX = ((longitude % 1) - 0.5) * 20;
+    const relativeZ = ((latitude % 1) - 0.5) * 20;
+    const relativeY = 2 + Math.abs(Math.sin((heading * Math.PI) / 180)) * 4;
+
+    const targetPosition = new THREE.Vector3(relativeX, relativeY, relativeZ);
+    const cameraOffset = new THREE.Vector3(12, 8, 12);
+    const nextCameraPosition = targetPosition.clone().add(cameraOffset);
+    const startCameraPosition = state.camera.position.clone();
+    const startTarget = state.controls.target.clone();
+    const durationMs = 900;
+    const startTime = performance.now();
+
+    function animateFocus(now) {
+        const progress = Math.min((now - startTime) / durationMs, 1);
+        state.camera.position.lerpVectors(startCameraPosition, nextCameraPosition, progress);
+        state.controls.target.lerpVectors(startTarget, targetPosition, progress);
+
+        if (progress < 1) {
+            requestAnimationFrame(animateFocus);
+        }
+    }
+
+    requestAnimationFrame(animateFocus);
+}
+
+function applyExternalSync(payload = {}) {
+    state.externalSync = {
+        ownShip: payload.ownShip || state.externalSync.ownShip,
+        selectedTarget: payload.selectedTarget || state.externalSync.selectedTarget,
+        alarms: Array.isArray(payload.alarms) ? payload.alarms.map(normalizeExternalAlarm) : state.externalSync.alarms,
+        weather: payload.weather || state.externalSync.weather,
+        source: payload.source || state.externalSync.source || 'worldmonitor',
+        updatedAt: payload.updatedAt || new Date().toISOString(),
+    };
+
+    if (state.externalSync.selectedTarget) {
+        focusOnCoordinates(state.externalSync.selectedTarget);
+    }
+
+    updateUI(state.latestData || {});
+}
+
+function handleWindowMessage(event) {
+    if (event.origin !== window.location.origin) return;
+
+    const message = event.data;
+    if (!message || message.source !== 'worldmonitor-ar-cas-pro') return;
+
+    if (message.type === 'bridge_sync') {
+        applyExternalSync(message.payload || {});
     }
 }
 
@@ -519,8 +613,11 @@ export function searchAndFocus(query) {
 window.DigitalTwin = {
     init,
     searchAndFocus,
+    applyExternalSync,
+    focusOnCoordinates,
     getState: () => state,
 };
 
 // 自动初始化
 window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('message', handleWindowMessage);

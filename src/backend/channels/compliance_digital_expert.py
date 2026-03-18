@@ -17,6 +17,9 @@ from .marine_base import MarineChannel, ChannelPriority, ChannelStatus, get_defa
 logger = logging.getLogger(f"{__name__}.compliance_digital_expert")
 
 
+RISK_ORDER = {"low": 0, "medium": 1, "high": 2}
+
+
 class ComplianceDigitalExpertChannel(MarineChannel):
     name = "compliance_digital_expert"
     description = "船舶合规数字专家 (COLREGs/机舱/能效统一认知层)"
@@ -70,10 +73,14 @@ class ComplianceDigitalExpertChannel(MarineChannel):
         except Exception as exc:
             return {"available": False, "name": name, "error": str(exc)}
 
+    def _max_risk(self, current: str, candidate: str) -> str:
+        return candidate if RISK_ORDER.get(candidate, -1) > RISK_ORDER.get(current, -1) else current
+
     def build_cognitive_snapshot(self) -> Dict[str, Any]:
         nav = self._get_channel_status("intelligent_navigation")
         engine = self._get_channel_status("intelligent_engine")
         efficiency = self._get_channel_status("energy_efficiency")
+        perception = self._get_channel_status("distributed_perception_hub")
 
         risk_level = "low"
         evidence: List[str] = []
@@ -83,26 +90,68 @@ class ComplianceDigitalExpertChannel(MarineChannel):
         logger.debug("🧠 Building cognitive snapshot...")
 
         nav_report = {}
+        colregs_assessment: List[Dict[str, Any]] = []
         nav_channel = self._registry().get("intelligent_navigation")
         if nav_channel and hasattr(nav_channel, "generate_navigation_report"):
             nav_report = nav_channel.generate_navigation_report()
             overall = nav_report.get("overall_status")
             if overall in {"danger", "warning"}:
-                risk_level = "high" if overall == "danger" else "medium"
+                risk_level = self._max_risk(risk_level, "high" if overall == "danger" else "medium")
                 evidence.append(f"navigation:{overall}")
                 actions.append("依据 COLREGs 规则复核避碰动作与瞭望状态")
+            colregs_assessment = nav_report.get("colregs_assessments", [])
+            if colregs_assessment:
+                evidence.extend(
+                    [f"colregs:{item['encounter_type']}:{item['rule']}" for item in colregs_assessment[:3]]
+                )
+                actions.extend([item["recommended_action"] for item in colregs_assessment[:2]])
 
         engine_alerts = engine.get("alerts", []) if engine.get("available") else []
+        engine_findings: List[Dict[str, Any]] = []
+        engine_channel = self._registry().get("intelligent_engine")
+        if engine_channel and hasattr(engine_channel, "diagnose_faults"):
+            engine_findings = engine_channel.diagnose_faults()
         if engine_alerts:
-            risk_level = "high" if any(a.get("level") == "critical" for a in engine_alerts) else max(risk_level, "medium")
+            risk_level = self._max_risk(
+                risk_level,
+                "high" if any(a.get("level") == "critical" for a in engine_alerts) else "medium",
+            )
             evidence.extend([f"engine:{a.get('message','alert')}" for a in engine_alerts[:3]])
             actions.append("执行机舱点检并确认故障诊断结果")
             compliance_status = "attention_required"
+        if engine_findings:
+            evidence.extend([f"engine_fault:{item['fault_type']}" for item in engine_findings[:3]])
+            actions.extend([item["recommended_action"] for item in engine_findings[:2]])
 
         if efficiency.get("health") not in {None, "ok"}:
             evidence.append(f"efficiency:{efficiency.get('health_message', 'deviation detected')}")
             actions.append("检查 CII / EEXI / SEEMP 偏差并生成能效纠偏动作")
             compliance_status = "attention_required"
+
+        energy_channel = self._registry().get("energy_efficiency")
+        energy_recommendations: List[Dict[str, Any]] = []
+        if energy_channel and hasattr(energy_channel, "get_recommendations"):
+            try:
+                energy_recommendations = [
+                    {
+                        "title": rec.title,
+                        "priority": rec.priority,
+                        "expected_improvement": rec.expected_improvement,
+                    }
+                    for rec in energy_channel.get_recommendations()[:3]
+                ]
+            except Exception as exc:
+                logger.debug(f"Energy recommendation build skipped: {exc}")
+        if energy_recommendations:
+            evidence.extend([f"energy:{rec['title']}" for rec in energy_recommendations[:2]])
+            actions.extend([rec["title"] for rec in energy_recommendations[:2]])
+
+        recent_events = []
+        perception_channel = self._registry().get("distributed_perception_hub")
+        if perception_channel and hasattr(perception_channel, "get_latest_events"):
+            recent_events = perception_channel.get_latest_events(5)
+        if recent_events:
+            evidence.append(f"perception:recent_events:{len(recent_events)}")
 
         rules = [
             self.knowledge_rules["COLREGs"]["rule_7"],
@@ -113,17 +162,56 @@ class ComplianceDigitalExpertChannel(MarineChannel):
         if efficiency.get("available"):
             rules.append(self.knowledge_rules["EFFICIENCY"]["cii"])
 
+        dedup_actions = []
+        for item in actions or ["当前系统无高优先级异常，维持监控。"]:
+            if item not in dedup_actions:
+                dedup_actions.append(item)
+
         return {
             "timestamp": datetime.now().isoformat(),
             "risk_level": risk_level,
             "compliance_status": compliance_status,
             "evidence": evidence,
-            "recommended_actions": actions or ["当前系统无高优先级异常，维持监控。"],
+            "recommended_actions": dedup_actions or ["当前系统无高优先级异常，维持监控。"],
             "maintenance_report": self.generate_maintenance_report(),
             "rules": rules,
+            "expert_cognition": {
+                "perception": {
+                    "recent_events_count": len(recent_events),
+                    "fusion_health": perception.get("health", "unknown"),
+                },
+                "memory": {
+                    "feedback_ready": True,
+                    "retained_evidence": len(evidence),
+                },
+                "thinking": {
+                    "colregs_cases": len(colregs_assessment),
+                    "engine_findings": len(engine_findings),
+                    "energy_actions": len(energy_recommendations),
+                },
+                "learning": {
+                    "closed_loop_feedback": True,
+                    "next_focus": "risk_mitigation" if risk_level != "low" else "efficiency_optimization",
+                },
+            },
+            "engineering_parameters": {
+                "navigation": nav.get("risk_thresholds", {}),
+                "engine": {
+                    "health_score": engine.get("engine_health_score"),
+                    "trend": engine.get("trend"),
+                },
+                "energy": {
+                    "vessel": efficiency.get("vessel"),
+                    "recommendations": energy_recommendations,
+                },
+            },
             "navigation": nav_report or nav,
             "engine": engine,
             "efficiency": efficiency,
+            "perception": {
+                "status": perception,
+                "recent_events": recent_events,
+            },
         }
 
     def generate_maintenance_report(self) -> Dict[str, Any]:

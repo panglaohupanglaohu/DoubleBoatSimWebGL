@@ -23,6 +23,7 @@ import uvicorn
 
 from adapters.worldmonitor_adapter import WorldMonitorAdapter
 from adapters.worldmonitor_adapter_real import WorldMonitorRealAdapter
+from storage.data_lakehouse import create_lakehouse
 
 # 配置日志
 logging.basicConfig(
@@ -89,6 +90,13 @@ class Alarm(BaseModel):
     message: str
     timestamp: str
     acknowledged: bool = False
+
+
+class DecisionFeedbackRequest(BaseModel):
+    """决策反馈请求"""
+    action: str
+    outcome: str
+    confirmed_by: str = "operator"
 
 # ==================== 内存数据存储 ====================
 
@@ -316,11 +324,58 @@ except Exception as e:
     logger.error(f"Failed to initialize WorldMonitorRealAdapter: {e}")
     worldmonitor_real = None
 
+# AI Native 记忆层与协调状态
+data_lakehouse = create_lakehouse({
+    "buffer_max_size": 1,
+    "store_type": "sqlite",
+    "store_config": {
+        "db_path": str(Path(__file__).resolve().parents[2] / "storage" / "poseidon_events.db")
+    },
+    "cloud_type": "local",
+    "cloud_config": {
+        "storage_path": str(Path(__file__).resolve().parents[2] / "storage" / "cloud_sync")
+    },
+})
+coordination_status: Dict[str, Any] = {
+    "running": False,
+    "runs": 0,
+    "last_cycle": None,
+    "last_error": None,
+}
+coordination_task: Optional[asyncio.Task] = None
+
+
+async def ai_native_coordination_loop():
+    """周期性执行智能体协调循环。"""
+    global coordination_status
+
+    coordination_status["running"] = True
+    while True:
+        try:
+            from channels.marine_base import get_default_registry
+
+            registry = get_default_registry()
+            orchestrator = registry.get("decision_orchestrator")
+            if orchestrator and hasattr(orchestrator, "coordinate_agents"):
+                summary = orchestrator.coordinate_agents(event_sink=data_lakehouse)
+                coordination_status["runs"] = summary.get("coordination_runs", coordination_status["runs"])
+                coordination_status["last_cycle"] = summary
+                coordination_status["last_error"] = None
+            await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            coordination_status["running"] = False
+            raise
+        except Exception as exc:
+            coordination_status["last_error"] = str(exc)
+            logger.error(f"AI Native coordination loop failed: {exc}")
+            await asyncio.sleep(5)
+
 # ==================== API 路由 ====================
 
 @app.on_event("startup")
 async def startup_event():
     """启动事件"""
+    global coordination_task
     logger.info("🚀 Starting Poseidon Server...")
     sim_engine.start()
     asyncio.create_task(sim_engine.generate_sensor_data())
@@ -343,16 +398,35 @@ async def startup_event():
         register_compliance_digital_expert()
         register_distributed_perception_hub()
         register_decision_orchestrator()
+        from channels.marine_base import get_default_registry
+        registry = get_default_registry()
+        perception = registry.get("distributed_perception_hub")
+        if perception and hasattr(perception, "set_event_sink"):
+            perception.set_event_sink(data_lakehouse)
+        orchestrator = registry.get("decision_orchestrator")
+        if orchestrator and hasattr(orchestrator, "set_event_sink"):
+            orchestrator.set_event_sink(data_lakehouse)
         logger.info("✅ Marine Channels registered")
     except Exception as e:
         logger.warning(f"⚠️ Channel registration skipped: {e}")
+
+    coordination_task = asyncio.create_task(ai_native_coordination_loop())
+    logger.info("✅ AI Native coordination loop started")
     
     logger.info("✅ Poseidon Server started")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """关闭事件"""
+    global coordination_task
     sim_engine.stop()
+    if coordination_task:
+        coordination_task.cancel()
+        try:
+            await coordination_task
+        except asyncio.CancelledError:
+            pass
+    data_lakehouse.shutdown()
     logger.info("🛑 Poseidon Server stopped")
 
 @app.get("/")
@@ -598,6 +672,12 @@ async def get_dashboard():
     }
 
     return {
+        "captain_agent": {
+            "name": "decision_orchestrator",
+            "status": orchestrator.get_status() if orchestrator else {},
+            "last_decision_package": getattr(orchestrator, "latest_package", {}) if orchestrator else {},
+            "coordination": coordination_status,
+        },
         "navigation": {
             "own_ship": nav_status.get("own_ship", {}),
             "report": nav_report,
@@ -613,6 +693,10 @@ async def get_dashboard():
         "compliance": compliance.query_compliance_status("overall") if compliance and hasattr(compliance, "query_compliance_status") else {},
         "perception": perception.get_status() if perception else {},
         "decision": orchestrator.build_decision_package() if orchestrator and hasattr(orchestrator, "build_decision_package") else {},
+        "memory": {
+            **data_lakehouse.get_status(),
+            "recent_events": data_lakehouse.query_events(limit=5),
+        },
         "worldmonitor": {
             "mode": "connected" if worldmonitor_real else worldmonitor.mode,
             "enabled": worldmonitor_real is not None,
@@ -634,6 +718,102 @@ async def get_dashboard():
             }
             for c in (await get_channels())["channels"]
         ]
+    }
+
+
+@app.get("/api/v1/ai-native/coordination/status")
+async def get_ai_native_coordination_status():
+    """获取 AI Native 协调状态和记忆层状态。"""
+    return {
+        "coordination": coordination_status,
+        "memory": {
+            **data_lakehouse.get_status(),
+            "profile": data_lakehouse.get_memory_profile(limit=25),
+            "recent_events": data_lakehouse.query_events(limit=10),
+        },
+    }
+
+
+@app.get("/api/v1/ai-native/cps/mission-brief")
+async def get_cps_mission_brief():
+    """返回面向驾驶台和总师的 CPS 任务摘要。"""
+    from channels.marine_base import get_default_registry
+
+    registry = get_default_registry()
+    orchestrator = registry.get("decision_orchestrator")
+    if not orchestrator:
+        raise HTTPException(status_code=404, detail="Decision orchestrator not found")
+
+    package = orchestrator.build_decision_package()
+    return {
+        "generated_at": package.get("generated_at"),
+        "mission_brief": package.get("mission_brief"),
+        "action_plan": package.get("action_plan", []),
+        "autonomy_mode": package.get("autonomy_mode"),
+        "memory_profile": data_lakehouse.get_memory_profile(limit=30),
+    }
+
+
+@app.get("/api/v1/ai-native/memory/events")
+async def get_ai_native_memory_events(limit: int = 20, event_type: Optional[str] = None):
+    """查询 AI Native 记忆层事件。"""
+    events = data_lakehouse.query_events(event_type=event_type, limit=limit)
+    return {
+        "count": len(events),
+        "event_type": event_type,
+        "events": events,
+    }
+
+
+@app.get("/api/v1/ai-native/memory/replay")
+async def replay_ai_native_memory(
+    limit: int = 20,
+    event_types: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+):
+    """按事件类型与时间窗口回放 AI Native 记忆层。"""
+    selected_types = [item.strip() for item in (event_types or "").split(",") if item.strip()]
+
+    if start_time and end_time:
+        try:
+            events = data_lakehouse.query_events_by_time(
+                datetime.fromisoformat(start_time),
+                datetime.fromisoformat(end_time),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid datetime range: {exc}")
+    else:
+        events = data_lakehouse.query_events(limit=max(limit * 3, limit))
+
+    if selected_types:
+        events = [event for event in events if event.get("event_type") in selected_types]
+
+    events = events[:limit]
+    return {
+        "count": len(events),
+        "limit": limit,
+        "event_types": selected_types,
+        "events": events,
+    }
+
+
+@app.post("/api/v1/ai-native/decision/feedback/log")
+async def log_decision_feedback(payload: DecisionFeedbackRequest):
+    """记录决策反馈并回写到 AI Native 记忆层。"""
+    from channels.marine_base import get_default_registry
+
+    registry = get_default_registry()
+    orchestrator = registry.get("decision_orchestrator")
+    if not orchestrator:
+        raise HTTPException(status_code=404, detail="Decision orchestrator not found")
+
+    feedback = orchestrator.record_feedback(payload.action, payload.outcome, payload.confirmed_by)
+    return {
+        "channel": "decision_orchestrator",
+        "result": feedback,
+        "feedback_records_count": len(getattr(orchestrator, "feedback_records", [])),
+        "recent_feedback": data_lakehouse.query_events(event_type="decision_feedback_event", limit=10),
     }
 
 @app.websocket("/ws")
@@ -676,6 +856,8 @@ async def health_check():
         "sensors": len(sensor_cache),
         "ais_targets": len(ais_targets),
         "alarms": len(alarms),
+        "ai_native": coordination_status,
+        "memory": data_lakehouse.get_status(),
     }
 
 # ==================== API Extensions ====================

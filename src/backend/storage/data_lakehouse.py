@@ -101,6 +101,8 @@ class DataLakehouse:
     
     def query_events(self, event_type: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """查询事件"""
+        if self.event_buffer:
+            self._flush_buffer_to_local()
         if not self.local_store:
             logger.warning("Local store not initialized")
             return []
@@ -110,11 +112,31 @@ class DataLakehouse:
     def query_events_by_time(self, start_time: datetime, end_time: datetime, 
                             event_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """按时间范围查询事件"""
+        if self.event_buffer:
+            self._flush_buffer_to_local()
         if not self.local_store:
             logger.warning("Local store not initialized")
             return []
         
         return self.local_store.load_events_by_time(start_time, end_time, event_type)
+
+    def get_memory_profile(self, limit: int = 50) -> Dict[str, Any]:
+        """生成近期记忆概况，供协调层和驾驶台消费。"""
+        recent_events = self.query_events(limit=limit)
+        by_type: Dict[str, int] = {}
+        by_source: Dict[str, int] = {}
+        for event in recent_events:
+            event_type = event.get("event_type", "unknown")
+            source = event.get("source", "unknown")
+            by_type[event_type] = by_type.get(event_type, 0) + 1
+            by_source[source] = by_source.get(source, 0) + 1
+
+        return {
+            "recent_events_count": len(recent_events),
+            "latest_event_time": recent_events[0].get("timestamp") if recent_events else None,
+            "event_type_breakdown": by_type,
+            "source_breakdown": by_source,
+        }
     
     def _flush_buffer_to_local(self):
         """将缓冲区事件刷入本地存储"""
@@ -147,7 +169,8 @@ class DataLakehouse:
                 "available": self.cloud_adapter is not None
             },
             "buffer_size": len(self.event_buffer),
-            "buffer_max_size": self.buffer_max_size
+            "buffer_max_size": self.buffer_max_size,
+            "memory_profile": self.get_memory_profile(limit=20) if self.local_store is not None else {},
         }
         
         if self.local_store:

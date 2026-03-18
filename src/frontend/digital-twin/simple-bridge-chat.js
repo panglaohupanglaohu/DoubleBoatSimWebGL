@@ -66,6 +66,7 @@ export class SimpleBridgeChat {
         <span style="color: #4fc3f7; font-weight: bold; font-size: 14px;">Poseidon-X Bridge</span>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="/poseidon-config.html" target="_blank" style="padding: 4px 8px; border-radius: 999px; background: rgba(79,195,247,0.16); color: #b3e5fc; text-decoration: none; font-size: 11px;">LLM 配置</a>
         <span style="color: #888; font-size: 10px;">💡 拖动</span>
         <span style="color: ${this.config.apiKey ? '#81c784' : '#ffb74d'}; font-size: 11px;">
           ${this.config.apiKey ? '● AI Ready' : '○ 配置 API'}
@@ -143,7 +144,7 @@ export class SimpleBridgeChat {
     // 添加欢迎消息
     setTimeout(() => {
       if (!this.config.apiKey) {
-        this.addMessage('system', '⚠️ 请先访问 LLM 配置页面配置 API Key');
+        this.addMessage('system', '⚠️ 请先访问右上角的 LLM 配置页面配置 API Key');
       } else {
         this.addMessage('system', `✅ LLM 已配置 (${this.config.llmProvider || 'minimax'})。有什么可以帮您？`);
       }

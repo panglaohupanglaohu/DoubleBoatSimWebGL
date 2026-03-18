@@ -19,6 +19,30 @@ from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 import math
 
 
+COLREGS_GUIDANCE = {
+    "head_on": {
+        "rule": "Rule 14",
+        "summary": "两船对遇时，应各自向右转向并安全通过。",
+        "default_action": "立即向右转向，拉开 CPA，并广播避让意图。",
+    },
+    "crossing_starboard": {
+        "rule": "Rule 15/16",
+        "summary": "目标位于本船右舷前方，本船为让路船。",
+        "default_action": "优先减速或向右转向，避免抢越船首。",
+    },
+    "crossing_port": {
+        "rule": "Rule 17",
+        "summary": "目标位于本船左舷前方，本船通常为直航船。",
+        "default_action": "保持态势监视，必要时执行最后时刻避险动作。",
+    },
+    "overtaking": {
+        "rule": "Rule 13",
+        "summary": "追越船应始终让清被追越船。",
+        "default_action": "避免贴近追越，预留横向安全间距并明确改向。",
+    },
+}
+
+
 @dataclass
 class AISTarget:
     """AIS 目标数据."""
@@ -114,6 +138,7 @@ class IntelligentNavigationChannel(MarineChannel):
     
     def get_status(self) -> Dict[str, Any]:
         """获取 Channel 状态."""
+        report = self.generate_navigation_report() if self._initialized else None
         return {
             "name": self.name,
             "version": self.version,
@@ -125,7 +150,10 @@ class IntelligentNavigationChannel(MarineChannel):
             "risk_thresholds": {
                 "dcpa_limit": self.dcpa_limit,
                 "tcpa_limit": self.tcpa_limit
-            }
+            },
+            "active_risks": len(report["collision_risks"]) if report else 0,
+            "highest_risk": report["risk_index"]["highest_risk"] if report else "safe",
+            "colregs_cases": len(report["colregs_assessments"]) if report else 0,
         }
     
     def shutdown(self) -> bool:
@@ -258,6 +286,54 @@ class IntelligentNavigationChannel(MarineChannel):
             return "caution"
         
         return "safe"
+
+    def classify_colregs_encounter(self, target: AISTarget, risk: Optional[CollisionRisk] = None) -> Dict[str, Any]:
+        """基于目标相对方位和运动趋势给出简化 COLREGs 遭遇分类。"""
+        risk = risk or self.calculate_cpa_tcpa(target)
+        bearing = risk.bearing
+        relative_heading = abs((self.own_ship["course"] - target.course + 180) % 360 - 180)
+        speed_delta = max(0.0, self.own_ship["speed"] - target.speed)
+
+        if (bearing <= 15 or bearing >= 345) and relative_heading >= 150:
+            encounter = "head_on"
+            role = "both_give_way"
+        elif 112.5 <= bearing <= 247.5 and speed_delta > 1.5:
+            encounter = "overtaking"
+            role = "give_way"
+        elif 0 < bearing < 112.5:
+            encounter = "crossing_starboard"
+            role = "give_way"
+        else:
+            encounter = "crossing_port"
+            role = "stand_on"
+
+        guidance = COLREGS_GUIDANCE[encounter]
+        urgency = "immediate" if risk.risk_level in {"danger", "warning"} else "monitor"
+        return {
+            "target_mmsi": target.mmsi,
+            "encounter_type": encounter,
+            "role": role,
+            "rule": guidance["rule"],
+            "summary": guidance["summary"],
+            "recommended_action": guidance["default_action"],
+            "urgency": urgency,
+            "bearing": round(bearing, 1),
+            "range_nm": round(risk.range, 3),
+            "risk_level": risk.risk_level,
+        }
+
+    def generate_colregs_assessment(self) -> List[Dict[str, Any]]:
+        """生成面向控制层的 COLREGs 规则评估列表。"""
+        assessments: List[Dict[str, Any]] = []
+        for target in self.ais_targets:
+            risk = self.calculate_cpa_tcpa(target)
+            if risk.risk_level == "safe":
+                continue
+            assessments.append(self.classify_colregs_encounter(target, risk))
+
+        risk_rank = {"danger": 0, "warning": 1, "caution": 2, "safe": 3}
+        assessments.sort(key=lambda item: (risk_rank.get(item["risk_level"], 4), item["range_nm"]))
+        return assessments
     
     def get_collision_risks(self) -> List[CollisionRisk]:
         """获取所有 AIS 目标的碰撞风险."""
@@ -283,6 +359,15 @@ class IntelligentNavigationChannel(MarineChannel):
         """
         if risk.risk_level == "safe":
             return "无碰撞风险，保持当前航向航速"
+
+        target = next((item for item in self.ais_targets if item.mmsi == risk.target_mmsi), None)
+        if target is not None:
+            assessment = self.classify_colregs_encounter(target, risk)
+            return (
+                f"{assessment['summary']} 当前风险等级 {risk.risk_level}，"
+                f"CPA {risk.cpa:.2f} 海里，TCPA {risk.tcpa:.1f} 分钟。"
+                f"建议：{assessment['recommended_action']}"
+            )
         
         advice = []
         
@@ -313,17 +398,29 @@ class IntelligentNavigationChannel(MarineChannel):
     def generate_navigation_report(self) -> Dict[str, Any]:
         """生成航行安全报告."""
         risks = self.get_collision_risks()
+        colregs = self.generate_colregs_assessment()
+        highest_risk = risks[0].risk_level if risks else "safe"
         
         report = {
             "timestamp": datetime.now().isoformat(),
             "own_ship": self.own_ship,
             "ais_targets_total": len(self.ais_targets),
             "collision_risks": [r.to_dict() for r in risks],
+            "colregs_assessments": colregs,
+            "recommended_manoeuvres": [item["recommended_action"] for item in colregs[:3]],
             "risk_summary": {
                 "danger": sum(1 for r in risks if r.risk_level == "danger"),
                 "warning": sum(1 for r in risks if r.risk_level == "warning"),
                 "caution": sum(1 for r in risks if r.risk_level == "caution"),
                 "safe": len(self.ais_targets) - len(risks)
+            },
+            "risk_index": {
+                "value": min(
+                    100,
+                    len(risks) * 20
+                    + (35 if highest_risk == "danger" else 20 if highest_risk == "warning" else 8 if highest_risk == "caution" else 0),
+                ),
+                "highest_risk": highest_risk,
             },
             "overall_status": "danger" if any(r.risk_level == "danger" for r in risks)
                            else "warning" if any(r.risk_level == "warning" for r in risks)

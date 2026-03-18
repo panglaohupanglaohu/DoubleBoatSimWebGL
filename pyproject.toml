@@ -1,7 +1,7 @@
 [project]
 name = "double-boat-claw-system"
 version = "1.0.0"
-description = "Digital Twin System for Deep-Sea Scientific Facilities"
+description = "AI Native deep-sea intelligent vessel system with unified agent orchestration and digital twin operations"
 requires-python = ">=3.10"
 
 [build-system]
