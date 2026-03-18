@@ -4,14 +4,11 @@
 Storage Module Unit Tests
 """
 
-import sys
 import os
 import tempfile
 import shutil
 
-sys.path.insert(0, 'src')
-
-from backend.storage.event_store import JSONLStore, SQLiteStore, get_store
+from backend.storage.event_store import JSONLStore, SQLiteStore
 
 def test_jsonl_store():
     """测试 JSONLStore"""
@@ -60,8 +57,6 @@ def test_jsonl_store():
         assert len(nav_events) == 0, "Navigation events should be empty"
         
         print("✅ JSONLStore tests passed")
-        return True
-        
     finally:
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -112,8 +107,6 @@ def test_sqlite_store():
         assert len(all_events) == 0, "Events should be empty"
         
         print("✅ SQLiteStore tests passed")
-        return True
-        
     finally:
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)

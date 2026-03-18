@@ -4,12 +4,7 @@
 P0 Module Unit Tests - AI Native 16小时优化计划
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
-
-from backend.channels.marine_base import get_default_registry, create_registry, _default_registry
+from backend.channels.marine_base import get_default_registry, create_registry
 from backend.channels.energy_efficiency_manager import EnergyEfficiencyChannel
 from backend.channels.intelligent_navigation import IntelligentNavigationChannel
 from backend.channels.intelligent_engine import IntelligentEngineChannel
@@ -46,7 +41,6 @@ def test_compliance_digital_expert():
     print("✅ ComplianceDigitalExpertChannel tests passed")
     print(f"   Risk level: {snapshot.get('risk_level')}")
     print(f"   Evidence count: {len(snapshot.get('evidence', []))}")
-    return True
 
 def test_distributed_perception_hub():
     """测试 DistributedPerceptionHubChannel"""
@@ -86,7 +80,6 @@ def test_distributed_perception_hub():
     print("✅ DistributedPerceptionHubChannel tests passed")
     print(f"   Total events in hub: {len(channel.events)}")
     print(f"   Fusion events: {len([e for e in channel.events if 'fusion' in e.event_type])}")
-    return True
 
 def test_decision_orchestrator():
     """测试 DecisionOrchestratorChannel"""
@@ -116,11 +109,10 @@ def test_decision_orchestrator():
     print("✅ DecisionOrchestratorChannel tests passed")
     print(f"   Risk level: {package.get('risk_level')}")
     print(f"   Feedback records: {len(package.get('feedback_records', []))}")
-    return True
 
 def test_full_pipeline():
     """测试完整AI Native管道"""
-    registry = create_registry()  # Use fresh registry to avoid duplicates
+    registry = get_default_registry()
     
     # Register all channels
     registry.register(EnergyEfficiencyChannel())
@@ -155,7 +147,6 @@ def test_full_pipeline():
     print("✅ Full pipeline test passed")
     print(f"   Last risk level: {snapshot.get('risk_level')}")
     print(f"   Last compliance status: {snapshot.get('compliance_status')}")
-    return True
 
 if __name__ == "__main__":
     print("=== AI Native P0 Module Unit Tests ===\n")

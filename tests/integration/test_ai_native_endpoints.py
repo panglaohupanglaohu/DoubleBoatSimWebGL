@@ -72,5 +72,5 @@ def test_ai_native_endpoints():
     assert pipeline_status["pipeline_health"] == "operational"
 
 if __name__ == "__main__":
-    success = test_ai_native_endpoints()
+    test_ai_native_endpoints()
     print("\n✅ AI Native Integration Validation Passed!")

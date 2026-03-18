@@ -4,14 +4,11 @@
 Data Lakehouse Module Unit Tests
 """
 
-import sys
 import os
 import tempfile
 import shutil
 
-sys.path.insert(0, 'src')
-
-from backend.storage.data_lakehouse import DataLakehouse, create_lakehouse
+from backend.storage.data_lakehouse import create_lakehouse
 
 def test_data_lakehouse():
     """测试 DataLakehouse"""
@@ -75,8 +72,6 @@ def test_data_lakehouse():
         print(f"   Navigation events: {len(nav_events)}")
         print(f"   Event types: {set(e.get('event_type') for e in events)}")
         
-        return True
-        
     finally:
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -97,9 +92,6 @@ def test_lakehouse_status():
     print(f"   Cloud adapter: {status['cloud_adapter']['type']}")
     print(f"   Buffer size: {status['buffer_size']}")
     
-    return True
-
-
 if __name__ == "__main__":
     print("=== Data Lakehouse Module Unit Tests ===\n")
     

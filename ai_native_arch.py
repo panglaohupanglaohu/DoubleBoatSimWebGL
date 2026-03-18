@@ -105,7 +105,7 @@ def show_test_results():
     
     import subprocess
     result = subprocess.run(
-        ["python", "test_p0_modules.py"],
+        ["python", "tests/unit/test_p0_modules.py"],
         capture_output=True,
         text=True,
         cwd=os.path.dirname(os.path.abspath(__file__))
@@ -117,7 +117,7 @@ def show_test_results():
             print(f"  {line}")
     
     result2 = subprocess.run(
-        ["python", "test_data_lakehouse.py"],
+        ["python", "tests/unit/test_data_lakehouse.py"],
         capture_output=True,
         text=True,
         cwd=os.path.dirname(os.path.abspath(__file__))
