@@ -22,6 +22,8 @@ from channels.intelligent_engine import IntelligentEngineChannel
 from channels.compliance_digital_expert import ComplianceDigitalExpertChannel
 from channels.distributed_perception_hub import DistributedPerceptionHubChannel
 from channels.decision_orchestrator import DecisionOrchestratorChannel
+from channels.rcs_control import RCSControlChannel
+from channels.structural_health_monitor import StructuralHealthMonitorChannel
 from datetime import datetime
 
 
@@ -151,6 +153,30 @@ def register_decision_orchestrator():
     return channel
 
 
+def register_rcs_control():
+    """注册 RCS 姿态控制 Channel."""
+    channel = RCSControlChannel()
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
+
+
+def register_structural_health_monitor():
+    """注册 SHM Channel."""
+    channel = StructuralHealthMonitorChannel()
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
+
+
 def list_registered_channels():
     """列出所有已注册的 Channel."""
     registry = get_default_registry()
@@ -172,5 +198,7 @@ if __name__ == "__main__":
     register_compliance_digital_expert()
     register_distributed_perception_hub()
     register_decision_orchestrator()
+    register_rcs_control()
+    register_structural_health_monitor()
     list_registered_channels()
     print("\n✅ Channel 注册完成")

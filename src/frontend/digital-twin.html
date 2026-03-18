@@ -774,6 +774,46 @@
             </div>
         </div>
 
+        <div class="data-card">
+            <h3>⚖️ RCS 控制</h3>
+            <div class="data-row">
+                <span class="data-label">T-Foil</span>
+                <span class="data-value" id="rcs-foil-angle">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Trim Tabs</span>
+                <span class="data-value" id="rcs-trim-tab">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">Roll Cmd</span>
+                <span class="data-value" id="rcs-roll-rate">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">MSDV 目标</span>
+                <span class="data-value" id="rcs-comfort-target">--</span>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h3>🏗️ SHM</h3>
+            <div class="data-row">
+                <span class="data-label">纵弯矩</span>
+                <span class="data-value" id="shm-bending">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">扭转载荷</span>
+                <span class="data-value" id="shm-torsion">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">疲劳损伤</span>
+                <span class="data-value" id="shm-fatigue">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">寿命余度</span>
+                <span class="data-value" id="shm-life">--</span>
+            </div>
+        </div>
+
         <!-- AI Native 认知摘要 -->
         <div class="data-card">
             <h3>🧠 AI Native 认知摘要</h3>
@@ -800,6 +840,18 @@
             <div class="data-row">
                 <span class="data-label">记忆层</span>
                 <span class="data-value" id="ai-memory-store">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">融合轨迹</span>
+                <span class="data-value" id="ai-fusion-count">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">任务图节点</span>
+                <span class="data-value" id="ai-task-nodes">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">海事情景</span>
+                <span class="data-value" id="ai-scene-type">--</span>
             </div>
             <div class="data-row">
                 <span class="data-label">认知摘要</span>
@@ -917,6 +969,15 @@
                 <div class="cockpit-list" id="captain-maintenance-list"></div>
             </div>
             <div class="cockpit-card full-width">
+                <h3>Task Graph & Fusion Tracks</h3>
+                <div class="cockpit-list" id="captain-task-graph-list"></div>
+                <div class="cockpit-list" id="captain-fusion-list"></div>
+            </div>
+            <div class="cockpit-card full-width">
+                <h3>OpenBridge Control Strip</h3>
+                <div class="cockpit-list" id="openbridge-control-list"></div>
+            </div>
+            <div class="cockpit-card full-width">
                 <h3>Recent Memory Replay</h3>
                 <div class="memory-stream" id="captain-memory-stream">
                     <div class="memory-event"><strong>等待记忆回放</strong><p>正在加载 AI Native 事件流...</p></div>
@@ -969,6 +1030,7 @@
             worldmonitorWeatherUrl: '/api/v1/worldmonitor/weather',
             refreshIntervalMs: 15000
           });
+                    window.aiNativeAggregator = dataAggregator;
           
           // Initialize NavigationMonitor
           navMonitor = new NavigationMonitor('worldmonitor-card', {
@@ -1006,6 +1068,30 @@
           
           // 3. Get ports info (placeholder)
           updatePortsList();
+
+                    const unifiedView = await dataAggregator.buildUnifiedView();
+                    const localDashboard = unifiedView?.local || {};
+                    const missionBrief = unifiedView?.aiNative?.missionBrief || {};
+                    const fusionState = unifiedView?.aiNative?.fusionState?.fusion || {};
+                    const aisTargets = aisData?.targets || [];
+                    const selectedTarget = aisTargets.find((target) => target.risk_level === 'medium' || target.risk_level === 'high') || aisTargets[0] || null;
+                    if (window.DigitalTwin?.applyExternalSync) {
+                        window.DigitalTwin.applyExternalSync({
+                            ownShip: localDashboard.navigation?.own_ship || null,
+                            selectedTarget,
+                            alarms: (localDashboard.engine?.alerts || []).map((alert) => ({
+                                level: alert.level || 'warning',
+                                message: alert.message || 'Engine alert',
+                                source: 'engine',
+                                timestamp: new Date().toISOString(),
+                            })),
+                            weather: weatherData?.weather || null,
+                            fusionTracks: fusionState.active_tracks || [],
+                            taskGraph: missionBrief.task_graph || null,
+                            source: 'ai-native-unified-view',
+                            updatedAt: unifiedView.generatedAt,
+                        });
+                    }
           
         } catch (error) {
           console.error('❌ Failed to refresh WorldMonitor data:', error);
@@ -1213,9 +1299,19 @@
                 document.getElementById('engine-advice').textContent = (engine.maintenance_advice || ['--'])[0];
 
                 const eff = data.efficiency || {};
+                const rcs = data.rcs || {};
+                const shm = data.shm || {};
                 document.getElementById('eff-health').textContent = (eff.health || '--').toUpperCase();
                 document.getElementById('eff-vessel').textContent = eff.vessel?.name || '--';
                 document.getElementById('eff-rec-count').textContent = eff.recommendations_count ?? '--';
+                document.getElementById('rcs-foil-angle').textContent = rcs.foil_angle_deg != null ? `${rcs.foil_angle_deg}°` : '--';
+                document.getElementById('rcs-trim-tab').textContent = rcs.trim_tab_angle_deg != null ? `${rcs.trim_tab_angle_deg}°` : '--';
+                document.getElementById('rcs-roll-rate').textContent = rcs.roll_rate_cmd != null ? `${rcs.roll_rate_cmd}°/s` : '--';
+                document.getElementById('rcs-comfort-target').textContent = rcs.comfort_target_msdv != null ? rcs.comfort_target_msdv : '--';
+                document.getElementById('shm-bending').textContent = shm.longitudinal_bending_moment_kNm != null ? `${shm.longitudinal_bending_moment_kNm} kNm` : '--';
+                document.getElementById('shm-torsion').textContent = shm.torsion_kNm != null ? `${shm.torsion_kNm} kNm` : '--';
+                document.getElementById('shm-fatigue').textContent = shm.fatigue_damage_index != null ? shm.fatigue_damage_index : '--';
+                document.getElementById('shm-life').textContent = shm.life_remaining_pct != null ? `${shm.life_remaining_pct}%` : '--';
 
                 const compliance = data.compliance || {};
                 const perception = data.perception || {};
@@ -1231,6 +1327,9 @@
                 aiComplianceEl.textContent = complianceValue;
                 document.getElementById('ai-event-count').textContent = perception.event_count ?? '--';
                 document.getElementById('ai-action-count').textContent = Array.isArray(decision.recommended_actions) ? decision.recommended_actions.length : '--';
+                document.getElementById('ai-fusion-count').textContent = perception.fusion_state?.active_tracks?.length ?? '--';
+                document.getElementById('ai-task-nodes').textContent = decision.task_graph?.nodes?.length ?? '--';
+                document.getElementById('ai-scene-type').textContent = (data.navigation?.report?.scene_context?.scene_type || '--').toUpperCase();
                 const lastCycle = captain.coordination?.last_cycle || {};
                 const memoryStoreType = memory.local_store?.type || '--';
                 document.getElementById('ai-captain-cycle').textContent = lastCycle.timestamp ? `RUN ${lastCycle.coordination_runs || 0}` : 'IDLE';
@@ -1319,6 +1418,11 @@
             const lastCycle = coordination.last_cycle || {};
             const maintenanceActions = decision.maintenance_report?.actions || [];
             const recommendedActions = decision.recommended_actions || [];
+            const taskGraph = decision.task_graph || {};
+            const fusionTracks = perception.fusion_state?.active_tracks || [];
+            const sceneContext = data.navigation?.report?.scene_context || {};
+            const rcs = data.rcs || {};
+            const shm = data.shm || {};
 
             document.getElementById('captain-loop-state').textContent = coordination.running ? 'RUN' : 'IDLE';
             document.getElementById('captain-runs').textContent = coordination.runs ?? '--';
@@ -1346,6 +1450,34 @@
                     </div>
                 `).join('')
                 : '<div class="cockpit-list-item"><span>暂无新增运维动作。</span><span>STANDBY</span></div>';
+
+            const taskGraphList = document.getElementById('captain-task-graph-list');
+            taskGraphList.innerHTML = Array.isArray(taskGraph.execution_order) && taskGraph.execution_order.length
+                ? taskGraph.execution_order.slice(0, 6).map((taskId, index) => `
+                    <div class="cockpit-list-item">
+                        <span>${escapeHtml(taskId)}</span>
+                        <span>T${index + 1}</span>
+                    </div>
+                `).join('')
+                : `<div class="cockpit-list-item"><span>场景 ${escapeHtml(sceneContext.scene_type || 'open_sea')}，任务图等待同步。</span><span>GRAPH</span></div>`;
+
+            const fusionList = document.getElementById('captain-fusion-list');
+            fusionList.innerHTML = fusionTracks.length
+                ? fusionTracks.slice(0, 4).map((track, index) => `
+                    <div class="cockpit-list-item">
+                        <span>${escapeHtml(track.track_id)} @ ${escapeHtml(track.position?.latitude)}, ${escapeHtml(track.position?.longitude)}</span>
+                        <span>${Math.round((track.confidence || 0) * 100)}%</span>
+                    </div>
+                `).join('')
+                : '<div class="cockpit-list-item"><span>暂无融合轨迹。</span><span>FUSION</span></div>';
+
+            const openBridgeList = document.getElementById('openbridge-control-list');
+            openBridgeList.innerHTML = [
+                `<div class="cockpit-list-item"><span>Task Graph Nodes</span><span>${escapeHtml(taskGraph.nodes?.length ?? '--')}</span></div>`,
+                `<div class="cockpit-list-item"><span>Scene Context</span><span>${escapeHtml(sceneContext.scene_type || 'open_sea')}</span></div>`,
+                `<div class="cockpit-list-item"><span>RCS Foil / Trim</span><span>${escapeHtml(rcs.foil_angle_deg ?? '--')}° / ${escapeHtml(rcs.trim_tab_angle_deg ?? '--')}°</span></div>`,
+                `<div class="cockpit-list-item"><span>SHM Fatigue / Life</span><span>${escapeHtml(shm.fatigue_damage_index ?? '--')} / ${escapeHtml(shm.life_remaining_pct ?? '--')}%</span></div>`,
+            ].join('');
         }
 
         function renderReplayEvents(events) {

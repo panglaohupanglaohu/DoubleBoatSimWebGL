@@ -18,6 +18,7 @@ logger = logging.getLogger(f"{__name__}.compliance_digital_expert")
 
 
 RISK_ORDER = {"low": 0, "medium": 1, "high": 2}
+POSITIVE_OUTCOMES = {"success", "positive_outcome", "confirmed", "effective", "resolved"}
 
 
 class ComplianceDigitalExpertChannel(MarineChannel):
@@ -75,6 +76,36 @@ class ComplianceDigitalExpertChannel(MarineChannel):
 
     def _max_risk(self, current: str, candidate: str) -> str:
         return candidate if RISK_ORDER.get(candidate, -1) > RISK_ORDER.get(current, -1) else current
+
+    def _build_learning_state(
+        self,
+        evidence: List[str],
+        colregs_assessment: List[Dict[str, Any]],
+        engine_findings: List[Dict[str, Any]],
+        energy_recommendations: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        orchestrator = self._registry().get("decision_orchestrator")
+        feedback_records = getattr(orchestrator, "feedback_records", []) if orchestrator else []
+        recent_feedback = feedback_records[-10:]
+        positive_feedback = sum(1 for item in recent_feedback if item.get("outcome") in POSITIVE_OUTCOMES)
+        total_feedback = len(recent_feedback)
+        positive_ratio = round(positive_feedback / total_feedback, 2) if total_feedback else 0.0
+
+        rule_confidence = {
+            "COLREGs": round(min(0.99, 0.58 + 0.05 * len(colregs_assessment) + 0.12 * positive_ratio), 2),
+            "ENGINE": round(min(0.99, 0.56 + 0.04 * len(engine_findings) + 0.10 * positive_ratio), 2),
+            "EFFICIENCY": round(min(0.99, 0.54 + 0.03 * len(energy_recommendations) + 0.08 * positive_ratio), 2),
+        }
+
+        return {
+            "learning_mode": "feedback_adaptive" if total_feedback else "cold_start",
+            "feedback_events": len(feedback_records),
+            "recent_feedback_window": total_feedback,
+            "positive_feedback_ratio": positive_ratio,
+            "retained_evidence": len(evidence),
+            "rule_confidence": rule_confidence,
+            "last_feedback": recent_feedback[-1] if recent_feedback else None,
+        }
 
     def build_cognitive_snapshot(self) -> Dict[str, Any]:
         nav = self._get_channel_status("intelligent_navigation")
@@ -153,6 +184,13 @@ class ComplianceDigitalExpertChannel(MarineChannel):
         if recent_events:
             evidence.append(f"perception:recent_events:{len(recent_events)}")
 
+        learning_state = self._build_learning_state(
+            evidence,
+            colregs_assessment,
+            engine_findings,
+            energy_recommendations,
+        )
+
         rules = [
             self.knowledge_rules["COLREGs"]["rule_7"],
             self.knowledge_rules["COLREGs"]["rule_8"],
@@ -190,10 +228,13 @@ class ComplianceDigitalExpertChannel(MarineChannel):
                     "energy_actions": len(energy_recommendations),
                 },
                 "learning": {
-                    "closed_loop_feedback": True,
+                    "closed_loop_feedback": learning_state["feedback_events"] > 0,
+                    "feedback_events": learning_state["feedback_events"],
+                    "positive_feedback_ratio": learning_state["positive_feedback_ratio"],
                     "next_focus": "risk_mitigation" if risk_level != "low" else "efficiency_optimization",
                 },
             },
+            "learning_state": learning_state,
             "engineering_parameters": {
                 "navigation": nav.get("risk_thresholds", {}),
                 "engine": {

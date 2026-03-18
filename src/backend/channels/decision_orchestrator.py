@@ -121,6 +121,64 @@ class DecisionOrchestratorChannel(MarineChannel):
         action_plan.sort(key=lambda item: PRIORITY_RANK.get(item["priority"], 9))
         return action_plan
 
+    def _build_task_graph(
+        self,
+        action_plan: List[Dict[str, Any]],
+        autonomy_mode: str,
+        snapshot: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        generated_at = datetime.now().isoformat()
+        nodes: List[Dict[str, Any]] = [
+            {
+                "id": "mission",
+                "type": "mission",
+                "label": "CPS mission brief",
+                "status": snapshot.get("compliance_status", "unknown"),
+                "priority": snapshot.get("risk_level", "unknown"),
+            }
+        ]
+        edges: List[Dict[str, str]] = []
+        execution_order: List[str] = []
+
+        seen_domains = set()
+        for item in action_plan:
+            domain_id = f"domain:{item['domain']}"
+            if domain_id not in seen_domains:
+                nodes.append(
+                    {
+                        "id": domain_id,
+                        "type": "domain",
+                        "label": item["domain"],
+                        "status": "ready",
+                        "priority": item["priority"],
+                    }
+                )
+                edges.append({"from": "mission", "to": domain_id, "relation": "dispatches"})
+                seen_domains.add(domain_id)
+
+            task_id = f"task:{item['id']}"
+            nodes.append(
+                {
+                    "id": task_id,
+                    "type": "task",
+                    "label": item["title"],
+                    "status": "ready",
+                    "priority": item["priority"],
+                    "execute_before": item.get("execute_before", generated_at),
+                }
+            )
+            edges.append({"from": domain_id, "to": task_id, "relation": "contains"})
+            execution_order.append(task_id)
+
+        return {
+            "generated_at": generated_at,
+            "autonomy_mode": autonomy_mode,
+            "nodes": nodes,
+            "edges": edges,
+            "execution_order": execution_order,
+            "feedback_channel": "decision_feedback_event",
+        }
+
     def shutdown(self) -> bool:
         self._initialized = False
         self._set_health(ChannelStatus.OFF, "Shutdown")
@@ -140,6 +198,7 @@ class DecisionOrchestratorChannel(MarineChannel):
         engine_status = engine.get_status() if engine else {}
         action_plan = self._build_action_plan(snapshot, nav_report, engine_status)
         autonomy_mode = "supervised_autonomy" if snapshot.get("risk_level") in {"medium", "high"} else "advisory"
+        task_graph = self._build_task_graph(action_plan, autonomy_mode, snapshot)
         package = {
             "generated_at": datetime.now().isoformat(),
             "risk_level": snapshot.get("risk_level", "unknown"),
@@ -148,6 +207,7 @@ class DecisionOrchestratorChannel(MarineChannel):
             "autonomy_mode": autonomy_mode,
             "recommended_actions": snapshot.get("recommended_actions", []),
             "action_plan": action_plan,
+            "task_graph": task_graph,
             "mission_brief": {
                 "operational_picture": {
                     "overall_status": nav_report.get("overall_status", "unknown"),
@@ -261,6 +321,7 @@ class DecisionOrchestratorChannel(MarineChannel):
             "compliance_status": package["compliance_status"],
             "recommended_actions_count": len(package["recommended_actions"]),
             "action_plan_count": len(package.get("action_plan", [])),
+            "task_graph_nodes": len(package.get("task_graph", {}).get("nodes", [])),
             "feedback_records_count": len(self.feedback_records),
             "coordination_runs": self.coordination_runs,
             "last_coordination_at": self.last_coordination_at,

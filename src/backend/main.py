@@ -23,6 +23,7 @@ import uvicorn
 
 from adapters.worldmonitor_adapter import WorldMonitorAdapter
 from adapters.worldmonitor_adapter_real import WorldMonitorRealAdapter
+from channels.openbridge_command_router import build_openbridge_command_result
 from storage.data_lakehouse import create_lakehouse
 
 # 配置日志
@@ -97,6 +98,12 @@ class DecisionFeedbackRequest(BaseModel):
     action: str
     outcome: str
     confirmed_by: str = "operator"
+
+
+class OpenBridgeCommandRequest(BaseModel):
+    """OpenBridge 驾驶台命令请求"""
+    command: str
+    source: str = "bridge_chat"
 
 # ==================== 内存数据存储 ====================
 
@@ -391,6 +398,8 @@ async def startup_event():
             register_compliance_digital_expert,
             register_distributed_perception_hub,
             register_decision_orchestrator,
+            register_rcs_control,
+            register_structural_health_monitor,
         )
         register_energy_efficiency_channel()
         register_intelligent_navigation()
@@ -398,6 +407,8 @@ async def startup_event():
         register_compliance_digital_expert()
         register_distributed_perception_hub()
         register_decision_orchestrator()
+        register_rcs_control()
+        register_structural_health_monitor()
         from channels.marine_base import get_default_registry
         registry = get_default_registry()
         perception = registry.get("distributed_perception_hub")
@@ -658,6 +669,8 @@ async def get_dashboard():
     compliance = registry.get("compliance_digital_expert")
     perception = registry.get("distributed_perception_hub")
     orchestrator = registry.get("decision_orchestrator")
+    rcs = registry.get("rcs_control")
+    shm = registry.get("structural_health_monitor")
 
     nav_status = nav.get_status() if nav else {}
     nav_report = nav.generate_navigation_report() if nav and hasattr(nav, "generate_navigation_report") else {}
@@ -693,6 +706,8 @@ async def get_dashboard():
         "compliance": compliance.query_compliance_status("overall") if compliance and hasattr(compliance, "query_compliance_status") else {},
         "perception": perception.get_status() if perception else {},
         "decision": orchestrator.build_decision_package() if orchestrator and hasattr(orchestrator, "build_decision_package") else {},
+        "rcs": rcs.get_status() if rcs else {},
+        "shm": shm.get_status() if shm else {},
         "memory": {
             **data_lakehouse.get_status(),
             "recent_events": data_lakehouse.query_events(limit=5),
@@ -734,6 +749,44 @@ async def get_ai_native_coordination_status():
     }
 
 
+@app.get("/api/v1/ai-native/perception/fusion-state")
+async def get_ai_native_fusion_state():
+    """返回当前特征融合轨迹状态，供数字孪生消费。"""
+    from channels.marine_base import get_default_registry
+
+    registry = get_default_registry()
+    perception = registry.get("distributed_perception_hub")
+    if not perception or not hasattr(perception, "get_fusion_state"):
+        raise HTTPException(status_code=404, detail="Perception fusion state not found")
+
+    return {
+        "channel": "distributed_perception_hub",
+        "fusion": perception.get_fusion_state(),
+    }
+
+
+@app.get("/api/v1/ai-native/rcs/status")
+async def get_ai_native_rcs_status():
+    from channels.marine_base import get_default_registry
+
+    registry = get_default_registry()
+    rcs = registry.get("rcs_control")
+    if not rcs:
+        raise HTTPException(status_code=404, detail="RCS control not found")
+    return {"channel": "rcs_control", "result": rcs.get_status()}
+
+
+@app.get("/api/v1/ai-native/shm/status")
+async def get_ai_native_shm_status():
+    from channels.marine_base import get_default_registry
+
+    registry = get_default_registry()
+    shm = registry.get("structural_health_monitor")
+    if not shm:
+        raise HTTPException(status_code=404, detail="Structural health monitor not found")
+    return {"channel": "structural_health_monitor", "result": shm.get_status()}
+
+
 @app.get("/api/v1/ai-native/cps/mission-brief")
 async def get_cps_mission_brief():
     """返回面向驾驶台和总师的 CPS 任务摘要。"""
@@ -749,6 +802,7 @@ async def get_cps_mission_brief():
         "generated_at": package.get("generated_at"),
         "mission_brief": package.get("mission_brief"),
         "action_plan": package.get("action_plan", []),
+        "task_graph": package.get("task_graph", {}),
         "autonomy_mode": package.get("autonomy_mode"),
         "memory_profile": data_lakehouse.get_memory_profile(limit=30),
     }
@@ -814,6 +868,32 @@ async def log_decision_feedback(payload: DecisionFeedbackRequest):
         "result": feedback,
         "feedback_records_count": len(getattr(orchestrator, "feedback_records", [])),
         "recent_feedback": data_lakehouse.query_events(event_type="decision_feedback_event", limit=10),
+    }
+
+
+@app.post("/api/v1/ai-native/openbridge/command")
+async def execute_openbridge_command(payload: OpenBridgeCommandRequest):
+    """将桥楼自然语言命令映射到任务图和控制状态。"""
+    from channels.marine_base import get_default_registry
+
+    registry = get_default_registry()
+    orchestrator = registry.get("decision_orchestrator")
+    if not orchestrator:
+        raise HTTPException(status_code=404, detail="Decision orchestrator not found")
+
+    dashboard = await get_dashboard()
+    mission = await get_cps_mission_brief()
+    result = build_openbridge_command_result(payload.command, dashboard, mission)
+    feedback = orchestrator.record_feedback(
+        action=f"openbridge:{result['recognized_intent']}",
+        outcome=result["execution_mode"],
+        confirmed_by=payload.source,
+    )
+
+    return {
+        "source": payload.source,
+        "result": result,
+        "feedback": feedback,
     }
 
 @app.websocket("/ws")

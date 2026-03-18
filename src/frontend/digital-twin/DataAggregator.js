@@ -11,6 +11,7 @@ export class DataAggregator {
       dashboardUrl: '/api/v1/dashboard',
       coordinationUrl: '/api/v1/ai-native/coordination/status',
       missionBriefUrl: '/api/v1/ai-native/cps/mission-brief',
+      fusionStateUrl: '/api/v1/ai-native/perception/fusion-state',
       worldmonitorAisUrl: '/api/v1/worldmonitor/ais',
       worldmonitorWeatherUrl: '/api/v1/worldmonitor/weather',
       refreshIntervalMs: 15000,
@@ -45,6 +46,12 @@ export class DataAggregator {
     return data;
   }
 
+  async getFusionState() {
+    const data = await this.fetchJson(this.config.fusionStateUrl);
+    this.cache.set('ai-native:fusion-state', { ts: Date.now(), data });
+    return data;
+  }
+
   async getWorldMonitorAis() {
     const data = await this.fetchJson(this.config.worldmonitorAisUrl);
     this.cache.set('worldmonitor:ais', { ts: Date.now(), data });
@@ -59,14 +66,16 @@ export class DataAggregator {
   }
 
   async buildUnifiedView() {
-    const [dashboardResult, coordinationResult, missionResult] = await Promise.allSettled([
+    const [dashboardResult, coordinationResult, missionResult, fusionResult] = await Promise.allSettled([
       this.getLocalDashboard(),
       this.getCoordinationStatus(),
       this.getMissionBrief(),
+      this.getFusionState(),
     ]);
     const dashboard = dashboardResult.status === 'fulfilled' ? dashboardResult.value : null;
     const coordination = coordinationResult.status === 'fulfilled' ? coordinationResult.value : null;
     const missionBrief = missionResult.status === 'fulfilled' ? missionResult.value : null;
+    const fusionState = fusionResult.status === 'fulfilled' ? fusionResult.value : null;
     
     // Try to get real WorldMonitor data
     let wmAis = null;
@@ -98,6 +107,7 @@ export class DataAggregator {
       aiNative: {
         coordination,
         missionBrief,
+        fusionState,
       },
       worldmonitor: {
         ais: wmAis,

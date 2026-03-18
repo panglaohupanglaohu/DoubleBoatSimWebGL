@@ -24,11 +24,14 @@ const state = {
     latestData: null,
     heatmapMaterials: [],
     semanticLabels: [],
+    fusionMarkers: [],
     externalSync: {
         ownShip: null,
         selectedTarget: null,
         alarms: [],
         weather: null,
+        fusionTracks: [],
+        taskGraph: null,
         source: null,
         updatedAt: null,
     },
@@ -463,6 +466,81 @@ function normalizeExternalAlarm(alarm) {
     };
 }
 
+function geoToScenePosition(target = {}) {
+    const latitude = Number(target.latitude ?? target.lat ?? target.position?.latitude ?? 0);
+    const longitude = Number(target.longitude ?? target.lng ?? target.position?.longitude ?? 0);
+    const x = ((longitude % 1) - 0.5) * 20;
+    const z = ((latitude % 1) - 0.5) * 20;
+    return new THREE.Vector3(x, 1.4, z);
+}
+
+function clearFusionMarkers() {
+    state.fusionMarkers.forEach(({ marker, label }) => {
+        if (marker) {
+            state.scene.remove(marker);
+            marker.geometry.dispose();
+            marker.material.dispose();
+        }
+        if (label) {
+            state.scene.remove(label);
+            label.material.map.dispose();
+            label.material.dispose();
+        }
+    });
+    state.fusionMarkers = [];
+}
+
+function renderFusionTracks(tracks = []) {
+    if (!state.scene) return;
+
+    clearFusionMarkers();
+
+    tracks.slice(0, 10).forEach((track, index) => {
+        const position = geoToScenePosition(track.position || track);
+        const confidence = Number(track.confidence ?? 0.5);
+        const color = confidence >= 0.8 ? 0x00e5ff : confidence >= 0.6 ? 0xffc107 : 0xff7043;
+        const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.45 + confidence * 0.25, 16, 16),
+            new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 })
+        );
+        marker.position.copy(position);
+
+        const label = createFloatingLabel(
+            `FUS-${index + 1}\n${Math.round(confidence * 100)}%`,
+            color,
+            position.clone().add(new THREE.Vector3(0, 1.6, 0))
+        );
+
+        state.scene.add(marker);
+        state.scene.add(label);
+        state.fusionMarkers.push({ marker, label });
+    });
+}
+
+function createFloatingLabel(text, color, position) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 128;
+    ctx.fillStyle = 'rgba(8, 16, 28, 0.78)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+    ctx.font = 'bold 30px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = String(text).split('\n');
+    lines.forEach((line, idx) => {
+        ctx.fillText(line, canvas.width / 2, 42 + idx * 32);
+    });
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(material);
+    sprite.position.copy(position);
+    sprite.scale.set(6, 3, 1);
+    return sprite;
+}
+
 function focusOnCoordinates(target = {}) {
     if (!state.camera || !state.controls) return;
 
@@ -501,6 +579,8 @@ function applyExternalSync(payload = {}) {
         selectedTarget: payload.selectedTarget || state.externalSync.selectedTarget,
         alarms: Array.isArray(payload.alarms) ? payload.alarms.map(normalizeExternalAlarm) : state.externalSync.alarms,
         weather: payload.weather || state.externalSync.weather,
+        fusionTracks: Array.isArray(payload.fusionTracks) ? payload.fusionTracks : state.externalSync.fusionTracks,
+        taskGraph: payload.taskGraph || state.externalSync.taskGraph,
         source: payload.source || state.externalSync.source || 'worldmonitor',
         updatedAt: payload.updatedAt || new Date().toISOString(),
     };
@@ -508,6 +588,8 @@ function applyExternalSync(payload = {}) {
     if (state.externalSync.selectedTarget) {
         focusOnCoordinates(state.externalSync.selectedTarget);
     }
+
+    renderFusionTracks(state.externalSync.fusionTracks || []);
 
     updateUI(state.latestData || {});
 }

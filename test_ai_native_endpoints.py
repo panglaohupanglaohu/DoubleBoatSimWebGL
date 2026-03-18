@@ -69,12 +69,8 @@ def test_ai_native_endpoints():
     print(f"⚡ Pipeline Health: {pipeline_status['pipeline_health']}")
     
     print("\n🎉 All AI Native components tested successfully!")
-    return True
+    assert pipeline_status["pipeline_health"] == "operational"
 
 if __name__ == "__main__":
     success = test_ai_native_endpoints()
-    if success:
-        print("\n✅ AI Native Integration Validation Passed!")
-    else:
-        print("\n❌ AI Native Integration Validation Failed!")
-        sys.exit(1)
+    print("\n✅ AI Native Integration Validation Passed!")

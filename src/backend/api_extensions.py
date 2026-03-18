@@ -27,6 +27,23 @@ API_ENDPOINTS = {
         "method": "GET",
         "description": "捕获感知快照"
     },
+    "/api/v1/ai-native/perception/fusion-state": {
+        "method": "GET",
+        "description": "获取特征融合轨迹状态"
+    },
+    "/api/v1/ai-native/rcs/status": {
+        "method": "GET",
+        "description": "获取主动姿态控制状态"
+    },
+    "/api/v1/ai-native/shm/status": {
+        "method": "GET",
+        "description": "获取结构健康监测状态"
+    },
+    "/api/v1/ai-native/openbridge/command": {
+        "method": "POST",
+        "description": "执行桥楼语义命令并返回任务图/控制摘要",
+        "params": ["command", "source"]
+    },
     "/api/v1/ai-native/decision/package": {
         "method": "GET",
         "description": "获取决策包"

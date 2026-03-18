@@ -120,6 +120,23 @@ class DataLakehouse:
         
         return self.local_store.load_events_by_time(start_time, end_time, event_type)
 
+    def get_storage_profile(self) -> Dict[str, Any]:
+        """返回轻量 Lakehouse 架构配置，明确当前不依赖 Hadoop。"""
+        store_type = self.config.get("store_type", "sqlite")
+        cloud_type = self.config.get("cloud_type", "none")
+        archive_format = self.config.get("archive_format", "parquet")
+        analytics_engine = self.config.get("analytics_engine", "duckdb")
+        return {
+            "architecture_mode": "lightweight_edge_lakehouse",
+            "hadoop_required": False,
+            "hot_store": store_type,
+            "hot_store_mode": "wal" if store_type == "sqlite" else "standard",
+            "archive_format": archive_format,
+            "analytics_engine": analytics_engine,
+            "cloud_sync": cloud_type,
+            "recommended_stack": ["sqlite", archive_format, analytics_engine, "s3-compatible-sync"],
+        }
+
     def get_memory_profile(self, limit: int = 50) -> Dict[str, Any]:
         """生成近期记忆概况，供协调层和驾驶台消费。"""
         recent_events = self.query_events(limit=limit)
@@ -168,6 +185,7 @@ class DataLakehouse:
                 "type": type(self.cloud_adapter).__name__ if self.cloud_adapter else "none",
                 "available": self.cloud_adapter is not None
             },
+            "storage_profile": self.get_storage_profile(),
             "buffer_size": len(self.event_buffer),
             "buffer_max_size": self.buffer_max_size,
             "memory_profile": self.get_memory_profile(limit=20) if self.local_store is not None else {},

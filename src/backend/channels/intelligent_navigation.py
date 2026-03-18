@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
+from .maritime_scene_model import MaritimeSceneModel
 import math
 
 
@@ -52,6 +53,8 @@ class AISTarget:
     course: float  # 航向 (度)
     speed: float   # 航速 (节)
     heading: float # 船首向 (度)
+    vessel_type: str = "Unknown"
+    nav_status: str = "normal"
     length: float = 0.0
     width: float = 0.0
     timestamp: datetime = field(default_factory=datetime.now)
@@ -120,6 +123,7 @@ class IntelligentNavigationChannel(MarineChannel):
         
         # 风险记录
         self.risk_history: List[CollisionRisk] = []
+        self.scene_model = MaritimeSceneModel()
     
     def initialize(self) -> bool:
         """初始化 Channel."""
@@ -287,9 +291,43 @@ class IntelligentNavigationChannel(MarineChannel):
         
         return "safe"
 
+    def _build_scene_context(self) -> Dict[str, Any]:
+        return self.scene_model.evaluate(self.own_ship, self.ais_targets)
+
+    def _resolve_contextual_rule(self, target: AISTarget, scene_context: Dict[str, Any]) -> Dict[str, str]:
+        vessel_type = (target.vessel_type or "").lower()
+        if target.nav_status == "restricted_manoeuvrability" or vessel_type in {"tug", "dredger", "offshore support vessel"}:
+            return {
+                "contextual_rule": "Rule 18",
+                "priority_basis": "Target treated as restricted in ability to manoeuvre.",
+            }
+
+        scene_type = scene_context.get("scene_type")
+        if scene_type == "narrow_channel":
+            return {
+                "contextual_rule": "Rule 9",
+                "priority_basis": "Channel geometry constrains both vessels.",
+            }
+        if scene_type == "port_approach":
+            return {
+                "contextual_rule": "Rule 9/10",
+                "priority_basis": "Port traffic lanes and entry constraints are active.",
+            }
+        if scene_type == "ice_navigation":
+            return {
+                "contextual_rule": "Rule 19",
+                "priority_basis": "Restricted visibility / ice-navigation safeguards applied.",
+            }
+
+        return {
+            "contextual_rule": "Rule 5/7/8",
+            "priority_basis": "Standard watchkeeping and early action basis.",
+        }
+
     def classify_colregs_encounter(self, target: AISTarget, risk: Optional[CollisionRisk] = None) -> Dict[str, Any]:
         """基于目标相对方位和运动趋势给出简化 COLREGs 遭遇分类。"""
         risk = risk or self.calculate_cpa_tcpa(target)
+        scene_context = self._build_scene_context()
         bearing = risk.bearing
         relative_heading = abs((self.own_ship["course"] - target.course + 180) % 360 - 180)
         speed_delta = max(0.0, self.own_ship["speed"] - target.speed)
@@ -309,17 +347,22 @@ class IntelligentNavigationChannel(MarineChannel):
 
         guidance = COLREGS_GUIDANCE[encounter]
         urgency = "immediate" if risk.risk_level in {"danger", "warning"} else "monitor"
+        contextual_rule = self._resolve_contextual_rule(target, scene_context)
         return {
             "target_mmsi": target.mmsi,
+            "target_type": target.vessel_type,
             "encounter_type": encounter,
             "role": role,
             "rule": guidance["rule"],
+            "contextual_rule": contextual_rule["contextual_rule"],
+            "priority_basis": contextual_rule["priority_basis"],
             "summary": guidance["summary"],
-            "recommended_action": guidance["default_action"],
+            "recommended_action": f"{guidance['default_action']} 场景约束：{scene_context['scene_type']}。",
             "urgency": urgency,
             "bearing": round(bearing, 1),
             "range_nm": round(risk.range, 3),
             "risk_level": risk.risk_level,
+            "scene_type": scene_context["scene_type"],
         }
 
     def generate_colregs_assessment(self) -> List[Dict[str, Any]]:
@@ -399,6 +442,7 @@ class IntelligentNavigationChannel(MarineChannel):
         """生成航行安全报告."""
         risks = self.get_collision_risks()
         colregs = self.generate_colregs_assessment()
+        scene_context = self._build_scene_context()
         highest_risk = risks[0].risk_level if risks else "safe"
         
         report = {
@@ -406,6 +450,7 @@ class IntelligentNavigationChannel(MarineChannel):
             "own_ship": self.own_ship,
             "ais_targets_total": len(self.ais_targets),
             "collision_risks": [r.to_dict() for r in risks],
+            "scene_context": scene_context,
             "colregs_assessments": colregs,
             "recommended_manoeuvres": [item["recommended_action"] for item in colregs[:3]],
             "risk_summary": {

@@ -87,7 +87,7 @@ export class SimpleBridgeChat {
     // 输入区域
     const quickBar = document.createElement('div');
     quickBar.style.cssText = `padding: 8px 12px; display:flex; gap:6px; flex-wrap:wrap; border-top: 1px solid rgba(255,255,255,0.08);`;
-    ['主机状态','碰撞风险','能效状态'].forEach(text => {
+    ['任务图','碰撞风险','舒适控制','结构健康','主机状态'].forEach(text => {
       const btn = document.createElement('button');
       btn.textContent = text;
       btn.style.cssText = 'padding:4px 8px; border:none; border-radius:999px; background:rgba(79,195,247,0.16); color:#b3e5fc; cursor:pointer; font-size:11px;';
@@ -109,14 +109,14 @@ export class SimpleBridgeChat {
     const input = document.createElement('input');
     input.type = 'text';
     input.id = 'bridge-input';
-    input.placeholder = this.config.apiKey ? '询问船舶状态...' : '请先配置 LLM';
-    input.disabled = !this.config.apiKey;
+    input.placeholder = this.config.apiKey ? '输入桥楼指令或询问状态...' : '可直接输入桥楼指令（离线命令可用）';
+    input.disabled = false;
     input.style.cssText = `flex: 1; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; font-size: 13px;`;
     
     const sendBtn = document.createElement('button');
     sendBtn.id = 'bridge-send';
     sendBtn.textContent = '发送';
-    sendBtn.style.cssText = `padding: 8px 16px; background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%); border: none; border-radius: 6px; color: #fff; cursor: ${this.config.apiKey ? 'pointer' : 'not-allowed'}; font-size: 13px;`;
+    sendBtn.style.cssText = 'padding: 8px 16px; background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px;';
     
     inputArea.appendChild(input);
     inputArea.appendChild(sendBtn);
@@ -144,9 +144,9 @@ export class SimpleBridgeChat {
     // 添加欢迎消息
     setTimeout(() => {
       if (!this.config.apiKey) {
-        this.addMessage('system', '⚠️ 请先访问右上角的 LLM 配置页面配置 API Key');
+        this.addMessage('system', '⚠️ 当前未配置外部 LLM，但本地桥楼命令和状态联动仍可使用。');
       } else {
-        this.addMessage('system', `✅ LLM 已配置 (${this.config.llmProvider || 'minimax'})。有什么可以帮您？`);
+        this.addMessage('system', `✅ LLM 已配置 (${this.config.llmProvider || 'minimax'})，同时本地桥楼命令也已启用。`);
       }
     }, 500);
     
@@ -163,7 +163,7 @@ export class SimpleBridgeChat {
       messagesContainer.style.maxHeight = '300px';
       messagesContainer.style.padding = '16px';
       inputArea.style.display = 'flex';
-      input.disabled = !this.config.apiKey;
+      input.disabled = false;
     } else {
       messagesContainer.style.maxHeight = '0';
       messagesContainer.style.padding = '0 16px';
@@ -224,13 +224,21 @@ export class SimpleBridgeChat {
     const input = document.getElementById('bridge-input');
     const text = input.value.trim();
     
-    if (!text || !this.config.apiKey) return;
+      if (!text) return;
     
     this.addMessage('user', text);
     input.value = '';
     this.addMessage('assistant', '🤔 正在思考...');
     
     try {
+        const commandResult = await this.executeOpenBridgeCommand(text);
+        if (commandResult?.result?.recognized_intent !== 'general_assist' || !this.config.apiKey) {
+          const messagesContainer = document.getElementById('bridge-messages');
+          messagesContainer.lastChild.remove();
+          this.addMessage('assistant', this.formatCommandResponse(commandResult.result));
+          return;
+        }
+
       let channelContext = '';
       const lower = text.toLowerCase();
       if (lower.includes('碰撞') || lower.includes('风险') || lower.includes('ais') || lower.includes('导航')) {
@@ -308,6 +316,48 @@ export class SimpleBridgeChat {
     }
     return await response.json();
   }
+
+    async executeOpenBridgeCommand(command) {
+      const response = await fetch('/api/v1/ai-native/openbridge/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command, source: 'bridge_chat' })
+      });
+      if (!response.ok) {
+        throw new Error(`OpenBridge command failed: ${response.status}`);
+      }
+      return await response.json();
+    }
+
+    formatCommandResponse(result) {
+      const focus = Array.isArray(result.focus_items) ? result.focus_items.slice(0, 3) : [];
+      const focusLines = focus.map((item) => {
+        if (item.zone) {
+          return `- ${item.zone}: ${item.microstrain} µε`;
+        }
+        if (item.label && Object.prototype.hasOwnProperty.call(item, 'value')) {
+          return `- ${item.label}: ${item.value ?? '--'}`;
+        }
+        if (item.title) {
+          return `- ${item.title}`;
+        }
+        if (item.label && item.status) {
+          return `- ${item.label}: ${item.status}`;
+        }
+        if (item.id) {
+          return `- ${item.id}`;
+        }
+        return `- ${JSON.stringify(item)}`;
+      }).join('\n');
+
+      return [
+        `意图: ${result.recognized_intent}`,
+        `模式: ${result.execution_mode}`,
+        `摘要: ${result.summary}`,
+        `操作建议: ${result.operator_action}`,
+        focusLines ? `重点:\n${focusLines}` : ''
+      ].filter(Boolean).join('\n');
+    }
   
   updateShipContext(context) {
     this.shipContext = { ...this.shipContext, ...context };
@@ -319,18 +369,30 @@ export class SimpleBridgeChat {
 
   async updateShipContextFromAPI() {
     try {
-      const [sensorsResp, channelsResp, engineResp] = await Promise.all([
+      const [sensorsResp, channelsResp, engineResp, dashboardResp, missionResp, rcsResp, shmResp] = await Promise.all([
         fetch('/api/v1/sensors'),
         fetch('/api/v1/channels'),
-        fetch('/api/v1/engine/status')
+        fetch('/api/v1/engine/status'),
+        fetch('/api/v1/dashboard'),
+        fetch('/api/v1/ai-native/cps/mission-brief'),
+        fetch('/api/v1/ai-native/rcs/status'),
+        fetch('/api/v1/ai-native/shm/status')
       ]);
       const sensors = await sensorsResp.json();
       const channels = await channelsResp.json();
       const engine = await engineResp.json();
+      const dashboard = await dashboardResp.json();
+      const missionBrief = await missionResp.json();
+      const rcs = await rcsResp.json();
+      const shm = await shmResp.json();
       this.updateShipContext({
         sensors: sensors.sensors || [],
         channels: channels.channels || [],
         engine,
+        dashboard,
+        missionBrief,
+        rcs: rcs.result || {},
+        shm: shm.result || {},
         updatedAt: new Date().toISOString()
       });
     } catch (error) {
