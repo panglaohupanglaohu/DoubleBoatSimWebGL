@@ -36,6 +36,7 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q test_cps_mission_brief.py test_ai_nat
 
 - 18 小时压缩执行计划：`docs/AI_NATIVE_CPS_18H_EXECUTION_PLAN.md`
 - 4 小时改写计划：`docs/AI_NATIVE_CPS_4H_REWRITE_PLAN.md`
+- OpenBridge 使用说明：`docs/OPENBRIDGE_QUICK_GUIDE.md`
 
 ## 系统目标
 
@@ -173,41 +174,63 @@ WorldMonitor + Local Lakehouse
 - `GET /api/v1/worldmonitor/ports`
 - `GET /api/v1/worldmonitor/routes`
 
-## 启动方式
+## 交付验收流程
 
-### Python 环境
+按下面顺序执行，可以完成当前交付版本的本地启动和核心验收。
+
+### 1. 准备环境
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -e ".[dev]"
-```
-
-### 前端依赖
-
-```bash
 npm install
 ```
 
-### 启动后端
+### 2. 启动后端
 
 ```bash
 source venv/bin/activate
 python src/backend/main.py --host 0.0.0.0 --port 8080
 ```
 
-### 启动前端
+### 3. 启动前端
 
 ```bash
 npm run dev -- --host 0.0.0.0
 ```
 
-### 访问入口
+### 4. 打开交付入口
 
 - 数字孪生：`http://localhost:5173/digital-twin.html`
 - 前端首页：`http://localhost:5173/`
 - 后端文档：`http://localhost:8080/docs`
 - WebSocket：`ws://localhost:8080/ws`
+
+### 5. 验证核心接口
+
+建议至少检查以下接口：
+
+- `GET /api/v1/dashboard`
+- `GET /api/v1/ai-native/cps/mission-brief`
+- `GET /api/v1/ai-native/perception/fusion-state`
+- `GET /api/v1/ai-native/rcs/status`
+- `GET /api/v1/ai-native/shm/status`
+- `POST /api/v1/ai-native/openbridge/command`
+
+### 6. 运行核心回归
+
+由于当前虚拟环境里存在第三方 `pytest` 插件冲突，建议关闭自动插件加载后运行：
+
+```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q test_cps_mission_brief.py test_ai_native_endpoints.py
+```
+
+通过标准：
+
+- 测试结果为 `9 passed`
+- 数字孪生页面能看到 task graph、fusion tracks、RCS、SHM 卡片
+- `Poseidon-X Bridge` 可响应任务图、碰撞风险、舒适控制、结构健康、主机状态等命令
 
 ## OpenBridge 命令入口
 
@@ -215,6 +238,7 @@ npm run dev -- --host 0.0.0.0
 
 - 数字孪生页面右下角 `Poseidon-X Bridge` 聊天面板
 - 后端语义命令接口 `POST /api/v1/ai-native/openbridge/command`
+- 独立使用说明：`docs/OPENBRIDGE_QUICK_GUIDE.md`
 
 请求体示例：
 
@@ -254,17 +278,7 @@ npm run dev -- --host 0.0.0.0
 
 ## 测试
 
-由于当前虚拟环境里存在第三方 `pytest` 插件冲突，建议关闭自动插件加载后运行：
-
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q
-```
-
-已验证通过的核心子集：
-
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest test_ai_native_endpoints.py test_data_lakehouse.py -q
-```
+完整测试可继续按仓库既有方式执行；当前交付版本的最小验收回归以“交付验收流程”中的命令为准。
 
 ## GitHub 提交说明
 
