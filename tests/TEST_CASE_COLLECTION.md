@@ -13,7 +13,7 @@
 - `tests/unit/test_cps_mission_brief.py`
   - 覆盖 scene-aware COLREGs、task graph、learning state、fusion state、RCS/SHM、OpenBridge 命令解析
 - `tests/unit/test_data_lakehouse.py`
-  - 覆盖 DataLakehouse 存储状态、事件写入和查询
+  - 覆盖 DataLakehouse 存储状态、事件写入和查询（SQLite WAL、Parquet 归档、DuckDB 即席分析、S3/MinIO 云同步）
 - `tests/unit/test_storage_modules.py`
   - 覆盖 JSONLStore 和 SQLiteStore
 - `tests/unit/test_p0_modules.py`
@@ -22,12 +22,18 @@
   - 覆盖 AI Native 核心通道的注册、初始化和事件行为
 - `tests/unit/test_backend.py`
   - 覆盖后端基础行为
+- `tests/unit/test_calculators.py`
+  - 覆盖 EEXI/CII/SEEMP 计算器：EEXICalculator、CIICalculator、SEEMPManager，以及不同船型和燃料类型的计算结果验证
 - `tests/unit/test_energy_efficiency_channel.py`
   - 覆盖能效通道逻辑
 - `tests/unit/test_feature_fusion_layer.py`
   - 覆盖特征融合层
 - `tests/unit/test_intelligent_engine_channel.py`
   - 覆盖智能机舱通道
+- `tests/unit/test_messagebus_config_engine.py`
+  - 覆盖 MarineMessageBus（消息注册、路由、安全告警）、ConfigLoader、EngineMonitorChannel（告警等级、健康评分）、MaritimeSceneModel（场景语义）
+- `tests/unit/test_rcs_shm_openbridge.py`
+  - 覆盖 RCSControlChannel（控制量范围、字段完整性、生命周期）、StructuralHealthMonitorChannel（疲劳指数、寿命余度、应变热点）、OpenBridge 命令路由（全域意图分类、边界输入、结果结构）
 
 ## 当前 Integration Test 集合
 
@@ -35,12 +41,14 @@
   - 覆盖 AI Native 关键 endpoint 定义与核心通道联动
 - `tests/integration/test_ai_native_api.py`
   - 覆盖 AI Native API 层
+- `tests/integration/test_nmea2000_engine_flow.py`
+  - 覆盖 NMEA2000 解析器 → 智能机舱数据流的端到端管道
 - `tests/integration/test_poseidon_x_integration.py`
-  - 覆盖 Poseidon-X 集成链路
+  - 覆盖 Poseidon-X 集成链路（Channel API、Sensors API、Root API、性能、端到端启动）
 - `tests/integration/test_api.py`
-  - 覆盖基础 API 集成
+  - 覆盖基础 API 集成（默认排除于 CI 回归，避免环境依赖问题）
 - `tests/integration/test_worldmonitor_placeholder_api.py`
-  - 覆盖 WorldMonitor placeholder API
+  - 覆盖 WorldMonitor placeholder API（AIS、天气、港口、航线）
 
 ## 当前 Manual Test 集合
 

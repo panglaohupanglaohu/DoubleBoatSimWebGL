@@ -20,6 +20,26 @@
   },
   "environment": "development",
   "debug": true,
+  "lakehouse": {
+    "buffer_max_size": 1,
+    "store_type": "sqlite",
+    "analytics_cache_dir": "storage/analytics_cache",
+    "store_config": {
+      "db_path": "storage/poseidon_events.db",
+      "storage_path": "storage/events"
+    },
+    "cloud_type": "local",
+    "cloud_config": {
+      "storage_path": "storage/cloud_sync",
+      "bucket_name": "doubleboat-events",
+      "region": "us-east-1",
+      "prefix": "events/",
+      "endpoint_url": null,
+      "addressing_style": "path",
+      "verify_ssl": true,
+      "auto_create_bucket": false
+    }
+  },
   "logging": {
     "level": "INFO",
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
