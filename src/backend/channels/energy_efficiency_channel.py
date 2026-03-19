@@ -15,7 +15,8 @@ from .efficiency_advisor import EfficiencyAdvisor
 from .compliance_reporter import ComplianceReporter
 from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
+import json
 
 class EnergyEfficiencyChannel(MarineChannel):
     """能效管理 Channel - 主入口类.
@@ -304,7 +305,7 @@ def main():
     print(f"   建造：{vessel.built_year}")
     
     # 初始化能效管理器
-    manager = EnergyEfficiencyManager({"vessel": vessel})
+    manager = EnergyEfficiencyChannel(config={"vessel": vessel})
     
     # 计算 EEXI
     print("\n" + "=" * 60)

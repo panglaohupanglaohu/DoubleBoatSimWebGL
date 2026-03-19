@@ -5,6 +5,7 @@ EEXI Calculator - 船舶 EEXI 指数计算器
 
 from .efficiency_models import VesselInfo, EEXIResult, VesselType
 from typing import Optional, Dict, Any
+from datetime import datetime
 import math
 
 

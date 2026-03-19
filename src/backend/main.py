@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
@@ -24,6 +25,7 @@ import uvicorn
 from adapters.worldmonitor_adapter import WorldMonitorAdapter
 from adapters.worldmonitor_adapter_real import WorldMonitorRealAdapter
 from channels.openbridge_command_router import build_openbridge_command_result
+from config_loader import get_config
 from storage.data_lakehouse import create_lakehouse
 
 # 配置日志
@@ -32,12 +34,127 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger("PoseidonServer")
+BASE_DIR = Path(__file__).resolve().parents[2]
+
+
+def _coerce_bool(value: Any, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _resolve_runtime_path(path_value: Optional[str], fallback: str) -> str:
+    raw_path = path_value or fallback
+    path = Path(raw_path)
+    if not path.is_absolute():
+        path = BASE_DIR / raw_path
+    return str(path)
+
+
+def build_lakehouse_config() -> Dict[str, Any]:
+    """构建湖仓运行时配置，优先级：环境变量 > settings.json > 默认值。"""
+    settings = get_config()
+    lakehouse_settings = settings.get("lakehouse", {}) or {}
+    store_config_settings = lakehouse_settings.get("store_config", {}) or {}
+    cloud_config_settings = lakehouse_settings.get("cloud_config", {}) or {}
+
+    store_type = os.getenv("POSEIDON_LAKEHOUSE_STORE_TYPE", lakehouse_settings.get("store_type", "sqlite"))
+    cloud_type = os.getenv("POSEIDON_LAKEHOUSE_CLOUD_TYPE", lakehouse_settings.get("cloud_type", "local"))
+    buffer_max_size = int(os.getenv("POSEIDON_LAKEHOUSE_BUFFER_MAX_SIZE", lakehouse_settings.get("buffer_max_size", 1)))
+    analytics_cache_dir = _resolve_runtime_path(
+        os.getenv("POSEIDON_LAKEHOUSE_ANALYTICS_CACHE_DIR"),
+        lakehouse_settings.get("analytics_cache_dir", "storage/analytics_cache"),
+    )
+
+    store_config = {
+        "db_path": _resolve_runtime_path(
+            os.getenv("POSEIDON_LAKEHOUSE_DB_PATH"),
+            store_config_settings.get("db_path", "storage/poseidon_events.db"),
+        ),
+        "storage_path": _resolve_runtime_path(
+            os.getenv("POSEIDON_LAKEHOUSE_STORAGE_PATH"),
+            store_config_settings.get("storage_path", "storage/events"),
+        ),
+    }
+
+    cloud_config: Dict[str, Any] = {
+        "storage_path": _resolve_runtime_path(
+            os.getenv("POSEIDON_LAKEHOUSE_CLOUD_STORAGE_PATH"),
+            cloud_config_settings.get("storage_path", "storage/cloud_sync"),
+        ),
+        "bucket_name": os.getenv("POSEIDON_LAKEHOUSE_S3_BUCKET", cloud_config_settings.get("bucket_name", "doubleboat-events")),
+        "region": os.getenv("POSEIDON_LAKEHOUSE_S3_REGION", cloud_config_settings.get("region", "us-east-1")),
+        "prefix": os.getenv("POSEIDON_LAKEHOUSE_S3_PREFIX", cloud_config_settings.get("prefix", "events/")),
+        "endpoint_url": os.getenv("POSEIDON_LAKEHOUSE_S3_ENDPOINT_URL", cloud_config_settings.get("endpoint_url")),
+        "addressing_style": os.getenv("POSEIDON_LAKEHOUSE_S3_ADDRESSING_STYLE", cloud_config_settings.get("addressing_style", "path")),
+        "verify_ssl": _coerce_bool(
+            os.getenv("POSEIDON_LAKEHOUSE_S3_VERIFY_SSL"),
+            _coerce_bool(cloud_config_settings.get("verify_ssl"), True),
+        ),
+        "auto_create_bucket": _coerce_bool(
+            os.getenv("POSEIDON_LAKEHOUSE_S3_AUTO_CREATE_BUCKET"),
+            _coerce_bool(cloud_config_settings.get("auto_create_bucket"), False),
+        ),
+    }
+
+    return {
+        "buffer_max_size": buffer_max_size,
+        "store_type": store_type,
+        "store_config": store_config,
+        "cloud_type": cloud_type,
+        "cloud_config": cloud_config,
+        "analytics_cache_dir": analytics_cache_dir,
+    }
+
+
+def probe_lakehouse_cloud_sync() -> Dict[str, Any]:
+    """在启动阶段探测 lakehouse 云同步可达性。"""
+    cloud_adapter = getattr(data_lakehouse, "cloud_adapter", None)
+    if cloud_adapter is None:
+        info = {
+            "available": False,
+            "configured": False,
+            "message": "No cloud adapter configured",
+        }
+        logger.info("☁️ Lakehouse cloud sync not configured")
+        return info
+
+    try:
+        bucket_info = cloud_adapter.get_bucket_info()
+        bucket_name = bucket_info.get("bucket", type(cloud_adapter).__name__)
+        endpoint = bucket_info.get("endpoint_url") or "local"
+        if bucket_info.get("available"):
+            created_suffix = " (created)" if bucket_info.get("created") else ""
+            logger.info(f"☁️ Lakehouse cloud sync ready: {bucket_name} @ {endpoint}{created_suffix}")
+        else:
+            logger.warning(f"☁️ Lakehouse cloud sync unavailable: {bucket_name} @ {endpoint} -> {bucket_info.get('error', 'unknown error')}")
+        return bucket_info
+    except Exception as exc:
+        logger.warning(f"☁️ Lakehouse cloud sync probe failed: {exc}")
+        return {
+            "available": False,
+            "configured": True,
+            "error": str(exc),
+        }
+
+@asynccontextmanager
+async def poseidon_lifespan(app: FastAPI):
+    """FastAPI lifespan hooks for startup and shutdown."""
+    await start_poseidon_services()
+    try:
+        yield
+    finally:
+        await stop_poseidon_services()
+
 
 # 创建 FastAPI 应用
 app = FastAPI(
     title="DoubleBoatClawSystem API",
     description="Digital Twin API for Deep-Sea Scientific Facilities",
     version="1.0.0",
+    lifespan=poseidon_lifespan,
 )
 
 # CORS 配置
@@ -105,6 +222,21 @@ class OpenBridgeCommandRequest(BaseModel):
     command: str
     source: str = "bridge_chat"
 
+
+class MemoryAnalyticsQueryRequest(BaseModel):
+    """记忆层即席分析请求。"""
+    sql: str
+    event_type: Optional[str] = None
+    limit: int = 100000
+    parquet_path: Optional[str] = None
+
+
+class MemoryArchiveRequest(BaseModel):
+    """记忆层归档请求。"""
+    event_type: Optional[str] = None
+    limit: int = 100000
+    output_path: Optional[str] = None
+
 # ==================== 内存数据存储 ====================
 
 # 传感器数据缓存
@@ -121,6 +253,14 @@ alarms: List[Alarm] = []
 
 # WebSocket 连接
 active_connections: List[WebSocket] = []
+
+# 传感器目录（接口稳定字段）
+SENSOR_CATALOG: List[Dict[str, str]] = [
+    {"id": "GPS-001", "type": "GPS", "description": "GPS 接收机"},
+    {"id": "COMPASS-001", "type": "COMPASS", "description": "罗经"},
+    {"id": "LOG-001", "type": "SPEED_LOG", "description": "计程仪"},
+    {"id": "ECHO-001", "type": "ECHO_SOUNDER", "description": "测深仪"},
+]
 
 # ==================== 仿真数据生成器 ====================
 
@@ -153,6 +293,64 @@ class SimulationEngine:
             "lube_oil_pressure": 4.5,
             "fuel_consumption": 180.0,
         }
+
+    def seed_initial_state(self) -> None:
+        """在后台循环启动前写入首批缓存，避免冷启动空数据。"""
+        now = datetime.now().isoformat()
+
+        sensor_cache.update(
+            {
+                "GPS-001": SensorData(
+                    sensor_id="GPS-001",
+                    sensor_type="GPS",
+                    value=0.0,
+                    unit="deg",
+                    timestamp=now,
+                    quality="good",
+                ),
+                "COMPASS-001": SensorData(
+                    sensor_id="COMPASS-001",
+                    sensor_type="COMPASS",
+                    value=self.ship_course,
+                    unit="deg",
+                    timestamp=now,
+                    quality="good",
+                ),
+                "LOG-001": SensorData(
+                    sensor_id="LOG-001",
+                    sensor_type="SPEED_LOG",
+                    value=self.ship_speed,
+                    unit="kn",
+                    timestamp=now,
+                    quality="good",
+                ),
+            }
+        )
+
+        for mmsi, target in self.ais_targets.items():
+            ais_targets[mmsi] = AISTarget(
+                mmsi=mmsi,
+                latitude=target["lat"],
+                longitude=target["lon"],
+                course=target["course"],
+                speed=target["speed"],
+                heading=target["course"],
+                vessel_type="Cargo",
+                cpa=0.5,
+                tcpa=300.0,
+            )
+
+        global engine_status
+        engine_status = EngineStatus(
+            engine_id="ENG-001",
+            rpm=self.engine["rpm"],
+            load=self.engine["load"],
+            cooling_water_temp=self.engine["cooling_water_temp"],
+            lube_oil_pressure=self.engine["lube_oil_pressure"],
+            fuel_consumption=self.engine["fuel_consumption"],
+            status="running",
+            alarms=[],
+        )
     
     async def generate_sensor_data(self):
         """生成传感器数据"""
@@ -285,10 +483,10 @@ class SimulationEngine:
             "type": "data_update",
             "timestamp": datetime.now().isoformat(),
             "data": {
-                "sensors": {k: v.dict() for k, v in sensor_cache.items()},
-                "ais_targets": {k: v.dict() for k, v in ais_targets.items()},
-                "engine": engine_status.dict() if engine_status else None,
-                "alarms": [a.dict() for a in alarms[-10:]],  # 最近 10 个报警
+                "sensors": {k: v.model_dump() for k, v in sensor_cache.items()},
+                "ais_targets": {k: v.model_dump() for k, v in ais_targets.items()},
+                "engine": engine_status.model_dump() if engine_status else None,
+                "alarms": [a.model_dump() for a in alarms[-10:]],  # 最近 10 个报警
             }
         })
         
@@ -333,15 +531,7 @@ except Exception as e:
 
 # AI Native 记忆层与协调状态
 data_lakehouse = create_lakehouse({
-    "buffer_max_size": 1,
-    "store_type": "sqlite",
-    "store_config": {
-        "db_path": str(Path(__file__).resolve().parents[2] / "storage" / "poseidon_events.db")
-    },
-    "cloud_type": "local",
-    "cloud_config": {
-        "storage_path": str(Path(__file__).resolve().parents[2] / "storage" / "cloud_sync")
-    },
+    **build_lakehouse_config(),
 })
 coordination_status: Dict[str, Any] = {
     "running": False,
@@ -379,13 +569,14 @@ async def ai_native_coordination_loop():
 
 # ==================== API 路由 ====================
 
-@app.on_event("startup")
-async def startup_event():
-    """启动事件"""
+async def start_poseidon_services():
+    """启动后台服务与 AI Native 协调逻辑。"""
     global coordination_task
     logger.info("🚀 Starting Poseidon Server...")
+    sim_engine.seed_initial_state()
     sim_engine.start()
     asyncio.create_task(sim_engine.generate_sensor_data())
+    probe_lakehouse_cloud_sync()
     
     # 注册 Marine Channels
     try:
@@ -426,9 +617,8 @@ async def startup_event():
     
     logger.info("✅ Poseidon Server started")
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """关闭事件"""
+async def stop_poseidon_services():
+    """关闭后台服务与 AI Native 协调逻辑。"""
     global coordination_task
     sim_engine.stop()
     if coordination_task:
@@ -437,6 +627,7 @@ async def shutdown_event():
             await coordination_task
         except asyncio.CancelledError:
             pass
+        coordination_task = None
     data_lakehouse.shutdown()
     logger.info("🛑 Poseidon Server stopped")
 
@@ -524,13 +715,23 @@ async def query_channel(channel_name: str, payload: dict):
 @app.get("/api/v1/sensors")
 async def get_sensors():
     """获取传感器列表"""
+    sensors: List[Dict[str, Any]] = []
+    for item in SENSOR_CATALOG:
+        row: Dict[str, Any] = dict(item)
+        latest = sensor_cache.get(item["id"])
+        if latest:
+            row.update(
+                {
+                    "latest_value": latest.value,
+                    "unit": latest.unit,
+                    "timestamp": latest.timestamp,
+                    "quality": latest.quality,
+                }
+            )
+        sensors.append(row)
+
     return {
-        "sensors": [
-            {"id": "GPS-001", "type": "GPS", "description": "GPS 接收机"},
-            {"id": "COMPASS-001", "type": "COMPASS", "description": "罗经"},
-            {"id": "LOG-001", "type": "SPEED_LOG", "description": "计程仪"},
-            {"id": "ECHO-001", "type": "ECHO_SOUNDER", "description": "测深仪"},
-        ]
+        "sensors": sensors
     }
 
 @app.get("/api/v1/sensors/{sensor_id}/data")
@@ -543,7 +744,7 @@ async def get_sensor_data(sensor_id: str):
 @app.get("/api/v1/ais/targets")
 async def get_ais_targets():
     """获取 AIS 目标"""
-    return {"targets": [t.dict() for t in ais_targets.values()]}
+    return {"targets": [t.model_dump() for t in ais_targets.values()]}
 
 @app.get("/api/v1/engine/status")
 async def get_engine_status():
@@ -565,13 +766,22 @@ async def get_engine_status():
     except Exception:
         pass
     if not engine_status:
-        raise HTTPException(status_code=404, detail="Engine status not available")
+        return {
+            "engine_id": "ENG-001",
+            "status": "initializing",
+            "rpm": None,
+            "load": None,
+            "cooling_water_temp": None,
+            "lube_oil_pressure": None,
+            "fuel_consumption": None,
+            "alerts": [],
+        }
     return engine_status
 
 @app.get("/api/v1/alerts")
 async def get_alerts():
     """获取报警列表"""
-    return {"alerts": [a.dict() for a in alarms]}
+    return {"alerts": [a.model_dump() for a in alarms]}
 
 
 @app.get("/api/v1/worldmonitor/ais")
@@ -852,6 +1062,56 @@ async def replay_ai_native_memory(
     }
 
 
+@app.get("/api/v1/ai-native/memory/analytics/status")
+async def get_ai_native_memory_analytics_status():
+    """返回 AI Native 湖仓分析能力状态。"""
+    return {
+        "status": "ready",
+        "storage_profile": data_lakehouse.get_storage_profile(),
+        "lakehouse_status": data_lakehouse.get_status(),
+    }
+
+
+@app.post("/api/v1/ai-native/memory/archive")
+async def archive_ai_native_memory(payload: MemoryArchiveRequest):
+    """将 AI Native 记忆层事件归档为 Parquet。"""
+    try:
+        parquet_path = data_lakehouse.archive_events_to_parquet(
+            output_path=payload.output_path,
+            event_type=payload.event_type,
+            limit=payload.limit,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to archive events: {exc}")
+
+    return {
+        "status": "archived",
+        "event_type": payload.event_type,
+        "limit": payload.limit,
+        "parquet_path": parquet_path,
+    }
+
+
+@app.post("/api/v1/ai-native/memory/analytics/query")
+async def query_ai_native_memory_analytics(payload: MemoryAnalyticsQueryRequest):
+    """基于 DuckDB 执行 AI Native 记忆层即席分析。"""
+    try:
+        rows = data_lakehouse.run_duckdb_query(
+            payload.sql,
+            parquet_path=payload.parquet_path,
+            event_type=payload.event_type,
+            limit=payload.limit,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Analytics query failed: {exc}")
+
+    return {
+        "count": len(rows),
+        "event_type": payload.event_type,
+        "rows": rows,
+    }
+
+
 @app.post("/api/v1/ai-native/decision/feedback/log")
 async def log_decision_feedback(payload: DecisionFeedbackRequest):
     """记录决策反馈并回写到 AI Native 记忆层。"""
@@ -902,6 +1162,9 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     active_connections.append(websocket)
     logger.info(f"📡 WebSocket client connected. Total: {len(active_connections)}")
+
+    # 连接建立后立即推送一帧，减少前端首屏等待。
+    await sim_engine.broadcast_update()
     
     try:
         while True:
@@ -929,6 +1192,7 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/health")
 async def health_check():
     """健康检查"""
+    memory_status = data_lakehouse.get_status()
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
@@ -937,7 +1201,9 @@ async def health_check():
         "ais_targets": len(ais_targets),
         "alarms": len(alarms),
         "ai_native": coordination_status,
-        "memory": data_lakehouse.get_status(),
+        "memory": memory_status,
+        "cloud_sync": memory_status.get("cloud_adapter", {}),
+        "lakehouse_health": memory_status.get("health", {}),
     }
 
 # ==================== API Extensions ====================

@@ -5,6 +5,113 @@ DoubleBoatClawSystem 单元测试 - 后端模块
 """
 
 import pytest
+import os
+
+
+def test_build_lakehouse_config_supports_env_override(monkeypatch):
+    import main
+
+    monkeypatch.setenv("POSEIDON_LAKEHOUSE_CLOUD_TYPE", "s3")
+    monkeypatch.setenv("POSEIDON_LAKEHOUSE_S3_ENDPOINT_URL", "http://127.0.0.1:9000")
+    monkeypatch.setenv("POSEIDON_LAKEHOUSE_S3_BUCKET", "poseidon-test")
+    monkeypatch.setenv("POSEIDON_LAKEHOUSE_S3_VERIFY_SSL", "false")
+    monkeypatch.setenv("POSEIDON_LAKEHOUSE_S3_AUTO_CREATE_BUCKET", "true")
+    monkeypatch.setenv("POSEIDON_LAKEHOUSE_DB_PATH", "storage/custom-events.db")
+
+    config = main.build_lakehouse_config()
+
+    assert config["cloud_type"] == "s3"
+    assert config["cloud_config"]["endpoint_url"] == "http://127.0.0.1:9000"
+    assert config["cloud_config"]["bucket_name"] == "poseidon-test"
+    assert config["cloud_config"]["verify_ssl"] is False
+    assert config["cloud_config"]["auto_create_bucket"] is True
+    assert config["store_config"]["db_path"].endswith("storage/custom-events.db")
+
+
+def test_probe_lakehouse_cloud_sync_reports_created_bucket():
+    import main
+
+    class FakeCloudAdapter:
+        def get_bucket_info(self):
+            return {
+                "bucket": "poseidon-test",
+                "endpoint_url": "http://127.0.0.1:9000",
+                "available": True,
+                "created": True,
+            }
+
+    class FakeLakehouse:
+        cloud_adapter = FakeCloudAdapter()
+
+    original_lakehouse = main.data_lakehouse
+    main.data_lakehouse = FakeLakehouse()
+    try:
+        payload = main.probe_lakehouse_cloud_sync()
+        assert payload["available"] is True
+        assert payload["created"] is True
+        assert payload["bucket"] == "poseidon-test"
+    finally:
+        main.data_lakehouse = original_lakehouse
+
+
+def test_lifecycle_service_wrappers_start_and_stop(monkeypatch):
+    import asyncio
+    import main
+
+    events = []
+
+    async def fake_start():
+        events.append("start")
+
+    async def fake_stop():
+        events.append("stop")
+
+    monkeypatch.setattr(main, "start_poseidon_services", fake_start)
+    monkeypatch.setattr(main, "stop_poseidon_services", fake_stop)
+
+    async def run_lifespan():
+        async with main.poseidon_lifespan(main.app):
+            events.append("inside")
+
+    asyncio.run(run_lifespan())
+
+    assert events == ["start", "inside", "stop"]
+
+
+def test_health_check_exposes_cloud_sync_summary(monkeypatch):
+    import asyncio
+    import main
+
+    class FakeLakehouse:
+        def get_status(self):
+            return {
+                "cloud_adapter": {
+                    "type": "S3CompatibleAdapter",
+                    "available": True,
+                    "info": {
+                        "bucket": "poseidon-test",
+                        "endpoint_url": "http://127.0.0.1:9000",
+                        "available": True,
+                    },
+                },
+                "health": {
+                    "local_store_ready": True,
+                    "cloud_sync_configured": True,
+                    "cloud_sync_available": True,
+                    "analytics_ready": True,
+                },
+            }
+
+    original_lakehouse = main.data_lakehouse
+    main.data_lakehouse = FakeLakehouse()
+    try:
+        payload = asyncio.run(main.health_check())
+        assert payload["status"] == "healthy"
+        assert payload["cloud_sync"]["type"] == "S3CompatibleAdapter"
+        assert payload["lakehouse_health"]["cloud_sync_available"] is True
+        assert payload["memory"]["cloud_adapter"]["info"]["bucket"] == "poseidon-test"
+    finally:
+        main.data_lakehouse = original_lakehouse
 import sys
 from pathlib import Path
 

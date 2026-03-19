@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoubleBoatClawSystem - 数字孪生监控平台</title>
+    <script>
+        if (new URLSearchParams(window.location.search).get('embed') === '1') {
+            document.documentElement.classList.add('embed-mode');
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -17,6 +22,10 @@
             color: #ffffff;
             overflow: hidden;
             height: 100vh;
+        }
+
+        html.embed-mode body {
+            background: radial-gradient(circle at top, #15314a 0%, #091321 48%, #050a12 100%);
         }
 
         /* 顶部状态栏 */
@@ -33,6 +42,12 @@
             padding: 0 20px;
             z-index: 1000;
             border-bottom: 2px solid #4a90e2;
+        }
+
+        html.embed-mode .status-bar,
+        html.embed-mode .search-panel,
+        html.embed-mode .ais-panel {
+            display: none;
         }
 
         .status-bar h1 {
@@ -116,6 +131,16 @@
             overflow-y: auto;
         }
 
+        html.embed-mode .data-panel {
+            left: 16px;
+            top: 16px;
+            width: 288px;
+            max-height: calc(100vh - 32px);
+            background: linear-gradient(180deg, rgba(5, 16, 28, 0.9) 0%, rgba(7, 16, 30, 0.74) 100%);
+            border-color: rgba(115, 230, 255, 0.16);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+        }
+
         .data-panel h2 {
             font-size: 16px;
             margin-bottom: 15px;
@@ -188,6 +213,15 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             max-height: calc(100vh - 90px);
             overflow-y: auto;
+        }
+
+        html.embed-mode .alarm-panel {
+            right: 16px;
+            top: 16px;
+            width: 264px;
+            max-height: 228px;
+            background: linear-gradient(180deg, rgba(31, 10, 18, 0.88) 0%, rgba(18, 8, 14, 0.72) 100%);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
         }
 
         .alarm-panel h2 {
@@ -285,6 +319,29 @@
             border: 1px solid rgba(115, 230, 255, 0.18);
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
             backdrop-filter: blur(12px);
+        }
+
+        html.embed-mode .cockpit-panel {
+            right: 16px;
+            top: auto;
+            bottom: 16px;
+            width: 380px;
+            max-height: calc(100vh - 276px);
+            padding: 16px;
+            background: linear-gradient(180deg, rgba(6, 19, 34, 0.9) 0%, rgba(6, 14, 24, 0.82) 100%);
+        }
+
+        html.embed-mode .cockpit-grid {
+            gap: 10px;
+        }
+
+        html.embed-mode .cockpit-card {
+            padding: 12px;
+        }
+
+        html.embed-mode .data-card,
+        html.embed-mode .alarm-item {
+            background: rgba(255, 255, 255, 0.04);
         }
 
         .cockpit-header {
@@ -635,6 +692,20 @@
             .cockpit-grid {
                 grid-template-columns: 1fr;
             }
+
+            html.embed-mode .data-panel,
+            html.embed-mode .alarm-panel,
+            html.embed-mode .cockpit-panel {
+                position: static;
+                width: calc(100% - 24px);
+                margin: 12px;
+                max-height: none;
+            }
+
+            html.embed-mode body {
+                overflow: auto;
+                height: auto;
+            }
         }
     </style>
 </head>
@@ -651,6 +722,7 @@
                 <span>🕐</span>
                 <span id="clock">--:--:--</span>
             </div>
+            <a href="/captain-cockpit.html" target="_blank">🎛️ 返回船长智能中控台</a>
             <a href="/poseidon-config.html" target="_blank">⚙️ LLM 配置</a>
             <div class="status-item" id="llm-status" style="font-size: 12px; color: #888;">
                 🧠 LLM: 未配置
@@ -840,6 +912,14 @@
             <div class="data-row">
                 <span class="data-label">记忆层</span>
                 <span class="data-value" id="ai-memory-store">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">云同步</span>
+                <span class="data-value" id="ai-cloud-sync">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">湖仓分析</span>
+                <span class="data-value" id="ai-analytics-state">--</span>
             </div>
             <div class="data-row">
                 <span class="data-label">融合轨迹</span>
@@ -1318,6 +1398,9 @@
                 const decision = data.decision || {};
                 const captain = data.captain_agent || {};
                 const memory = data.memory || {};
+                const lakehouseHealth = memory.health || {};
+                const cloudSync = memory.cloud_adapter || {};
+                const cloudInfo = cloudSync.info || {};
                 const worldmonitor = data.worldmonitor || {};
                 const aiRiskEl = document.getElementById('ai-risk-level');
                 const aiComplianceEl = document.getElementById('ai-compliance-status');
@@ -1334,6 +1417,12 @@
                 const memoryStoreType = memory.local_store?.type || '--';
                 document.getElementById('ai-captain-cycle').textContent = lastCycle.timestamp ? `RUN ${lastCycle.coordination_runs || 0}` : 'IDLE';
                 document.getElementById('ai-memory-store').textContent = memoryStoreType.toUpperCase();
+                document.getElementById('ai-cloud-sync').textContent = lakehouseHealth.cloud_sync_available
+                    ? `${(cloudInfo.bucket || cloudSync.type || 'CLOUD').toUpperCase()}`
+                    : (lakehouseHealth.cloud_sync_configured ? 'DEGRADED' : 'LOCAL');
+                document.getElementById('ai-analytics-state').textContent = lakehouseHealth.analytics_ready
+                    ? `${(memory.storage_profile?.analytics_engine || 'duckdb').toUpperCase()}`
+                    : 'OFF';
                 document.getElementById('ai-summary').textContent = decision.summary || (Array.isArray(compliance.recommended_actions) ? compliance.recommended_actions[0] : '--');
                 const wmModeEl = document.getElementById('wm-mode');
                 if (wmModeEl) {
@@ -1374,13 +1463,20 @@
                 aiComplianceEl.className = 'data-value';
                 const aiCaptainEl = document.getElementById('ai-captain-cycle');
                 const aiMemoryEl = document.getElementById('ai-memory-store');
+                const aiCloudEl = document.getElementById('ai-cloud-sync');
+                const aiAnalyticsEl = document.getElementById('ai-analytics-state');
                 aiCaptainEl.className = 'data-value';
                 aiMemoryEl.className = 'data-value';
+                aiCloudEl.className = 'data-value';
+                aiAnalyticsEl.className = 'data-value';
                 if (riskValue === 'HIGH' || riskValue === 'DANGER') aiRiskEl.classList.add('critical');
                 else if (riskValue === 'MEDIUM' || riskValue === 'WARNING') aiRiskEl.classList.add('warning');
                 if (complianceValue.includes('ATTENTION')) aiComplianceEl.classList.add('warning');
                 if (lastCycle.timestamp) aiCaptainEl.classList.add('ok');
                 if (memory.local_store?.available) aiMemoryEl.classList.add('ok');
+                if (lakehouseHealth.cloud_sync_available) aiCloudEl.classList.add('ok');
+                else if (lakehouseHealth.cloud_sync_configured) aiCloudEl.classList.add('warning');
+                if (lakehouseHealth.analytics_ready) aiAnalyticsEl.classList.add('ok');
                 renderCaptainCockpit(data);
             } catch (error) {
                 console.error('Failed to update dashboard:', error);
@@ -1414,6 +1510,10 @@
             const captain = data.captain_agent || {};
             const decision = data.decision || {};
             const memory = data.memory || {};
+            const lakehouseHealth = memory.health || {};
+            const cloudSync = memory.cloud_adapter || {};
+            const cloudInfo = cloudSync.info || {};
+            const perception = data.perception || {};
             const coordination = captain.coordination || {};
             const lastCycle = coordination.last_cycle || {};
             const maintenanceActions = decision.maintenance_report?.actions || [];
@@ -1427,7 +1527,9 @@
             document.getElementById('captain-loop-state').textContent = coordination.running ? 'RUN' : 'IDLE';
             document.getElementById('captain-runs').textContent = coordination.runs ?? '--';
             document.getElementById('captain-last-cycle').textContent = formatTime(lastCycle.timestamp);
-            document.getElementById('captain-memory-availability').textContent = memory.local_store?.available ? (memory.local_store?.type || 'READY') : 'OFF';
+            document.getElementById('captain-memory-availability').textContent = memory.local_store?.available
+                ? `${memory.local_store?.type || 'READY'} / ${lakehouseHealth.cloud_sync_available ? 'CLOUD' : (lakehouseHealth.cloud_sync_configured ? 'DEGRADED' : 'LOCAL')}`
+                : 'OFF';
             document.getElementById('captain-decision-summary').textContent = decision.summary || '等待决策包...';
             document.getElementById('cockpit-last-sync').textContent = `最近同步 ${formatTime(lastCycle.timestamp || new Date().toISOString())}`;
 
@@ -1449,7 +1551,7 @@
                         <span>M${index + 1}</span>
                     </div>
                 `).join('')
-                : '<div class="cockpit-list-item"><span>暂无新增运维动作。</span><span>STANDBY</span></div>';
+                : `<div class="cockpit-list-item"><span>暂无新增运维动作。云同步 ${escapeHtml(cloudInfo.bucket || cloudSync.type || 'local')} / 分析 ${escapeHtml(memory.storage_profile?.analytics_engine || '--')}</span><span>${lakehouseHealth.analytics_ready ? 'READY' : 'STANDBY'}</span></div>`;
 
             const taskGraphList = document.getElementById('captain-task-graph-list');
             taskGraphList.innerHTML = Array.isArray(taskGraph.execution_order) && taskGraph.execution_order.length

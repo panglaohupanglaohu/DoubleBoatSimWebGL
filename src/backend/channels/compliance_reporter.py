@@ -3,12 +3,14 @@
 Compliance Reporter - 合规报告生成
 """
 
-from .efficiency_models import ComplianceReport, VesselInfo, VoyageData, CIIResult, EEXIResult, CIIRating
+from .efficiency_models import ComplianceReport, VesselInfo, VoyageData, CIIResult, EEXIResult, CIIRating, FuelType, SEEMPMeasure
 from .cii_calculator import CIICalculator
 from .eexi_calculator import EEXICalculator
 from .seemp_manager import SEEMPManager
+from .efficiency_advisor import EfficiencyAdvisor
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+import json
 
 
 class ComplianceReporter:

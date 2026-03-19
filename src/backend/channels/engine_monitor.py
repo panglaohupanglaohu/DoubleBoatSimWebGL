@@ -14,8 +14,8 @@ Engine Monitor Channel — 船舶主机工况监控.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
-from .base import Channel
+from typing import Any, Dict, List, Optional
+from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 
 
 class AlarmLevel(Enum):
@@ -105,7 +105,7 @@ class EngineStatus:
     last_updated: datetime = field(default_factory=datetime.now)
 
 
-class EngineMonitorChannel(Channel):
+class EngineMonitorChannel(MarineChannel):
     """船舶主机工况监控 Channel.
 
     功能特性:
@@ -142,8 +142,9 @@ class EngineMonitorChannel(Channel):
 
     name = "engine_monitor"
     description = "船舶主机工况监控 (温度/压力/转速/报警)"
-    backends = []
-    tier = 0  # zero-config, 内置解析器
+    version = "1.0.0"
+    priority = ChannelPriority.P0
+    dependencies: List[str] = []
 
     def __init__(
         self,
@@ -158,6 +159,7 @@ class EngineMonitorChannel(Channel):
             alarm_enabled: 是否启用报警检测.
             data_retention_hours: 历史数据保留时长 (小时).
         """
+        super().__init__()
         self.engine_id = engine_id
         self.alarm_enabled = alarm_enabled
         self.data_retention_hours = data_retention_hours
@@ -482,15 +484,31 @@ class EngineMonitorChannel(Channel):
 
         return self.get_engine_status()
 
+    def initialize(self) -> bool:
+        self._initialized = True
+        self._running = True
+        self._set_health(ChannelStatus.OK, "主机监控就绪")
+        return True
+
+    def get_status(self) -> Dict[str, Any]:
+        engine_status = self.get_engine_status()
+        return {
+            "name": self.name,
+            "version": self.version,
+            "initialized": self._initialized,
+            "health": self._health.status.value,
+            "health_message": self._health.message,
+            "engine_id": self.engine_id,
+            "parameters_count": len(self.parameters),
+            "active_alarms": len(self.get_active_alarms()),
+            "status_text": engine_status.status_text,
+        }
+
+    def shutdown(self) -> bool:
+        self._initialized = False
+        self._running = False
+        self._set_health(ChannelStatus.OFF, "Shutdown")
+        return True
+
     def can_handle(self, url: str) -> bool:
-        """Check if this channel can handle the given URL.
-
-        Engine monitor doesn't process URLs, always returns False.
-
-        Args:
-            url: URL to check.
-
-        Returns:
-            False (this channel doesn't handle URLs).
-        """
         return False

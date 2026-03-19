@@ -20,10 +20,10 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 import logging
-import json
 import os
+from pathlib import Path
 
-from .event_store import EventStore, JSONLStore, SQLiteStore, get_store
+from .event_store import EventStore, get_store
 from .cloud_sync import CloudStorageAdapter, get_adapter
 
 
@@ -44,6 +44,8 @@ class DataLakehouse:
         self.cloud_adapter: Optional[CloudStorageAdapter] = None
         self.event_buffer: List[Dict[str, Any]] = []
         self.buffer_max_size = self.config.get("buffer_max_size", 100)
+        self.analytics_cache_dir = Path(self.config.get("analytics_cache_dir", "./storage/analytics_cache"))
+        self.analytics_cache_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize local store
         store_type = self.config.get("store_type", "sqlite")
@@ -134,8 +136,68 @@ class DataLakehouse:
             "archive_format": archive_format,
             "analytics_engine": analytics_engine,
             "cloud_sync": cloud_type,
+            "duckdb_available": analytics_engine == "duckdb",
             "recommended_stack": ["sqlite", archive_format, analytics_engine, "s3-compatible-sync"],
         }
+
+    def archive_events_to_parquet(
+        self,
+        output_path: Optional[str] = None,
+        event_type: Optional[str] = None,
+        limit: int = 100000,
+    ) -> str:
+        """将当前事件归档到 Parquet，供 DuckDB 即席分析使用。"""
+        if self.event_buffer:
+            self._flush_buffer_to_local()
+
+        events = self.query_events(event_type=event_type, limit=limit)
+        target_path = output_path or str(
+            self.analytics_cache_dir / f"{event_type or 'all_events'}.parquet"
+        )
+
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        rows = [
+            {
+                "timestamp": event.get("timestamp"),
+                "event_type": event.get("event_type"),
+                "source": event.get("source"),
+                "payload": event.get("payload", {}),
+                "confidence": event.get("confidence", 1.0),
+            }
+            for event in events
+        ]
+        table = pa.Table.from_pylist(rows or [{
+            "timestamp": None,
+            "event_type": None,
+            "source": None,
+            "payload": {},
+            "confidence": None,
+        }])
+        pq.write_table(table, target_path)
+        return target_path
+
+    def run_duckdb_query(
+        self,
+        sql: str,
+        parquet_path: Optional[str] = None,
+        event_type: Optional[str] = None,
+        limit: int = 100000,
+    ) -> List[Dict[str, Any]]:
+        """使用 DuckDB 对 Parquet 归档执行即席分析。"""
+        archive_path = parquet_path or self.archive_events_to_parquet(event_type=event_type, limit=limit)
+
+        import duckdb
+
+        conn = duckdb.connect(database=':memory:')
+        escaped_path = archive_path.replace("'", "''")
+        conn.execute(f"CREATE VIEW lakehouse_events AS SELECT * FROM read_parquet('{escaped_path}')")
+        result = conn.execute(sql)
+        columns = [item[0] for item in result.description]
+        rows = [dict(zip(columns, row)) for row in result.fetchall()]
+        conn.close()
+        return rows
 
     def get_memory_profile(self, limit: int = 50) -> Dict[str, Any]:
         """生成近期记忆概况，供协调层和驾驶台消费。"""
@@ -188,6 +250,7 @@ class DataLakehouse:
             "storage_profile": self.get_storage_profile(),
             "buffer_size": len(self.event_buffer),
             "buffer_max_size": self.buffer_max_size,
+            "analytics_cache_dir": str(self.analytics_cache_dir),
             "memory_profile": self.get_memory_profile(limit=20) if self.local_store is not None else {},
         }
         
@@ -199,6 +262,23 @@ class DataLakehouse:
                     status["local_store"]["info"] = info()
             except Exception:
                 pass
+
+        if self.cloud_adapter:
+            try:
+                status["cloud_adapter"]["info"] = self.cloud_adapter.get_bucket_info()
+            except Exception as exc:
+                status["cloud_adapter"]["info"] = {
+                    "available": False,
+                    "error": str(exc),
+                }
+
+        cloud_info = status["cloud_adapter"].get("info", {})
+        status["health"] = {
+            "local_store_ready": status["local_store"]["available"],
+            "cloud_sync_configured": self.cloud_adapter is not None,
+            "cloud_sync_available": bool(cloud_info.get("available", False)),
+            "analytics_ready": bool(status["storage_profile"].get("duckdb_available", False)),
+        }
         
         return status
     

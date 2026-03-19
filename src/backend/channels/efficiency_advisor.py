@@ -3,11 +3,12 @@
 Efficiency Advisor - 能效优化建议
 """
 
-from .efficiency_models import EfficiencyRecommendation, VesselInfo, VoyageData, EngineData, CIIRating, EEXIResult
+from .efficiency_models import EfficiencyRecommendation, VesselInfo, VoyageData, EngineData, CIIRating, CIIResult, EEXIResult
 from .cii_calculator import CIICalculator
 from .eexi_calculator import EEXICalculator
 from .seemp_manager import SEEMPManager
 from typing import Optional, Dict, Any, List
+from datetime import datetime, timedelta
 
 
 class EfficiencyAdvisor:

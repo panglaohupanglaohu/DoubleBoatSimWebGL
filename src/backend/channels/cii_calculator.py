@@ -3,8 +3,9 @@
 CII Calculator - 船舶 CII 指数计算器
 """
 
-from .efficiency_models import VesselInfo, CIIResult, CIIRating, FuelType
-from typing import Optional, Dict, Any, Tuple
+from .efficiency_models import VesselInfo, CIIResult, CIIRating, FuelType, VoyageData
+from .eexi_calculator import EEXICalculator
+from typing import Optional, Dict, Any, Tuple, List
 from datetime import datetime
 import math
 

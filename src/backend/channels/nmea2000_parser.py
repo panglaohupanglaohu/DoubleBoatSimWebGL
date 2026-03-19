@@ -23,7 +23,7 @@ from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .base import Channel
+from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class NMEA2000Message:
     category: PGNClass
 
 
-class NMEA2000ParserChannel(Channel):
+class NMEA2000ParserChannel(MarineChannel):
     """
     NMEA 2000 解析器 Channel
     
@@ -131,7 +131,10 @@ class NMEA2000ParserChannel(Channel):
     
     name = "nmea2000_parser"
     description = "NMEA 2000 CAN bus 协议解析器"
-    
+    version = "1.0.0"
+    priority = ChannelPriority.P0
+    dependencies: list = []
+
     def __init__(self):
         super().__init__()
         self.pgn_definitions: Dict[int, PGNDefinition] = {}
@@ -690,3 +693,25 @@ class NMEA2000ParserChannel(Channel):
             bool: 是否可以处理
         """
         return False
+
+    def initialize(self) -> bool:
+        self._initialized = True
+        self._set_health(ChannelStatus.OK, f"NMEA2000 解析器就绪 ({len(self.pgn_definitions)} PGNs)")
+        return True
+
+    def get_status(self) -> Dict[str, Any]:
+        stats = self.get_statistics()
+        return {
+            "name": self.name,
+            "version": self.version,
+            "initialized": self._initialized,
+            "health": self._health.status.value,
+            "health_message": self._health.message,
+            "statistics": stats,
+        }
+
+    def shutdown(self) -> bool:
+        self._initialized = False
+        self.clear_messages()
+        self._set_health(ChannelStatus.OFF, "Shutdown")
+        return True

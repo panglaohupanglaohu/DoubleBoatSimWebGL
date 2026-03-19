@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>船长智能中控台 - Poseidon-X</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07111f;
+            --panel: rgba(9, 22, 39, 0.86);
+            --panel-strong: rgba(9, 22, 39, 0.96);
+            --line: rgba(125, 207, 255, 0.18);
+            --cyan: #7ddcff;
+            --cyan-strong: #35c8ff;
+            --lime: #98f5a7;
+            --amber: #ffcf70;
+            --red: #ff7d7d;
+            --text: #eef7ff;
+            --muted: #94a9bc;
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(53, 200, 255, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(152, 245, 167, 0.12), transparent 24%),
+                linear-gradient(180deg, #06101d 0%, #091727 56%, #07111f 100%);
+        }
+
+        .shell {
+            padding: 18px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .topbar,
+        .panel,
+        .frame-card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .topbar {
+            border-radius: 20px;
+            padding: 18px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--cyan);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 30px;
+            line-height: 1;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            max-width: 760px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .action-link,
+        .chip,
+        .command-button {
+            border: 1px solid rgba(125, 220, 255, 0.24);
+            background: rgba(125, 220, 255, 0.08);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 10px 14px;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .action-link:hover,
+        .chip:hover,
+        .command-button:hover {
+            transform: translateY(-1px);
+            background: rgba(125, 220, 255, 0.15);
+            border-color: rgba(125, 220, 255, 0.4);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .metric {
+            border-radius: 18px;
+            padding: 16px;
+            min-height: 108px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric::after {
+            content: '';
+            position: absolute;
+            inset: auto -20px -40px auto;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(125, 220, 255, 0.16), transparent 70%);
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .metric-note {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1.8fr) minmax(360px, 0.95fr);
+            gap: 16px;
+            min-height: calc(100vh - 250px);
+        }
+
+        .frame-card {
+            border-radius: 22px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 420px;
+        }
+
+        .frame-header,
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .frame-title,
+        .panel-title {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .frame-title strong,
+        .panel-title strong {
+            font-size: 16px;
+        }
+
+        .frame-title span,
+        .panel-title span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        iframe {
+            width: 100%;
+            border: 0;
+            background: #06101d;
+        }
+
+        .twin-frame {
+            flex: 1;
+            min-height: 720px;
+        }
+
+        .sidebar {
+            display: grid;
+            gap: 16px;
+            grid-template-rows: auto auto minmax(260px, 1fr) minmax(260px, 1fr);
+        }
+
+        .panel {
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .panel-body {
+            padding: 16px 18px 18px;
+        }
+
+        .list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .list-item strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .list-item span,
+        .list-item small {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .badge {
+            align-self: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: rgba(125, 220, 255, 0.12);
+            color: var(--cyan);
+            white-space: nowrap;
+        }
+
+        .command-form {
+            display: grid;
+            gap: 10px;
+        }
+
+        .command-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(125, 220, 255, 0.16);
+            background: rgba(0, 0, 0, 0.24);
+            color: var(--text);
+            font: inherit;
+        }
+
+        .command-response {
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 14px;
+            min-height: 136px;
+            color: var(--text);
+            white-space: pre-wrap;
+            line-height: 1.45;
+            font-size: 13px;
+        }
+
+        .command-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .map-frame {
+            min-height: 320px;
+        }
+
+        .map-shell {
+            position: relative;
+            min-height: 320px;
+            background:
+                radial-gradient(circle at top, rgba(0, 214, 255, 0.16), transparent 36%),
+                linear-gradient(180deg, rgba(7, 21, 36, 0.96) 0%, rgba(6, 16, 28, 0.88) 100%);
+        }
+
+        .map-canvas {
+            height: 320px;
+        }
+
+        .map-overlay {
+            position: absolute;
+            inset: 14px 14px auto 14px;
+            display: grid;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .map-summary,
+        .traffic-strip {
+            pointer-events: auto;
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            background: rgba(5, 15, 27, 0.72);
+            border: 1px solid rgba(125, 220, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+        }
+
+        .map-summary {
+            padding: 10px 12px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 10px;
+        }
+
+        .map-summary-item small {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            margin-bottom: 3px;
+        }
+
+        .map-summary-item strong {
+            font-size: 13px;
+        }
+
+        .traffic-strip {
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .traffic-chip {
+            min-width: 118px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .traffic-chip small {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .traffic-chip strong {
+            font-size: 13px;
+        }
+
+        .traffic-chip.is-high {
+            border-color: rgba(255, 114, 114, 0.28);
+            background: rgba(255, 114, 114, 0.12);
+        }
+
+        .ownship-marker,
+        .target-marker {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .ownship-marker {
+            width: 20px;
+            height: 20px;
+            background: #7ddcff;
+            box-shadow: 0 0 18px rgba(125, 220, 255, 0.65);
+        }
+
+        .target-marker {
+            background: #6ef5a1;
+        }
+
+        .target-marker.is-medium {
+            background: #ffc857;
+        }
+
+        .target-marker.is-high {
+            background: #ff7272;
+        }
+
+        .maplibregl-popup-content {
+            background: rgba(7, 18, 32, 0.96);
+            color: var(--text);
+            border: 1px solid rgba(125, 220, 255, 0.16);
+            border-radius: 14px;
+            padding: 10px 12px;
+        }
+
+        .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+        .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+        .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+            border-top-color: rgba(7, 18, 32, 0.96);
+        }
+
+        .footer-note {
+            color: var(--muted);
+            font-size: 12px;
+            text-align: right;
+            padding: 0 6px;
+        }
+
+        @media (max-width: 1440px) {
+            .metrics {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                grid-template-rows: auto auto auto auto;
+            }
+
+            .twin-frame {
+                min-height: 560px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .metrics {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <div class="title-wrap">
+                <div class="eyebrow">Poseidon-X / Captain Console</div>
+                <h1>船长智能中控台</h1>
+                <div class="subtitle">同屏整合数字孪生、WorldMonitor、AI Native 任务图、RCS/SHM 与 OpenBridge 命令交互。</div>
+            </div>
+            <div class="action-row">
+                <a class="action-link" href="/worldmonitor-ar-cas-pro.html" target="_blank" rel="noopener noreferrer">打开 AR-CAS Pro</a>
+                <a class="action-link" href="/worldmonitor-map.html" target="_blank" rel="noopener noreferrer">打开 WorldMonitor 地图</a>
+                <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">打开数字孪生</a>
+                <a class="action-link" href="/poseidon-config.html" target="_blank" rel="noopener noreferrer">LLM 配置</a>
+            </div>
+        </header>
+
+        <section class="metrics">
+            <div class="panel metric">
+                <div class="metric-label">系统健康</div>
+                <div class="metric-value" id="metric-health">--</div>
+                <div class="metric-note" id="metric-backend">Backend waiting</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">任务图节点</div>
+                <div class="metric-value" id="metric-task-graph">--</div>
+                <div class="metric-note" id="metric-autonomy">Mode --</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">碰撞风险</div>
+                <div class="metric-value" id="metric-risk">--</div>
+                <div class="metric-note" id="metric-scene">Scene --</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">RCS 控制</div>
+                <div class="metric-value" id="metric-rcs">--</div>
+                <div class="metric-note" id="metric-comfort">MSDV --</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">结构健康</div>
+                <div class="metric-value" id="metric-shm">--</div>
+                <div class="metric-note" id="metric-life">Life --</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">记忆与态势</div>
+                <div class="metric-value" id="metric-memory">--</div>
+                <div class="metric-note" id="metric-ais">AIS --</div>
+            </div>
+        </section>
+
+        <section class="workspace">
+            <article class="frame-card">
+                <div class="frame-header">
+                    <div class="frame-title">
+                        <strong>数字孪生主视图</strong>
+                        <span>3D 船体、Captain-Agent cockpit、RCS/SHM、WorldMonitor 卡片同屏运行</span>
+                    </div>
+                    <div class="badge" id="twin-sync-badge">SYNC WAIT</div>
+                </div>
+                <iframe class="twin-frame" src="/digital-twin.html?embed=1" title="数字孪生驾驶台"></iframe>
+            </article>
+
+            <aside class="sidebar">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>决策摘要</strong>
+                            <span>Mission brief / action plan</span>
+                        </div>
+                        <div class="badge" id="decision-badge">ADVISORY</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="list" id="action-plan-list">
+                            <div class="list-item"><div><strong>等待数据</strong><span>正在拉取决策包...</span></div><div class="badge">INIT</div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="frame-card map-frame">
+                    <div class="frame-header">
+                        <div class="frame-title">
+                            <strong>WorldMonitor 海图</strong>
+                            <span>原生海图嵌入，直接显示本船、AIS 目标与气象摘要</span>
+                        </div>
+                        <a class="action-link" href="/worldmonitor-map.html" target="_blank" rel="noopener noreferrer">新窗口</a>
+                    </div>
+                    <div class="map-shell">
+                        <div class="map-canvas" id="cockpit-map" aria-label="WorldMonitor 海图"></div>
+                        <div class="map-overlay">
+                            <div class="map-summary" id="map-summary">
+                                <div class="map-summary-item"><small>本船位置</small><strong id="map-ownship-position">--</strong></div>
+                                <div class="map-summary-item"><small>目标态势</small><strong id="map-target-count">AIS --</strong></div>
+                                <div class="map-summary-item"><small>气象风浪</small><strong id="map-weather-summary">风 -- / 浪 --</strong></div>
+                                <div class="map-summary-item"><small>值班提示</small><strong id="map-watch-summary">等待同步</strong></div>
+                            </div>
+                            <div class="traffic-strip" id="map-traffic-list">
+                                <div class="traffic-chip"><small>TRAFFIC</small><strong>等待 AIS 数据</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>OpenBridge 命令台</strong>
+                            <span>直接向船长智能体发命令，返回任务图和控制摘要</span>
+                        </div>
+                        <div class="badge" id="command-badge">READY</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="command-chips">
+                            <button class="chip" type="button" data-command="任务图">任务图</button>
+                            <button class="chip" type="button" data-command="碰撞风险">碰撞风险</button>
+                            <button class="chip" type="button" data-command="舒适控制">舒适控制</button>
+                            <button class="chip" type="button" data-command="结构健康">结构健康</button>
+                            <button class="chip" type="button" data-command="主机状态">主机状态</button>
+                        </div>
+                        <form class="command-form" id="command-form" style="margin-top: 12px;">
+                            <input class="command-input" id="command-input" type="text" placeholder="输入船长命令，例如：请切到舒适控制并摘要当前任务图">
+                            <button class="command-button" type="submit">执行命令</button>
+                        </form>
+                        <div class="command-response" id="command-response">等待命令输入...</div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>关键控制带</strong>
+                            <span>RCS / SHM / 记忆层 / WorldMonitor 关键状态</span>
+                        </div>
+                        <div class="badge" id="ops-badge">LIVE</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="list" id="ops-list">
+                            <div class="list-item"><div><strong>等待同步</strong><small>系统初始化中</small></div><div class="badge">WAIT</div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>Lakehouse Analytics</strong>
+                            <span>基于 DuckDB 的船端即席分析预设</span>
+                        </div>
+                        <div class="badge" id="analytics-badge">INIT</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="command-chips" id="analytics-chips">
+                            <button class="chip analytics-chip" type="button" data-query="event-type">事件类型</button>
+                            <button class="chip analytics-chip" type="button" data-query="source">事件来源</button>
+                            <button class="chip analytics-chip" type="button" data-query="timeline">时间分桶</button>
+                        </div>
+                        <div class="command-response" id="analytics-response">等待 analytics 状态...</div>
+                    </div>
+                </section>
+            </aside>
+        </section>
+
+        <div class="footer-note">船长智能中控台基于现有数字孪生与 WorldMonitor 页面复用构建，保持独立入口可用。</div>
+    </div>
+
+    <script>
+        const actionPlanList = document.getElementById('action-plan-list');
+        const opsList = document.getElementById('ops-list');
+        const commandForm = document.getElementById('command-form');
+        const commandInput = document.getElementById('command-input');
+        const commandResponse = document.getElementById('command-response');
+        const chips = [...document.querySelectorAll('.chip')];
+        const analyticsResponse = document.getElementById('analytics-response');
+        const analyticsBadge = document.getElementById('analytics-badge');
+        const analyticsChips = [...document.querySelectorAll('.analytics-chip')];
+        const mapTrafficList = document.getElementById('map-traffic-list');
+        const mapOwnshipPosition = document.getElementById('map-ownship-position');
+        const mapTargetCount = document.getElementById('map-target-count');
+        const mapWeatherSummary = document.getElementById('map-weather-summary');
+        const mapWatchSummary = document.getElementById('map-watch-summary');
+
+        const analyticsQueries = {
+            'event-type': {
+                label: '事件类型分布',
+                sql: 'SELECT event_type, COUNT(*) AS total FROM lakehouse_events GROUP BY event_type ORDER BY total DESC, event_type LIMIT 5'
+            },
+            source: {
+                label: '事件来源分布',
+                sql: 'SELECT source, COUNT(*) AS total FROM lakehouse_events GROUP BY source ORDER BY total DESC, source LIMIT 5'
+            },
+            timeline: {
+                label: '最近时间分桶',
+                sql: "SELECT substr(timestamp, 1, 13) AS hour_bucket, COUNT(*) AS total FROM lakehouse_events WHERE timestamp IS NOT NULL GROUP BY hour_bucket ORDER BY hour_bucket DESC LIMIT 6"
+            }
+        };
+
+        let cockpitMap = null;
+        let cockpitOwnShipMarker = null;
+        let cockpitTrafficMarkers = [];
+        let mapCentered = false;
+
+        function formatValue(value, suffix = '') {
+            if (value === null || value === undefined || value === '') return '--';
+            return `${value}${suffix}`;
+        }
+
+        function formatCommandResult(result) {
+            const focusItems = Array.isArray(result.focus_items) ? result.focus_items.slice(0, 3) : [];
+            const focus = focusItems.map((item) => {
+                if (item.zone) return `- ${item.zone}: ${item.microstrain} µε`;
+                if (item.label && Object.prototype.hasOwnProperty.call(item, 'value')) return `- ${item.label}: ${item.value ?? '--'}`;
+                if (item.title) return `- ${item.title}`;
+                if (item.id) return `- ${item.id}`;
+                return `- ${JSON.stringify(item)}`;
+            }).join('\n');
+            return [
+                `意图: ${result.recognized_intent}`,
+                `模式: ${result.execution_mode}`,
+                `摘要: ${result.summary}`,
+                `操作建议: ${result.operator_action}`,
+                focus ? `重点:\n${focus}` : ''
+            ].filter(Boolean).join('\n');
+        }
+
+        async function fetchJson(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`${url} -> ${response.status}`);
+            }
+            return response.json();
+        }
+
+        function formatAnalyticsRows(title, rows) {
+            if (!rows.length) {
+                return `${title}\n暂无可分析事件。`;
+            }
+
+            return [title].concat(rows.map((row) => {
+                return Object.entries(row).map(([key, value]) => `${key}: ${value ?? '--'}`).join(' | ');
+            })).join('\n');
+        }
+
+        async function refreshAnalyticsStatus() {
+            try {
+                const status = await fetchJson('/api/v1/ai-native/memory/analytics/status');
+                const storageProfile = status.storage_profile || {};
+                const lakehouseStatus = status.lakehouse_status || {};
+                const health = lakehouseStatus.health || {};
+                analyticsBadge.textContent = health.analytics_ready ? 'READY' : 'OFF';
+                analyticsResponse.textContent = [
+                    `状态: ${status.status || '--'}`,
+                    `引擎: ${storageProfile.analytics_engine || '--'}`,
+                    `归档: ${storageProfile.archive_format || '--'}`,
+                    `云同步: ${health.cloud_sync_available ? 'UP' : (health.cloud_sync_configured ? 'DEGRADED' : 'LOCAL')}`,
+                    '点击上方预设执行即席分析。'
+                ].join('\n');
+            } catch (error) {
+                analyticsBadge.textContent = 'ERROR';
+                analyticsResponse.textContent = `analytics 状态读取失败: ${error.message}`;
+            }
+        }
+
+        async function executeAnalyticsQuery(queryKey) {
+            const preset = analyticsQueries[queryKey];
+            if (!preset) {
+                return;
+            }
+
+            analyticsBadge.textContent = 'BUSY';
+            analyticsResponse.textContent = `执行中: ${preset.label}`;
+            try {
+                const response = await fetch('/api/v1/ai-native/memory/analytics/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sql: preset.sql, limit: 5000 })
+                });
+                if (!response.ok) {
+                    throw new Error(`analytics query failed: ${response.status}`);
+                }
+                const data = await response.json();
+                analyticsBadge.textContent = `ROWS ${data.count}`;
+                analyticsResponse.textContent = formatAnalyticsRows(preset.label, data.rows || []);
+            } catch (error) {
+                analyticsBadge.textContent = 'ERROR';
+                analyticsResponse.textContent = `analytics 查询失败: ${error.message}`;
+            }
+        }
+
+        function ensureCockpitMap() {
+            if (cockpitMap || !window.maplibregl) {
+                return cockpitMap;
+            }
+
+            cockpitMap = new maplibregl.Map({
+                container: 'cockpit-map',
+                style: {
+                    version: 8,
+                    sources: {
+                        osm: {
+                            type: 'raster',
+                            tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '© OpenStreetMap Contributors'
+                        }
+                    },
+                    layers: [
+                        {
+                            id: 'osm-tiles',
+                            type: 'raster',
+                            source: 'osm',
+                            minzoom: 0,
+                            maxzoom: 19
+                        }
+                    ]
+                },
+                center: [121.4737, 31.2304],
+                zoom: 7,
+                pitch: 34,
+                bearing: -8,
+                attributionControl: false
+            });
+
+            cockpitMap.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+            return cockpitMap;
+        }
+
+        function formatCoordinate(latitude, longitude) {
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                return '--';
+            }
+            return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        }
+
+        function clearTrafficMarkers() {
+            cockpitTrafficMarkers.forEach((marker) => marker.remove());
+            cockpitTrafficMarkers = [];
+        }
+
+        function buildMarkerElement(className) {
+            const element = document.createElement('div');
+            element.className = className;
+            return element;
+        }
+
+        function updateMapSummary({ ownShip, targets, weather, riskLevel }) {
+            const latitude = Number(ownShip?.latitude);
+            const longitude = Number(ownShip?.longitude);
+            const safeLat = Number.isFinite(latitude) ? latitude : null;
+            const safeLng = Number.isFinite(longitude) ? longitude : null;
+            const highRiskCount = targets.filter((target) => String(target.risk_level).toLowerCase() === 'high').length;
+
+            mapOwnshipPosition.textContent = formatCoordinate(safeLat, safeLng);
+            mapTargetCount.textContent = `AIS ${targets.length} / HIGH ${highRiskCount}`;
+            mapWeatherSummary.textContent = `风 ${weather?.wind?.speed?.toFixed?.(1) ?? '--'} m/s / 浪 ${weather?.wave?.height?.toFixed?.(1) ?? '--'} m`;
+            mapWatchSummary.textContent = riskLevel ? `${String(riskLevel).toUpperCase()} watch` : '保持值班';
+        }
+
+        function updateTrafficStrip(targets) {
+            if (!targets.length) {
+                mapTrafficList.innerHTML = '<div class="traffic-chip"><small>TRAFFIC</small><strong>暂无 AIS 目标</strong></div>';
+                return;
+            }
+
+            mapTrafficList.innerHTML = targets.slice(0, 4).map((target) => {
+                const riskLevel = String(target.risk_level || 'low').toLowerCase();
+                const vesselLabel = target.vessel_type || `MMSI ${target.mmsi || '--'}`;
+                const speed = Number.isFinite(Number(target.speed)) ? `${Number(target.speed).toFixed(1)} kn` : '--';
+                const course = Number.isFinite(Number(target.course)) ? `${Number(target.course).toFixed(0)}°` : '--';
+                return `
+                    <div class="traffic-chip ${riskLevel === 'high' ? 'is-high' : ''}">
+                        <small>${riskLevel.toUpperCase()}</small>
+                        <strong>${vesselLabel}</strong>
+                        <small>${speed} / ${course}</small>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function refreshMapPanel(dashboard) {
+            try {
+                const mapInstance = ensureCockpitMap();
+                if (!mapInstance) {
+                    return;
+                }
+
+                const ownShip = dashboard.navigation?.own_ship || {};
+                const ownShipLatitude = Number(ownShip.latitude);
+                const ownShipLongitude = Number(ownShip.longitude);
+                const latitude = Number.isFinite(ownShipLatitude) ? ownShipLatitude : 31.2304;
+                const longitude = Number.isFinite(ownShipLongitude) ? ownShipLongitude : 121.4737;
+                const weatherQuery = `/api/v1/worldmonitor/weather?lat=${latitude}&lng=${longitude}`;
+                const [aisResult, weatherResult] = await Promise.allSettled([
+                    fetchJson('/api/v1/worldmonitor/ais'),
+                    fetchJson(weatherQuery)
+                ]);
+
+                const targets = aisResult.status === 'fulfilled' ? (aisResult.value.targets || []) : [];
+                const weather = weatherResult.status === 'fulfilled' ? weatherResult.value.weather || {} : {};
+                const riskRank = { high: 2, medium: 1, low: 0 };
+                const sortedTargets = [...targets].sort((left, right) => (
+                    (riskRank[String(right.risk_level).toLowerCase()] || 0) -
+                    (riskRank[String(left.risk_level).toLowerCase()] || 0)
+                ));
+
+                updateMapSummary({
+                    ownShip,
+                    targets: sortedTargets,
+                    weather,
+                    riskLevel: dashboard.decision?.risk_level || dashboard.navigation?.report?.overall_status
+                });
+                updateTrafficStrip(sortedTargets);
+
+                if (cockpitOwnShipMarker) {
+                    cockpitOwnShipMarker.remove();
+                }
+                cockpitOwnShipMarker = new maplibregl.Marker({ element: buildMarkerElement('ownship-marker') })
+                    .setLngLat([longitude, latitude])
+                    .setPopup(new maplibregl.Popup({ offset: 18 }).setHTML(`
+                        <strong>本船</strong><br>
+                        位置: ${formatCoordinate(latitude, longitude)}<br>
+                        航向: ${formatValue(ownShip.course, '°')}<br>
+                        航速: ${formatValue(ownShip.speed, ' kn')}
+                    `))
+                    .addTo(mapInstance);
+
+                clearTrafficMarkers();
+                sortedTargets.slice(0, 10).forEach((target) => {
+                    const targetLatitude = Number(target.latitude);
+                    const targetLongitude = Number(target.longitude);
+                    if (!Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
+                        return;
+                    }
+
+                    const riskLevel = String(target.risk_level || 'low').toLowerCase();
+                    const marker = new maplibregl.Marker({
+                        element: buildMarkerElement(`target-marker ${riskLevel === 'high' ? 'is-high' : riskLevel === 'medium' ? 'is-medium' : ''}`.trim())
+                    })
+                        .setLngLat([targetLongitude, targetLatitude])
+                        .setPopup(new maplibregl.Popup({ offset: 18 }).setHTML(`
+                            <strong>${target.vessel_type || 'AIS Target'}</strong><br>
+                            MMSI: ${target.mmsi || '--'}<br>
+                            航向: ${formatValue(target.course, '°')}<br>
+                            航速: ${formatValue(target.speed, ' kn')}
+                        `))
+                        .addTo(mapInstance);
+
+                    cockpitTrafficMarkers.push(marker);
+                });
+
+                if (!mapCentered) {
+                    mapInstance.jumpTo({ center: [longitude, latitude], zoom: 8.6 });
+                    mapCentered = true;
+                } else {
+                    mapInstance.easeTo({ center: [longitude, latitude], duration: 1200, essential: true });
+                }
+            } catch (error) {
+                mapWatchSummary.textContent = `海图同步失败: ${error.message}`;
+            }
+        }
+
+        async function refreshCockpit() {
+            try {
+                const [health, dashboard, mission] = await Promise.all([
+                    fetchJson('/health'),
+                    fetchJson('/api/v1/dashboard'),
+                    fetchJson('/api/v1/ai-native/cps/mission-brief')
+                ]);
+
+                const decision = dashboard.decision || {};
+                const navigation = dashboard.navigation || {};
+                const scene = navigation.report?.scene_context || {};
+                const rcs = dashboard.rcs || {};
+                const shm = dashboard.shm || {};
+                const memory = health.memory || {};
+                const lakehouseHealth = health.lakehouse_health || {};
+                const cloudSync = health.cloud_sync || {};
+                const cloudInfo = cloudSync.info || {};
+                const worldmonitor = dashboard.worldmonitor || {};
+                const actionPlan = decision.action_plan || mission.action_plan || [];
+                const taskGraph = mission.task_graph || decision.task_graph || {};
+
+                document.getElementById('metric-health').textContent = health.status === 'healthy' ? 'ONLINE' : 'DEGRADED';
+                document.getElementById('metric-backend').textContent = `Cycles ${health.ai_native?.runs ?? '--'} / Sensors ${health.sensors ?? '--'}`;
+                document.getElementById('metric-task-graph').textContent = formatValue(taskGraph.nodes?.length);
+                document.getElementById('metric-autonomy').textContent = `Mode ${mission.autonomy_mode || decision.autonomy_mode || '--'}`;
+                document.getElementById('metric-risk').textContent = (decision.risk_level || navigation.report?.overall_status || '--').toUpperCase();
+                document.getElementById('metric-scene').textContent = `Scene ${scene.scene_type || 'open_sea'}`;
+                document.getElementById('metric-rcs').textContent = `${formatValue(rcs.foil_angle_deg, '°')} / ${formatValue(rcs.trim_tab_angle_deg, '°')}`;
+                document.getElementById('metric-comfort').textContent = `MSDV ${formatValue(rcs.comfort_target_msdv)}`;
+                document.getElementById('metric-shm').textContent = `FDI ${formatValue(shm.fatigue_damage_index)}`;
+                document.getElementById('metric-life').textContent = `Life ${formatValue(shm.life_remaining_pct, '%')}`;
+                document.getElementById('metric-memory').textContent = formatValue(memory.memory_profile?.recent_events_count || 0);
+                document.getElementById('metric-ais').textContent = `AIS ${dashboard.navigation?.report?.collision_risks?.length ?? 0} / Cloud ${lakehouseHealth.cloud_sync_available ? 'UP' : 'DOWN'}`;
+                document.getElementById('decision-badge').textContent = (mission.autonomy_mode || decision.autonomy_mode || 'advisory').toUpperCase();
+                document.getElementById('twin-sync-badge').textContent = health.ai_native?.last_cycle?.timestamp ? 'SYNC LIVE' : 'SYNC WAIT';
+
+                actionPlanList.innerHTML = actionPlan.length
+                    ? actionPlan.slice(0, 5).map((item) => `
+                        <div class="list-item">
+                            <div>
+                                <strong>${item.title || 'Untitled action'}</strong>
+                                <span>${item.recommended_action || item.rationale || 'No details'}</span>
+                            </div>
+                            <div class="badge">${(item.priority || 'low').toUpperCase()}</div>
+                        </div>
+                    `).join('')
+                    : '<div class="list-item"><div><strong>当前无高优先动作</strong><span>继续维持监控与值班</span></div><div class="badge">OK</div></div>';
+
+                opsList.innerHTML = [
+                    { label: 'WorldMonitor 模式', value: worldmonitor.mode || '--', note: worldmonitor.data_source || 'unknown' },
+                    { label: 'RCS 控制', value: `${formatValue(rcs.foil_angle_deg, '°')} / ${formatValue(rcs.trim_tab_angle_deg, '°')}`, note: `MSDV ${formatValue(rcs.comfort_target_msdv)}` },
+                    { label: '结构健康', value: formatValue(shm.fatigue_damage_index), note: `Life ${formatValue(shm.life_remaining_pct, '%')}` },
+                    { label: '记忆层', value: memory.local_store?.available ? 'READY' : 'OFF', note: memory.local_store?.type || '--' },
+                    { label: '云同步', value: lakehouseHealth.cloud_sync_available ? 'UP' : 'DOWN', note: `${cloudInfo.bucket || cloudSync.type || '--'} @ ${cloudInfo.endpoint_url || 'local'}` },
+                    { label: 'Lakehouse 分析', value: lakehouseHealth.analytics_ready ? 'READY' : 'OFF', note: `${memory.storage_profile?.analytics_engine || '--'} / ${memory.storage_profile?.archive_format || '--'}` },
+                ].map((item) => `
+                    <div class="list-item">
+                        <div>
+                            <strong>${item.label}</strong>
+                            <small>${item.note}</small>
+                        </div>
+                        <div class="badge">${item.value}</div>
+                    </div>
+                `).join('');
+
+                refreshMapPanel(dashboard);
+            } catch (error) {
+                document.getElementById('metric-health').textContent = 'ERROR';
+                document.getElementById('metric-backend').textContent = error.message;
+                actionPlanList.innerHTML = `<div class="list-item"><div><strong>数据同步失败</strong><span>${error.message}</span></div><div class="badge">ERR</div></div>`;
+            }
+        }
+
+        async function executeCommand(command) {
+            commandResponse.textContent = '命令执行中...';
+            document.getElementById('command-badge').textContent = 'BUSY';
+            try {
+                const response = await fetch('/api/v1/ai-native/openbridge/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command, source: 'captain_cockpit' })
+                });
+                if (!response.ok) {
+                    throw new Error(`Command failed: ${response.status}`);
+                }
+                const data = await response.json();
+                commandResponse.textContent = formatCommandResult(data.result || {});
+                document.getElementById('command-badge').textContent = (data.result?.recognized_intent || 'READY').toUpperCase();
+            } catch (error) {
+                commandResponse.textContent = `命令失败: ${error.message}`;
+                document.getElementById('command-badge').textContent = 'ERROR';
+            }
+        }
+
+        chips.forEach((chip) => {
+            chip.addEventListener('click', () => {
+                const command = chip.dataset.command;
+                if (!command) {
+                    return;
+                }
+                commandInput.value = command;
+                executeCommand(command);
+            });
+        });
+
+        analyticsChips.forEach((chip) => {
+            chip.addEventListener('click', () => {
+                executeAnalyticsQuery(chip.dataset.query);
+            });
+        });
+
+        commandForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const command = commandInput.value.trim();
+            if (!command) return;
+            executeCommand(command);
+        });
+
+        ensureCockpitMap();
+        refreshAnalyticsStatus();
+        refreshCockpit();
+        setInterval(refreshCockpit, 15000);
+        setInterval(refreshAnalyticsStatus, 30000);
+    </script>
+</body>
+</html>

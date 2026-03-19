@@ -196,17 +196,25 @@ class IntelligentEngineChannel(MarineChannel):
         elif pgn == 127489:
             load = fields.get("engine_load")
             fuel_rate = fields.get("fuel_rate")
+            oil_pressure = fields.get("oil_pressure")
+            coolant_temp = fields.get("coolant_temp")
+            
             if load is not None:
                 pending["load"] = float(load)
             if fuel_rate is not None:
                 pending["fuel_rate"] = float(fuel_rate)
-        elif pgn == 127493:
-            oil_pressure = fields.get("oil_pressure")
-            oil_temp = fields.get("oil_temp")
             if oil_pressure is not None:
                 pending["oil_pressure"] = self._normalize_pressure_to_bar(float(oil_pressure))
-            if oil_temp is not None:
-                pending["coolant_temp"] = self._normalize_temperature_to_celsius(float(oil_temp))
+            if coolant_temp is not None:
+                pending["coolant_temp"] = self._normalize_temperature_to_celsius(float(coolant_temp))
+        elif pgn == 127493:
+            # Fallback to transmission parameters if 127489 didn't provide them
+            trans_oil_pressure = fields.get("oil_pressure")
+            trans_oil_temp = fields.get("oil_temp")
+            if trans_oil_pressure is not None and "oil_pressure" not in pending:
+                pending["oil_pressure"] = self._normalize_pressure_to_bar(float(trans_oil_pressure))
+            if trans_oil_temp is not None and "coolant_temp" not in pending:
+                pending["coolant_temp"] = self._normalize_temperature_to_celsius(float(trans_oil_temp))
 
         required = {"rpm", "load", "coolant_temp", "oil_pressure", "fuel_rate"}
         if required.issubset(pending):
@@ -248,6 +256,7 @@ class IntelligentEngineChannel(MarineChannel):
             return []
 
         trend = self.get_trend_summary()
+        current_time = datetime.now().isoformat()
         findings: List[Dict[str, Any]] = []
         if snap.coolant_temp >= self.thresholds["coolant_temp_warn"]:
             findings.append({
@@ -255,6 +264,8 @@ class IntelligentEngineChannel(MarineChannel):
                 "confidence": 0.82 if snap.coolant_temp >= self.thresholds["coolant_temp_alarm"] else 0.67,
                 "risk_level": "critical" if snap.coolant_temp >= self.thresholds["coolant_temp_alarm"] else "warning",
                 "recommended_action": "检查海水滤器、淡水回路和换热器堵塞情况",
+                "supporting_features": {"coolant_temp": snap.coolant_temp, "trend": trend.get("temp")},
+                "timestamp": current_time
             })
         if snap.oil_pressure <= self.thresholds["oil_pressure_warn"]:
             findings.append({
@@ -262,6 +273,8 @@ class IntelligentEngineChannel(MarineChannel):
                 "confidence": 0.86 if snap.oil_pressure <= self.thresholds["oil_pressure_alarm"] else 0.71,
                 "risk_level": "critical" if snap.oil_pressure <= self.thresholds["oil_pressure_alarm"] else "warning",
                 "recommended_action": "检查滑油液位、滤器压差和油泵输出",
+                "supporting_features": {"oil_pressure": snap.oil_pressure, "trend": trend.get("pressure")},
+                "timestamp": current_time
             })
         if snap.load >= self.thresholds["load_high"] and snap.fuel_rate >= self.thresholds["fuel_rate_high"]:
             findings.append({
@@ -269,6 +282,8 @@ class IntelligentEngineChannel(MarineChannel):
                 "confidence": 0.74,
                 "risk_level": "warning",
                 "recommended_action": "核查推进阻力、喷油状态和空燃比，必要时降载",
+                "supporting_features": {"load": snap.load, "fuel_rate": snap.fuel_rate},
+                "timestamp": current_time
             })
         if trend.get("pressure") == "worsening" and trend.get("temp") == "rising":
             findings.append({
@@ -276,6 +291,8 @@ class IntelligentEngineChannel(MarineChannel):
                 "confidence": 0.69,
                 "risk_level": "warning",
                 "recommended_action": "将监测频率提升到 5 分钟级，并安排点检确认趋势",
+                "supporting_features": {"pressure_trend": "worsening", "temp_trend": "rising"},
+                "timestamp": current_time
             })
         return findings
 

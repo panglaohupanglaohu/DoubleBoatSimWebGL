@@ -7,6 +7,7 @@ from .efficiency_models import SEEMPMeasure, VesselInfo, EnergySavingMeasureType
 from .cii_calculator import CIICalculator
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+import json
 
 
 class SEEMPManager:

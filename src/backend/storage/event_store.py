@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import logging
 import json
 import os
+from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
@@ -176,6 +177,14 @@ class JSONLStore(EventStore):
         except Exception as e:
             self.logger.warning(f"Trim failed: {e}")
 
+    def get_info(self) -> Dict[str, Any]:
+        files = [name for name in os.listdir(self.storage_path) if name.endswith('.jsonl')]
+        return {
+            "storage_path": self.storage_path,
+            "file_count": len(files),
+            "max_events": self.max_events,
+        }
+
 
 class SQLiteStore(EventStore):
     """SQLite 数据库存储"""
@@ -196,6 +205,10 @@ class SQLiteStore(EventStore):
             import sqlite3
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
+
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA temp_store=MEMORY")
             
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS events (
@@ -217,12 +230,19 @@ class SQLiteStore(EventStore):
         except Exception as e:
             self.logger.error(f"Init DB failed: {e}")
             raise
+
+    def _connect(self):
+        import sqlite3
+
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        return conn
     
     def save_event(self, event: Dict[str, Any]) -> bool:
         """保存单个事件"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
+            conn = self._connect()
             cursor = conn.cursor()
             
             event_type = event.get("event_type", "unknown")
@@ -246,8 +266,7 @@ class SQLiteStore(EventStore):
     def save_events(self, events: List[Dict[str, Any]]) -> bool:
         """批量保存事件"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
+            conn = self._connect()
             cursor = conn.cursor()
             
             for event in events:
@@ -272,8 +291,7 @@ class SQLiteStore(EventStore):
     def load_events(self, event_type: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """加载事件"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
+            conn = self._connect()
             cursor = conn.cursor()
             
             if event_type:
@@ -313,8 +331,7 @@ class SQLiteStore(EventStore):
     def load_events_by_time(self, start_time: datetime, end_time: datetime, event_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """按时间范围加载事件"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
+            conn = self._connect()
             cursor = conn.cursor()
             
             start_ts = start_time.isoformat()
@@ -356,8 +373,7 @@ class SQLiteStore(EventStore):
     def clear_events(self, event_type: Optional[str] = None) -> bool:
         """清除事件"""
         try:
-            import sqlite3
-            conn = sqlite3.connect(self.db_path)
+            conn = self._connect()
             cursor = conn.cursor()
             
             if event_type:
@@ -372,6 +388,132 @@ class SQLiteStore(EventStore):
             self.logger.error(f"Clear failed: {e}")
             return False
 
+    def get_info(self) -> Dict[str, Any]:
+        wal_path = f"{self.db_path}-wal"
+        return {
+            "db_path": self.db_path,
+            "wal_enabled": True,
+            "wal_file_present": os.path.exists(wal_path),
+        }
+
+
+class ParquetStore(EventStore):
+    """Parquet 文件存储。"""
+
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.storage_path = config.get("storage_path", "./storage/parquet")
+        os.makedirs(self.storage_path, exist_ok=True)
+        self.logger = logging.getLogger(f"{self.__class__.__name__}")
+        self.logger.info(f"Parquet Store initialized: {self.storage_path}")
+
+    def _get_path(self, event_type: str) -> str:
+        return os.path.join(self.storage_path, f"{event_type}.parquet")
+
+    def _load_table(self, filepath: str):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        if not os.path.exists(filepath):
+            return pa.table({
+                "timestamp": [],
+                "event_type": [],
+                "source": [],
+                "payload": [],
+                "confidence": [],
+            })
+        return pq.read_table(filepath)
+
+    def _write_rows(self, filepath: str, rows: List[Dict[str, Any]]) -> None:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        existing = self._load_table(filepath)
+        new_table = pa.Table.from_pylist(rows)
+        merged = pa.concat_tables([existing, new_table]) if existing.num_rows else new_table
+        pq.write_table(merged, filepath)
+
+    def save_event(self, event: Dict[str, Any]) -> bool:
+        return self.save_events([event])
+
+    def save_events(self, events: List[Dict[str, Any]]) -> bool:
+        try:
+            grouped: Dict[str, List[Dict[str, Any]]] = {}
+            for event in events:
+                event_type = event.get("event_type", "unknown")
+                grouped.setdefault(event_type, []).append({
+                    "timestamp": event.get("timestamp", datetime.now().isoformat()),
+                    "event_type": event_type,
+                    "source": event.get("source", ""),
+                    "payload": json.dumps(event.get("payload", event), ensure_ascii=False),
+                    "confidence": event.get("confidence", 1.0),
+                })
+
+            for event_type, rows in grouped.items():
+                self._write_rows(self._get_path(event_type), rows)
+            return True
+        except Exception as e:
+            self.logger.error(f"Save failed: {e}")
+            return False
+
+    def load_events(self, event_type: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        try:
+            import pyarrow.parquet as pq
+
+            filepaths: List[str]
+            if event_type:
+                filepaths = [self._get_path(event_type)]
+            else:
+                filepaths = [str(path) for path in Path(self.storage_path).glob("*.parquet")]
+
+            events: List[Dict[str, Any]] = []
+            for filepath in filepaths:
+                if not os.path.exists(filepath):
+                    continue
+                table = pq.read_table(filepath)
+                for row in table.to_pylist():
+                    events.append({
+                        "timestamp": row["timestamp"],
+                        "event_type": row["event_type"],
+                        "source": row["source"],
+                        "payload": json.loads(row["payload"]),
+                        "confidence": row["confidence"],
+                    })
+
+            events.sort(key=lambda item: item.get("timestamp", ""), reverse=True)
+            return events[:limit]
+        except Exception as e:
+            self.logger.error(f"Load failed: {e}")
+            return []
+
+    def load_events_by_time(self, start_time: datetime, end_time: datetime, event_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        events = self.load_events(event_type=event_type, limit=100000)
+        start_ts = start_time.isoformat()
+        end_ts = end_time.isoformat()
+        return [event for event in events if start_ts <= event.get("timestamp", "") <= end_ts]
+
+    def clear_events(self, event_type: Optional[str] = None) -> bool:
+        try:
+            if event_type:
+                filepath = self._get_path(event_type)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            else:
+                for path in Path(self.storage_path).glob("*.parquet"):
+                    path.unlink()
+            return True
+        except Exception as e:
+            self.logger.error(f"Clear failed: {e}")
+            return False
+
+    def get_info(self) -> Dict[str, Any]:
+        files = list(Path(self.storage_path).glob("*.parquet"))
+        return {
+            "storage_path": self.storage_path,
+            "file_count": len(files),
+            "format": "parquet",
+        }
+
 
 def get_store(store_type: str, config: Dict[str, Any]) -> EventStore:
     """获取存储实例"""
@@ -379,5 +521,7 @@ def get_store(store_type: str, config: Dict[str, Any]) -> EventStore:
         return JSONLStore(config)
     elif store_type == "sqlite":
         return SQLiteStore(config)
+    elif store_type == "parquet":
+        return ParquetStore(config)
     else:
         raise ValueError(f"Unknown store type: {store_type}")

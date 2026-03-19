@@ -12,6 +12,15 @@ cd "$(dirname "$0")/.."
 echo "📦 Activating Python virtual environment..."
 source venv/bin/activate
 
+# 可选：通过环境变量切换到 S3 / MinIO 云同步
+# export POSEIDON_LAKEHOUSE_CLOUD_TYPE=s3
+# export POSEIDON_LAKEHOUSE_S3_ENDPOINT_URL=http://127.0.0.1:9000
+# export POSEIDON_LAKEHOUSE_S3_BUCKET=doubleboat-events
+# export POSEIDON_LAKEHOUSE_S3_REGION=us-east-1
+# export POSEIDON_LAKEHOUSE_S3_ADDRESSING_STYLE=path
+# export POSEIDON_LAKEHOUSE_S3_VERIFY_SSL=false
+# export POSEIDON_LAKEHOUSE_S3_AUTO_CREATE_BUCKET=true
+
 # 启动后端服务器
 echo "🌐 Starting backend server on port 8082..."
 nohup python src/backend/main.py --host 0.0.0.0 --port 8082 > /tmp/poseidon.log 2>&1 &

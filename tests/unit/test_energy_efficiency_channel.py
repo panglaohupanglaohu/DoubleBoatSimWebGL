@@ -216,9 +216,11 @@ class TestEnergyEfficiencyChannelRegistry:
     
     def test_registry_list_channels(self, sample_vessel):
         """测试注册表列出所有 Channel."""
-        from backend.channels.marine_base import get_default_registry
+        from backend.channels.marine_base import ChannelRegistry
         
-        registry = get_default_registry()
+        registry = ChannelRegistry()
+        channel = EnergyEfficiencyChannel(config={"vessel": sample_vessel})
+        registry.register(channel)
         channels = registry.list_channels()
         
         assert "energy_efficiency" in channels

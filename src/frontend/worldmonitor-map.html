@@ -51,6 +51,26 @@
             align-items: center;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-actions a {
+            color: #d9f6ff;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(79,195,247,0.12);
+            border: 1px solid rgba(79,195,247,0.24);
+            font-size: 12px;
+        }
+
+        .header-actions a:hover {
+            background: rgba(79,195,247,0.2);
+        }
+
         .status-item {
             display: flex;
             align-items: center;
@@ -306,6 +326,10 @@
                 <span>AIS 目标：</span>
                 <span style="color: #48bb78;" id="ais-count">0</span>
             </div>
+        </div>
+        <div class="header-actions">
+            <a href="/captain-cockpit.html" target="_blank" rel="noopener noreferrer">返回船长智能中控台</a>
+            <a href="/worldmonitor-ar-cas-pro.html" target="_blank" rel="noopener noreferrer">AR-CAS Pro</a>
         </div>
     </div>
 

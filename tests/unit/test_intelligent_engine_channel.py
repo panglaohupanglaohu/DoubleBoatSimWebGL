@@ -164,6 +164,34 @@ class TestIntelligentEngineChannel:
         assert "cooling_system_abnormal" in fault_types
         assert "lubrication_system_abnormal" in fault_types
         assert "overload_or_combustion_inefficiency" in fault_types
+        
+        # Check newly added fields
+        for finding in findings:
+            assert "supporting_features" in finding
+            assert "timestamp" in finding
+
+    def test_nmea2000_ingest_builds_snapshot_from_pgn_127489_full(self, channel):
+        base_count = len(channel.snapshots)
+        rapid = SimpleNamespace(pgn=127488, fields={"engine_instance": 0, "speed": 745.0})
+        dynamic_full = SimpleNamespace(pgn=127489, fields={
+            "engine_instance": 0, 
+            "engine_load": 75.0, 
+            "fuel_rate": 490.0,
+            "oil_pressure": 325000.0,
+            "coolant_temp": 360.15
+        })
+        # first ingest rapid -> rpm
+        assert channel.ingest_nmea2000_message(rapid) is False
+        # then ingest dynamic -> generates snapshot because all fields present
+        assert channel.ingest_nmea2000_message(dynamic_full) is True
+
+        latest = channel.get_latest_snapshot()
+        assert len(channel.snapshots) == base_count + 1
+        assert latest.rpm == 745.0
+        assert latest.load == 75.0
+        assert round(latest.oil_pressure, 2) == 3.25
+        assert round(latest.coolant_temp, 1) == 87.0
+        assert latest.fuel_rate == 490.0
 
     def test_query_engine_status_fault_response(self, channel):
         channel.update_snapshot(910, 95, 97.0, 1.6, 650)
