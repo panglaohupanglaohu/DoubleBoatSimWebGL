@@ -28,6 +28,8 @@
   - 覆盖能效通道逻辑
 - `tests/unit/test_feature_fusion_layer.py`
   - 覆盖特征融合层
+- `tests/unit/test_compliance_efficiency.py`
+  - 覆盖 ComplianceReporter（IMO DCS/EU MRV 报告生成、年度合规报告、JSON 导出、年份过滤、空航次边界）和 EfficiencyAdvisor（引擎工况分析、CII/EEXI 评级建议、行动计划预算控制）
 - `tests/unit/test_intelligent_engine_channel.py`
   - 覆盖智能机舱通道
 - `tests/unit/test_messagebus_config_engine.py`
