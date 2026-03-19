@@ -15,7 +15,7 @@
 - `tests/unit/test_data_lakehouse.py`
   - 覆盖 DataLakehouse 存储状态、事件写入和查询（SQLite WAL、Parquet 归档、DuckDB 即席分析、S3/MinIO 云同步）
 - `tests/unit/test_storage_modules.py`
-  - 覆盖 JSONLStore 和 SQLiteStore
+  - 覆盖 JSONLStore（保存/加载/批量写入/按类型过滤/按时间过滤/清除/limit/get_info）、SQLiteStore（保存/批量/过滤/清除/limit/时间查询/WAL模式验证/get_info）、get_store 工厂、LocalFileAdapter（上传/批量/bucket_info）
 - `tests/unit/test_p0_modules.py`
   - 覆盖 P0 核心通道和最小全链路构建
 - `tests/unit/test_ai_native_channels.py`
