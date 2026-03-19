@@ -42,7 +42,7 @@
 - `tests/integration/test_ai_native_endpoints.py`
   - 覆盖 AI Native 关键 endpoint 定义与核心通道联动
 - `tests/integration/test_ai_native_api.py`
-  - 覆盖 AI Native API 层
+  - 覆盖 AI Native API 层：Dashboard 结构、Channel 查询、RCS/SHM 状态端点、CPS Mission Brief、Memory 事件/回放/分析状态、Fusion State、OpenBridge 命令（任务图/RCS/SHM）、Decision Feedback Log、Compliance/Perception/Decision 扩展端点、Full Pipeline Status
 - `tests/integration/test_nmea2000_engine_flow.py`
   - 覆盖 NMEA2000 解析器 → 智能机舱数据流的端到端管道
 - `tests/integration/test_poseidon_x_integration.py`

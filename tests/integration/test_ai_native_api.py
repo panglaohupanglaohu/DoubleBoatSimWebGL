@@ -109,3 +109,158 @@ class TestAINativeQueryEndpoints:
         assert "compliance_digital_expert" in names
         assert "distributed_perception_hub" in names
         assert "decision_orchestrator" in names
+
+
+class TestAINativeRCSSHMEndpoints:
+    def test_rcs_status(self, client):
+        response = client.get("/api/v1/ai-native/rcs/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "rcs_control"
+        result = data["result"]
+        assert "foil_angle_deg" in result
+        assert "trim_tab_angle_deg" in result
+        assert "stability_margin" in result
+
+    def test_shm_status(self, client):
+        response = client.get("/api/v1/ai-native/shm/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "structural_health_monitor"
+        result = data["result"]
+        assert "fatigue_damage_index" in result
+        assert "life_remaining_pct" in result
+        assert "strain_hotspots" in result
+
+
+class TestAINativeCPSAndMemory:
+    def test_cps_mission_brief(self, client):
+        response = client.get("/api/v1/ai-native/cps/mission-brief")
+        assert response.status_code == 200
+        data = response.json()
+        assert "mission_brief" in data
+        assert "action_plan" in data
+        assert "task_graph" in data
+
+    def test_memory_events(self, client):
+        response = client.get("/api/v1/ai-native/memory/events", params={"limit": 5})
+        assert response.status_code == 200
+        data = response.json()
+        assert "count" in data
+        assert "events" in data
+        assert isinstance(data["events"], list)
+
+    def test_memory_analytics_status(self, client):
+        response = client.get("/api/v1/ai-native/memory/analytics/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ready"
+        assert "storage_profile" in data
+        assert "lakehouse_status" in data
+
+    def test_fusion_state(self, client):
+        response = client.get("/api/v1/ai-native/perception/fusion-state")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "distributed_perception_hub"
+        assert "fusion" in data
+
+
+class TestAINativePostEndpoints:
+    def test_decision_feedback_log(self, client):
+        response = client.post(
+            "/api/v1/ai-native/decision/feedback/log",
+            json={"action": "test_action", "outcome": "success", "confirmed_by": "test"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "decision_orchestrator"
+        assert "result" in data
+        assert "feedback_records_count" in data
+
+    def test_openbridge_command(self, client):
+        response = client.post(
+            "/api/v1/ai-native/openbridge/command",
+            json={"command": "查看任务图", "source": "test"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["source"] == "test"
+        assert "result" in data
+        result = data["result"]
+        assert result["recognized_intent"] == "show_task_graph"
+        assert "summary" in result
+        assert "control_state" in result
+
+    def test_openbridge_command_rcs(self, client):
+        response = client.post(
+            "/api/v1/ai-native/openbridge/command",
+            json={"command": "rcs 姿态", "source": "bridge_chat"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["result"]["recognized_intent"] == "set_comfort_mode"
+
+    def test_openbridge_command_shm(self, client):
+        response = client.post(
+            "/api/v1/ai-native/openbridge/command",
+            json={"command": "结构健康", "source": "bridge_chat"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["result"]["recognized_intent"] == "show_structural_health"
+
+
+class TestAINativeExtensionEndpoints:
+    def test_compliance_status(self, client):
+        response = client.get("/api/v1/ai-native/compliance/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "compliance_digital_expert"
+        assert "result" in data
+
+    def test_cognitive_snapshot(self, client):
+        response = client.get("/api/v1/ai-native/compliance/cognitive-snapshot")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "compliance_digital_expert"
+        assert "result" in data
+
+    def test_perception_events(self, client):
+        response = client.get("/api/v1/ai-native/perception/events", params={"limit": 5})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "distributed_perception_hub"
+        assert "result" in data
+        assert "events" in data["result"]
+
+    def test_perception_capture_snapshot(self, client):
+        response = client.get("/api/v1/ai-native/perception/capture-snapshot")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "distributed_perception_hub"
+        assert "result" in data
+
+    def test_decision_package(self, client):
+        response = client.get("/api/v1/ai-native/decision/package")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "decision_orchestrator"
+        assert "result" in data
+
+    def test_decision_feedback(self, client):
+        response = client.post(
+            "/api/v1/ai-native/decision/feedback",
+            params={"action": "slow_down", "outcome": "accepted"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "decision_orchestrator"
+        assert "result" in data
+        assert "feedback_records_count" in data
+
+    def test_full_pipeline_status(self, client):
+        response = client.get("/api/v1/ai-native/status/full-pipeline")
+        assert response.status_code == 200
+        data = response.json()
+        assert "pipeline_health" in data
