@@ -1,0 +1,1943 @@
+--- Page 1 ---
+
+
+--- Page 2 ---
+
+
+--- Page 3 ---
+
+
+--- Page 4 ---
+
+
+--- Page 5 ---
+
+
+--- Page 6 ---
+THE DESIGN AND
+CONSTRUCTION OF SHIPS,
+
+
+--- Page 7 ---
+gles GRIFFIN & G0.’S" PUBLICATIONS.
+oper al a Be LET TH
+PRINCIPLES AND PRACTICE oF.
+‘DOCK ENGINEERING.
+
+By BRYSSON CUNNINGHAM.
+
+GENERAL CONTENTS.
+Historical and Discurstve—Dom Design--Constructive Apphances—Materials—Dock
+| Quay Walltgntrance Arn Goes ities, Wharves, and Piorsg-Dock Gate
+
+| Cainons—Triaitesheds and WMalouses—Dock Bridges—Uraving and. Repairing
+
+aks—Working Eqyipment of Docks—I
+
+We have nfec en a. more profane rant
+
+sold e te the Hage ofall dick ait harhour engineer
+_ rs
+
+a Largo 8vo. Pp. i-xii+288, With 18 Plates, 11 Tables, and 220dbllustrat@ns in the
+
+Toxt, 16s, net
+A COMPANION VOLUME TO “DOCK enoaneefine.”
+
+'HE PRINCIPLES AND P: CTICE -OF.
+‘HARBOUR ENGINEERING.%
+
+By BRYSSON CUNNINGHAM.
+Coxrants.—Introductory —Harlonr Design —Surveying, Marine gpd Submarifie—
+ing—Stone, Natural and Artifcial—Breakwater Dosigu—Breakwates Construction—
+mheads, Quays, and Landing Stayes—Kntrance Channels—Channelg Demareation—
+DEX.
+
+Jews met important standard work,
+
+"—Kngineer.
+
+"The best
+“This ta
+
+moat complete book we have wen on the subject.-Stamakip,
+standard work « « » aure to prove n valuable book wf roference,’—Shipping World,
+
+1 Crown Bvo, Handsome Cloth, Pp.4-xiv4604. With man ies, ra
+7 Coloured and 16 other Plates, 12s, uet, ‘adage
+
+HYDROGRAPHIC SURVEYING.
+By COMMANDER S. MESSUM, RN,
+
+Instructor in Nautical Surveying, XN, College, Greenwich,
+jonTENTS,—Sextant— fre sain Poittter-—Theodolite—Projectios—Symbols
+
+‘Evbreviati lo:ting auf, Tviangflatioy of a Sigal! Man—Mfust-ead Angle Survey
+‘Meridian Distances—At I
+
+In Medipyy 2c eped-xx +313, With 866 Figures and 23 TSbtes, 26s, net,
+
+ELECTRIC CRANE, CONSTRUCTION.
+_ By CLAUDE V. HIYL, A.MInst.C.E, M.LEE,“ete,
+
+8.X,Overhead Cranes—Kbcomotive and Portable Jib Cranes—Derrick Gratf®S
+s-—Sheer legs—Revolving Cantilever Cranes Caldew! jewSys—Iower feqtiired fo
+frge_Startfig Torque and ARogleration Design of Urane Structured Designo
+Toothed eGearing—Hooks—Lifffhg Magnets, ‘Ropes and Cranes
+Motors, Controllers and Oglectre—Crajd asain gO
+os
+
+ARLES GRIFFIN & CO, LID, Exeree Smeel, Sn
+
+
+
+--- Page 8 ---
+THE DESIGN
+
+AND
+
+CONSTRUCTION ‘OF SHIPS.
+
+ny
+
+JOHN HARVARD BILKS, LL.D., D.8e.,
+
+“it ov NAVAL AKUIUTECTUNE IN THR URIVERSMY OP OLASOOW.
+
+Vi OU. IL--STABILITY, RESISTANCE, PROPULSION, AND
+OSCILLATIONS OF SHIPS,
+
+‘With 316 Flustrations, including 4 Folding Plates,
+
+LONDOMs
+SHARLSS GRIFFIN AND GOMPANY, LI
+. 2 sTREET, STRAND,
+WH,
+
+LAU Rights Reserved.)
+
+
+--- Page 9 ---
+\o74-
+
+
+--- Page 10 ---
+PREFACE,
+
+Tms volume, like the provious one, embodies the Lectrzes on the subjects
+dealt with as given at the University of Glasgow. It was intended to have
+compleied the.subject of the title of the hook, Design and Construction of
+Ships, in .wo vylumes, Int the rapid growth of waterial which should be
+ihéluded ix the subject und the decline of available time to devote to such
+work have together dehyed the completion of it, and haye made it
+desirable at this stage to publish a second volume, ‘The parts of the subject
+‘sineltided in this volume are Stability, Resistance, Propulsion, and Oscillations
+of Ships. -
+
+In ship, forms the determination of Stability is usually made by methods
+of calculations similar to those explained fully in Volume I. To these methods
+many porsovs have contributed, but probably few will be disposed to grudge
+to the Inte fr,F. K. Barnes the hopour of having laid securely the founda-
+tionguper. which Sir William White, Sir’ Philip Watts, and others have built
+up our very complote mastery of this subject. Tho methods at present used
+aré very different to those used by Mr Barnes and his coadjutors. ‘The intro-
+duction of the planimeter, the integrator, and the integraph, calculating
+iustruments invented by Amsler and Coradi, has broadened our grasp of
+this subject by naking easy the calculations upon which Sir William White
+and Sir Philip Watts ay otvors in their early days spent many weary houre,
+‘These instruments hcwe made it possible to siave sticbility calculations made
+by a inuch less kighly skilled class of calculators, Theanthor remembers with
+much pleasure the ease with whick, at Clydebank, Mr Archibald Campbell, now
+at Ferrol, Mfr Joon Paterson, Naval Architect to Messrs John Brown & Co,
+and M: A. W. Stowart, Electrical Enginger, and others, then lads fresh
+fronr school, usec’ Amslor’s integrator wheh it was firgt applied to stability
+calcalations. eS
+
+The purely goomcirical side of the study of stability, t.., that side whlch
+is connested with theorems,’and not with actual values, own its existence.
+almost ,completely to the French writer Dupin, Extensions of tie geometry
+
+
+--- Page 11 ---
+vu ‘WREFACE.
+
+of stability. ave been made from time to time by.other writers,® Methods
+of proof “of Dipin’sg propositions and the lator extensions are here giver
+iffertng. ‘fn many cases from the original proofs, becguse sthe yaeth
+seemed to thgauthor better suited*to the purpose of the student? Tofthe
+methods of obtaining actual velues th author has devoted considerable
+attention, with a view to producing simple processes which can ¢e used by
+operators of small experience, agkd with much less labour than’ the older
+processes. . te .
+
+The work on Resistance and Propulsion cannot fail to be largely an
+adaptation of the-gublished work of thoke who have been fortunate enough
+to have the use of Sxporimental tanks, from which alone such results ean be
+obtained, ‘The work of the late Mr Wm, Froude and his son Dr Rt, Bx Froude
+has been largely laid under contribution. Some of the agaptattions ave been
+unde by following the ofiginal closely, rather ghan by making changes of
+doubtful advantage to the student. ‘This has the advantage of dccasioning
+less frequent references to the original text of these @ritery, an 'igvantage
+cess!
+
+which it is hoped will be of value to students, as the size, cost, and Ma
+
+bility of the volumes of the ‘Trunsactions in which the work originally
+appeared are considerable. ‘The work of Mr D. W. Taylor of the American
+Navy, read before the American Society of Naval Architects, has léxgoly been
+used in a similar way, but since this volume has been in type a valuable
+collection of published, Professor Sadler’s work in the
+University of Mich tange Bf full forms (read Also before the
+American Socicty of Naval Architects), and that of others, has*peen alse
+given. Messrs Denny of Dumbarton have from time to time given the authgr
+information as to the Resistance of specific forms, and in some cases the
+
+is work has hee
+on
+
+information is embodied in Chapter XIV. in dingrams, giving for exch of a
+series of speeds the H.P. required tosirive any required displacement.“
+
+‘of revolutions of” engines, become
+». ‘The experimental
+“jas been in advance
+
+Propulsion bas, by the gy
+one of the most importdn 5 subj.
+work in conection with the determitition of Resistafi
+of that of [raged rorethe Inst forty yours, Int now they*are nearer than
+ever to being abreast of each other. ‘This is due to the work of Dr R. Be
+Froude and Mr D. W. Taylor, and to Messrs Denny, {those works none the
+Jess reat and wihuuble though ithedunot be exuctly appraised, as mitch ge
+has not been publishe&.
+
+The work @ Opiflations of Ships™is m the Teast Iully developed state ot
+the four divising of thin yolume, ‘The work’ of thetGlder raude hin, had
+little of vi ly fadded to it since his time, ‘The epoch-making djscowery "that
+gual stability and great steadiness were correlated has been acted oif in all
+
+
+
+--- Page 12 ---
+~ FREFACKg
+
+navies. The extreme onges with which ho dealt sre all that ha
+investigated. They aro, ist, where the periods of the wave af
+
+J equal, in which case oxcessive rolling takes place.” Sovond,
+shtXs period s indefinitely great compared with that of the’
+case Yhe ship remnins practically upright. ‘Third, whore tho shiip’s period is
+indefinitely small compared with that of the wave, in which ease the ship's
+mast fSllows the wave normal, ‘The second qnd third are unreal cases, and
+tho first is very imusual. The intermediate conditions be 2 not been in-
+vestigated theoretically, hough at sea,/itany of thei “ave boon prctioally
+exporiencod in all kinds of ships.
+
+To Mr A. Architecture Department of
+this University, the author fy iitlebted for assistance in the collection and
+correct
+
+amon, Assistant in the Naval
+
+n of the Lectures on which « considerable part of this volume is
+based, ama for the’ correction of the proofs, aud for some valuable
+sugyestionys
+
+Leegrets are offer} to those who may have heen good enough to have
+erected that this volte would have beon issued sooner, and that it would
+
+have completed the work on this subject.
+
+* The werk on Design has proved to be much more voluminous than was
+expected, [vis an clusive subject. ‘Types of ships vary from year to year,
+The kind of kuowledge accumulated and stored in the first two of these
+volumes is incrensing rapidly, but its application to Design not only causes
+additions to our knowledge, but prodnces changes of type of ships and im-
+provgmer‘y in results which make the wisdom of a few years ago the folly
+of today. Much less help ean be given by others to the student in matters
+of Design than in other parts of the subject, He can only become a coni
+potent designer by making designs ; and while theories and data can be given
+tu him, their applica
+
+tion can only be his own work, An attempt, however,
+will be made in the next yolume, to put soae information and examples
+before the student to w'ich tic may refer for assistaace at present, but to
+which in tho fufure “2 will probably lo.« back with” the same reverent or
+irroverent fecling’s as we look back upon the work of c:...2yo(lecessors.
+
+To those Reviewers who noticed the first volume the Authér is grateful
+for the unifermly kind way in which it was réccived.
+
+. ! JOHN HARVARD BILES.
+March 1911.
+
+
+
+--- Page 13 ---
+
+
+--- Page 14 ---
+CONTENT
+
+PART IV.) STABILITY.
+
+cuaerin
+J. Righ ing Arms anil Moments
+
+LL Stability of Ibating Budies generally. :
+ILE, Determination of Coordinates of B for a Given Form from a Similar
+
+Bam of Diller
+
+ Geometricnl Properties of Isovels, ete,
+
+AV. Methods of Findmg Stability
+
+PARI V. RESISTANCE.
+
+‘nV Hydirsistance to being Set inAMotion
+VIL. Present Theory of Kesistance
+IX. Waves.
+
+. Wave-muking Resistance of Ships
+
+"XL. Determination of the Resistanse of Shipe from Model Experiments
+XIL, Resistance Résulte and Mgplod of Standardising,” =. *
+XIIL, Sadler's Resistance Results", + a
+
+XTV.+ Other Resiste ice Kesutts
+
+buna ey
+
+XV. Determination of Machinery Horse-Power fr Resistance Horse-Power_,
+
+XVI,
+
+Influence of Lepulros Water on Speed .
+
+PART VI. PROPULSION.
+
+XVIL. Elementary Sonsiderytibsror Propulsion
+XVII, “Propeller and Propeller Kftiency) =. 8,
+NIN, Prostical’Application of Experimental Model Results .
+
+pagRs
+1-12
+
+13-21
+
+22-81
+32-48
+49-90
+
+91-100
+101-105
+106-119,
+120-185
+136-154
+155-176
+177-196
+
+> 197-210
+211-230
+281-283
+234-241
+
+242-272
+278-282,
+288-294
+
+
+--- Page 15 ---
+‘4 ee « CONTENTS.
+gps XXedlfhhe Relition between ‘Type, Area, Dimensichs, and Efficiency of
+eg WA Boru Propellers. . ws,
+
+s@$kt. Terlor’s Experiments on the Determination of Dimersions for Sevew
+© Propels...
+
+XXIL Effect on Thickness, Kake, and ‘3hape of Blade upon Prqpeller
+Efficiency . : foe . + y+ * 828-888
+
+XXIII, Pressuires near Propeller.’ Test of Laws of Comparison and Cavitation 884-848
+
+XXIV. Appl of Model Bxpé:imental Results to the Design of Tro-
+ellers and the Determination of Efficiency in Full-sized Ships . 844-854
+
+XXV. Rel
+
+hetween Indicated and “Shaft Horse-Power, Progressive
+
+Speed Trials Oo | 356-860
+PART VII. OSCILLATIONS OF SHIPS. .
+. General Considerations of the Motion of a Ship when at Sen . =. 961-867"
+. Vnresisted Rolling in Still Water. “ s08-s7¢
+|. Resisted Rolling in Still Water (Hxperimental Investigations) «© Bis-880
+. Resisted Rolling in Still Water (continued)... 8816887
+. Rolling amongst Waves Soe .. 3p8-897
+XXXL. The Gruphie Process of Integrating the Equation of Rolling ford Shrp 898-411
+XXXIL Method of Reducing Rolling by Lilge eels. 412-416
+XXXIH, Means of Restricting Rolling by Moving Objects =... 417-420
+
+IV, Pitehing and Dipping Oscillations =. ks
+
+Inpex ,
+
+
+
+--- Page 16 ---
+THE
+DESIGN AND CONSTRUCTION
+OF. SHIPS.
+
+PART IV.
+STABILITY.
+
+CHAPTER 1.
+RIGHTING ARMS AND MOMENTS.
+
+.
+In Part II. Vol. 1. the methods of finding volumes and centres of gravity of
+solidghave been discussed. In this chapter it is proposed to consider fully
+the action of the forces upon ship when at rest in still water, and when
+slightly disturbed from this position of rest to another position.
+
+Befig. 1, suppose B to he the centre of gravity of the volume of water V
+displaced by the ship SSS (called the contre ofgbuoyancy, or O.B,), and
+suppose (i to be the centre of gravty of the whole bf the sjaterial in tye ship
+(called the C. At rost, the weight may be cou idered as concentrated at
+G, and the buoyancy or sfpporting force utB. "The weight and buoyancy
+foroos are equal und ppposite, and act vertically in the same Tin
+
+Suppose that some force F, whose point of appligation *,,!, juclives the
+vessel until she is again at rest in the pesition ‘shown by“the dotted
+section S'S'She 9
+
+The point G will movc‘to G, the same position relatively to the structure
+es beff¥,and the volume displawed will probisly be of w differcat form to
+fat i in the. upright position.
+
+tke “force F displacing tt ship from its upright podtion ofe reat be
+acting in some direetion, say A ,,other than horizontal or vertical, we may
+repolve it by the parallelogam of forces, into horizoutal and vertical components
+Fy and fy respectively, acting iff Db and C4, The Vertical componcat will
+cause an ingtease of volume of water displaced equal in weight to this vertical
+
+VOL. 1, * .
+
+
+
+--- Page 17 ---
+THE DESIGN AND CONSTRUCTION OF "SHIP.
+a)
+
+cot ‘The centre of gravity. of this incréase of volume may not actin
+“the samd vertical line as the vertical component of the applied force,
+“AL W L,be the position of the waterline in the vesscl when she is upright,
+ahd WL! be the position of this same line when thg vessel is inclined, and
+“W;'L, be the water surface in both conditions, we may ‘cut off fromthe ship
+SISTSta yolume below W, Ly equal tothe increase of volume which the vertical
+component Fy causes to Le displaced. ‘The horizontal component Fy will tend
+to move the vessel bodily to the right, and must be resisted: hy some force
+X in order that there shali be equilbrium. If this foree R be resolvable
+into verticdii.e4 horizontal components Ry and Ry, respectively, the former
+
+i &
+
+"Rot
+
+aust be treated in the
+
+" the vertical component of -the appliad
+foree., Let W. 1. be the water
+
+parallel to W, 1, which the resultant of
+Fy and Ry'cuts off in Volume, If its contre of gravity is at g we shall have #
+couple formed by the foree Fy and the leverage yh and ity with leverage
+wh, tending to overset the ve sel.
+<Phe force Ry must be equi lio Fy, or the vessel will move bod). Thi
+force Ry will form a couple with Fy. Its moment will be Fy, p. The weigh;
+of the ship will act downward through G!, and the bnoyaney, equal iy amoum
+to the orjginal buoyancy in the upright condition, will eet upwards througl
+B,, the centre of gravity of the volume below th line WyL, which volum:
+is the same as that in. the upright coiditio... These two forces, the weigh
+and buoyancy, form a couple W. GZ; W being the weight of the ship,
+
+
+
+--- Page 18 ---
+RIGHTING ARMS AND MOMENTS.
+
+Vit-the point B, is to the fight of (i, the couple tends to ‘bring the ship
+rack to the upright, and vice verad, We have thus the follawing couples in“
+the figure as drawn. oy gt
+
+1. An upsetting egtple due to Fy and I,aund the buoyuney of the layé
+2, » Fumyl By=tyo
+3, Arighting couple, Wo o=Wx ay.
+f there Js equifbrium, the algebraic sum of they: must be =
+The case. may b+ simplified by assuming that both the applied force F
+vnd the resisting force It act horizontally aud are equal, av.3e%4f consequence,
+ihe volume of displiement remains wicho aged, For equilibrgin, the value
+WV. Z must equal the moment bp of the inclining foree, ‘THie value varies
+
+with the angle of in all dyzles it is apssible
+to determine the angle at wich equilibyium will Gist fog a known inclining
+moment. With a fixed poSttion of G the proBlem Tecoifes one of finding the
+ptsition of B, for apgiven inclination, This would he easily done were the
+volume of displiement at a yiven angle determmed, gWe ku:*syhat if ought
+to be, the same 1 the upright position, hut to know exactly
+waterline is that wil Ent,off, at x given inclingfion, a given displacement, is
+aot so casy. ¢ Turning to fig. 2, suppose W ly afd W, 1, to be the positions in
+the béHJRof such a waterline in the upright ahd inclined positions, the angle
+of inclination Being @.@ The volume Le W)KL,=¥ the volume of
+displacemdnt. W, KL is coma to WKJeand WYK Ly, so'thut ©
+. Wry, =V-W,KL
+LFL
+=, say.
+
+
+
+--- Page 19 ---
+THR DESIGN AND CONSTRUCTION OF SHIPS.
+
+v ig the volume of the wedge of emersion br submersion, and therefbre
+the wedge of erxersion WF W, ix equal to the wedge of submersion LF L,.
+If B, is the centre of buoyancy of tile volume W KL, then V.GZ will be
+the’ moment of the buoyancy causing the vessel to eeturn to the upright,
+tity V.GZ is expressed in units of weight, eadh equal te’ the weight
+ofa unite! volume. This noment ic. called the righting moment, and is the
+measure of what is known as the stability of the vessel at the particular angle
+of inclination 6. ro
+he of such a form that all waterlines cutting df equal
+volumes pass’ squgh the point Q, it will e ekact form and
+position of the centre of gravity pf a volume of the solid which has constant
+displac But generally this is not so. ‘The waterline W, Ly ents off
+from the uprignt solid ny, and adds a wedge LOL, =
+nay 2. ‘The volume W, K L, then eq ~ 2) +, and this is (as drawn)
+ine A is the area of
+
+ss
+
+Hence the volume of the layer Wy W, Ly ux the correcting layer)
+is equal to the difference of the wedges 7, If we kuow,this volume
+A.K and find A, we eam find K, which will enable us to deterniine the true
+position of W, 1). It is evident that we may find the volunies x, aug 4, and
+the valne A hy the methods of previous chapters.
+
+Had », been greater than 74, W,L, would have been al
+of below it.
+
+\, L, instead j
+
+We can also find the position of Bh. Suppose, in fig. 3, y, and g, to be the
+centres of gravity of the wedges v, aud r, respectively. Join y,y, aud drop
+
+perpendienlars y, 4, and y,h, upon W,L,. Take moments of volume about
+the line OH drawn perpendicujarly to W, 1, BP as horizontal and perpen-
+dicular o OH :
+
+Starting with the volume Vand moment V. BP we first take off , with
+the moment »,O/,, then add 7, with moment v,.Oh,, and finally teke off
+W,W, L, ly with moment (r,~ r,) Oc, ¢ being the foot of perpendicular let fall ¢
+from the centre of gravity of the correcting layer upon W, Ty. ‘The result
+of these Ii the volume V(=W, K L,) and ity moment ©
+about OH, ion, treating, moments which
+turn ¢, the ponitiy . and reductions of volumes as
+negative, we hat
+
+VBP ~ moh, oh OC -VPR ‘
+VQRP PR) VBR = node, Fret Mmm )OC -Q@
+
+ing moments about BR,
+V(BR) = 0,(yjh, + UP) - 2(OP = 9
+
+ah +n,
+
++ (en MOE Cay)
+ov u Mgt ACe(v,¢ my) (2°
+
+* This sign will be + if the excess of volume uf one welgetovér the other belongs to the
+rpposite side to ‘which the C.G. of cufreeting layem iq in relation to OP. It i»generally ,
+‘emembered, by the expression “like sides give negative.” This means that .f the volame
+su submerged oxcess with the C.C. of the eonnediing layer ou the anbmerged side of the
+OP the sign Similarly, an merged excess on the emerged sige will'be
+.. The other two combinations will give a positive sign,
+
+his sign is always nogative.
+
+
+
+--- Page 20 ---
+= ARMS AND MOMENTS.
+
+NYence weanay at once find the position of B laterally and’ vertically if we
+kndW the positions of y, and y, and the volumes », and ry.
+
+BR=BN + NR= BU sin 64.07%
+BR -#U sin = G7
+V.BR - V.BG sin 6= Vy
+tity + nol, # (0, = %,)OU= V.BG sin O= V.G2,
+‘Yo fmd the’ position of 1 vertically we havewsimilarly
+(ry mC = VBR “
+
+tly +
+
+case of this ©
+
+nation for V.G 4% is known as Atwood’s formula,
+
+It is obtained by direct iyfestigation, as Atgood botained it, or by substitu.
+tion in the equations (1) and (2) of >= =r, when wedbtain
+
+V.BR = o(oh oly) =0.h ly,
+
+then V.GZ= why VBE sin 8)
+or Ce re)
+. .
+» .
+and ° oBR= Flys tad ee 0B)
+
+BM from Atwood’s Formula, —* Suppose @ to be ‘sally and the
+wrtical through B to intersett the vertical through B, in the poittt M (fig. 4). ~
+
+wow .
+8Z—= GM sin O= Gh, — BU sin 6 from (4).
+
+
+--- Page 21 ---
+THE DESIGN AND CONSTRUCTION OF SHIPS.
+
+Suppose 0 W or O L represents y, the half ordinate of the load waterlisfe,
+For a amalleingle, the area of the small triangle LO L, is represefted
+by $ y' 6 If we suppose this triangle to have a small thickness dit in a
+
+diéetion perpendicular to the paper, we may exprery the volyyme of the
+wedge hy «
+
+the limits for by
+
+Fre. 4
+
+The moment of this eld aent of valume abput € is }
+
+« ‘ .
+momeut of the transference of the wedge » is nih.
+
+Hence we tay write GM sm @27 8
+
+Jf @ is small, sin 0=6
+
+and
+
+The point M is known in shipshape fofms as the metacentre, “It has
+been fully defined in Chapter IX, Part II
+
+
+--- Page 22 ---
+RIGHTING ARMS AND wOMENTS.
+
+L
+af ‘pode
+This expression is BM=-" Vv ‘
+. “, .
+
+We Mat seen thit this expression ¥ | sAete is the form of expression for
+the moment of inertia about OX of an ‘rea in the plane X ¥ and sfinmetrical
+about the 0 Xaxis,
+
+Now the axis of 0 X is in the direction of the longth of the form, that is,
+it is perpensticular to the plane of the paper, and the y ordjnates are the
+
+ordinates like UL, ‘Therefore 3 i Pale is the moment of inertin of the whole
+
+waterphme WO 1, about an axis throygh 0 in the direction of the length,
+
+Calling
+
+oe! we obtitin a series of valucs of G% for a series of angles of inclination
+and a given displicementy wo may set off the results in a graphie form thus :
+
+7.
+
+GZ
+
+DEGREES OF INCLINATION.
+Fie. 5.
+
+This curve is kuown as a Curve of Righting Arms, or more commonly a
+Cuve of Staticnl Stability. We,may call it « curve of (Z's for constant
+displacemeht and constant position of G, and for pest angle of heel.
+
+Suppose we have three axc> jit right,angles fb cach ther, as represented
+in fig. 6. Suppose-at eachavalye of Vfpr'which Te have 4 curve of stability
+(with a constant position BiG) we set mp thé curve of statical stability. It is
+‘evident that it is only necessary to have a series of curves for a sufficiently
+large number of values of V to make a surface of statical stability. If we
+out this surface by a ple parallel to the plane Through ZUY such as in
+P,P, Py, the aurva P, P,P, will be one of G van varying displacements and
+
+constant angle of heel (measured by Oh), ff by an independent process of
+caleiffition we could obtain a series of curves buch as P, P,P, wagcould obtain
+the samo.surfitee of stapical stability as that obtained hy the series of curves
+of staticdl stability (or curvor of G % for ‘constant displacement ayd varying
+angle of heel). Swch curves as,P, P, P, are called Uross Curves gf Stabili
+«The differesce hetwetn a curve of stability and a cross curve of stability
+ig that the former is a curve df G 2's for constant edisplacement and varying
+inolinatiog, wile the latter is for varying diyplacoment and constant¥inclina-
+
+
+
+--- Page 23 ---
+THE DESIGN END CONSTRUCTION OF SHIPS.
+
+tion, In the surface above dealt with it is assumed that (i ic unchanfed
+in position.
+. For each position of (4 there will be a separate surface of statical stability.
+
+Z
+
+2 vawwel or ez.
+
+Suppose we have a known form of ship ab a given inclination, and find
+
+for a waterline W, 1, (fig. 7) the volume of displacement V and the position
+
+‘Fat on
+
+of GB, suy’ B, by any of the methods describell ix ‘an earlier chapter. It
+is evident that we have only to find V, ahd 13S V, and By, ete. for other’ water-
+Tines W, L,, W, Ly ote. in onder to be able to obtain a curve B, B, B, {yom which
+
+
+
+--- Page 24 ---
+RIGHTING ARMS AND MOMENTS, 9
+
+We can determine such a cutveas P, P,P, (fig. 6). If we find a series of such
+calves for a sories of angles of inclination, we can complesely determine the
+surface of statival stability for a known position of the C.G. of the ship. For ,
+every position of the C.G. there will be a separate surface of stability, but
+they wil Ml be founfled on the positions of the C.B.’s for the diffegeut volumes,
+and angles of inclination, Hence iteis desirable to find the Gab’s for all
+volumes and all angles of inclination, and then surfaces of statical stability ean
+be found for'dctermined positions of G.
+
+ge
+fe
+
+Fie. 8, Fra, 9
+
+Hence we see that the determination of the stability resolves itself into
+finding voluwes wd (.(,'s of volumes, and ny in all cases be dealt with by
+the methods described in Part 11., or some nf'difications of them.
+
+fVetacentric Evolute.—In fig. 8 Tet T; be the position ofethe centfe of
+buoyancy in the upright. Let 1B, he the position of the sentre of buoyancy
+after thd vessel has been inclined through in angle * ow
+
+Let B, be thesposition of Byufter the vessel has received a further inclina-_
+«tion through af angled. ‘| -
+
+Draw the verticals BG, B/M,, and B,M, through the points B, By and B,
+respectivély. * *
+
+
+
+--- Page 25 ---
+10 THE DESIGN AND CONSTRUCTION OF SHIPS,
+
+If the vessel is symmetrical about the midship section, i.e. if ié is dow
+ended and the vessel be inclined about a fore and aft axis, fixed only in dirdo-
+tion, the centre pf buoyancy for all transverse inclinations will lie in the midship «
+soctidn, but if the ends are not symmetrical, there may be a tendency to
+change trimgwhen the vessel is intlined. The verticals "through the*contres
+of Lnoyancse corresponding tor two cormucutive positions may not intersect,
+but they will be in vertical pines perpendicular to the axis of inclination, i.e.
+parallel to the plane of inclittion. ‘The intersection of the %projectjon of
+these two lines in a transverse vertical plane may be called the metacentre,
+and the locus of tis point is called the Metacontr olute (lig. 99. Mj, the
+intersection on_the plane of the paper (parallel to the plane of inclination)
+of tho projectien of the v Js through B, and B, (fig. 8), is a point on the
+metacentrie cvolute. '
+
+For transverse inclinations it involves generally only an inappresiable
+quantity if we consider these verticals 8 hiesin the midship section and fo
+intersect at a point M. Its amonnt is sinall, because i.most forms the
+departure from symmetry about the mid scetion is smal.
+
+Later wo shall see that the term metavel js suggested “for the locus of the
+intersection of verticals (or their projections) through the centres‘of bugyan
+
+In fig. 8 draw perpendiculars from the points Band Gon the verticals
+through B, and B,,
+
+let RM,
+RB:
+
+RB
+
+The angle R,BR, =.
+
+Now
+Again, my =dn
+
+d= der
+
+me fede. .
+Heneg we [atom [ [atO.td.
+r %, ara
+
+If we have a enroe pf ty My'seor values of fc insferims Of 8 we can get the
+curves of BR, and BR, by integration. Integrating once we get the curve,
+of valneg of = or values of BR,. Integrating this we get the curve of
+values of w or fites of 1, Ry.” These tree curves are shown in fig. 10.
+
+We have seen that
+
+lish +hy,), equation (5), yt 5.
+
+an thay, ©
+
+But.
+
+shay pt Be
+coe
+
+a Juteto—iun + hall
+
+
+--- Page 26 ---
+“RIGHTING ARMS AND “vomznrs, u
+
+\, Dynamical Stability —The work done in inclining a vessel through
+ah angle dé is W.GZ.d8, and therefore the total work dene in inclining a
+
+ty :
+vessel from 0, £5 6, i W [ "Gnas. : oo
+
+The Auamical Stability of a vessel at Any angle ix defined tg be the work
+done in inclining the vessel from the upright position (in which she is
+assumed to be in statial equilibrium) through that angle. ‘The expression
+
+for tht dynamical stability is therefore W362 48, where @ is the angle
+a
+
+through Which the vessel h.s been inclined.
+
+Fic, 10.
+
+< *
+Th dvnamical stability = Wf? «z.a9
+; °
+
+re g . .
+2 WwW [rade “BU si! 8) d6 (ee fig. 8) *
+J :
+
+J
+
+~ obs 0+1)
+6- BG)
+
+@ oJ oe
+=W fi TR, do WBC, sin 6.00
+° °
+= W.B)Ry - W.BG
+=W(BR, + BG,
+=W(R,Z, - Buy}
+
+Herfve the dynainical stability is=W(B,Z,-BG). 7 oe
+
+‘The expression (B,Z, ~ BG) is called the Dynamical Arm, ayd is generally
+« written 4, so that the dynamical stability is represented hy Wh.
+
+A method of showing diréctly that this is the work done in inclining the
+
+vessel isvas follows (ace fig. 3, p. 5) :—
+
+
+--- Page 27 ---
+12 THE DESIGN AND CONSTRUCTION OF SHIPS,
+
+{ .
+OG is distance of C.G. above or below the waterplane WL in the uprigft
+
+. condition. .
+QB +», GB. below the watorplane WL in the upright condition.
+8% » CG. above or below the waterglane W, 1 in the
+
+. inclined condition. oe
+SB,» CB. helpw the ewaterplane W, I, in the inclined
+condition.
+
+Original d2 Xauce between ( and B= BO+0G = Bu,
+Finil distanee 4, BOBS 4NZ= DZ,
+
++". Distancet lag which thes
+during the inclination of the vessel = (BZ),
+
+Here, sinew h,/ is > BG, the distance =(B,7.~ Bu),
+
+<¢ Work done in inclining W(B,Ze BU), " (Fig. 3.)
+
+And (8,2 ~ BG) is the quantity prevignsly denoted hy 2,
+
+Ze. work done during inclination = W% « -
+
+Relation between the Statical Curve of Stability ind the
+Dynamical Curve.--The statical curve is a curve gf glues of GZ, and
+the dynamical curve isa curve of values of f.,
+
+two centres of force have eon? separated
+
+We have seen that wend Wh.
+
+ve fonae=n.
+
+oi. The dy
+be obtained di
+
+curve is the integral of the sta
+lly from the G% by ordinuy integ
+
+sand it can
+
+
+--- Page 28 ---
+CHAPTER HL.
+STABILITY OF FLOATING BODIES GENERALLY.
+
+T¥'this chapter will be investigated the stabilities of bodies in general, that is,
+of any form,
+
+Té has beow seen that ¢!e displacement of a body is equal to its weight,
+end on the sastumption that the weight is tant and that the C.G, can be
++ will float in equilibrium in many positions. In
+ils, bor every pline cutting off from the body a volume of the liquid
+diyplaced whose weight is equal to the weight of the body, we have a possible
+pline of flotation. For each volume so eut off there’ will be a centre of
+buoyancy.
+
+Tf we imagine a body to be slowly rotated about an axis through its C.G.
+and fixed in direction, but free to move vertically, the body will adjust itself
+verticully so that the weight of the displaced fluid will be equal to the weight
+of the body ut every point of the revolution, Hence we shall have an in~
+cfinite nuinber of planes in the hody which can be phines of flotation eutting
+off coustant volume, Each volume rozresponding to a pline of flotation will
+have a contre of buoyanc: ’
+
+When the revolution is completed, the centre of bnoyaney will coincide
+with that at the beginning of the revolution.
+
+‘The whole series cf centres of buoyancy whieh have corresponded to the
+series of constant volumes submerged during the complete revolution will
+form a curve beginning and ending at the centre of buoyancy in the first
+position, In other words, it will be a closed eury
+
+If we now rotate the be 'v abeut anoth
+otherwise free, as in the former case, we shall jother closed’ curve of
+centres of buoyancy which will be differen to the formtr one if the direction
+of the axis of rogation he different. We may take au indofinite number of
+axes, all having different directions ; in fact we may start with, au axis pointing
+to the north, and take every point of the compass Hetween north and south for
+the directionof the axis, and to every directicy.’ of axis there will correspond
+a closed curve of centres of buoyancy, 'Thtke obvionsly will, if taken closely
+enotigh, form a closed surface, which undly ve called 2’ surfuce,of buoyancy.
+Hence 4 surfce of buoynney of a body may be defined as, the loci of centres
+of gravity of constant volume cut off ffom the form. *We may, for con-
+venience, vall this surface of centres of buoyane} the isovel syrface, that is,
+«athe surface for conbtane volume and varying inclination, .
+
+Suppose the chosen axis*throwgh the centro of gravity to remain fixed in
+
+direction; only; ss before. Also suppose the whole volume of the bédy to be
+13 2
+
+1 in disection, but
+
+
+
+--- Page 29 ---
+4 THE DESIGN AND CONSTRUCTION OF SHIPS.
+
+unchanged, but its weight to be changed grad fatty from nothing to
+weight of its whale volume of the liquid in which it is immersed. In ot}
+words, let the ody be at first without weight, just touching the water surface, .
+and be gradually increased in weight until it is just eqmpletely submerged,
+change of position taking place only in a vertical dircetidn, ‘To each volume
+submerged {here will correspopd a centre of buoyancy ; and if the volumes
+cut off be taken closely enough’ together, these centres ‘of buoyaney will form
+a curve, beginning at the tangent plane of the point of no inamersion and
+ending at the centre of bnoyhucy of the whole solid, This enrve thay be
+called an ravelie. and may be defined as the lacus of centres of buoyaney
+corresponding to,volumes cut off at planes perpendicular to u fixed line in the
+body. .
+
+Seppo there is a datum line in ihe body passing through the centre of
+gravity of the whole volume, and iakiay a known angle with the assomed
+vertical alrewly We may uve en indefinite number of lines, *
+each of whi making the same known angle with #ae datifing’
+ling, and for each of the: y have an isoeliqe, ‘Those isocline ®
+curves will form a surf lel an Isocline Mirface of Buoyaney
+for the known angle. There aay he an indetmite number of angles, to each
+of which would correspond an isoc ¢, and those surfaces in all would
+muke pond to the solid formed by the
+enveloping su X oe
+y, for each volume ext off—from that of no displuwement tthe
+whole displicement of the body—there will correspond an isovol surface. These
+will form a solid, which could be called san isovol solid, but thatsit ix the same
+as the isocline solid and the enveloping surface of the body’ ‘The isovol
+surface corresponding to uo displacement will he the enveloping surface of
+the body, or the surface which all the tangent plines to the body whieh do
+not eut it, would form
+
+Let us first consider some of the priperties of the isoval suface of buoyancy,
+the isoelines and other curves, —* :
+
+Ist. Th has been seeu that he isuvol is a closed survieee, and must lie within
+the linits of the enveloping surfice of the bndy
+
+2nd. The tangent plane at any point of Mh
+plane corresponding to that point. Bor, the
+inclination, the centre of hnoyaney changes, has been shown to be parallel*o
+the straight line joining the centres of gravity of the wedges of ®mergence
+and submersion. “Wao theYugle ix jndgfinitas small, this kutter line coincides
+with th waterplund, and tf former line with thadirection of the tangent,
+As this is true of sl slirectious wf intlination, a change of direction of the
+centre of buoyancy takes place along the tangent line pagullel to the water-+
+plane, and therefore in a tangent plane parallel to the waterplane, Hence
+all points indeffhitely clost to the original centre of bu ¢ in the same
+plane with it, and that ph tangent plane, is payulel to the water-
+
+un ise
+
+isul is purallel to the water-
+ont itt which, for a small
+
+TNT
+plane. ‘ .
+Bra. It hgs no reenteriny pees.’ Ut any part of the surface had ve-enaring
+partys tment plane in sone point of the part woul wnt the surface bat
+
+it can be shown that a
+surface,
+
+“We have'already seen that a change of Wwaterpiuhe caused by inclining,
+the body through a small angle (displuceshent tenaining constant) is equiva-
+lent toguking a wedge of volume from the emerged side beloim the guagerling;
+
+gent Yo an isovol surface can ucver ‘ect. the
+
+
+
+--- Page 30 ---
+STABILITY or, FLOATING BODMES GENERALLY. 16
+fg placing, a wodge of thd same volume on the submerged side adove the
+wikerline. This necessarily causes a rise in the centre of byoyaney relatively
+to the waterplang. :
+
+As tho waterplang is parallel to the tangent plane the centre of buoyaney
+will alwaye move ralatively to it in the direction of the waterplane, and,
+therefore, its curvature will always yo towards the waterplang, and away
+from the tangent plane. Hence the surface cannever have a re-entering part,
+and a tangertsplane cannot cut it.
+
+This can also be seen ax follows: >
+
+If the isovel surfac ® re-entrant part, then some
+parallel to a plane of flotation amst cut it, and, in the vieinity of the tangent
+plane B, the adjacent centres of buoyaney would mov from the plane
+parallel to the waterplane, which is jmpoxsible. Further, ‘there would be
+
+angent plane at B,
+
+allel to the same v
+ve a solid with Uh
+
+another taiqyent plane at By pa
+sponding to B), and we should hi
+buoyancy, whfth is impossible.
+
+4th. Hor every isovol there is a complementary isovol similar in form, but
+with corresyondiny radii at ISO" from cack other. The pole of similarity is
+the centre of volume of the whole solid,
+
+If V bo the volume of displwecment sd B its centre of buoyancy, the
+vdlume m of the remainder of the sohd and the position of 4 will be related
+to each other hy
+
+terplane as that corre-
+¢ positions of centres of
+
+nll = V.BH,
+
+re His the centre of volume of the whole solid, Since B and 6 are
+points on the isovols of Vand » volume: their loci will be similar, since
+
+oH=Y BH and © iy constant, he rvdins 611 8 € 180° wo BH.
+°
+
+» 7 ,
+The limiting isovols dre (i) the enveloping surface got the body, (2) the
+point H; so that the complementary isovols which approach very near to
+
+the total volume of the body and to no volume, approach very neur to the
+point H and to the cuvcloping surface of the body respectively. The point
+H in the limit has the sane shape as the cuve!yping surface, but with all ite
+correspondinig radii at. 140°, ‘
+
+fth. For the same angle of inclination, the tangents to the isovolg at
+the centre ofsbuoygucy for the same solid and angle of inclindtion will all
+have thd sane inclination, as they are pagallel to the warprlines of the same
+inclination. Hence ull tangents fo isovals alongsan isocline are parallel to
+each other. - Kig.'A2qihows a’set of isovols aud isoclines for a shipshaped,
+form. ‘The isovols are for un‘formly varying percentages of the total volume
+of the solid. he isoclines are for uniformly varying angles of inclinagion.
+
+
+
+--- Page 31 ---
+16 THE DESIGN AND CONSTRUCTIQN OF SHIPS.
+
+Curve of Flotation.—To each constant volume of displacement thee
+will be a watewplane. Consecutive waterplanes intersect in their cent!
+of gravity. -'The locus of centre of gravity of waterplane for gonstant volume
+for # given direction of inclination is called a Curve of Rlotation,
+
+Surface of Flotation, or Flotavol.—If the direction of tolination
+be varied jffinitely a series gof curv of flotation will be formed, which
+together will form a Surface of Flotation for constant volume of displace-
+ment. This surface will he the locus of all centres of gravity of waterplane
+ontting off constant volume, * ‘
+
+6th. The tangents to the isocline will all pass through the point of the
+curve of flotation which corresponds to the centre of buoyaney, which is the
+touching poius of the tangent, because each addition to the volume of
+displacement for coustant angle of inglination is made by a. small addition
+of volume at the waterlini: formed ty a parallel layer whose centre of
+
+1s6voLs|
+
+Fie, 2.
+nd is therefore ¢ point on
+
+gravity is in the limit at that of the
+the curve of flotation oe
+
+For cach watertine of Yeostant inclination there will be a contre of
+gravity of area whieh will be a point n the turve of flotation for one par-
+ticular volume and inclination. Hence there will be a curve of flotation of.
+constant inclination and varying volume, which may be called a Flotaeline.*
+One end of this curve véll ide with the end’A of the corresponding
+isocline (at the angle 6), whig is normal to the midship seetipn ; the other
+end B will coincide with the cO\responding end of the isocline ay the angle
++m. This is shown in fig, 13," o
+
+This curve will be such that from any poing of ituif a, straight
+Tine be drawn ,to! the corresponding (.B., this line will be a twagent to
+the isocline. ' .
+
+Tthe Hertce the flotucline isa curne of purshit to thescorvespanding jaocline. ,
+
+* 1 may be noticed that there is the same tlotachue for (0+) and, ai for 0
+and Vie
+
+
+--- Page 32 ---
+STABILITY OF FLOATING BODIES GENERALLY, Ww
+‘
+
+‘Phe projection of the intersection of consecutive normaly to the isovol
+will form the curve known as the metacoutrie evolute, which thay perhaps be
+better called the Metavol. Such # curve is shown in fig. 9. .
+
+If we consider the consecutive metaceytres for varying volume and
+constant inclination, we shall see that there will be a curve of ingtacentres
+for constant inclination. This curve may be calle a Metacline. ©
+
+Bth. A tangent to the metacline will always pass through the centre of
+curvaturg of the corresponding flotarel, because the change in position of the
+metacentre isle to a small added volume at the correspondipg waterline
+which acts for a small inclination through the intersection off consecutive
+verticals through consecutive C.(:. of the waterpline, that is,.through the
+intersection of consecutive normaly to the flotavol. Hence the’ tangent to
+
+(
+
+Fie. 13,
+
+the curve of metaclines will pass through the corregpondiny, point on centre
+of curvature of the flotavol, eh. * my
+For constant inchnation und gvaryings vogue, the curye of centres of
+curvature of the consecutive flotavols will have its consechtive points on the
+tangents to corresponfing consecutive points on the metacline. This curve
+thus forms a curve of pumuit to the metacline. Hgnee we have the two
+following statements :
+1 The flotagineds a curve of pursuit to the isdeline,
+2. The lous of the centre of curvaturegof the flotaclines is a curve of
+pursuit to the metacline. .
+Method of Sbtainfirtg Isoclines and Isovols.—For agy form isoclines
+can be dranfn at convenient angles, say 154 30", 458, 60°, etc’, and* isovols
+are geverlly dr drawn yb yuffory percontages of the total volume from 207%
+to
+tet to find the spots for an*isocline, we hate first to constrngt a
+stability body plat? It is better to leave out erections (xo that the form Mag,
+VOL. Il.
+
+
+
+--- Page 33 ---
+18 THE DESIGN AND CONSTRUCTION OF SHIPS,
+'
+have no serious discontinuities), for purposes of comparison of forms indog
+ently of the viriations in deck erections. A series of parallel ai Ne
+is then drawn at the required angle 6 for the isocline
+At each waterplane we have to find—
+(1) @he displacoment up to that waterline,
+(2)€Phe moment of the dixplcement about wu axis perpendicular to
+the waterplanes,
+(3) The moment of sthe displacement about an axié ‘parallel to the
+waterplanes. .
+This is most*conveniently done by the integrator, If possible, for working
+the integratay, the most suitable axis per dicular to the waterline is taken
+through the keel. The axis parallel to the waterplane is taken at any con-
+venient distance from the body plant
+
+Positions for axes are as shown wN I4. KK, is through the keel and
+is perpendicular to the waterplanes, LT is outside the bogy planand
+is parallel to waterphanes.
+
+If we divide (2) by (1) we get the position of the cere of buoyaney with
+
+reference to the axis K “a
+
+If we divide (3) by (1) we get the position of the centre of buoyaney wiih
+
+reference to the axis 1. Ly.
+
+‘Phe actual position of C.B.
+isocline obtained,
+
+Obtaining as
+each wate
+angle of he
+
+"These operations for obtaining an isocline can he performed in the
+following orde:
+
+(1) Draw a series of waterphines at 6°.
+
+(2) Go over all the sections with the int
+
+the aves being fixed s
+Ist (it) perpendicular to the waterlines as at K Ky.
+nid (6) parallel ” ; 4 bly.
+et off the readings of the area and moment wheels for
+on it base representing the length. (There
+one curve of areas and two curves of moments.)
+(4) Find the areas of () thé area cure
+. 11) the moment ahont K K, curves,
+und le) OM LLy
+
+(5) Apply thgscales of thaintegrator ad aSivlug td get the true volume
+
+and the true moment.
+
+(6) Divide the moment results by the corresponding volume results,
+
+(7) Set off the distences thus obtained for each waterline with reference
+
+to the axes K Kyand LL, and we get the values gf the offsets of
+B, which enable ws fo place the spots for.the iseclin®,
+
+Note.—This series of operations cau be simplitied by first spacing they
+fody play sections according to Tchebycheft’s Rules, say, for instancet’
+according to th¢ three ordinate rule ns ‘used for disflavement table in Vol. L,
+oppositt page 82, Theelabour of plotting the integrator reading& for each:
+section isetheroby saved, as the section spaozd ,in this qanner can be traced
+over in succession by the integrator, heginying at the keél and continuing,
+without stopping, to the end. It is only necessury to note the final readings
+
+he aren and moment wheels, There will be only oné volume and two
+
+therefore be fixed, and tihes.a spot in the
+
+calculations for
+cline for all displicements*for a constant
+
+of these spots
+plane, we can yet the
+
+rato up to each waterline,
+
+cachesection
+thus for each wl
+
+
+
+--- Page 34 ---
+STABILITY OF FLOATING BODIES GENERALLY. 19
+
+montent reafings to record for cach waterline, and we cap now get the
+igocline by performing the operations (6) and (7) above described.
+To find the spot in an Isorline corresponding to a given Waterplanes—
+Let K K, and LL, be the two axes as befgre, und let 1H be the isocline
+- obtained by setting olf the ordinates obtained as described aboye. On a.
+base line OA as shown, parallel to KK, set off as horizontal ordinates the
+displacements jv fo each waterplie. ‘These form the curve OM, Thus
+at the waterline w/ the displacement is'am. ©
+Let 2, ba the position on the isocline of the centre of bupyancy corre-
+sponding to waterline w/, which 1s assumed to be one for which the integrator
+readings have been ot off along am the distance ab equal toa, by,
+the distance of 4, from OA, Doing this for all the waterplahes used for
+integrating we can yet a new curve YB, from which can be obtained at
+any waterplane the distance of the editre of buoyaney in the isocline from
+
+Fie. 14,
+
+ho dine OA, means 1 determine the spot giving the position
+of centre of lgioynuey corresponding’ to amy Waterline parallel to LL.
+To determine the Isovol Curves.—The yore egastruction leads at
+once to the determination of the isovol . . .
+If we have a series of*isockines, awd kiww the pging on each which
+» Corresponds to a ch nt displacement which is'a fixed percentage
+of the total bulk, we &an draw a curve through these points, ‘This curve will
+be the isovol for that displacement, It is conveniens, therefore, to find first
+the waterlines giving certain percentages of dispjacement, say from 207% up
+to 80%. ‘Thijs is casily done by dividing the ordinate AM (fig. 14) into these
+ercentae proportions. The vertical lines through these points cut the
+~ Gisplacoment curyes at the required waterlines, and the ordinates of the BB,
+curve at thgse waterlines five the distances out from O A of tile gorresponding
+“positions 8f C.B, on the isocline. Doing this for these percentages’ for the
+different angles of inc\jngtign we get spots on the isovol curves. &
+Teoglines are Usually drawn gor tye following angles of inclination, 15°,
+30°, 49%, 60°, 75°,,and 90°. ‘The isovoly can then Be found by the above
+method at 20%, 30%, 407, 50%, 607, 70%, 80%, of total volume.
+
+
+
+--- Page 35 ---
+20
+
+THE DESIGN AND CONSTRUCTION OF SHIPS.
+
+Angles of Inclination 6,
+@ oe
+%
+
+Fre, 15,
+
+Fie. 16.
+
+
+--- Page 36 ---
+STABILITY OF BLOATING BODIES GENERALLY. aL
+
+3 is sometimes better to make a combined diagram giving the curves
+for each angle of inclination. °
+
+For each angle of inclination wo have three curves (fig, 1
+respectively — .
+
+giving
+
+@) Displicem
+(2) Curve of K
+(3) Curve of Q
+
+(See fig 16.)
+ss (do)
+
+The values of these (displacement, K N,
+waterline, aufl are set off in tery x of the waterline interval, ¢
+
+Having « series of curves for the ition 8, By Oy By etc.,
+we can draw the vertical lines at the required percentages of difplacoment for
+which the isovols are required.
+
+Where these vertical lines ent fie displacement cui
+positions of the waterlnes cuttims off the required volumes,
+the values @ KN and QB for t ‘alues fix the
+positions of the centre of havyaney of constant volume in the isoclines, and
+hence yive points throuvh ‘rich the isovol curve for each percentage of
+displacement chn be dzxw a, .
+
+’ .
+and QB) are obtained for cach
+
++ we got the
+nd we also get
+
+
+
+--- Page 37 ---
+CHAPTER III.
+
+DETERMINATION OF CQORDINATES OF B FOR A
+GIVEN FORM FROM & SIMILAR FORM OF DIF-
+FERENT DIMENSIONS.
+
+Ir iy sometimes useful to obtain the locus of centre of ‘buoyancy ot a known
+form of one set of dimensions from that of-a similar form of @ifferent dimen-
+sions. If all the measurements defining a form are altered in ‘the safae
+proportion the coordinates of the centres of buoyancy will he gimilarly altered,
+Int if the length, breadth, and depth measurements are al'ertd respeetively
+in different. proportions, the ch in the coordinates of the centres of
+buoyimey are not 50 sho to determine, The following suple analysis
+enables us to obtain these :
+
+Suppose we have a form whose priueipal dimensions are 1.BD, and a new
+form is evolved by altering all the length, breadth, and depth measurements
+respectively in proportions such that 1, B,, and D, are the uew principal
+dimensions.
+
+. a Som ah . L,
+The ratio of length dimensign aiteration will be |“!
+
+B
+” breadth ” ~ RB
+«depth, m
+
+For transverse inclinations the ‘ation in lengtl will produce no effect,
+
+on the Ieeus of B+
+Let the breadth and dlpth be" repre rc
+
+A, O (fig. 17). Referring thefa to
+
+the coordinates of a point P in 4.0
+
+yw the vertical height of P,
+
+the horizontal distinee from ¥ OX,
+
+w the longitudinal or foe: daft distance from ZOY. &
+
+‘The coordinates of a corresponding point 1 in A, O ato therfore
+Bi
+axl
+
+cd in,scetion-as shown at AO and
+S04 OY, OX as shown, we see that
+
+—
+
+yx
+
+ox
+
+22
+
+
+--- Page 38 ---
+DETERMINATION OF COORDINATES OF B FOR A GIVEN FORM. 23
+
+At P tha volume of an clement = dr.dy.d: = BV.
+
+At P the moment of an clement about 0% = y.dady.de= 8M,
+
+Applying thisormula to a corresponding element at P, in A, 0 we havo,
+by substizating the coordinates given above for P,, the volume 6f an elemtnt
+
+at P, BD, drdy.de=8¥,, the moment of ap element about,0Z at Py
+
+=D BDL,
+D7 EDL ‘
+. D, BDyLy [, . .
+ta [pete d: b, /aM
+“bp Tev- a
+ly
+Zz
+x,
+
+So that the alteration in a given form of the length and breadth dimensions
+alone do not affect Y, the height of the U.B. Only the alteration in depth
+affects the height of C3.
+
+Similarly, the AMterutitn of length and depth alone do not affect Z, the
+lateral position of C.B,
+
+The total effect on G1, of a change ao length, breadth, and*depth sry
+thereforé be seen to be for Y in proportion, to the value py ! and for Bto B°
+
+* Suppose tha’ thd watdrpltue’of a form is inclined oe to the hofizontal, and
+that xe enlarge all the breadth*and depth dimensions, B and D being for the
+original form, aad B, and D, for the enlarged form.
+
+
+--- Page 39 ---
+24 THE DESIGNSAND CONSTRUCTION OF SHIPS.
+
+In fig. 18, WK I. represents a section of the original form ip which WL
+is the waterpleic inclined at 6° to the horizontal OF, ‘The dotted figure
+W,K,1, represents the corresponding section of the enlarged form. For
+clearness Iet*the sections be so placed that the waterlines WL and W, L,
+intersect in O at the centre‘liner ‘The inclination of W, Ly to the ‘horizontal
+is 8,, und it is desired to fing the relation hetweeu 6 and 6,.
+
+If we lake a point P in WL we ean yet the correspouding point P, in the
+
+enlarged form hy the method shown above, and the line OP, will be the
+waterline of enlarged form. ‘Thus in the figure
+
+PR = Tee.
+
+OF, = we OF,
+
+‘Thes.elation between the angles of inclination of corresponding water-
+planes is expresséd by the above ‘ormula or ‘
+
+“tan 6D, B
+
+tan 6D BY
+
+Pye above cousideration applies equally to any plane east 1 parallel to
+
+
+--- Page 40 ---
+. ° :
+DETERMINATION OF COORDINATES OF B FOR A GIVEN FORM, 2t
+
+the floating awaterplane ; and therefore if we have for a given form a series 0
+Naterplanes, we can at once get the angles of inclination of the eorrespouding
+Waterplanes for tny enlarged form of different dimensions. The actue
+
+Position of the corresponding waterplane is got by sotting up KO nko, a
+
+in Bg. 19, and 1 inclined 6, the hori
+zontal, 8, beings civ
+
+awing a straight lin’ throug 0,
+en by
+
+tan 6, = i i tan 8.
+
+1
+Tf we have an isovol of a form of known dimensions, we
+
+Fro. 19. ©
+
+mine the corresponding isovol {dr the same forr’, with the length? breadth,
+and depth nicasureinents réspeefjvely. The gue is trae of an isocline,
+
+Standardising.—We have seen how to find the edtresponding points in
+‘7. form similar to a given one, aud also how to find the corresponding angles
+of inclination of the waterphines.
+
+Ratjo of breadths
+
+» depths
+
+angles ==" _ BD,
+eS tan 67 B,D
+
+Ir we' refer the resnlts of fa given form to a similar form of standard
+dimensions, we-tiereby standardise those results. ‘That is, that whigver
+
+
+--- Page 41 ---
+w® ‘THE DESIGN "AND CONSTRUCTION OF SHIPS.
+
+the dimensions of the forms we have been working upon may have been, if ©
+we plot the resifits as for the same forms to standard dimensions, we are then
+able to compare the results of different forms directly with tach other, what:
+
+evel may have Leen the absolute dimensions of the forms for which the results
+have been obtained, . .
+
+The stqfadard form chose (for corfvenience) is one in which
+
+br the half-breadth
+
+‘Therefore in fhe formule above,
+
+the ratio of \ ath =
+
+oy depth *
+
+Band 1 being m mel
+
+tan 6,_ 0
+tan > 21"
+
+‘
+
+Standardisiny an Isucline-—Let 1H (lig. 20) be the isocline of a given
+form of dimensions L, Bywnd 1), and let the angle of inclination of the isocline
+be 6 We can plot the fori to standard dimensions from the ratios of dimen-
+sions. This is shown dotted. Hy the spot corresbondinlg to Hy is obtained
+frem OH: OH, : D:D.
+
+"The anglo which the tangent at 1 makes with teshorizontal is 8 The
+tangent gt will make 4 such that
+
+tan 6,
+
+1 @x',
+
+the spot corresponding to J, is found.
+
+
+--- Page 42 ---
+DETERMINATION OF COORDINATES OF B FOR A GIVEN FORM. 27
+
+Take amy other point P whose coordinates are. and g ip inches on the
+isooline. ‘Then the coordinates of the corresponding ‘pint P, on the
+standardised isoctine are
+
+129 and yx .
+Sy ali
+
+J, can also be found in this way, so that we ed plot. the standardfsed isocline
+from H, to 1,"
+In order always to obtain isovols and isoclinés of forms of standard dimen-
+sions at thersame percentages of displacements and angles of ivelination, it is
+more convenient to draw the waterlines on the actual form at angles correspond-
+ing to 15°, 30°, 45°, 60", andard ft These eqn he obtained
+directly by substituting the above values in succession for 8, in the formula
+
+fi
+a
+
+tan 6, ta 6.
+DISPLACEMENT.
+2°" Whe, 9% , 80% F
+
+DRAFT*
+
+Fie, 2.
+
+The values of @ obtained ares those tor whieh wa
+in the actuil form.
+
+When the results are set off on « stazndardived f, rm, as reviously-oxplained,
+they will then be fr isovoly at 207%, 107, 80%, 80 / of the total displacement,
+and for isoclines for 15°, 30°, 49, 60°, and 73" inelinatien:
+
+= Tf all results for every form are so plotted, the curves so obtained will be
+directly comparable with each other, and will show directly the effect upon
+the isoclines and isovols of difference of form,
+
+It is sometimes couvgnient to be able to extry out the standardising of
+stability eifrves direct from curves of KN, or “cross curves” as they are
+sometimes called, oe
+
+To dq this, first*make a complete cyrve OF of displacement in the.
+uprightsig. 21. Draw the locus of eentre, of buoyancy 04 (fig. 21)-by taking
+at a series of draughts, such as JA, the value of
+
+. ards OBD in sq, inches
+AB in inches
+
+
+
+--- Page 43 ---
+28 THE DESIGN AND CONSTRUCTION OF SHIPS
+
+This value AC, plotted at the corresponding draught, gives the height of B
+above the draught datum line when the vessel is floating at a draught OA,
+and the curvy 04 is obtained.
+
+Divide the line EV, representing the total displycment, by .points at
+207, 30% 1017, 50%, GOY, 7074, andd0Y, of the length EF from E; these
+poiuts will represent corresponding perventages of total displacement. The
+heights of the C.B.'s for thege displacements can be got frota the curve 06
+by drawing at any porcentag of displacement, say 20%, « vertical, wnt where
+it cuts the curve OF drawing « horizontal line eutting the curve Ob, The
+ordinate at this line will be the height above the draught datum Tine of the
+C.B. correspop ling to 20% displacement.
+
+Describe i (st: dised) » of LOinch side (fi
+the half-breadth tidship section of Uns
+
+22), in which place
+sel, using the following seule
+
+80%}
+60%:
+40%
+
+20%:
+
+Horiontal seale
+
+(i)
+
+Vertical .
+ya a
+"Ds (i)
+
+«ly, gre the coordinates m mahes Sf paper of « point on the
+standardised seetion, and or and y are the coordinates in inches of paper of the.
+corresponding point on the ord section; Band 1) the moulded breadth
+and depth respectively of the ship in feet; and n= the scale to which the
+
+where
+
+ue
+ordinary section is araxn (2 =l toot)
+i
+
+# Using the vertical seale (ii), mfirk off the K B's on fig.
+pereentnge of diglneement a found in fg. 21
+
+Takeguow she curves pf KN; yometimes called Cross Curves dt Stability
+
+(fig. 23), for the vessel * and set, uf the different t poreentages of displacement.
+
+ul
+
+at the different ,
+
+* In view of standardising stability curves, jf is alvisable, when preparing JN curves
+for the ordinary stability calculations, to take the ICN’s for displacements ranging froth 20%
+te S0H ofthe intal displacement.
+
+
+--- Page 44 ---
+.
+DETERMINATION OF CODRDINATES OF B FOR A GIVEN FORM. 29
+
+Set off horizontal lines (see fig. 23) KB sin C distant from the base, where
+
+C has’ the values,15°, 30°, 45°, 60", and 75°, and KB is the distance of the
+centre of buoyancy above the datum line for draft,
+
+KB | sm 5° _ |
+
+2% ey 40% 80% ‘80%
+Fre. 23.
+
+Since BR=K N—KB sin © we have now a simple method of measuring
+BR at displacements 20%, 30%, ete,, and angles of heel 15°, 30°, ete,
+
+“RB sinc
+Fie, 24.
+
+* Plot curve oP BR on‘ basy of radians (fig. 25). Integrate these curves
+
+and We got the (Zotted) enrves of Ili, as ER [BR.26, See p. 10.
+
+
+--- Page 45 ---
+30 THE DESIGN AND CONSTRUCTION DF SHIPS,
+
+Next find the angles @ on the ordinary section wi
+
+‘hich will correspond to the
+angles 1!
+
+30°ctc,, on the standardized soction from the formula
+
+tan 8, tan 6
+ca
+
+Set off thf'angles so found on fig
+
+25, then BR and BYR ean be measured
+
+CORRESPONDS CORRESPONDS . .
+To, To ¢
+1° 60°
+RADIANS
+Vie. 25,
+
+‘or displacements 20°
+ate,
+
+» 807% ete and angles correspoudidy to 15°, 80°,
+
+an Soe i
+fi nes 2 and ive which correspond, on the standardised
+
+T
+
+ection, to HR and 1, Ron the original section, procevd as follow:
+Fig. 26 shows the ordinary sectign, and fig. 27 the standardised section.
+
+from (i) and (ii), p. 28,
+
+‘ oe ape(y’
+nd g
+
+= BRn20
+
+B+ (4D® ~ BY) sin? a.”
+
+
+--- Page 46 ---
+DETERMINATION Of COORDINATES OF B FOR A GIVEN FORM. 81
+
+a, has the valuos 15°, 80°, ete, ‘and on substituting in this equation the cor.
+responding values of BR from (iii) we get the values of b> for the standardised
+
+section The equation for 4, is of the same form with BYR substituted Jor
+BR and (90° - a,) for a, v a)
+er |
+
+4 (4D? — BY) sin? (90° —a,)"
+.
+
+brs Ptna09/)
+
+Having’the yalues of brand hy we ean now plot. the cur
+of B, vir, the ixovols and isoclines, on the stanlundiseal forme
+
+es giving the loci
+
+
+
+--- Page 47 ---
+CHAPTER IV.
+GEOMETRICAL PROPERTIES OF ISOVOLS, ETC.
+
+‘Tug curve of flotation has been defined as the locus of C.C.’s of Wwaterplane
+cutting off constant volume for one direction of inclivg.tion, ‘This is also
+called a Flotavol Curve, The locus of all flotavol curves lias heen called the
+Flotavol Surface. * my -
+
+Fu
+
+Leclert's Formula jor the Rains of Curvatury of, the Plotavol.—F in fig. 28
+is the centre of curvature of a flotavol curvesy is The radiu’ of querature B
+and B, are C.B.s at yolames V and V+ UV and are at heights 4 and %
+ely. Mand M, and p and p, are corresponding metaceutric quantities.
+
+
+
+--- Page 48 ---
+a
+GEOMETRICAL PROPERTIES oF TSOVOLS, ETC, » 8k
+
+“ Taking moments about AD of the volume ¥
+
+acting at M, aud the volume
+4V acting at F, we have
+
+V+ (r4 Fada aay, ()
+
+__By the principle of ants thie sonst be equal to the mom:nt about
+
+AD Of V+ dV (noting at M,); or
+
+VHA Hd - (i)
+Equatings (i) and (ii) we got
+
+pV rdV4 (@ :
+
+VN = aN tmdVdyVaavy, (ii)
+
+Taking momeuts about A D of dV
+
+Ting at C snd (V-+dV) acting at By
+we have, |
+
+(a0 Ou =WKV +0),
+
+equation (iii)
+
+Decomen .
+rVerdVep adv) - (iv)
+Now we hk sgthat
+1
+pry
+Teal
+and ye
+
+Substituting these values for p and py in (iv) we get
+l+ndV=T4dl,
+
+whenee pa fl >
+
+=a - (vy)
+Another expression for the radius of curvature of the flotavol may be
+srived Ts follows: —
+
+»-!
+poy
+. dp idl ot
+. WV vy
+a
+WT do
+Wy ay
+_ dp
+., teetvde
+ich is know as “ Leclert’s formula.” :
+
+Tt may be noticed thut, in the case of a parubolic prism, floating with axig
+“val and vertéx dowherards, for any inclination $, p is independent of V
+‘iver by p=2a 9, where 2a is equal to che semi latus-recsuin of
+
+dp
+
+© Thus, iy thisgay «pp since % — 0, ;
+
+Werties of the Isoctite. ict 11 be thd isocine of a vessel
+“3 the vertfeal at an angle 6 (fig. 29),
+
+
+
+--- Page 49 ---
+34. THE DESIGN AND CONSTRUCTIGN OF SHIPS.
+
+Let X X be any vertical line,
+Let B he the position of the centre of buoyancy corresponding to the
+
+waterline w/ which cuts off a volume V.
+
+Fia, 29,
+Let 1, fy be a waterline pavallel, and very close to ml, 80 #
+volume ¢at off is Let y be thee egntre, of gravity’ of fig. 28
+detween w? and ih. Let y be listart from X'X ‘ang Tel® 3
+distant 4 from XX. We can find the position of B, egrespondin Osa
+lume V +dV.
+
+
+
+--- Page 50 ---
+GROMETRICAL PROPERTIES OF ISOVOLS, ETO. 35
+
+Let B, be*distant 2+dh from XX. Then, taking momoyts about XX
+we have
+Vib tdVirw (V +dV).(h+ dh),
+which, on naglecting qugntities of the second omy of infiuitesimals, becomes
+
+dN = hd Vdh,
+
+dh .
+here
+neve . . @
+Clearly thé point B, will lie «the line B, and (\'¢dV).RB, 4dV.gB= 0 ;
+wba
+ba, en,
+1 Veal ‘
+
+In the limit BB, becouies zero when dV is infinitely small, and then the
+tangent to the isocline at B will bg By and will pass through’ the centre of
+gravity of th® -orrespondiig phe of flotation
+
+DISPLACEMENT I,
+: Fie, 30,
+.
+
+If we plot® eurve ff values of A in terms of Vy we have a curve from
+which may be derived what is ¢: OI NW passes through
+K, the keel, it will Ie a cig or a known position of
+once obtined.
+cross curve giving valtes of Jam
+
+d from a line
+
+such as XX in fig. 29.
+Let P be the point 4, Vo Draw the tungent ge Py meeting the zero
+ordinate of displace gut in K. Draw PM parallel to OX. Let K PM =a,
+
+. dh
+Then a =e
++ 8
+= PM tan a= wih
+
+or
+
+

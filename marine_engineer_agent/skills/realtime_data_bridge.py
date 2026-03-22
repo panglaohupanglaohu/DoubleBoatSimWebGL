@@ -44,7 +44,10 @@ except ImportError:
     websockets = None  # type: ignore
     WebSocketServerProtocol = Any  # type: ignore
 
-from .channels_integration import ChannelData, ChannelsIntegration, Event
+try:
+    from .channels_integration import ChannelData, ChannelsIntegration, Event
+except ImportError:
+    from channels_integration import ChannelData, ChannelsIntegration, Event
 
 
 class MessageType(Enum):

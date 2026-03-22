@@ -32,7 +32,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from .channels.base import Channel
+try:
+    from .channels.base import Channel
+except ImportError:
+    from channels.base import Channel
 
 
 class DataType(Enum):

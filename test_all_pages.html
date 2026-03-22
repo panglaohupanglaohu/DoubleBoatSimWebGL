@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>系统测试页面</title>
+  <style>
+    body { background: #0a0f1a; color: #fff; font-family: monospace; padding: 20px; }
+    .test-item { margin: 10px 0; padding: 10px; background: rgba(79,195,247,0.1); border-radius: 5px; }
+    .pass { color: #81c784; }
+    .fail { color: #ef5350; }
+    .pending { color: #ffb74d; }
+  </style>
+</head>
+<body>
+  <h1>🧪 系统测试页面</h1>
+  <div id="results"></div>
+  <script>
+    const tests = [
+      { name: 'Poseidon API 健康检查', url: 'http://127.0.0.1:8080/health', type: 'api' },
+      { name: 'poseidon-x-integrated.html', url: './poseidon-x-integrated.html', type: 'page' },
+      { name: 'index-refactored.html', url: './index-refactored.html', type: 'page' },
+      { name: 'public/twins-test.html', url: './public/twins-test.html', type: 'page' },
+      { name: 'public/poseidon-bridge.js', url: './public/poseidon-bridge.js', type: 'js' }
+    ];
+
+    async function runTests() {
+      const results = document.getElementById('results');
+      
+      for (const test of tests) {
+        const div = document.createElement('div');
+        div.className = 'test-item';
+        div.innerHTML = `⏳ ${test.name}...`;
+        results.appendChild(div);
+        
+        try {
+          if (test.type === 'api') {
+            const res = await fetch(test.url);
+            const data = await res.json();
+            if (data.status === 'healthy') {
+              div.innerHTML = `<span class="pass">✅ ${test.name} - 通过</span>`;
+            } else {
+              div.innerHTML = `<span class="fail">❌ ${test.name} - 失败</span>`;
+            }
+          } else {
+            const res = await fetch(test.url);
+            if (res.ok) {
+              div.innerHTML = `<span class="pass">✅ ${test.name} - 通过</span>`;
+            } else {
+              div.innerHTML = `<span class="fail">❌ ${test.name} - ${res.status}</span>`;
+            }
+          }
+        } catch (e) {
+          div.innerHTML = `<span class="fail">❌ ${test.name} - ${e.message}</span>`;
+        }
+      }
+    }
+    
+    runTests();
+  </script>
+</body>
+</html>

@@ -1,8 +1,9 @@
 # 🚢 DoubleBoatSimWebGL 优化计划
 
-**基于：** NArch 502 Ship Design and Construction 知识学习  
+**基于：** NArch 502 Ship Design and Construction 知识学习 + Tavily 阅读  
 **日期：** 2026-03-10  
-**状态：** ⏳ OCR 处理中 (25/849 页)
+**状态：** ✅ Round 1 完成 | 🔄 Round 2 进行中  
+**最新报告：** `code_optimization_report_round1.md`
 
 ---
 
@@ -98,25 +99,28 @@
 ## 📁 待创建文件
 
 ### 知识库
-- [ ] `narch_502_ship_design_summary.md` - 书籍摘要
-- [ ] `ship_hydrodynamics.md` - 船舶水动力学
-- [ ] `ship_resistance_propulsion.md` - 阻力与推进
-- [ ] `ship_stability.md` - 船舶稳性
+- [x] `narch_502_ship_design_summary.md` - 书籍摘要 ✅
+- [x] `ship_hydrodynamics.md` - 船舶水动力学 ✅ (in hydrodynamics.py)
+- [ ] `ship_resistance_propulsion.md` - 阻力与推进 (Tavily 已读)
+- [ ] `ship_stability.md` - 船舶稳性 (Tavily 已读)
+- [ ] `marine_fault_tree.md` - 故障树分析 (Tavily 已读)
 - [ ] `marine_systems.md` - 船舶系统
 
 ### 技能模块
-- [ ] `skills/hydrodynamics.py` - 水动力学计算
-- [ ] `skills/resistance.py` - 阻力计算
-- [ ] `skills/stability.py` - 稳性计算
+- [x] `skills/hydrodynamics.py` - 水动力学计算 ✅
+- [ ] `skills/resistance.py` - 阻力计算 (ITTC 1957 公式已收集)
+- [ ] `skills/stability.py` - 稳性计算 (IMO 规范已收集)
+- [ ] `skills/propulsion.py` - 推进系统 (伴流/推力减额已收集)
+- [ ] `skills/fault_tree.py` - 故障树分析 (FTA 方法已收集)
 - [ ] `skills/marine_systems.py` - 系统仿真
-- [ ] `skills/fault_tree.py` - 故障树分析
 
 ### API 端点
-- [ ] `/api/v1/twins/hydrodynamics` - 水动力学计算
+- [x] `/api/v1/hydro/analysis` - 水动力学计算 ✅
 - [ ] `/api/v1/twins/resistance` - 阻力计算
 - [ ] `/api/v1/twins/stability` - 稳性计算
-- [ ] `/api/v1/twins/systems` - 系统仿真
+- [ ] `/api/v1/twins/propulsion` - 推进系统
 - [ ] `/api/v1/twins/fault_tree` - 故障树分析
+- [ ] `/api/v1/twins/systems` - 系统仿真
 
 ---
 
