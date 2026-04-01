@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ob-title" content="船长总览">
+    <meta name="ob-subtitle" content="K-Bridge Conning Display">
+    <title>船长总览 — PoseidonX</title>
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+    <style>
+        .conning-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 12px;
+            height: calc(100vh - var(--ob-topbar-height) - 32px);
+        }
+        .conning-header { grid-column: 1 / -1; }
+        .conning-left { grid-row: 2; }
+        .conning-center { grid-row: 2; }
+        .conning-right { grid-row: 2; }
+        .conning-footer { grid-column: 1 / -1; }
+
+        /* Compass Rose */
+        .compass-container {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .compass-ring {
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--ob-border-strong);
+            border-radius: 50%;
+            position: relative;
+        }
+        .compass-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 80px;
+            background: linear-gradient(to top, var(--ob-alarm) 50%, var(--ob-text-primary) 50%);
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(0deg);
+            border-radius: 2px;
+            transition: transform 1s ease;
+        }
+        .compass-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: var(--ob-accent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .compass-label {
+            position: absolute;
+            font-size: 11px;
+            font-weight: 570;
+            color: var(--ob-text-tertiary);
+        }
+        .compass-label.n { top: 4px; left: 50%; transform: translateX(-50%); color: var(--ob-alarm); }
+        .compass-label.s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+        .compass-label.e { right: 4px; top: 50%; transform: translateY(-50%); }
+        .compass-label.w { left: 4px; top: 50%; transform: translateY(-50%); }
+
+        /* Helm angle indicator */
+        .helm-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+        }
+        .helm-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--ob-border-subtle);
+            border-radius: var(--ob-radius-round);
+            position: relative;
+        }
+        .helm-bar-center {
+            position: absolute;
+            left: 50%;
+            top: -4px;
+            width: 2px;
+            height: 16px;
+            background: var(--ob-text-tertiary);
+        }
+        .helm-bar-thumb {
+            position: absolute;
+            top: -3px;
+            width: 14px;
+            height: 14px;
+            background: var(--ob-accent);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            left: 50%;
+            transition: left 1s ease;
+        }
+
+        /* Speed tape */
+        .speed-tape {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .speed-value {
+            font-size: 48px;
+            font-weight: 670;
+            line-height: 1;
+        }
+
+        /* Map */
+        .conning-map {
+            height: 100%;
+            min-height: 280px;
+            border-radius: var(--ob-radius-lg);
+            overflow: hidden;
+        }
+
+        /* Scrollable card body */
+        .ob-card-body-scroll {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .mini-readout {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--ob-border-subtle);
+            font-size: 13px;
+        }
+        .mini-readout:last-child { border-bottom: none; }
+        .mini-readout-label { color: var(--ob-text-tertiary); }
+        .mini-readout-value { font-weight: 570; }
+
+        .alarm-strip {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 0;
+        }
+        .alarm-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: var(--ob-radius-round);
+            font-size: 12px;
+            font-weight: 570;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Conning Display Grid -->
+    <div class="conning-grid">
+        <!-- Header: Key Readouts -->
+        <div class="conning-header">
+            <div class="ob-grid ob-grid-6" style="gap:8px;">
+                <div class="ob-readout">
+                    <span class="ob-readout-label">航速 SOG</span>
+                    <span class="ob-readout-value" id="sog">12.4<span class="ob-readout-unit">kn</span></span>
+                </div>
+                <div class="ob-readout">
+                    <span class="ob-readout-label">航向 COG</span>
+                    <span class="ob-readout-value" id="cog">045.2<span class="ob-readout-unit">°</span></span>
+                </div>
+                <div class="ob-readout">
+                    <span class="ob-readout-label">船首向 HDG</span>
+                    <span class="ob-readout-value" id="hdg">044.8<span class="ob-readout-unit">°</span></span>
+                </div>
+                <div class="ob-readout">
+                    <span class="ob-readout-label">水深 DEPTH</span>
+                    <span class="ob-readout-value" id="depth">45.6<span class="ob-readout-unit">m</span></span>
+                </div>
+                <div class="ob-readout">
+                    <span class="ob-readout-label">风速/向 WIND</span>
+                    <span class="ob-readout-value" id="wind">18.3<span class="ob-readout-unit">kn / 220°</span></span>
+                </div>
+                <div class="ob-readout">
+                    <span class="ob-readout-label">舵角 RUDDER</span>
+                    <span class="ob-readout-value" id="rudder">P 2.5<span class="ob-readout-unit">°</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Column: Navigation + Trend -->
+        <div class="conning-left" style="display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
+            <!-- Compass -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">航向罗盘</span>
+                    <span class="ob-badge ob-badge-ok">GYRO</span>
+                </div>
+                <div class="ob-card-body" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+                    <div class="compass-container">
+                        <div class="compass-ring">
+                            <div class="compass-needle" id="compass-needle"></div>
+                            <div class="compass-center"></div>
+                            <span class="compass-label n">N</span>
+                            <span class="compass-label s">S</span>
+                            <span class="compass-label e">E</span>
+                            <span class="compass-label w">W</span>
+                        </div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:32px;font-weight:670;" id="hdg-display">044.8°</div>
+                        <div style="font-size:12px;color:var(--ob-text-tertiary);">TRUE HEADING</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rudder Indicator -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">舵角指示 Rudder</span>
+                </div>
+                <div class="ob-card-body">
+                    <div class="helm-indicator">
+                        <span style="font-size:11px;color:var(--ob-text-tertiary);">35°P</span>
+                        <div class="helm-bar">
+                            <div class="helm-bar-center"></div>
+                            <div class="helm-bar-thumb" id="rudder-thumb"></div>
+                        </div>
+                        <span style="font-size:11px;color:var(--ob-text-tertiary);">35°S</span>
+                    </div>
+                    <div style="text-align:center;font-size:20px;font-weight:670;" id="rudder-display">P 2.5°</div>
+                </div>
+            </div>
+
+            <!-- Speed Order -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">速度指令 Speed</span>
+                </div>
+                <div class="ob-card-body">
+                    <div class="speed-tape">
+                        <span class="speed-value ob-status-ok" id="speed-display">12.4</span>
+                        <span style="font-size:14px;font-weight:570;color:var(--ob-text-tertiary);">KNOTS</span>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <div class="mini-readout">
+                            <span class="mini-readout-label">设定速度</span>
+                            <span class="mini-readout-value" id="set-speed">12.0 kn</span>
+                        </div>
+                        <div class="mini-readout">
+                            <span class="mini-readout-label">主机功率</span>
+                            <span class="mini-readout-value" id="engine-power">72%</span>
+                        </div>
+                        <div class="mini-readout">
+                            <span class="mini-readout-label">主机转速</span>
+                            <span class="mini-readout-value" id="rpm">680 RPM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: Map / Situation Display -->
+        <div class="conning-center" style="display:flex;flex-direction:column;gap:12px;overflow:hidden;">
+            <div class="ob-card" style="flex:1;display:flex;flex-direction:column;">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">态势显示 Situation</span>
+                    <span class="ob-badge ob-badge-neutral">ECDIS</span>
+                </div>
+                <div class="ob-card-body" style="flex:1;padding:0;">
+                    <div class="conning-map" id="conning-map"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Systems + Alarms -->
+        <div class="conning-right" style="display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
+            <!-- AIS Targets -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">AIS 目标</span>
+                    <span class="ob-card-badge" id="ais-count">5 targets</span>
+                </div>
+                <div class="ob-card-body ob-card-body-scroll">
+                    <div id="ais-list">
+                        <div class="ob-list-item" style="margin-bottom:6px;">
+                            <div>
+                                <div style="font-weight:570;font-size:13px;">COSCO BEIJING</div>
+                                <div style="font-size:11px;color:var(--ob-text-tertiary);">CPA 0.8nm / TCPA 12min</div>
+                            </div>
+                            <span class="ob-badge ob-badge-warning">CLOSE</span>
+                        </div>
+                        <div class="ob-list-item" style="margin-bottom:6px;">
+                            <div>
+                                <div style="font-weight:570;font-size:13px;">MAERSK LIMA</div>
+                                <div style="font-size:11px;color:var(--ob-text-tertiary);">CPA 2.1nm / TCPA 28min</div>
+                            </div>
+                            <span class="ob-badge ob-badge-ok">SAFE</span>
+                        </div>
+                        <div class="ob-list-item" style="margin-bottom:6px;">
+                            <div>
+                                <div style="font-weight:570;font-size:13px;">EVER FORTUNE</div>
+                                <div style="font-size:11px;color:var(--ob-text-tertiary);">CPA 3.5nm / TCPA 42min</div>
+                            </div>
+                            <span class="ob-badge ob-badge-ok">SAFE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voyage Info -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">航次信息 Voyage</span>
+                </div>
+                <div class="ob-card-body">
+                    <div class="mini-readout"><span class="mini-readout-label">目的港</span><span class="mini-readout-value">SHANGHAI</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">ETA</span><span class="mini-readout-value" id="eta">2025-03-24 08:00</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">剩余距离</span><span class="mini-readout-value" id="dtg">156.2 nm</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">航次进度</span><span class="mini-readout-value">68%</span></div>
+                    <div style="margin-top:8px;">
+                        <div class="ob-progress"><div class="ob-progress-bar ok" style="width:68%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environment -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">环境数据 Environment</span>
+                </div>
+                <div class="ob-card-body">
+                    <div class="mini-readout"><span class="mini-readout-label">风速/风向</span><span class="mini-readout-value" id="env-wind">18.3 kn / 220°</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">浪高</span><span class="mini-readout-value" id="wave-height">1.8 m</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">流速/流向</span><span class="mini-readout-value" id="current">1.2 kn / 180°</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">气温</span><span class="mini-readout-value" id="air-temp">22.5 °C</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">气压</span><span class="mini-readout-value" id="pressure">1013.2 hPa</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer: Alarm Strip -->
+        <div class="conning-footer">
+            <div class="ob-card">
+                <div class="ob-card-body" style="padding:8px 12px;">
+                    <div class="alarm-strip" id="alarm-strip">
+                        <div class="alarm-chip ob-bg-running" style="opacity:0.9;">
+                            <span class="ob-dot" style="background:white;width:6px;height:6px;"></span>
+                            系统正常 — 无活跃告警
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/nav-sidebar.js" data-active="captain"></script>
+    <script>
+    (function() {
+        // Initialize map
+        let map;
+        try {
+            map = new maplibregl.Map({
+                container: 'conning-map',
+                style: {
+                    version: 8,
+                    sources: {
+                        'osm-tiles': {
+                            type: 'raster',
+                            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '© OpenStreetMap'
+                        }
+                    },
+                    layers: [{
+                        id: 'osm-tiles',
+                        type: 'raster',
+                        source: 'osm-tiles',
+                        minzoom: 0,
+                        maxzoom: 19
+                    }]
+                },
+                center: [122.0, 31.0],
+                zoom: 10,
+                attributionControl: false
+            });
+        } catch(e) { console.warn('Map init failed:', e); }
+
+        // Simulate compass rotation
+        function updateCompass(hdg) {
+            const needle = document.getElementById('compass-needle');
+            if (needle) needle.style.transform = `translate(-50%, -100%) rotate(${hdg}deg)`;
+            const display = document.getElementById('hdg-display');
+            if (display) display.textContent = hdg.toFixed(1) + '°';
+        }
+
+        // Simulate rudder
+        function updateRudder(angle) {
+            const thumb = document.getElementById('rudder-thumb');
+            if (thumb) {
+                const pct = 50 + (angle / 35) * 50;
+                thumb.style.left = pct + '%';
+            }
+            const display = document.getElementById('rudder-display');
+            if (display) {
+                const dir = angle < 0 ? 'P' : angle > 0 ? 'S' : '';
+                display.textContent = dir + ' ' + Math.abs(angle).toFixed(1) + '°';
+            }
+        }
+
+        // WebSocket data connection
+        let ws;
+        function connectWS() {
+            try {
+                ws = new WebSocket(`ws://${location.host}/ws`);
+                ws.onmessage = function(e) {
+                    try {
+                        const data = JSON.parse(e.data);
+                        if (data.hdg !== undefined) updateCompass(data.hdg);
+                        if (data.rudder !== undefined) updateRudder(data.rudder);
+                        if (data.sog !== undefined) {
+                            const el = document.getElementById('sog');
+                            if (el) el.innerHTML = data.sog.toFixed(1) + '<span class="ob-readout-unit">kn</span>';
+                        }
+                    } catch(err) {}
+                };
+                ws.onclose = function() { setTimeout(connectWS, 5000); };
+                ws.onerror = function() { ws.close(); };
+            } catch(e) { setTimeout(connectWS, 5000); }
+        }
+        connectWS();
+
+        // Initial state
+        updateCompass(44.8);
+        updateRudder(-2.5);
+
+        // Simulate gentle heading drift
+        let heading = 44.8;
+        setInterval(() => {
+            heading += (Math.random() - 0.5) * 0.3;
+            if (heading < 0) heading += 360;
+            if (heading >= 360) heading -= 360;
+            updateCompass(heading);
+        }, 2000);
+    })();
+    </script>
+</body>
+</html>

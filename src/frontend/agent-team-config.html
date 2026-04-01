@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-obc-theme="dusk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,6 +47,9 @@ input[type=range]{width:100%;accent-color:var(--pink)}
 .hidden{display:none!important}
 @media(max-width:900px){.sidebar{width:200px;min-width:200px}.main-scroll{padding:16px}}@media(max-width:600px){.sidebar{display:none}.tabs{padding:0 16px}.main-scroll{padding:12px}}
   </style>
+<meta name="ob-title" content="智能体管理">
+<meta name="ob-subtitle" content="Agent Team — 7-Agent 协作配置">
+<link rel="stylesheet" href="/css/openbridge-theme.css">
 </head>
 <body>
 <div class="app">
@@ -406,5 +409,6 @@ openModal=function(id){_origOpen(id);if(id==='modal-import-openclaw'){api(`${A}/
 
 loadTeams();
 </script>
+<script src="/js/nav-sidebar.js" data-active="agents"></script>
 </body>
 </html>

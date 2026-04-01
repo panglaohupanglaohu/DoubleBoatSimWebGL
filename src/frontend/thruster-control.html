@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ob-title" content="推进控制">
+    <meta name="ob-subtitle" content="K-Thrust RCS — Thruster Remote Control">
+    <title>推进控制 — PoseidonX</title>
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <style>
+        body{margin:0;padding:var(--ob-topbar-height,48px) 24px 24px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,sans-serif);}
+        .top-readouts{display:flex;gap:16px;margin-bottom:20px;}
+        .top-readouts .ob-readout{flex:1;}
+        .thrusters{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+        .thr-card{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;display:flex;flex-direction:column;align-items:center;}
+        .thr-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;width:100%;}
+        .thr-name{font-weight:600;font-size:14px;}
+        .rpm-gauge{width:48px;height:140px;background:var(--ob-bg-section);border-radius:var(--ob-radius-sm);position:relative;overflow:hidden;margin:8px 0;}
+        .rpm-fill{position:absolute;bottom:0;left:0;right:0;background:var(--ob-running,#00b0f0);transition:height .6s ease;}
+        .rpm-label{font-size:11px;color:var(--ob-text-tertiary);margin-top:4px;}
+        .rpm-value{font-size:20px;font-weight:700;margin:4px 0;}
+        .thr-row{display:flex;justify-content:space-between;width:100%;font-size:13px;margin-top:6px;}
+        .telegraph{display:flex;gap:6px;margin-top:10px;}
+        .telegraph button{padding:4px 10px;border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);background:var(--ob-bg-section);color:var(--ob-text-primary);font-size:11px;cursor:pointer;}
+        .telegraph button.active{background:var(--ob-accent,#0078d4);color:#fff;border-color:var(--ob-accent,#0078d4);}
+        .bottom-bar{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+        .telegraph-zone{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;}
+        .telegraph-zone h3{margin:0 0 12px;font-size:14px;font-weight:600;}
+        .tele-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:13px;}
+        .tele-indicator{width:10px;height:10px;border-radius:50%;background:var(--ob-running,#00b0f0);}
+    </style>
+</head>
+<body>
+    <div class="top-readouts">
+        <div class="ob-readout"><span class="ob-readout-label">主机转速</span><span class="ob-readout-value">185</span><span class="ob-readout-unit">RPM</span></div>
+        <div class="ob-readout"><span class="ob-readout-label">主机功率</span><span class="ob-readout-value">7820</span><span class="ob-readout-unit">kW</span></div>
+        <div class="ob-readout"><span class="ob-readout-label">滑油温度</span><span class="ob-readout-value">62.3</span><span class="ob-readout-unit">°C</span></div>
+        <div class="ob-readout"><span class="ob-readout-label">冷却水温</span><span class="ob-readout-value">48.7</span><span class="ob-readout-unit">°C</span></div>
+    </div>
+    <div class="thrusters" id="thrGrid"></div>
+    <div class="bottom-bar">
+        <div class="telegraph-zone ob-card">
+            <h3 class="ob-card-title">Telegraph 车钟指令</h3>
+            <div class="tele-row"><span class="tele-indicator"></span><span>Port Main — FULL AHEAD</span></div>
+            <div class="tele-row"><span class="tele-indicator"></span><span>Stbd Main — FULL AHEAD</span></div>
+            <div class="tele-row"><span class="tele-indicator" style="background:var(--ob-warning)"></span><span>Bow Thr — STOP</span></div>
+            <div class="tele-row"><span class="tele-indicator" style="background:var(--ob-warning)"></span><span>Stern Thr — STOP</span></div>
+        </div>
+        <div class="ob-card telegraph-zone">
+            <h3 class="ob-card-title">机舱综合状态</h3>
+            <div class="ob-grid-2" style="gap:12px;">
+                <div class="ob-readout"><span class="ob-readout-label">燃油压力</span><span class="ob-readout-value">4.2</span><span class="ob-readout-unit">bar</span></div>
+                <div class="ob-readout"><span class="ob-readout-label">排气温度</span><span class="ob-readout-value">385</span><span class="ob-readout-unit">°C</span></div>
+                <div class="ob-readout"><span class="ob-readout-label">振动水平</span><span class="ob-readout-value">2.1</span><span class="ob-readout-unit">mm/s</span></div>
+                <div class="ob-readout"><span class="ob-readout-label">舱底水位</span><span class="ob-readout-value">正常</span><span class="ob-readout-unit"><span class="ob-badge ob-badge-ok">OK</span></span></div>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        var thrusters=[
+            {name:"Bow Thruster",status:"STANDBY",sc:"ob-badge-neutral",rpm:0,mx:1200,pw:0,ord:"STOP"},
+            {name:"Stern Thruster",status:"STANDBY",sc:"ob-badge-neutral",rpm:0,mx:1200,pw:0,ord:"STOP"},
+            {name:"Port Main",status:"RUNNING",sc:"ob-badge-ok",rpm:185,mx:250,pw:78,ord:"AHEAD"},
+            {name:"Stbd Main",status:"RUNNING",sc:"ob-badge-ok",rpm:183,mx:250,pw:77,ord:"AHEAD"}
+        ];
+        var g=document.getElementById("thrGrid");
+        thrusters.forEach(function(t){
+            var pct=Math.round((t.rpm/t.mx)*100);
+            var h='<div class="thr-card">';
+            h+='<div class="thr-header"><span class="thr-name">'+t.name+'</span><span class="ob-badge '+t.sc+'">'+t.status+'</span></div>';
+            h+='<div class="rpm-gauge"><div class="rpm-fill" style="height:'+pct+'%"></div></div>';
+            h+='<div class="rpm-label">RPM</div><div class="rpm-value">'+t.rpm+'</div>';
+            h+='<div class="thr-row"><span>功率</span><span>'+t.pw+' %</span></div>';
+            h+='<div class="telegraph">';
+            ["AHEAD","STOP","ASTERN"].forEach(function(c){h+='<button class="'+(c===t.ord?"active":"")+'">'+c+'</button>';});
+            h+='</div></div>';
+            g.innerHTML+=h;
+        });
+    })();
+    </script>
+    <script src="/js/nav-sidebar.js" data-active="thruster"></script>
+    <script>(function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(cn,5000);};}catch(e){setTimeout(cn,5000);}}cn();})();</script>
+</body>
+</html>

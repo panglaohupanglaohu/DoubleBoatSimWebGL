@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="ob-title" content="安全应急">
+<meta name="ob-subtitle" content="K-Safe — 消防监测与应急管理">
+<title>安全应急 — PoseidonX</title>
+
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+.safety-wrap{padding:16px;display:flex;flex-direction:column;gap:16px}
+.top-row,.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fire-matrix{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.fire-cell{background:var(--ob-bg-section);border-radius:var(--ob-radius-sm);padding:10px 6px;text-align:center;font-size:11px}
+.fire-cell .zone-name{color:var(--ob-text-tertiary);margin-bottom:6px}
+.fire-header{font-weight:700;color:var(--ob-text-primary);background:transparent;font-size:12px;display:flex;align-items:center;justify-content:center}
+.esd-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.esd-btn{width:120px;height:120px;border-radius:50%;background:linear-gradient(145deg,#e53935,#b71c1c);border:4px solid #ff5252;color:#fff;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 0 30px rgba(229,57,53,0.4);display:flex;align-items:center;justify-content:center;transition:.2s}
+.esd-btn:active{transform:scale(0.95);box-shadow:0 0 15px rgba(229,57,53,0.6)}
+.esd-steps{display:flex;gap:16px;font-size:13px;color:var(--ob-text-tertiary)}
+.esd-step{padding:8px 16px;border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);text-align:center}
+.esd-step.active{border-color:var(--ob-alarm);color:var(--ob-alarm)}
+.plan-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.plan-card{background:var(--ob-bg-section);border-radius:var(--ob-radius-sm);padding:14px 10px;text-align:center}
+.plan-card .plan-icon{font-size:28px;margin-bottom:8px}
+.plan-card .plan-name{font-size:12px;color:var(--ob-text-primary);margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="safety-wrap">
+<div class="top-row">
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">消防区域矩阵</span></div><div class="ob-card-body">
+<div class="fire-matrix">
+<div class="fire-header"></div><div class="fire-header">Deck 1</div><div class="fire-header">Deck 2</div><div class="fire-header">Deck 3</div><div class="fire-header">Deck 4</div><div class="fire-header">Deck 5</div>
+<div class="fire-header">Port</div>
+<div class="fire-cell"><div class="zone-name">P1-机舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">P2-货舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">P3-住舱</div><span class="ob-dot ob-dot-warning"></span></div>
+<div class="fire-cell"><div class="zone-name">P4-驾驶</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">P5-甲板</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-header">Center</div>
+<div class="fire-cell"><div class="zone-name">C1-机舱</div><span class="ob-dot ob-dot-warning"></span></div>
+<div class="fire-cell"><div class="zone-name">C2-货舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">C3-住舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">C4-驾驶</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">C5-甲板</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-header">Stbd</div>
+<div class="fire-cell"><div class="zone-name">S1-机舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">S2-货舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">S3-住舱</div><span class="ob-dot ob-dot-ok"></span></div>
+<div class="fire-cell"><div class="zone-name">S4-驾驶</div><span class="ob-dot ob-dot-warning"></span></div>
+<div class="fire-cell"><div class="zone-name">S5-甲板</div><span class="ob-dot ob-dot-ok"></span></div>
+
+</div></div></div>
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">紧急停车 (ESD)</span></div><div class="ob-card-body esd-panel">
+<button class="esd-btn" onclick="this.style.boxShadow='0 0 50px rgba(229,57,53,0.8)';document.querySelector('.esd-step').classList.add('active')">ESD</button>
+<div class="esd-steps"><div class="esd-step">① 按下</div><div class="esd-step">② 确认</div><div class="esd-step">③ 执行</div></div>
+</div></div></div>
+<div class="bottom-row">
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">救生设备清单</span></div><div class="ob-card-body">
+<table class="ob-table"><thead><tr><th>设备</th><th>数量</th><th>容量</th><th>状态</th></tr></thead><tbody>
+<tr><td>救生艇 #1 (左)</td><td>1</td><td>30人</td><td><span class="ob-badge ob-badge-ok">就绪</span></td></tr>
+<tr><td>救生艇 #2 (右)</td><td>1</td><td>30人</td><td><span class="ob-badge ob-badge-ok">就绪</span></td></tr>
+<tr><td>救生筏 A</td><td>2</td><td>25人×2</td><td><span class="ob-badge ob-badge-ok">就绪</span></td></tr>
+<tr><td>救生筏 B</td><td>2</td><td>20人×2</td><td><span class="ob-badge ob-badge-ok">就绪</span></td></tr>
+<tr><td>救生圈 (发光)</td><td>8</td><td>—</td><td><span class="ob-badge ob-badge-ok">就绪</span></td></tr>
+<tr><td>救生圈 (烟雾)</td><td>4</td><td>—</td><td><span class="ob-badge ob-badge-warning">检修中</span></td></tr>
+</tbody></table></div></div>
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">应急预案</span></div><div class="ob-card-body"><div class="plan-cards">
+<div class="plan-card"><div class="plan-icon">🔥</div><div class="plan-name">火灾</div><span class="ob-badge ob-badge-ok">READY</span></div>
+<div class="plan-card"><div class="plan-icon">🚢</div><div class="plan-name">弃船</div><span class="ob-badge ob-badge-ok">READY</span></div>
+<div class="plan-card"><div class="plan-icon">🏊</div><div class="plan-name">人落水</div><span class="ob-badge ob-badge-ok">READY</span></div>
+<div class="plan-card"><div class="plan-icon">💥</div><div class="plan-name">碰撞</div><span class="ob-badge ob-badge-ok">READY</span></div>
+<div class="plan-card"><div class="plan-icon">⚓</div><div class="plan-name">搁浅</div><span class="ob-badge ob-badge-ok">READY</span></div>
+</div></div></div>
+</div></div>
+
+<script src="/js/nav-sidebar.js" data-active="safety"></script>
+<script>(function(){var P="ws://"+location.host+"/ws/safety";var ws,t;function C(){ws=new WebSocket(P);ws.onclose=function(){clearTimeout(t);t=setTimeout(C,3e3)};ws.onerror=function(){ws.close()}}C()})();</script>
+</body>
+</html>

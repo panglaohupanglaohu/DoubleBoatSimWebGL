@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ob-title" content="动力定位">
+    <meta name="ob-subtitle" content="K-Pos DP — Dynamic Positioning">
+    <title>动力定位 — PoseidonX</title>
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <style>
+        .dp-layout{display:grid;grid-template-rows:auto 1fr auto;gap:12px;height:calc(100vh - var(--ob-topbar-height) - 32px);}
+        .dp-center{display:grid;grid-template-columns:1fr 360px;gap:12px;overflow:hidden;}
+        .dp-canvas-wrap{position:relative;background:var(--ob-bg-section);border-radius:var(--ob-radius-lg);border:1px solid var(--ob-border);overflow:hidden;}
+        #dp-canvas{width:100%;height:100%;display:block;}
+        .dp-mode{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:var(--ob-radius-round);font-weight:670;font-size:14px;}
+        .dp-mode-off{background:var(--ob-border-subtle);color:var(--ob-text-tertiary);}
+        .dp-mode-auto{background:var(--ob-running);color:var(--ob-on-alarm);}
+        .thrust-bar-wrap{display:flex;flex-direction:column;gap:4px;}
+        .thrust-bar-label{display:flex;justify-content:space-between;font-size:12px;}
+        .thrust-bar{height:24px;background:var(--ob-border-subtle);border-radius:var(--ob-radius-sm);overflow:hidden;}
+        .thrust-bar-fill{height:100%;border-radius:inherit;transition:width .5s ease;}
+        .thrust-bar-fill.fwd{background:var(--ob-accent);}
+        .thrust-bar-fill.lat{background:var(--ob-teal);}
+        .dp-sidebar{overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+        .sp-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ob-border-subtle);font-size:13px;}
+        .sp-row:last-child{border-bottom:none;}
+    </style>
+</head>
+<body>
+    <div class="dp-layout">
+        <div class="ob-grid ob-grid-5" style="gap:8px;">
+            <div class="ob-readout"><span class="ob-readout-label">纬度 LAT</span><span class="ob-readout-value" style="font-size:18px;">31° 23.456' N</span></div>
+            <div class="ob-readout"><span class="ob-readout-label">经度 LON</span><span class="ob-readout-value" style="font-size:18px;">121° 29.123' E</span></div>
+            <div class="ob-readout"><span class="ob-readout-label">船首向 HDG</span><span class="ob-readout-value">044.8<span class="ob-readout-unit">°</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">位置偏差</span><span class="ob-readout-value ob-status-ok">0.8<span class="ob-readout-unit">m</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">DP 模式</span><span class="ob-readout-value"><span class="dp-mode dp-mode-off" id="dp-mode">DP OFF</span></span></div>
+        </div>
+        <div class="dp-center">
+            <div class="dp-canvas-wrap"><canvas id="dp-canvas"></canvas></div>
+            <div class="dp-sidebar">
+                <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">DP 设定值</span><span class="ob-badge ob-badge-neutral">SETPOINT</span></div>
+                <div class="ob-card-body">
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">目标纬度</span><span style="font-weight:570">31° 23.450' N</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">目标经度</span><span style="font-weight:570">121° 29.120' E</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">目标船首向</span><span style="font-weight:570">045.0°</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">旋转半径</span><span style="font-weight:570">50 m</span></div>
+                </div></div>
+                <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">系统状态</span></div>
+                <div class="ob-card-body">
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">DP 级别</span><span style="font-weight:570">DP-2</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">位置参考</span><span style="font-weight:570"><span class="ob-dot ob-dot-ok"></span> DGPS + HPR</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">风前馈</span><span style="font-weight:570"><span class="ob-dot ob-dot-ok"></span> Active</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">模型测试</span><span style="font-weight:570"><span class="ob-dot ob-dot-ok"></span> PASS</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">能力分析</span><span style="font-weight:570;color:var(--ob-running)">92%</span></div>
+                </div></div>
+                <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">环境力</span></div>
+                <div class="ob-card-body">
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">风</span><span style="font-weight:570">18.3 kn / 220°</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">流</span><span style="font-weight:570">1.2 kn / 180°</span></div>
+                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">浪</span><span style="font-weight:570">1.8 m / 210°</span></div>
+                </div></div>
+            </div>
+        </div>
+        <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">推力分配 Thrust Allocation</span></div>
+        <div class="ob-card-body"><div class="ob-grid ob-grid-4" style="gap:12px;">
+            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>艏侧推 Bow</span><span>45%</span></div><div class="thrust-bar"><div class="thrust-bar-fill lat" style="width:45%"></div></div></div>
+            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>艉侧推 Stern</span><span>30%</span></div><div class="thrust-bar"><div class="thrust-bar-fill lat" style="width:30%"></div></div></div>
+            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>左全回转 Port Az</span><span>62%</span></div><div class="thrust-bar"><div class="thrust-bar-fill fwd" style="width:62%"></div></div></div>
+            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>右全回转 Stbd Az</span><span>58%</span></div><div class="thrust-bar"><div class="thrust-bar-fill fwd" style="width:58%"></div></div></div>
+        </div></div></div>
+    </div>
+    <script src="/js/nav-sidebar.js" data-active="dp"></script>
+    <script>
+    (function(){
+        const c=document.getElementById('dp-canvas'),ctx=c.getContext('2d');
+        function resize(){c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;}
+        resize();window.addEventListener('resize',resize);
+        const trail=[];let shipX=0,shipY=0,shipHdg=45;
+        function draw(){
+            const w=c.width,h=c.height,cx=w/2,cy=h/2;
+            ctx.clearRect(0,0,w,h);
+            ctx.strokeStyle='rgba(130,130,130,0.12)';ctx.lineWidth=1;
+            for(let i=-10;i<=10;i++){const x=cx+i*30,y=cy+i*30;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+            ctx.beginPath();ctx.arc(cx,cy,40,0,Math.PI*2);ctx.strokeStyle='rgba(67,103,154,0.5)';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+            ctx.beginPath();ctx.strokeStyle='rgba(67,103,154,0.3)';ctx.lineWidth=2;
+            trail.forEach((p,i)=>{i===0?ctx.moveTo(cx+p.x,cy+p.y):ctx.lineTo(cx+p.x,cy+p.y);});ctx.stroke();
+            const sx=cx+shipX,sy=cy+shipY,r=Math.PI/180*shipHdg;
+            ctx.save();ctx.translate(sx,sy);ctx.rotate(r);
+            ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(8,14);ctx.lineTo(-8,14);ctx.closePath();
+            ctx.fillStyle='rgba(67,103,154,0.9)';ctx.fill();ctx.restore();
+            ctx.strokeStyle='rgba(130,130,130,0.4)';ctx.lineWidth=1;
+            ctx.beginPath();ctx.moveTo(cx-8,cy);ctx.lineTo(cx+8,cy);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,cy-8);ctx.lineTo(cx,cy+8);ctx.stroke();
+            ctx.fillStyle='rgba(130,130,130,0.6)';ctx.font='11px Noto Sans,sans-serif';ctx.fillText('N',cx-4,16);ctx.fillText('30m',cx+44,cy-4);
+        }
+        function simulate(){shipX+=(Math.random()-0.5)*1.5;shipY+=(Math.random()-0.5)*1.5;shipX*=0.98;shipY*=0.98;shipHdg+=((Math.random()-0.5)*0.5);trail.push({x:shipX,y:shipY});if(trail.length>120)trail.shift();draw();requestAnimationFrame(simulate);}
+        simulate();
+        let ws;function connectWS(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(connectWS,5000);};ws.onerror=function(){ws.close();};}catch(e){setTimeout(connectWS,5000);}}connectWS();
+    })();
+    </script>
+</body>
+</html>

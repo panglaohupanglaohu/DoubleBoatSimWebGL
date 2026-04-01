@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ob-title" content="导航与操纵">
+    <meta name="ob-subtitle" content="K-Bridge MFD — Navigation & Manoeuvring">
+    <title>导航与操纵 — PoseidonX</title>
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+    <style>
+        .nav-layout{display:grid;grid-template-rows:auto 1fr auto;gap:12px;height:calc(100vh - var(--ob-topbar-height) - 32px);}
+        .nav-center{display:grid;grid-template-columns:1fr 340px;gap:12px;overflow:hidden;}
+        .nav-map{height:100%;min-height:300px;border-radius:var(--ob-radius-lg);overflow:hidden;}
+        .nav-sidebar{overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+        .wp-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--ob-border-subtle);font-size:13px;}
+        .wp-row:last-child{border-bottom:none;}
+        .wp-idx{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ob-accent-light);color:var(--ob-accent);font-weight:670;font-size:11px;flex-shrink:0;}
+        .wp-active .wp-idx{background:var(--ob-accent);color:var(--ob-accent-text);}
+        .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13px;}
+        .toggle-switch{width:36px;height:20px;border-radius:10px;background:var(--ob-border-subtle);position:relative;cursor:pointer;transition:background .2s;}
+        .toggle-switch.on{background:var(--ob-running);}
+        .toggle-switch::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:var(--ob-text-primary);top:2px;left:2px;transition:left .2s;}
+        .toggle-switch.on::after{left:18px;background:var(--ob-on-alarm);}
+    </style>
+</head>
+<body>
+    <div class="nav-layout">
+        <div class="ob-grid ob-grid-6" style="gap:8px;">
+            <div class="ob-readout"><span class="ob-readout-label">SOG</span><span class="ob-readout-value">12.4<span class="ob-readout-unit">kn</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">COG</span><span class="ob-readout-value">045.2<span class="ob-readout-unit">°</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">HDG</span><span class="ob-readout-value">044.8<span class="ob-readout-unit">°</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">ROT</span><span class="ob-readout-value">+0.3<span class="ob-readout-unit">°/min</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">XTE</span><span class="ob-readout-value ob-status-ok">0.02<span class="ob-readout-unit">nm</span></span></div>
+            <div class="ob-readout"><span class="ob-readout-label">DTG</span><span class="ob-readout-value">156.2<span class="ob-readout-unit">nm</span></span></div>
+        </div>
+        <div class="nav-center">
+            <div class="ob-card" style="display:flex;flex-direction:column;">
+                <div class="ob-card-header"><span class="ob-card-title">电子海图 ECDIS</span><span class="ob-badge ob-badge-neutral">ROUTE ACTIVE</span></div>
+                <div style="flex:1;padding:0;"><div class="nav-map" id="nav-map"></div></div>
+            </div>
+            <div class="nav-sidebar">
+                <div class="ob-card">
+                    <div class="ob-card-header"><span class="ob-card-title">航线路径点</span><span class="ob-card-badge">4 WPs</span></div>
+                    <div class="ob-card-body" style="padding:0;">
+                        <div class="wp-row wp-active"><span class="wp-idx">01</span><div><div style="font-weight:570;">Shanghai Pilot</div><div style="font-size:11px;color:var(--ob-text-tertiary);">31°23.4'N 121°29.1'E</div></div><span class="ob-badge ob-badge-ok">PASSED</span></div>
+                        <div class="wp-row wp-active"><span class="wp-idx">02</span><div><div style="font-weight:570;">Changjiang</div><div style="font-size:11px;color:var(--ob-text-tertiary);">31°15.8'N 122°05.3'E</div></div><span class="ob-badge ob-badge-neutral">ACTIVE</span></div>
+                        <div class="wp-row"><span class="wp-idx">03</span><div><div style="font-weight:570;">Offshore Turn</div><div style="font-size:11px;color:var(--ob-text-tertiary);">30°45.2'N 122°30.0'E</div></div><span style="font-size:11px;color:var(--ob-text-tertiary);">42.3 nm</span></div>
+                        <div class="wp-row"><span class="wp-idx">04</span><div><div style="font-weight:570;">Destination</div><div style="font-size:11px;color:var(--ob-text-tertiary);">30°10.0'N 123°00.0'E</div></div><span style="font-size:11px;color:var(--ob-text-tertiary);">98.5 nm</span></div>
+                    </div>
+                </div>
+                <div class="ob-card">
+                    <div class="ob-card-header"><span class="ob-card-title">气象数据</span></div>
+                    <div class="ob-card-body">
+                        <div style="display:grid;gap:6px;font-size:13px;">
+                            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ob-text-tertiary);">风速/风向</span><span>18.3 kn / 220°</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ob-text-tertiary);">浪高</span><span>1.8 m</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ob-text-tertiary);">能见度</span><span>8.5 nm</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span style="color:var(--ob-text-tertiary);">海况</span><span>4 级</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ob-card">
+                    <div class="ob-card-header"><span class="ob-card-title">叠加层 Overlays</span></div>
+                    <div class="ob-card-body">
+                        <div class="toggle-row"><span>AIS 目标</span><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+                        <div class="toggle-row"><span>雷达回波</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
+                        <div class="toggle-row"><span>安全等深线</span><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+                        <div class="toggle-row"><span>ARPA 追踪</span><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ob-card"><div class="ob-card-body" style="padding:8px 12px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:12px;font-weight:570;color:var(--ob-text-tertiary);">航线进度</span>
+            <div class="ob-progress" style="flex:1;"><div class="ob-progress-bar ok" style="width:42%"></div></div>
+            <span style="font-size:12px;font-weight:570;">42% — WP02 → WP03</span>
+        </div></div>
+    </div>
+    <script src="/js/nav-sidebar.js" data-active="navigation"></script>
+    <script>
+    (function(){
+        try {
+            new maplibregl.Map({container:'nav-map',style:{version:8,sources:{'osm':{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256}},layers:[{id:'osm',type:'raster',source:'osm'}]},center:[122,31],zoom:10,attributionControl:false});
+        } catch(e){}
+        let ws;function connectWS(){try{ws=new WebSocket(`ws://${location.host}/ws`);ws.onclose=()=>setTimeout(connectWS,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(connectWS,5000);}}connectWS();
+    })();
+    </script>
+</body>
+</html>

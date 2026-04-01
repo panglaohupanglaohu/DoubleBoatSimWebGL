@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-obc-theme="dusk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -308,6 +308,9 @@
             display: none;
         }
     </style>
+<meta name="ob-title" content="全船监控">
+<meta name="ob-subtitle" content="WorldMonitor — 全船态势感知">
+<link rel="stylesheet" href="/css/openbridge-theme.css">
 </head>
 <body>
     <!-- 顶部状态栏 -->
@@ -620,5 +623,6 @@
         setInterval(loadAISData, 15000);
         setInterval(loadWeatherData, 15000);
     </script>
+<script src="/js/nav-sidebar.js" data-active="monitor"></script>
 </body>
 </html>
