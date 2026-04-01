@@ -405,17 +405,25 @@ export class EngineerAgent extends AgentBase {
    */
   async _handleEquipmentQuery(task, context) {
     // 模拟设备传感器数据
-    const mockSensorData = {
-      temperature: 95,
-      temperatureLimit: 120,
-      vibration: 4.5,
-      vibrationLimit: 8.0,
-      runningHours: 7600
-    };
-    
+    // 尝试从后端获取真实传感器数据
+    let sensorData;
+    try {
+      const resp = await fetch("/api/v1/ai-native/engine-diagnostics/status");
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.sensors || data.temperature) sensorData = data;
+      }
+    } catch (_e) { /* fallback */ }
+    if (!sensorData) {
+      sensorData = {
+        temperature: 95, temperatureLimit: 120,
+        vibration: 4.5, vibrationLimit: 8.0,
+        runningHours: 7600
+      };
+    }
     const healthReport = await this.useTool('calculateHealthScore', {
       equipmentId: 'ME-01',
-      sensorData: mockSensorData,
+      sensorData: sensorData,
       historicalData: []
     });
     

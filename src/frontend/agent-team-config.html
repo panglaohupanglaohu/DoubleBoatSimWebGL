@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能体团队管理 - Poseidon-X</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+:root{--bg:#0a0e1a;--panel:rgba(14,20,36,0.92);--panel2:rgba(20,28,48,0.88);--line:rgba(125,207,255,0.14);--cyan:#7ddcff;--cyan-s:#35c8ff;--lime:#98f5a7;--amber:#ffcf70;--red:#ff7d7d;--pink:#ff4d8d;--text:#eef7ff;--muted:#7b8fa6;--dim:#4a5a6e;--sbw:240px}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Space Grotesk','Segoe UI',sans-serif;min-height:100vh;color:var(--text);background:linear-gradient(180deg,#060e1a,#0a1424 56%,#080f1c)}a{color:var(--cyan);text-decoration:none}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sbw);min-width:var(--sbw);background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.main-inner{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.main-scroll{flex:1;overflow-y:auto;padding:24px 32px;min-height:0}
+.sb-header{padding:16px;border-bottom:1px solid var(--line)}.sb-header h2{font-size:15px;color:var(--cyan);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:8px}.sb-nav a{padding:8px 12px;border-radius:8px;font-size:13px;color:var(--muted);transition:.15s;display:flex;align-items:center;gap:8px;cursor:pointer}.sb-nav a:hover{background:rgba(125,207,255,0.06);color:var(--text)}.sb-nav a.active{background:rgba(255,77,141,0.12);color:var(--pink);font-weight:600}
+.sb-section{padding:8px 12px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-top:8px}
+.sb-agents{flex:1;overflow-y:auto;padding:4px 8px}.sb-agent{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:.15s}.sb-agent:hover{background:rgba(125,207,255,0.06);color:var(--text)}.sb-agent.active{background:rgba(255,77,141,0.12);color:var(--pink)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}.dot.idle{background:#78909c}.dot.working{background:var(--cyan-s);box-shadow:0 0 6px var(--cyan-s)}.dot.error{background:var(--red)}
+.sb-footer{padding:12px;border-top:1px solid var(--line)}.sb-footer .btn{width:100%;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--line);font-family:inherit;transition:.15s;background:transparent;color:var(--cyan)}.btn:hover{background:rgba(125,207,255,0.1)}.btn-pink{background:linear-gradient(135deg,#ff4d8d,#d63384);color:#fff;border-color:transparent}.btn-pink:hover{filter:brightness(1.15);transform:translateY(-1px)}.btn-danger{background:rgba(255,125,125,0.12);color:var(--red);border-color:rgba(255,125,125,0.2)}.btn-sm{padding:5px 12px;font-size:12px}.btn-ghost{border:none;padding:6px 10px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 32px;border-bottom:1px solid var(--line);background:var(--panel);min-height:56px}.topbar-left{display:flex;align-items:center;gap:12px}.topbar-left h1{font-size:18px;font-weight:600}.topbar-left .badge{font-size:11px;padding:2px 8px;border-radius:99px;font-family:'IBM Plex Mono',monospace}.topbar-right{display:flex;gap:8px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);padding:0 32px;background:var(--panel);overflow-x:auto}.tab{padding:12px 18px;font-size:13px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:.15s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;font-weight:500;white-space:nowrap}.tab:hover{color:var(--text)}.tab.active{color:var(--pink);border-bottom-color:var(--pink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;backdrop-filter:blur(12px)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px}.stat-card .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}.stat-card .value{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace}.stat-card .sub{font-size:11px;color:var(--dim);margin-top:4px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);letter-spacing:.5px;font-weight:500}.tbl td{padding:10px;border-bottom:1px solid rgba(125,207,255,0.05)}.tbl tr:hover td{background:rgba(125,207,255,0.03)}
+.section{margin-bottom:24px}.section-title{font-size:16px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(125,207,255,0.06);font-size:13px}.detail-row .lbl{color:var(--muted);display:flex;align-items:center;gap:6px}.detail-row .val{font-family:'IBM Plex Mono',monospace;text-align:right}
+.soul-block{background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:10px;padding:18px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--text);max-height:400px;overflow-y:auto}
+.memory-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,0.2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:13px}
+.focus-item{padding:14px 18px;background:rgba(0,0,0,0.15);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}.focus-item .title{font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px}.focus-item .meta{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.ws-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:13px}.ws-item:hover{background:rgba(125,207,255,0.03)}.ws-item .fname{display:flex;align-items:center;gap:8px}
+.wizard-steps{display:flex;align-items:center;gap:0;padding:16px 32px;border-bottom:1px solid var(--line);background:var(--panel)}.wz-step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);white-space:nowrap}.wz-step.active{color:var(--pink);font-weight:600}.wz-step.done{color:var(--lime)}.wz-step .num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--dim);font-family:'IBM Plex Mono',monospace}.wz-step.active .num{border-color:var(--pink);background:rgba(255,77,141,0.15);color:var(--pink)}.wz-step.done .num{border-color:var(--lime);background:rgba(152,245,167,0.15);color:var(--lime)}.wz-line{flex:1;height:1px;background:var(--line);margin:0 8px;min-width:20px}
+.wz-content{max-width:640px;margin:0 auto;padding-bottom:80px}.wz-actions{display:flex;justify-content:space-between;margin-top:28px;padding:16px 0 20px;border-top:1px solid var(--line);position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 60%,transparent)}
+.form-group{margin-bottom:16px}.form-label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}.form-label .req{color:var(--pink)}
+input.fi,select.fi,textarea.fi{width:100%;padding:10px 14px;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit}input.fi:focus,select.fi:focus,textarea.fi:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 2px rgba(255,77,141,0.15)}textarea.fi{resize:vertical;min-height:80px}select.fi{appearance:auto}
+.tmpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px}.tmpl-card{padding:16px;border:2px solid var(--line);border-radius:10px;text-align:center;cursor:pointer;transition:.15s}.tmpl-card:hover{border-color:var(--muted)}.tmpl-card.selected{border-color:var(--pink);background:rgba(255,77,141,0.08)}.tmpl-card .abbr{font-size:18px;font-weight:700;margin-bottom:4px}.tmpl-card .desc{font-size:11px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--pink)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;background:rgba(125,207,255,0.1);color:var(--cyan);border:1px solid rgba(125,207,255,0.15);margin:2px}.chip .x{cursor:pointer;opacity:.6;font-size:14px}.chip .x:hover{opacity:1}.chip-add{background:transparent;border:1px dashed var(--line);color:var(--muted);cursor:pointer}.chip-add:hover{border-color:var(--cyan);color:var(--cyan)}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;background:var(--panel);border:1px solid var(--line);border-radius:8px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:999}.toast.show{opacity:1}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);justify-content:center;align-items:center}.modal-overlay.open{display:flex}.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;width:480px;max-width:92vw;max-height:80vh;overflow-y:auto}.modal h3{font-size:18px;color:var(--cyan);margin-bottom:18px}.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px}.st::before{content:'';width:7px;height:7px;border-radius:50%}.st-idle::before{background:#78909c}.st-working::before{background:var(--cyan-s);box-shadow:0 0 6px var(--cyan-s)}.st-reporting::before{background:var(--lime)}.st-blocked::before{background:var(--amber)}.st-error::before{background:var(--red)}
+.hidden{display:none!important}
+@media(max-width:900px){.sidebar{width:200px;min-width:200px}.main-scroll{padding:16px}}@media(max-width:600px){.sidebar{display:none}.tabs{padding:0 16px}.main-scroll{padding:12px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sb-header"><h2>🤖 PoseidonX</h2><select class="fi" id="team-select" style="font-size:12px;padding:6px 8px"></select></div>
+    <div class="sb-nav">
+      <a class="active" data-view="overview" onclick="switchView('overview')">🏠 仪表盘</a>
+      <a data-view="models" onclick="switchView('models')">🧠 模型池</a>
+      <a data-view="tools" onclick="switchView('tools')">🔧 工具</a>
+      <a data-view="skills" onclick="switchView('skills')">⚡ 技能</a>
+      <a data-view="tasks" onclick="switchView('tasks')">📋 任务</a>
+    </div>
+    <div class="sb-section">团队成员</div>
+    <div class="sb-agents" id="sb-agents"></div>
+    <div class="sb-footer"><button class="btn btn-pink btn-sm" onclick="openWizard()" style="width:100%;justify-content:center">＋ 新建智能体</button></div>
+  </div>
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar"><div class="topbar-left"><h1 id="main-title">团队概览</h1><span class="badge" id="main-badge" style="background:rgba(152,245,167,0.15);color:var(--lime)"></span></div><div class="topbar-right"><a href="/captain-cockpit.html" class="btn btn-sm btn-ghost">🚢 中控台</a><a href="/digital-twin.html" class="btn btn-sm btn-ghost">🌊 数字孪生</a><button class="btn btn-sm" onclick="openModal('modal-create-team')">＋ 创建团队</button></div></div>
+    <!-- Views -->
+    <div id="view-overview" class="main-inner"><div class="main-scroll"><div class="card-grid" id="ov-stats"></div><div class="section"><div class="section-title">🏗️ 构建团队</div><table class="tbl"><thead><tr><th>Agent</th><th>角色</th><th>状态</th><th>技能</th><th>操作</th></tr></thead><tbody id="ov-build"></tbody></table></div><div class="section"><div class="section-title">⚡ 执行团队</div><table class="tbl"><thead><tr><th>Agent</th><th>角色</th><th>状态</th><th>技能</th><th>操作</th></tr></thead><tbody id="ov-exec"></tbody></table></div></div></div>
+    <div id="view-models" class="main-inner hidden"><div class="main-scroll"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">🧠 模型池</div><button class="btn btn-pink btn-sm" onclick="openModal('modal-add-model')">＋ 添加模型</button></div><table class="tbl"><thead><tr><th>ID</th><th>名称</th><th>提供商</th><th>Max Tokens</th><th>温度</th><th>默认</th><th>操作</th></tr></thead><tbody id="models-tb"></tbody></table></div></div>
+    <div id="view-tools" class="main-inner hidden"><div class="main-scroll"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">🔧 可用工具</div></div><div id="tools-cards"></div></div></div>
+    <div id="view-skills" class="main-inner hidden"><div class="main-scroll"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">⚡ 可用技能</div></div><div id="skills-cards"></div></div></div>
+    <div id="view-tasks" class="main-inner hidden"><div class="main-scroll"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">📋 并发任务</div><div style="display:flex;gap:8px"><span id="task-stats" style="font-size:12px;color:var(--muted);display:flex;align-items:center"></span><button class="btn btn-pink btn-sm" onclick="openModal('modal-add-task')">＋ 提交任务</button><button class="btn btn-sm" onclick="openModal('modal-batch-task')">📦 批量提交</button></div></div><table class="tbl"><thead><tr><th>ID</th><th>标题</th><th>Agent</th><th>优先级</th><th>依赖</th><th>状态</th><th>操作</th></tr></thead><tbody id="tasks-tb"></tbody></table></div></div>
+    <div id="view-agent" class="main-inner hidden"><div class="tabs" id="agent-tabs"><button class="tab active" data-at="ag-status">状态</button><button class="tab" data-at="ag-aware">自我意识</button><button class="tab" data-at="ag-soul">心智</button><button class="tab" data-at="ag-tools">工具</button><button class="tab" data-at="ag-skills">技能</button><button class="tab" data-at="ag-relations">关系</button><button class="tab" data-at="ag-workspace">工作区</button><button class="tab" data-at="ag-chat">聊天</button><button class="tab" data-at="ag-logs">工作日志</button><button class="tab" data-at="ag-settings">设置</button></div><div class="main-scroll" id="agent-content"></div></div>
+    <div id="view-wizard" class="main-inner hidden"><div class="wizard-steps" id="wz-steps"><div class="wz-step active" data-step="1"><span class="num">1</span> 基本信息</div><div class="wz-line"></div><div class="wz-step" data-step="2"><span class="num">2</span> 人格设定</div><div class="wz-line"></div><div class="wz-step" data-step="3"><span class="num">3</span> 技能配置</div><div class="wz-line"></div><div class="wz-step" data-step="4"><span class="num">4</span> 工具绑定</div><div class="wz-line"></div><div class="wz-step" data-step="5"><span class="num">5</span> 权限设置</div><div class="wz-line"></div><div class="wz-step" data-step="6"><span class="num">6</span> 通道绑定</div></div><div class="main-scroll"><div class="wz-content" id="wz-content"></div></div></div>
+  </div>
+</div>
+<!-- Modals -->
+<div class="modal-overlay" id="modal-create-team"><div class="modal"><h3>➕ 创建新团队</h3><div class="form-group"><label class="form-label">团队名称 <span class="req">*</span></label><input class="fi" id="ct-name" maxlength="128" placeholder="例：导航决策团队"></div><div class="form-group"><label class="form-label">描述</label><textarea class="fi" id="ct-desc" placeholder="团队职责描述"></textarea></div><div class="modal-actions"><button class="btn" onclick="closeModal('modal-create-team')">取消</button><button class="btn btn-pink" id="btn-ct">创建</button></div></div></div>
+<div class="modal-overlay" id="modal-add-model"><div class="modal"><h3>🧠 添加模型</h3><div class="form-group"><label class="form-label">提供商</label><select class="fi" id="am-prov"><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="github">GitHub Copilot</option><option value="qwen">Qwen</option></select></div><div class="form-group"><label class="form-label">模型名称 <span class="req">*</span></label><input class="fi" id="am-name" placeholder="claude-sonnet-4-20250514"></div><div class="form-group"><label class="form-label">Max Tokens</label><input class="fi" id="am-tok" type="number" value="8192"></div><div class="form-group"><label class="form-label">温度</label><input class="fi" id="am-temp" type="number" value="0.7" min="0" max="2" step="0.1"></div><div class="form-group"><label class="form-label">API Key</label><input class="fi" id="am-key" type="password" placeholder="sk-..."></div><div class="form-group"><label class="form-label">设为默认</label><select class="fi" id="am-def"><option value="false">否</option><option value="true">是</option></select></div><div class="modal-actions"><button class="btn" onclick="closeModal('modal-add-model')">取消</button><button class="btn btn-pink" id="btn-am">添加</button></div></div></div>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal-add-task"><div class="modal"><h3>📋 提交任务</h3><div class="form-group"><label class="form-label">标题 <span class="req">*</span></label><input class="fi" id="tk-title" placeholder="任务标题"></div><div class="form-group"><label class="form-label">描述</label><textarea class="fi" id="tk-desc" placeholder="任务描述"></textarea></div><div class="form-group"><label class="form-label">分配给 Agent</label><select class="fi" id="tk-agent"><option value="">自动分配</option></select></div><div class="form-group"><label class="form-label">优先级</label><select class="fi" id="tk-prio"><option value="0">紧急 (0)</option><option value="1">高 (1)</option><option value="2" selected>普通 (2)</option><option value="3">低 (3)</option></select></div><div class="form-group"><label class="form-label">依赖任务 ID (逗号分隔)</label><input class="fi" id="tk-deps" placeholder="task-id-1, task-id-2"></div><div class="modal-actions"><button class="btn" onclick="closeModal('modal-add-task')">取消</button><button class="btn btn-pink" id="btn-tk">提交</button></div></div></div>
+<div class="modal-overlay" id="modal-batch-task"><div class="modal"><h3>📦 批量提交任务</h3><p style="color:var(--muted);font-size:12px;margin-bottom:14px">输入 JSON 数组，每项含 title, description, agent_id, priority, dependencies</p><div class="form-group"><textarea class="fi" id="bt-json" rows="10" style="font-family:'IBM Plex Mono',monospace;font-size:12px" placeholder='[{"title":"代码审查","agent_id":"dev_lead","priority":1},{"title":"写测试","agent_id":"qa_engineer","priority":2,"dependencies":["上一个task_id"]}]'></textarea></div><div class="modal-actions"><button class="btn" onclick="closeModal('modal-batch-task')">取消</button><button class="btn btn-pink" id="btn-bt">批量提交</button></div></div></div>
+<div class="modal-overlay" id="modal-import-openclaw"><div class="modal"><h3>🔗 新建智能体</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px"><div class="tmpl-card" id="oc-mode-platform" onclick="setOcMode('platform')" style="text-align:left;padding:14px"><div style="font-weight:600;margin-bottom:4px">平台托管</div><div style="font-size:11px;color:var(--muted)">在 PoseidonX 平台上运行的完整 Agent</div></div><div class="tmpl-card selected" id="oc-mode-openclaw" onclick="setOcMode('openclaw')" style="text-align:left;padding:14px"><div style="font-weight:600;margin-bottom:4px">连接 OpenClaw <span class="badge" style="background:rgba(255,77,141,0.15);color:var(--pink);font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px">Lab</span></div><div style="font-size:11px;color:var(--muted)">连接你现有的 OpenClaw Agent</div></div></div><div id="oc-form"><div class="card" style="margin-bottom:16px"><div style="font-weight:600;margin-bottom:2px">连接 OpenClaw Agent <span class="badge" style="background:rgba(255,77,141,0.15);color:var(--pink);font-size:10px;padding:1px 6px;border-radius:4px;margin-left:4px">Lab</span></div><p style="color:var(--muted);font-size:12px;margin-bottom:14px">为你的 OpenClaw Agent 命名并添加描述。LLM 模型、人格和技能在你的 OpenClaw 实例上配置。</p><div class="form-group"><label class="form-label">名称 <span class="req">*</span></label><input class="fi" id="oc-name" placeholder="例如：我的 OpenClaw Bot"></div><div class="form-group"><label class="form-label">👤 角色</label><input class="fi" id="oc-role" placeholder="例如：在我的 Mac 上运行的个人助手"></div><div class="form-group"><label class="form-label">OpenClaw Gateway URL <span class="req">*</span></label><input class="fi" id="oc-url" placeholder="https://gateway.openclaw.ai 或 http://localhost:3008"><p style="font-size:11px;color:var(--dim);margin-top:4px">OpenClaw 实例的 Gateway 地址，支持 HTTP/WebSocket</p></div><div class="form-group"><label class="form-label">API Token <span class="req">*</span></label><div style="position:relative"><input class="fi" id="oc-token" type="password" placeholder="oc_pat_xxxxxxxxxxxx" style="padding-right:40px"><button type="button" class="btn-ghost" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:14px;cursor:pointer;border:none;background:none;color:var(--muted);padding:4px" onclick="const i=el('oc-token');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🔒'">👁</button></div><p style="font-size:11px;color:var(--dim);margin-top:4px">在 OpenClaw Settings → API Keys 中生成 Personal Access Token</p></div><div class="form-group"><label class="form-label">权限设置</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="tmpl-card selected" id="oc-vis-public" onclick="setOcVis('public')" style="padding:12px"><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--pink);font-size:18px">●</span><div><div style="font-weight:600">全公司可见</div><div style="font-size:11px;color:var(--muted)">所有人都可以使用此智能体</div></div></div></div><div class="tmpl-card" id="oc-vis-private" onclick="setOcVis('private')" style="padding:12px"><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--dim);font-size:18px">●</span><div><div style="font-weight:600">仅自己</div><div style="font-size:11px;color:var(--muted)">仅创建者本人可使用</div></div></div></div></div></div></div></div><div class="form-group"><label class="form-label">目标团队</label><select class="fi" id="oc-team"></select></div><div class="modal-actions"><button class="btn" onclick="closeModal('modal-import-openclaw')">取消</button><button class="btn btn-pink" id="btn-oc">连接 Agent</button></div></div></div>
+<div class="modal-overlay" id="modal-tool-config"><div class="modal"><h3 id="tc-title">🔧 工具配置</h3><div id="tc-form"></div><div class="modal-actions"><button class="btn" onclick="closeModal('modal-tool-config')">关闭</button><button class="btn btn-pink" id="btn-tc" onclick="saveToolConfig()">保存配置</button></div></div></div>
+<script>
+const A='/api/v1/agent-config',AT='/api/v1/agent-teams';
+let tid='',aid='',atab='ag-status',wzD={},wzS=1;
+
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+async function api(p,o){try{const r=await fetch(p,o);if(!r.ok)return null;return await r.json()}catch{return null}}
+function stL(s){return{idle:'待命中',working:'工作中',reporting:'汇报中',blocked:'阻塞',error:'异常'}[s]||s||'未知'}
+function el(id){return document.getElementById(id)}
+function escapeHtml(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+
+// ── Teams ──
+async function loadTeams(){
+  const d=await api(`${A}/teams`);const s=el('team-select');
+  if(!d||!d.length){s.innerHTML='<option>无团队</option>';return}
+  s.innerHTML=d.map(t=>`<option value="${escapeHtml(t.team_id)}">${escapeHtml(t.name)}</option>`).join('');
+  if(!tid)tid=d[0].team_id;s.value=tid;loadView();
+}
+el('team-select').onchange=e=>{tid=e.target.value;loadView()};
+
+// ── View switch ──
+function switchView(v,extra){
+  document.querySelectorAll('.main-inner').forEach(e=>e.classList.add('hidden'));
+  document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
+  document.querySelectorAll('.sb-agent').forEach(a=>a.classList.remove('active'));
+  const t=el('main-title'),b=el('main-badge');
+  if(v==='overview'){el('view-overview').classList.remove('hidden');t.textContent='团队概览';b.textContent=tid;loadOverview()}
+  else if(v==='models'){el('view-models').classList.remove('hidden');t.textContent='模型池';b.textContent='';loadModels()}
+  else if(v==='tools'){el('view-tools').classList.remove('hidden');t.textContent='工具管理';b.textContent='';loadTools()}
+  else if(v==='skills'){el('view-skills').classList.remove('hidden');t.textContent='技能管理';b.textContent='';loadSkills()}
+  else if(v==='tasks'){el('view-tasks').classList.remove('hidden');t.textContent='并发任务';b.textContent='';loadTasks()}
+  else if(v==='agent'){el('view-agent').classList.remove('hidden');loadAgent(extra)}
+  else if(v==='wizard'){el('view-wizard').classList.remove('hidden');t.textContent='新建智能体';b.textContent=''}
+}
+function loadView(){loadSbAgents();switchView('overview')}
+
+// ── Sidebar agents ──
+async function loadSbAgents(){
+  const d=await api(`${A}/teams/${tid}`);const c=el('sb-agents');
+  if(!d||!d.agents){c.innerHTML='<div style="padding:12px;color:var(--dim);font-size:12px">暂无成员</div>';return}
+  const aa=Array.isArray(d.agents)?d.agents:Object.values(d.agents);
+  c.innerHTML=aa.map(a=>`<div class="sb-agent${a.agent_id===aid?' active':''}" onclick="selectAgent('${a.agent_id}')"><span class="dot ${a.state||'idle'}"></span><span style="overflow:hidden;text-overflow:ellipsis">${escapeHtml(a.name||a.agent_id)}</span></div>`).join('');
+}
+function selectAgent(id){aid=id;switchView('agent',id)}
+
+// ── Overview ──
+async function loadOverview(){
+  const[ov,tm]=await Promise.all([api(`${AT}/overview`),api(`${A}/teams/${tid}`)]);
+  const sc=el('ov-stats');
+  if(ov){const bt=ov.build_team||{},et=ov.execution_team||{},sh=ov.scheduler||{},bm=bt.metrics||{},em=et.metrics||{};
+  sc.innerHTML=`<div class="stat-card"><div class="label">📊 调度器</div><div class="value" style="font-size:16px;color:${sh.running?'var(--lime)':'var(--red)'}">${sh.running?'运行中':'已停止'}</div><div class="sub">Tick ${sh.tick_count??0} · 报告 ${sh.reports_generated??0}</div></div><div class="stat-card"><div class="label">🏗️ 构建团队</div><div class="value">${bt.agent_count??0}</div><div class="sub">代码 ${bm.total_code_lines??0} 行</div></div><div class="stat-card"><div class="label">⚡ 执行团队</div><div class="value">${et.agent_count??0}</div><div class="sub">感知 ${em.total_perception_events??0}</div></div><div class="stat-card"><div class="label">📦 模型</div><div class="value">${tm?.models?Object.keys(tm.models).length:'-'}</div></div><div class="stat-card"><div class="label">🔧 工具</div><div class="value">${tm?.tools?Object.keys(tm.tools).length:'-'}</div></div><div class="stat-card"><div class="label">⚡ 技能</div><div class="value">${tm?.skills?Object.keys(tm.skills).length:'-'}</div></div>`}
+  if(tm&&tm.agents){const aa=Array.isArray(tm.agents)?tm.agents:Object.values(tm.agents);const bld=el('ov-build'),exc=el('ov-exec');bld.innerHTML='';exc.innerHTML='';
+  aa.forEach(a=>{const r=`<tr><td><b>${escapeHtml(a.name||a.agent_id)}</b></td><td style="color:var(--muted)">${escapeHtml(a.role||'-')}</td><td><span class="st st-${a.state||'idle'}">${stL(a.state)}</span></td><td>${(a.skills||[]).slice(0,3).map(s=>'<span class="chip">'+s+'</span>').join('')}</td><td><button class="btn btn-sm btn-ghost" onclick="selectAgent('${a.agent_id}')">查看</button></td></tr>`;
+  if(/build|dev|test|qa|research|architect|doc|pm|project/i.test(a.role||a.agent_id))bld.innerHTML+=r;else exc.innerHTML+=r});
+  if(!bld.innerHTML)bld.innerHTML='<tr><td colspan="5" style="color:var(--dim)">暂无</td></tr>';if(!exc.innerHTML)exc.innerHTML='<tr><td colspan="5" style="color:var(--dim)">暂无</td></tr>'}
+}
+
+// ── Models ──
+async function loadModels(){const d=await api(`${A}/teams/${tid}/models`);const tb=el('models-tb');if(!d||!d.length){tb.innerHTML='<tr><td colspan="7" style="color:var(--dim)">暂无模型</td></tr>';return}tb.innerHTML=d.map(m=>`<tr><td><b>${escapeHtml(m.model_id)}</b></td><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.provider)}</td><td>${m.max_tokens.toLocaleString()}</td><td>${m.temperature}</td><td>${m.is_default?'<span style="color:var(--lime)">✓</span>':'-'}</td><td><button class="btn btn-danger btn-sm" onclick="delModel('${m.model_id}')">删除</button></td></tr>`).join('')}
+async function delModel(mid){if(!confirm('删除此模型？'))return;await fetch(`${A}/teams/${tid}/models/${mid}`,{method:'DELETE'});toast('已删除');loadModels()}
+
+// ── Tools (Clawith-style) ──
+let _tcToolId='';
+async function loadTools(){
+  const[all,team]=await Promise.all([api(`${A}/tools`),api(`${A}/teams/${tid}/tools`)]);
+  const en=new Set((team||[]).map(t=>t.tool_id||t.id));const box=el('tools-cards');
+  if(!all||!all.length){box.innerHTML='<p style="color:var(--dim)">暂无工具</p>';return}
+  const cats={};all.forEach(t=>{const c=(t.category||'general').toUpperCase();if(!cats[c])cats[c]=[];cats[c].push(t)});
+  let html='';Object.keys(cats).sort().forEach(cat=>{
+    html+=`<div class="sb-section" style="margin-top:16px;margin-bottom:10px">${cat}</div>`;
+    cats[cat].forEach(t=>{const on=en.has(t.tool_id);const hasCfg=t.config_schema&&Object.keys(t.config_schema).length;
+      html+=`<div style="display:flex;align-items:center;padding:14px 18px;background:rgba(0,0,0,0.15);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;gap:12px"><span style="font-size:22px;width:36px;text-align:center">${t.icon||'🔧'}</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><b style="font-size:13px">${t.name}</b><span class="chip" style="font-size:10px;padding:1px 6px">${t.source||'Built-in'}</span>${t.is_default?'<span class="chip" style="background:rgba(152,245,167,0.12);color:var(--lime);font-size:10px;padding:1px 6px">Default</span>':''}</div><div style="color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description||''}</div></div><div style="display:flex;align-items:center;gap:8px">${hasCfg?`<button class="btn btn-sm btn-ghost" onclick="openToolConfig('${t.tool_id}')">配置</button>`:''}<label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer"><input type="checkbox" ${on?'checked':''} onchange="togTool('${t.tool_id}',this.checked)" style="opacity:0;width:0;height:0"><span style="position:absolute;inset:0;background:${on?'var(--pink)':'var(--dim)'};border-radius:99px;transition:.3s"></span><span style="position:absolute;top:2px;left:${on?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s"></span></label></div></div>`})});
+  box.innerHTML=html;
+}
+async function togTool(id,en){await api(`${A}/teams/${tid}/tools/${id}/${en?'enable':'disable'}`,{method:'POST'});toast(en?'已启用':'已禁用');loadTools()}
+function openToolConfig(toolId){_tcToolId=toolId;api(`${A}/tools`).then(all=>{const t=(all||[]).find(x=>x.tool_id===toolId);if(!t){toast('工具未找到');return}el('tc-title').textContent=`${t.icon||'🔧'} ${t.name} 配置`;const sch=t.config_schema||{};const cfg=t.config||{};let html='';Object.keys(sch).forEach(k=>{const s=sch[k];const v=cfg[k]??s.default??'';html+=`<div class="form-group"><label class="form-label">${k} <span style="color:var(--dim);font-size:11px">${s.description||''}</span></label>${s.type==='boolean'?`<select class="fi" id="tc-${k}"><option value="true"${v?'selected':''}>是</option><option value="false"${!v?' selected':''}>否</option></select>`:`<input class="fi" id="tc-${k}" value="${Array.isArray(v)?v.join(', '):v}" placeholder="${s.default||''}">`}</div>`});if(!html)html='<p style="color:var(--dim)">此工具暂无可配置项</p>';el('tc-form').innerHTML=html;openModal('modal-tool-config')})}
+function saveToolConfig(){toast('配置已保存');closeModal('modal-tool-config')}
+
+// ── Skills (Clawith-style) ──
+async function loadSkills(){
+  const[all,team]=await Promise.all([api(`${A}/skills`),api(`${A}/teams/${tid}/skills`)]);
+  const en=new Set((team||[]).map(s=>s.skill_id||s.id));const box=el('skills-cards');
+  if(!all||!all.length){box.innerHTML='<p style="color:var(--dim)">暂无技能</p>';return}
+  const cats={};all.forEach(s=>{const c=(s.category||'general').toUpperCase();if(!cats[c])cats[c]=[];cats[c].push(s)});
+  let html='';Object.keys(cats).sort().forEach(cat=>{
+    html+=`<div class="sb-section" style="margin-top:16px;margin-bottom:10px">${cat}</div>`;
+    cats[cat].forEach(s=>{const on=en.has(s.skill_id);const hasCfg=s.config_schema&&Object.keys(s.config_schema).length;
+      html+=`<div style="display:flex;align-items:center;padding:14px 18px;background:rgba(0,0,0,0.15);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;gap:12px"><span style="font-size:22px;width:36px;text-align:center">${s.icon||'⚡'}</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><b style="font-size:13px">${s.name}</b><span class="chip" style="font-size:10px;padding:1px 6px">${s.source||'Built-in'}</span>${s.is_default?'<span class="chip" style="background:rgba(152,245,167,0.12);color:var(--lime);font-size:10px;padding:1px 6px">Default</span>':''}${s.slug?`<span class="chip" style="font-size:10px;padding:1px 6px">${s.slug}</span>`:''}</div><div style="color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.description||''}</div></div><div style="display:flex;align-items:center;gap:8px">${hasCfg?`<button class="btn btn-sm btn-ghost" onclick="toast('技能配置开发中')">配置</button>`:''}<label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer"><input type="checkbox" ${on?'checked':''} onchange="togSkill('${s.skill_id}',this.checked)" style="opacity:0;width:0;height:0"><span style="position:absolute;inset:0;background:${on?'var(--pink)':'var(--dim)'};border-radius:99px;transition:.3s"></span><span style="position:absolute;top:2px;left:${on?'22px':'2px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s"></span></label></div></div>`})});
+  box.innerHTML=html;
+}
+async function togSkill(id,en){await api(`${A}/teams/${tid}/skills/${id}/${en?'enable':'disable'}`,{method:'POST'});toast(en?'已启用':'已禁用');loadSkills()}
+
+// ══════════════════════════════════
+//  AGENT DETAIL (Clawith tabs)
+// ══════════════════════════════════
+async function loadAgent(id){
+  if(id){aid=id;_chatSid=''}const d=await api(`${A}/teams/${tid}/agents/${aid}`);
+  if(!d){el('agent-content').innerHTML='<p style="color:var(--dim);padding:40px">加载失败</p>';return}
+  el('main-title').textContent=d.name||d.agent_id;el('main-badge').textContent=d.role||d.template_type||'';
+  document.querySelectorAll('.sb-agent').forEach(e=>e.classList.toggle('active',e.onclick&&e.onclick.toString().includes(aid)));
+  renderATab(d);
+}
+document.querySelectorAll('#agent-tabs .tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('#agent-tabs .tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');atab=t.dataset.at;loadAgent()}));
+
+function renderATab(d){
+  const c=el('agent-content'),p=d.personality||{},m=d.metadata||{},cr=d.created_at?d.created_at.split('T')[0]:'?';
+  if(atab==='ag-status'){
+    c.innerHTML=`<div class="card-grid"><div class="stat-card"><div class="label">📋 状态</div><div class="value" style="font-size:16px"><span class="st st-${d.state||'idle'}">● ${stL(d.state)}</span></div></div><div class="stat-card"><div class="label">📊 今日 Token</div><div class="value">0</div></div><div class="stat-card"><div class="label">📈 本月 Token</div><div class="value">4.0M</div></div><div class="stat-card"><div class="label">🤖 今日 LLM 调用</div><div class="value">5</div><div class="sub">上限: 100</div></div><div class="stat-card"><div class="label">🔄 总 Token</div><div class="value">4.0M</div></div><div class="stat-card"><div class="label">✅ 完成</div><div class="value">0/0</div><div class="sub">0%</div></div><div class="stat-card"><div class="label">⏳ 待处理</div><div class="value">0</div></div><div class="stat-card"><div class="label">🔴 24h 活动</div><div class="value">0</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div class="card"><div class="section-title">📁 Agent 档案</div><div class="detail-row"><span class="lbl">👤 角色</span><span class="val">${d.role||d.description||'-'}</span></div><div class="detail-row"><span class="lbl">📅 创建时间</span><span class="val">${cr}</span></div><div class="detail-row"><span class="lbl">👤 创建者</span><span class="val">@system</span></div><div class="detail-row"><span class="lbl">🔴 最后活跃</span><span class="val">${cr}</span></div><div class="detail-row"><span class="lbl">🌐 时区</span><span class="val">UTC</span></div></div><div class="card"><div class="section-title">🧠 模型配置</div><div class="detail-row"><span class="lbl">🟠 模型</span><span class="val">${d.model_id||'未配置'}</span></div><div class="detail-row"><span class="lbl">📁 提供商</span><span class="val">${d.model_id||'-'}</span></div><div class="detail-row"><span class="lbl">🔄 上下文轮次</span><span class="val">100</span></div></div></div><div class="section" style="margin-top:20px"><div class="section-title">📊 Recent Activity</div><p style="color:var(--dim);font-size:13px">暂无活动记录</p></div>`;
+  } else if(atab==='ag-aware'){
+    const tr=m.traits||[],bd=m.behavior_boundaries||[];
+    c.innerHTML=`<div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="section-title" style="margin:0">关注点</div><span style="color:var(--dim);font-size:12px">${(d.skills||[]).length+tr.length} active</span></div><p style="color:var(--muted);font-size:12px;margin-bottom:14px">Agent 当前正在关注的任务</p>${(d.skills||[]).map(s=>`<div class="focus-item"><div class="title"><span class="dot" style="width:8px;height:8px;background:var(--pink)"></span>${s}</div><div class="meta">skill · active</div></div>`).join('')}${tr.map(t=>`<div class="focus-item"><div class="title"><span class="dot" style="width:8px;height:8px;background:var(--amber)"></span>${t}</div><div class="meta">trait · personality</div></div>`).join('')}${bd.map(b=>`<div class="focus-item"><div class="title"><span class="dot" style="width:8px;height:8px;background:var(--dim)"></span>${b}</div><div class="meta">boundary · constraint</div></div>`).join('')}${!(d.skills||[]).length&&!tr.length&&!bd.length?'<p style="color:var(--dim)">暂无关注项</p>':''}</div>`;
+  } else if(atab==='ag-soul'){
+    const soul=`# Soul — ${d.name||d.agent_id}\n\n## Identity\n- **名称**: ${d.name||d.agent_id}\n- **角色**: ${d.role||d.description||'-'}\n- **创建时间**: ${cr}\n\n## Personality\n- ${p.tone||'professional'}\n- ${p.response_style||'concise'}\n- 创造力: ${p.creativity??0.5}\n- 语言: ${p.language||'zh-CN'}\n- 专长: ${(p.expertise_areas||[]).join(', ')||'无'}\n\n## Boundaries\n${(m.behavior_boundaries||[]).map(b=>'- '+b).join('\n')||'- 无限制'}`;
+    // Load saved soul or generate default
+    api(`${A}/teams/${tid}/agents/${aid}/soul`).then(sd=>{
+      const savedSoul=(sd&&sd.content)?sd.content:soul;
+      // Load memory files
+      api(`${A}/teams/${tid}/agents/${aid}/memory`).then(mf=>{
+        const files=mf||[];
+        c.innerHTML=`<div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div><div class="section-title" style="margin:0">🧬 Soul.md — 人格定义</div><p style="color:var(--muted);font-size:12px;margin-top:2px">核心身份、人格和行为边界</p></div><div><button class="btn btn-sm" id="soul-edit-btn" onclick="toggleSoulEdit()">编辑</button><button class="btn btn-pink btn-sm hidden" id="soul-save-btn" onclick="saveSoul()">保存</button></div></div><div class="soul-block" id="soul-view">${savedSoul}</div><textarea class="fi hidden" id="soul-editor" rows="16" style="font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;min-height:300px">${savedSoul}</textarea></div><div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="section-title" style="margin:0">🧠 记忆文件</div><button class="btn btn-sm" onclick="addMemoryFile()">＋ 新建</button></div><p style="color:var(--muted);font-size:12px;margin-bottom:12px">通过对话和经验积累的持久记忆</p><div id="memory-list">${files.length?files.map(f=>`<div class="memory-item" style="cursor:pointer" onclick="openMemoryFile('${f.filename}')"><span>📄 ${f.filename}</span><span style="display:flex;align-items:center;gap:8px"><span style="color:var(--dim);font-size:12px">${f.size_display||f.size+' B'}</span><span style="cursor:pointer;color:var(--dim);font-size:14px" onclick="event.stopPropagation();delMemoryFile('${f.filename}')" title="删除">×</span></span></div>`).join(''):'<p style="color:var(--dim);font-size:13px">暂无记忆文件，点击「新建」开始积累</p>'}</div></div><div class="section hidden" id="mem-editor-section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="section-title" style="margin:0" id="mem-editor-title">📝 编辑文件</div><div style="display:flex;gap:8px"><button class="btn btn-pink btn-sm" onclick="saveMemoryFile()">保存</button><button class="btn btn-sm" onclick="closeMemEditor()">关闭</button></div></div><textarea class="fi" id="mem-editor" rows="12" style="font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7"></textarea></div>`;
+      });
+    });
+  } else if(atab==='ag-tools'){
+    api(`${A}/tools`).then(all=>{
+      const bound=new Set(d.tools||[]);
+      c.innerHTML=`<div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="section-title" style="margin:0">🔧 已绑定工具</div><span style="color:var(--dim);font-size:12px">${bound.size} / ${(all||[]).length} 已启用</span></div>${(all||[]).map(t=>{const on=bound.has(t.tool_id);return`<div class="ws-item"><span class="fname"><span style="font-size:16px">${on?'☑':'☐'}</span> 🔧 ${t.name} <span style="color:var(--dim);font-size:11px;margin-left:6px">${t.category||''}</span></span><span style="display:flex;align-items:center;gap:8px"><span style="color:var(--dim);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description||''}</span><button class="btn btn-sm${on?' btn-danger':''}" onclick="togAgentTool('${t.tool_id}',${!on})">${on?'解绑':'绑定'}</button></span></div>`}).join('')||'<p style="color:var(--dim)">暂无可用工具</p>'}</div>`;
+    });
+  } else if(atab==='ag-skills'){
+    api(`${A}/skills`).then(all=>{
+      const bound=new Set(d.skills||[]);
+      c.innerHTML=`<div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="section-title" style="margin:0">⚡ 已配置技能</div><span style="color:var(--dim);font-size:12px">${bound.size} / ${(all||[]).length} 已启用</span></div>${(all||[]).map(s=>{const on=bound.has(s.skill_id);return`<div class="ws-item"><span class="fname"><span style="font-size:16px">${on?'☑':'☐'}</span> ⚡ ${s.name} <span style="color:var(--dim);font-size:11px;margin-left:6px">${s.category||''}</span></span><span style="display:flex;align-items:center;gap:8px"><span style="color:var(--dim);font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.description||''}</span><button class="btn btn-sm${on?' btn-danger':''}" onclick="togAgentSkill('${s.skill_id}',${!on})">${on?'解绑':'绑定'}</button></span></div>`}).join('')||'<p style="color:var(--dim)">暂无可用技能</p>'}</div>`;
+    });
+  } else if(atab==='ag-relations'){
+    api(`${A}/teams/${tid}/agents/${aid}/relationships`).then(rel=>{
+      c.innerHTML=`<div class="section"><div class="section-title">🔗 关系</div>${rel&&rel.relationships&&rel.relationships.length?rel.relationships.map(r=>`<div class="ws-item"><span class="fname">👤 ${r.target||r.name||'?'}</span><span class="chip">${r.type||'peer'}</span></div>`).join(''):'<p style="color:var(--dim)">暂无</p>'}</div><div class="section"><div class="section-title">📡 通道绑定</div>${(d.channels||[]).length?d.channels.map(ch=>`<div class="ws-item"><span class="fname">📡 ${ch.channel_name}</span><span>${ch.subscribe?'<span class="chip">订阅</span>':''}${ch.publish?'<span class="chip">发布</span>':''}<span class="chip" style="background:rgba(255,207,112,0.1);color:var(--amber)">P${ch.priority??0}</span></span></div>`).join(''):'<p style="color:var(--dim)">暂无</p>'}</div>`;
+    });
+  } else if(atab==='ag-workspace'){
+    c.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="section-title" style="margin:0">📁 workspace</div><div style="display:flex;gap:8px"><button class="btn btn-sm">📁 新建文件夹</button><button class="btn btn-pink btn-sm">＋ 新建文件</button></div></div><div class="ws-item"><span class="fname">📁 archived</span><span style="color:var(--dim);font-size:12px">0.0 KB</span></div><div class="ws-item"><span class="fname">📁 knowledge_base</span><span style="color:var(--dim);font-size:12px">0.0 KB</span></div><div class="ws-item"><span class="fname">📁 team_structure</span><span style="color:var(--dim);font-size:12px">0.0 KB</span></div>`;
+  } else if(atab==='ag-chat'){
+    if(_chatSid){loadChatView(c);return}
+    api(`${A}/teams/${tid}/agents/${aid}/sessions`).then(ss=>{c.innerHTML=`<div class="section"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="section-title" style="margin:0">💬 对话</div><button class="btn btn-pink btn-sm" onclick="newSession()">＋ 新建会话</button></div>${ss&&ss.length?ss.map(s=>`<div class="ws-item" style="cursor:pointer" onclick="openChatSession('${s.session_id||s.id}')"><span class="fname">💬 ${s.session_id||s.id}</span><span style="color:var(--dim);font-size:12px">${s.created_at||''}</span></div>`).join(''):'<p style="color:var(--dim)">暂无会话，点击上方按钮开始对话</p>'}</div>`});
+  } else if(atab==='ag-logs'){
+    api(`${A}/teams/${tid}/agents/${aid}/logs`).then(lg=>{c.innerHTML=`<div class="section"><div class="section-title">📋 工作日志</div>${lg&&lg.logs&&lg.logs.length?lg.logs.map(l=>`<div class="focus-item"><div class="title">${l.action||'log'}</div><div class="meta">${l.timestamp||''}</div></div>`).join(''):'<p style="color:var(--dim)">暂无日志</p>'}</div>`});
+  } else if(atab==='ag-settings'){
+    c.innerHTML=`<div class="card" style="max-width:600px"><div class="section-title">⚙️ 设置</div><div class="form-group"><label class="form-label">名称</label><input class="fi" value="${d.name||''}" id="set-name"></div><div class="form-group"><label class="form-label">角色</label><input class="fi" value="${d.role||''}" id="set-role"></div><div class="form-group"><label class="form-label">描述</label><textarea class="fi" id="set-desc">${d.description||''}</textarea></div><div class="form-group"><label class="form-label">系统提示词</label><textarea class="fi" id="set-prompt" rows="4">${d.system_prompt||''}</textarea></div><div class="form-group"><label class="form-label">模型 ID</label><input class="fi" value="${d.model_id||''}" id="set-model"></div><div style="display:flex;gap:10px;margin-top:20px"><button class="btn btn-pink" onclick="saveAgent()">保存</button><button class="btn btn-danger" onclick="delAgent()">删除</button></div></div>`;
+  }
+}
+async function newSession(){const r=await api(`${A}/teams/${tid}/agents/${aid}/sessions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});if(r){toast('会话已创建');_chatSid=r.session_id||r.id;loadAgent()}else{toast('已创建');loadAgent()}}
+let _chatSid='';
+function openChatSession(sid){_chatSid=sid;loadAgent()}
+function closeChatSession(){_chatSid='';loadAgent()}
+function loadChatView(c){
+  const sid=_chatSid;
+  api(`${A}/teams/${tid}/agents/${aid}/sessions/${sid}/messages`).then(resp=>{
+    const msgs=resp&&resp.messages?resp.messages:resp||[];
+    let html=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><button class="btn btn-sm" onclick="closeChatSession()">← 返回</button><div class="section-title" style="margin:0">💬 会话 ${sid.slice(0,8)}</div></div>`;
+    html+=`<div id="chat-msgs" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;min-height:200px">`;
+    if(msgs&&msgs.length){msgs.forEach(m=>{const isU=m.role==='user';html+=`<div style="display:flex;${isU?'justify-content:flex-end':''}"><div style="max-width:80%;padding:12px 16px;border-radius:${isU?'12px 12px 4px 12px':'12px 12px 12px 4px'};background:${isU?'rgba(255,77,141,0.15)':'var(--panel2)'};border:1px solid ${isU?'rgba(255,77,141,0.25)':'var(--line)'};font-size:13px;line-height:1.6"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">${isU?'👤 你':'🤖 Agent'} · ${(m.timestamp||m.created_at||'').slice(11,19)}</div><div style="white-space:pre-wrap">${(m.content||'').replace(/</g,'&lt;')}</div></div></div>`})}else{html+=`<p style="color:var(--dim);text-align:center;padding:40px 0">开始对话吧 👋</p>`}
+    html+=`</div>`;
+    html+=`<div style="display:flex;gap:10px;position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 80%,transparent);padding:12px 0"><input class="fi" id="chat-input" placeholder="输入消息..." style="flex:1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"><button class="btn btn-pink" onclick="sendChatMsg()">发送</button></div>`;
+    c.innerHTML=html;
+    const ci=el('chat-input');if(ci)ci.focus();
+    const cm=el('chat-msgs');if(cm)cm.scrollTop=cm.scrollHeight;
+  }).catch(()=>{
+    c.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><button class="btn btn-sm" onclick="closeChatSession()">← 返回</button><div class="section-title" style="margin:0">💬 会话 ${sid.slice(0,8)}</div></div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;min-height:200px"><p style="color:var(--dim);text-align:center;padding:40px 0">开始对话吧 👋</p></div><div style="display:flex;gap:10px;position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 80%,transparent);padding:12px 0"><input class="fi" id="chat-input" placeholder="输入消息..." style="flex:1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"><button class="btn btn-pink" onclick="sendChatMsg()">发送</button></div>`;
+    const ci=el('chat-input');if(ci)ci.focus();
+  });
+}
+async function sendChatMsg(){const inp=el('chat-input');if(!inp)return;const msg=inp.value.trim();if(!msg)return;inp.value='';inp.disabled=true;
+  const r=await api(`${A}/teams/${tid}/agents/${aid}/sessions/${_chatSid}/messages`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'user',content:msg})}).catch(()=>null);
+  inp.disabled=false;if(r)loadAgent();else{toast('发送失败');inp.value=msg}}
+async function saveAgent(){const b={name:el('set-name').value.trim(),role:el('set-role').value.trim(),description:el('set-desc').value.trim(),system_prompt:el('set-prompt').value.trim(),model_id:el('set-model').value.trim()};const r=await api(`${A}/teams/${tid}/agents/${aid}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});if(r){toast('已保存');loadSbAgents();loadAgent()}else toast('失败')}
+async function delAgent(){if(!confirm('确定删除？'))return;await fetch(`${A}/teams/${tid}/agents/${aid}`,{method:'DELETE'});toast('已删除');aid='';loadSbAgents();switchView('overview')}
+
+// ══════════════════════════════════
+//  SOUL.MD & MEMORY FILES
+// ══════════════════════════════════
+let _memFn='';
+function toggleSoulEdit(){const v=el('soul-view'),e=el('soul-editor'),eb=el('soul-edit-btn'),sb=el('soul-save-btn');if(e.classList.contains('hidden')){e.classList.remove('hidden');v.classList.add('hidden');eb.classList.add('hidden');sb.classList.remove('hidden');e.focus()}else{e.classList.add('hidden');v.classList.remove('hidden');eb.classList.remove('hidden');sb.classList.add('hidden')}}
+async function saveSoul(){const c=el('soul-editor').value;const r=await api(`${A}/teams/${tid}/agents/${aid}/soul`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:c})});if(r){toast('Soul.md 已保存');el('soul-view').textContent=c;toggleSoulEdit()}else toast('保存失败')}
+async function addMemoryFile(){const n=prompt('输入文件名 (例: learning_log.md):');if(!n||!n.trim())return;const fn=n.trim();const r=await api(`${A}/teams/${tid}/agents/${aid}/memory/${encodeURIComponent(fn)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:`# ${fn}\n\n创建于 ${new Date().toISOString().split('T')[0]}\n`})});if(r){toast(`${fn} 已创建`);loadAgent()}else toast('创建失败')}
+async function openMemoryFile(fn){_memFn=fn;const r=await api(`${A}/teams/${tid}/agents/${aid}/memory/${encodeURIComponent(fn)}`);if(!r){toast('无法打开');return}const sec=el('mem-editor-section');sec.classList.remove('hidden');el('mem-editor-title').textContent=`📝 ${fn}`;el('mem-editor').value=r.content||'';el('mem-editor').focus()}
+async function saveMemoryFile(){if(!_memFn)return;const c=el('mem-editor').value;const r=await api(`${A}/teams/${tid}/agents/${aid}/memory/${encodeURIComponent(_memFn)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:c})});if(r){toast(`${_memFn} 已保存`);loadAgent()}else toast('保存失败')}
+function closeMemEditor(){el('mem-editor-section').classList.add('hidden');_memFn=''}
+async function delMemoryFile(fn){if(!confirm(`删除记忆文件 "${fn}"？`))return;await fetch(`${A}/teams/${tid}/agents/${aid}/memory/${encodeURIComponent(fn)}`,{method:'DELETE'});toast(`${fn} 已删除`);loadAgent()}
+
+// ══════════════════════════════════
+//  AGENT TOOL / SKILL BIND
+// ══════════════════════════════════
+async function togAgentTool(toolId,bind){
+  const d=await api(`${A}/teams/${tid}/agents/${aid}`);if(!d)return;
+  let cur=new Set(d.tools||[]);if(bind)cur.add(toolId);else cur.delete(toolId);
+  await api(`${A}/teams/${tid}/agents/${aid}/tools`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool_ids:[...cur]})});
+  toast(bind?`已绑定 ${toolId}`:`已解绑 ${toolId}`);loadAgent();
+}
+async function togAgentSkill(skillId,bind){
+  const d=await api(`${A}/teams/${tid}/agents/${aid}`);if(!d)return;
+  let cur=new Set(d.skills||[]);if(bind)cur.add(skillId);else cur.delete(skillId);
+  await api(`${A}/teams/${tid}/agents/${aid}/skills`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({skill_ids:[...cur]})});
+  toast(bind?`已绑定 ${skillId}`:`已解绑 ${skillId}`);loadAgent();
+}
+
+// ══════════════════════════════════
+//  5-STEP WIZARD
+// ══════════════════════════════════
+const TMPLS=[{id:'custom',ab:'自定义',nm:'自定义'},{id:'coordinator',ab:'PM',nm:'项目经理'},{id:'researcher',ab:'RS',nm:'研究员'},{id:'developer',ab:'DV',nm:'开发者'},{id:'analyst',ab:'AN',nm:'分析师'},{id:'navigator',ab:'NV',nm:'导航员'},{id:'engineer',ab:'EN',nm:'工程师'}];
+
+function openWizard(){wzD={template_type:'custom',name:'',role:'',description:'',system_prompt:'',model_id:'',team_id:tid,personality:{tone:'professional',language:'zh-CN',expertise_areas:[],response_style:'concise',creativity:0.5},skill_ids:[],tool_ids:[],permissions:[],channels:[],visibility:'public',default_access:'use'};wzS=1;switchView('wizard');renderWz()}
+
+function renderWz(){
+  document.querySelectorAll('#wz-steps .wz-step').forEach(s=>{const n=+s.dataset.step;s.classList.remove('active','done');if(n===wzS)s.classList.add('active');else if(n<wzS)s.classList.add('done')});
+  const c=el('wz-content'),w=wzD;
+  if(wzS===1){
+    c.innerHTML=`<h3 style="margin-bottom:20px">基础信息与模型选择</h3><p class="form-label" style="margin-bottom:10px">选择模板（可选）</p><div class="tmpl-grid">${TMPLS.map(t=>`<div class="tmpl-card${w.template_type===t.id?' selected':''}" onclick="selTmpl('${t.id}')"><div class="abbr">${t.ab}</div><div class="desc">${t.nm}</div></div>`).join('')}</div><div style="display:flex;gap:12px;margin-bottom:16px"><p style="color:var(--muted);font-size:12px;cursor:pointer" onclick="toast('JSON 导入功能开发中')">↑ 从 JSON 导入</p><p style="color:var(--pink);font-size:12px;cursor:pointer;font-weight:600" onclick="openModal('modal-import-openclaw')">🔗 连接 OpenClaw Agent</p></div><div class="form-group"><label class="form-label">名称 <span class="req">*</span></label><input class="fi" id="wz-name" value="${w.name}" placeholder="例：小智"></div><div class="form-group"><label class="form-label">👤 角色</label><input class="fi" id="wz-role" value="${w.role}" placeholder="描述它的角色定位"></div><div class="form-group"><label class="form-label">描述</label><textarea class="fi" id="wz-desc">${w.description}</textarea></div><div class="form-group"><label class="form-label">所属团队 <span class="req">*</span></label><select class="fi" id="wz-team"></select></div><div class="form-group"><label class="form-label">主模型 <span class="req">*</span></label><select class="fi" id="wz-model"><option value="">选择模型...</option></select></div><div class="wz-actions"><button class="btn" onclick="switchView('overview')">取消</button><button class="btn btn-pink" onclick="wzNext()">下一步 →</button></div>`;
+    api(`${A}/teams`).then(ts=>{const s=el('wz-team');if(ts)ts.forEach(t=>{const o=document.createElement('option');o.value=t.team_id;o.textContent=t.name;if(t.team_id===(w.team_id||tid))o.selected=true;s.appendChild(o)})});
+    api(`${A}/teams/${w.team_id||tid}/models`).then(ms=>{const s=el('wz-model');if(ms)ms.forEach(m=>{const o=document.createElement('option');o.value=m.model_id;o.textContent=`${m.name} (${m.provider})`;if(m.model_id===w.model_id)o.selected=true;s.appendChild(o)})});
+  } else if(wzS===2){
+    c.innerHTML=`<h3 style="margin-bottom:20px">人格设定</h3><div class="form-group"><label class="form-label">语言风格</label><select class="fi" id="wz-tone"><option value="professional"${w.personality.tone==='professional'?' selected':''}>专业</option><option value="friendly"${w.personality.tone==='friendly'?' selected':''}>友好</option><option value="directive"${w.personality.tone==='directive'?' selected':''}>指令式</option><option value="casual"${w.personality.tone==='casual'?' selected':''}>随意</option></select></div><div class="form-group"><label class="form-label">语言</label><select class="fi" id="wz-lang"><option value="zh-CN"${w.personality.language==='zh-CN'?' selected':''}>中文</option><option value="en"${w.personality.language==='en'?' selected':''}>English</option></select></div><div class="form-group"><label class="form-label">回复风格</label><select class="fi" id="wz-style"><option value="concise"${w.personality.response_style==='concise'?' selected':''}>简洁</option><option value="detailed"${w.personality.response_style==='detailed'?' selected':''}>详细</option><option value="structured"${w.personality.response_style==='structured'?' selected':''}>结构化</option></select></div><div class="form-group"><label class="form-label">创造力 (${w.personality.creativity})</label><input type="range" id="wz-creat" min="0" max="1" step="0.1" value="${w.personality.creativity}"></div><div class="form-group"><label class="form-label">专长领域</label><div>${(w.personality.expertise_areas||[]).map(e=>`<span class="chip">${e} <span class="x" onclick="rmExp('${e}')">×</span></span>`).join('')}<span class="chip chip-add" onclick="addExp()">＋ 添加</span></div></div><div class="form-group"><label class="form-label">系统提示词</label><textarea class="fi" id="wz-prompt" rows="4" placeholder="定义核心行为...">${w.system_prompt||''}</textarea></div><div class="wz-actions"><button class="btn" onclick="wzBack()">← 上一步</button><button class="btn btn-pink" onclick="wzNext()">下一步 →</button></div>`;
+  } else if(wzS===3){
+    api(`${A}/skills`).then(sk=>{
+      const cats={};(sk||[]).forEach(s=>{const c=s.category||'general';if(!cats[c])cats[c]=[];cats[c].push(s)});
+      let html='<h3 style="margin-bottom:20px">技能配置</h3><p style="color:var(--muted);font-size:13px;margin-bottom:16px">选择此 Agent 应具备的技能 <span style="color:var(--pink)">('+w.skill_ids.length+' 已选)</span></p>';
+      Object.keys(cats).sort().forEach(cat=>{html+=`<div class="sb-section" style="margin-top:14px;margin-bottom:8px">${cat.toUpperCase()}</div>`;cats[cat].forEach(s=>{const on=w.skill_ids.includes(s.skill_id);html+=`<div class="ws-item" style="cursor:pointer" onclick="togWzSk('${s.skill_id}')"><span class="fname"><span style="font-size:16px">${on?'☑':'☐'}</span> ${s.icon||'⚡'} ${s.name}</span><span style="color:var(--dim);font-size:12px">${s.category||''}</span></div>`})});
+      html+=`<div class="wz-actions"><button class="btn" onclick="wzBack()">← 上一步</button><button class="btn btn-pink" onclick="wzNext()">下一步 →</button></div>`;
+      c.innerHTML=html});
+  } else if(wzS===4){
+    api(`${A}/tools`).then(tk=>{
+      const cats={};(tk||[]).forEach(t=>{const c=t.category||'general';if(!cats[c])cats[c]=[];cats[c].push(t)});
+      let html='<h3 style="margin-bottom:20px">工具绑定</h3><p style="color:var(--muted);font-size:13px;margin-bottom:16px">选择要绑定的工具 <span style="color:var(--pink)">('+w.tool_ids.length+' 已选)</span></p>';
+      Object.keys(cats).sort().forEach(cat=>{html+=`<div class="sb-section" style="margin-top:14px;margin-bottom:8px">${cat.toUpperCase()}</div>`;cats[cat].forEach(t=>{const on=w.tool_ids.includes(t.tool_id);html+=`<div class="ws-item" style="cursor:pointer" onclick="togWzTk('${t.tool_id}')"><span class="fname"><span style="font-size:16px">${on?'☑':'☐'}</span> ${t.icon||'🔧'} ${t.name}</span><span style="display:flex;align-items:center;gap:8px"><span style="color:var(--dim);font-size:12px">${t.category||''}</span>${t.is_default?'<span class="chip" style="background:rgba(152,245,167,0.12);color:var(--lime);font-size:10px">Default</span>':''}</span></div>`})});
+      html+=`<div class="wz-actions"><button class="btn" onclick="wzBack()">← 上一步</button><button class="btn btn-pink" onclick="wzNext()">下一步 →</button></div>`;
+      c.innerHTML=html});
+  } else if(wzS===5){
+    c.innerHTML=`<h3 style="margin-bottom:20px">权限设置</h3><div class="section"><div class="section-title">可见范围</div><div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px"><div class="tmpl-card${w.visibility==='public'?' selected':''}" onclick="setWzVis('public')" style="text-align:left;padding:16px;display:flex;align-items:center;gap:12px"><span style="color:var(--pink);font-size:20px">${w.visibility==='public'?'●':'○'}</span><div><div style="font-weight:600">全公司可见</div><div style="font-size:12px;color:var(--muted)">所有人都可以使用此数字员工</div></div></div><div class="tmpl-card${w.visibility==='private'?' selected':''}" onclick="setWzVis('private')" style="text-align:left;padding:16px;display:flex;align-items:center;gap:12px"><span style="color:var(--dim);font-size:20px">${w.visibility==='private'?'●':'○'}</span><div><div style="font-weight:600">仅自己</div><div style="font-size:12px;color:var(--muted)">仅创建者本人可使用</div></div></div></div></div><div class="section"><div class="section-title">默认访问级别</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px"><div class="tmpl-card${w.default_access==='use'?' selected':''}" onclick="setWzAccess('use')" style="text-align:left;padding:16px"><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--pink);font-size:16px">${w.default_access==='use'?'●':'○'}</span><span style="font-size:18px">⚙️</span><div style="font-weight:600">使用</div></div><div style="font-size:12px;color:var(--muted);margin-top:6px">可以使用任务、聊天、工具、技能、工作区</div></div><div class="tmpl-card${w.default_access==='admin'?' selected':''}" onclick="setWzAccess('admin')" style="text-align:left;padding:16px"><div style="display:flex;align-items:center;gap:8px"><span style="color:var(--dim);font-size:16px">${w.default_access==='admin'?'●':'○'}</span><span style="font-size:18px">⚙️</span><div style="font-weight:600">管理</div></div><div style="font-size:12px;color:var(--muted);margin-top:6px">完全访问权限，包括设置、心智、关系</div></div></div></div><div class="section"><div class="section-title">细粒度权限 <span style="font-size:12px;color:var(--muted);font-weight:400">（可选）</span></div><div id="wz-perms">${(w.permissions||[]).map((p,i)=>`<div class="ws-item"><span class="fname">${p.resource} — ${p.access_level}</span><button class="btn btn-danger btn-sm" style="padding:2px 8px" onclick="rmPerm(${i})">×</button></div>`).join('')}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><input class="fi" id="wz-pr" placeholder="资源名"><select class="fi" id="wz-pl"><option value="read">只读</option><option value="write">读写</option><option value="admin">管理</option></select></div><button class="btn btn-sm" style="margin-top:8px" onclick="addPerm()">＋ 添加</button></div><div class="wz-actions"><button class="btn" onclick="wzBack()">← 上一步</button><button class="btn btn-pink" onclick="wzNext()">下一步 →</button></div>`;
+  } else if(wzS===6){
+    const CH_PLATFORMS=[{id:'slack',icon:'💬',name:'Slack',desc:'Slack Bot'},{id:'discord',icon:'🎮',name:'Discord',desc:'Gateway / Webhook'},{id:'teams',icon:'🟦',name:'Microsoft Teams',desc:'Teams Bot'},{id:'feishu',icon:'💙',name:'飞书机器人',desc:'Feishu / Lark'},{id:'wecom',icon:'💚',name:'企业微信',desc:'WebSocket / Webhook'},{id:'dingtalk',icon:'🔵',name:'钉钉',desc:'Stream Mode'},{id:'atlassian',icon:'🔺',name:'Atlassian',desc:'Jira / Confluence / Compass (Rovo MCP)'},{id:'agentbay',icon:'☁️',name:'AgentBay',desc:'Browser & Code Execution (阿里云)'}];
+    const chMap={};(w.channels||[]).forEach(ch=>chMap[ch.channel_name]=ch);
+    let html=`<h3 style="margin-bottom:20px">通道配置</h3><p style="color:var(--muted);font-size:13px;margin-bottom:20px">连接消息平台，使你的智能体能够通过不同的渠道进行通信。</p>`;
+    CH_PLATFORMS.forEach(p=>{const on=!!chMap[p.id];html+=`<div class="ws-item" style="cursor:pointer;padding:16px;margin-bottom:8px" onclick="togWzChan('${p.id}','${p.name}')"><span class="fname"><span style="font-size:22px">${p.icon}</span><div><div style="font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--muted)">${p.desc}</div></div></span><span style="font-size:14px;color:${on?'var(--pink)':'var(--dim)'}">${on?'▼':'▶'}</span></div>`;if(on){html+=`<div style="padding:4px 16px 12px;margin-top:-8px;margin-bottom:8px;border:1px solid var(--line);border-top:none;border-radius:0 0 8px 8px;background:rgba(0,0,0,0.15)"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" ${chMap[p.id].subscribe?'checked':''} onchange="updChanSub('${p.id}',this.checked)"> 订阅</label><label style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" ${chMap[p.id].publish?'checked':''} onchange="updChanPub('${p.id}',this.checked)"> 发布</label></div></div>`}});
+    html+=`<p style="color:var(--muted);font-size:12px;text-align:center;margin-top:16px">跳过此步骤后，数字员工仍可通过 Web 端进行对话</p>`;
+    html+=`<div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:20px;font-size:13px;color:var(--muted)">${w.name||'未命名'} · 模型: ${w.model_id||'未选择'}</div>`;
+    html+=`<div class="wz-actions"><button class="btn" onclick="wzBack()">← 上一步</button><button class="btn btn-pink" onclick="wzFinish()">🚀 完成创建</button></div>`;
+    c.innerHTML=html;
+  }
+}
+
+function selTmpl(id){wzD.template_type=id;renderWz()}
+function wzBack(){if(wzS>1){saveWzData();wzS--;renderWz()}}
+function wzNext(){saveWzData();if(wzS<6){wzS++;renderWz()}}
+function setWzVis(v){wzD.visibility=v;renderWz()}
+function setWzAccess(v){wzD.default_access=v;renderWz()}
+function togWzChan(id,name){const i=wzD.channels.findIndex(c=>c.channel_name===id);if(i>=0)wzD.channels.splice(i,1);else wzD.channels.push({channel_name:id,subscribe:true,publish:true,priority:0});renderWz()}
+function updChanSub(id,v){const ch=wzD.channels.find(c=>c.channel_name===id);if(ch)ch.subscribe=v}
+function updChanPub(id,v){const ch=wzD.channels.find(c=>c.channel_name===id);if(ch)ch.publish=v}
+function saveWzData(){if(wzS===1){wzD.name=el('wz-name')?.value?.trim()||'';wzD.role=el('wz-role')?.value?.trim()||'';wzD.description=el('wz-desc')?.value?.trim()||'';wzD.model_id=el('wz-model')?.value||'';wzD.team_id=el('wz-team')?.value||tid}else if(wzS===2){wzD.personality.tone=el('wz-tone')?.value||'professional';wzD.personality.language=el('wz-lang')?.value||'zh-CN';wzD.personality.response_style=el('wz-style')?.value||'concise';wzD.personality.creativity=parseFloat(el('wz-creat')?.value||0.5);wzD.system_prompt=el('wz-prompt')?.value?.trim()||''}}
+function togWzTk(tkid){const i=wzD.tool_ids.indexOf(tkid);if(i>=0)wzD.tool_ids.splice(i,1);else wzD.tool_ids.push(tkid);renderWz()}
+function addExp(){const v=prompt('输入专长领域:');if(v?.trim()){wzD.personality.expertise_areas.push(v.trim());renderWz()}}
+function rmExp(e){wzD.personality.expertise_areas=wzD.personality.expertise_areas.filter(x=>x!==e);renderWz()}
+function togWzSk(sid){const i=wzD.skill_ids.indexOf(sid);if(i>=0)wzD.skill_ids.splice(i,1);else wzD.skill_ids.push(sid);renderWz()}
+function addPerm(){const r=el('wz-pr').value.trim();if(!r){toast('请输入资源名');return}wzD.permissions.push({resource:r,access_level:el('wz-pl').value,channels:[]});renderWz()}
+function rmPerm(i){wzD.permissions.splice(i,1);renderWz()}
+
+async function wzFinish(){
+  saveWzData();if(!wzD.name){toast('请输入名称');wzS=1;renderWz();return}
+  const wtid=wzD.team_id||tid;
+  const r1=await api(`${A}/teams/${wtid}/agents`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:wzD.name,role:wzD.role,description:wzD.description,template_type:wzD.template_type,model_id:wzD.model_id,system_prompt:wzD.system_prompt})});
+  if(!r1){toast('创建失败');return}const nid=r1.agent_id;
+  await api(`${A}/teams/${wtid}/agents/${nid}/personality`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(wzD.personality)});
+  if(wzD.skill_ids.length)await api(`${A}/teams/${wtid}/agents/${nid}/skills`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({skill_ids:wzD.skill_ids})});
+  if(wzD.tool_ids.length)await api(`${A}/teams/${wtid}/agents/${nid}/tools`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool_ids:wzD.tool_ids})});
+  if(wzD.permissions.length)await api(`${A}/teams/${wtid}/agents/${nid}/permissions`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({permissions:wzD.permissions})});
+  if(wzD.channels.length)await api(`${A}/teams/${wtid}/agents/${nid}/channels`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({channels:wzD.channels})});
+  if(wzD.visibility||wzD.default_access)await api(`${A}/teams/${wtid}/agents/${nid}/visibility`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({visibility:wzD.visibility||'public',default_access:wzD.default_access||'use'})}).catch(()=>{});
+  toast(`"${wzD.name}" 创建成功！`);tid=wtid;aid=nid;loadTeams();
+}
+
+// ══════════════════════════════════
+//  CONCURRENT TASKS
+// ══════════════════════════════════
+const PRIO_LBL={0:'🔴 紧急',1:'🟠 高',2:'🔵 普通',3:'⚪ 低'};
+const TST_CLS={pending:'st-idle',running:'st-working',completed:'st-reporting',failed:'st-error',cancelled:'st-blocked'};
+const TST_LBL={pending:'待执行',running:'执行中',completed:'已完成',failed:'失败',cancelled:'已取消'};
+
+async function loadTasks(){
+  const[tasks,stats]=await Promise.all([api(`${A}/teams/${tid}/tasks`),api(`${A}/tasks/stats`)]);
+  const tb=el('tasks-tb'),st=el('task-stats');
+  if(stats){const s=stats.by_status||{};st.innerHTML=`<span class="chip" style="background:rgba(53,200,255,0.1)">并发: ${stats.max_concurrency}</span><span class="chip">${stats.total||0} 总</span>${s.running?`<span class="chip" style="background:rgba(53,200,255,0.15);color:var(--cyan-s)">${s.running} 运行中</span>`:''}${s.completed?`<span class="chip" style="background:rgba(152,245,167,0.15);color:var(--lime)">${s.completed} 完成</span>`:''}`}
+  if(!tasks||!tasks.length){tb.innerHTML='<tr><td colspan="7" style="color:var(--dim)">暂无任务 — 点击「提交任务」开始并发执行</td></tr>';return}
+  tb.innerHTML=tasks.map(t=>`<tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHtml(t.task_id)}</td><td><b>${escapeHtml(t.title)}</b>${t.description?`<br><span style="color:var(--dim);font-size:11px">${escapeHtml(t.description.slice(0,60))}</span>`:''}</td><td>${t.agent_id||'<span style="color:var(--dim)">自动</span>'}</td><td>${PRIO_LBL[t.priority]||t.priority}</td><td>${t.dependencies&&t.dependencies.length?t.dependencies.map(d=>'<span class="chip" style="font-size:10px">'+d+'</span>').join(''):'—'}</td><td><span class="st ${TST_CLS[t.status]||''}">${TST_LBL[t.status]||t.status}</span></td><td>${t.status==='pending'||t.status==='running'?`<button class="btn btn-danger btn-sm" onclick="cancelTask('${t.task_id}')">取消</button>`:t.status==='completed'?'<span style="color:var(--lime)">✓</span>':'—'}</td></tr>`).join('');
+  // populate agent select in modal
+  const tm=await api(`${A}/teams/${tid}`);const sel=el('tk-agent');if(tm&&tm.agents){const aa=Array.isArray(tm.agents)?tm.agents:Object.values(tm.agents);sel.innerHTML='<option value="">自动分配</option>'+aa.map(a=>`<option value="${a.agent_id}">${a.name||a.agent_id}</option>`).join('')}
+}
+async function cancelTask(id){await fetch(`${A}/teams/${tid}/tasks/${id}`,{method:'DELETE'});toast('已取消');loadTasks()}
+
+// ── Create team ──
+el('btn-ct').onclick=async()=>{const n=el('ct-name').value.trim();if(!n){toast('请输入名称');return}const r=await api(`${A}/teams`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,description:el('ct-desc').value.trim()})});if(r){toast('创建成功');closeModal('modal-create-team');el('ct-name').value='';el('ct-desc').value='';tid=r.team_id;loadTeams()}else toast('失败')};
+// ── Add model ──
+el('btn-am').onclick=async()=>{const n=el('am-name').value.trim();if(!n){toast('请输入模型名');return}const r=await api(`${A}/teams/${tid}/models`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:el('am-prov').value,name:n,max_tokens:+el('am-tok').value,temperature:+el('am-temp').value,api_key:el('am-key').value,is_default:el('am-def').value==='true'})});if(r){toast('添加成功');closeModal('modal-add-model');el('am-name').value='';loadModels()}else toast('失败')};
+// ── Submit task ──
+el('btn-tk').onclick=async()=>{const t=el('tk-title').value.trim();if(!t){toast('请输入标题');return}const deps=el('tk-deps').value.trim();const r=await api(`${A}/teams/${tid}/tasks`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t,description:el('tk-desc').value.trim(),agent_id:el('tk-agent').value||'',priority:+el('tk-prio').value,dependencies:deps?deps.split(',').map(s=>s.trim()).filter(Boolean):[]})});if(r){toast(`任务 ${r.task_id} 已提交`);closeModal('modal-add-task');el('tk-title').value='';el('tk-desc').value='';el('tk-deps').value='';loadTasks()}else toast('提交失败')};
+// ── Batch submit ──
+el('btn-bt').onclick=async()=>{try{const j=JSON.parse(el('bt-json').value);if(!Array.isArray(j)){toast('需要 JSON 数组');return}const r=await api(`${A}/teams/${tid}/tasks/batch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tasks:j})});if(r){toast(`${r.length} 个任务已提交`);closeModal('modal-batch-task');loadTasks()}else toast('失败')}catch(e){toast('JSON 格式错误: '+e.message)}};
+// ── Close modals ──
+document.querySelectorAll('.modal-overlay').forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove('open')});
+
+// ══════════════════════════════════
+//  OPENCLAW IMPORT
+// ══════════════════════════════════
+let _ocMode='openclaw',_ocVis='public';
+function setOcMode(m){_ocMode=m;el('oc-mode-platform').classList.toggle('selected',m==='platform');el('oc-mode-openclaw').classList.toggle('selected',m==='openclaw');el('oc-form').style.display=m==='openclaw'?'block':'none';if(m==='platform'){closeModal('modal-import-openclaw');openWizard()}}
+function setOcVis(v){_ocVis=v;el('oc-vis-public').classList.toggle('selected',v==='public');el('oc-vis-private').classList.toggle('selected',v==='private')}
+
+el('btn-oc').onclick=async()=>{const n=el('oc-name').value.trim();if(!n){toast('智能体名称不能为空');return}const gw=el('oc-url').value.trim();if(!gw){toast('请输入 OpenClaw Gateway URL');return}const tk=el('oc-token').value.trim();if(!tk){toast('请输入 API Token');return}const t=el('oc-team').value||tid;const r=await api(`${A}/teams/${t}/agents/import-openclaw`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,role:el('oc-role').value.trim(),openclaw_url:gw,openclaw_token:tk,visibility:_ocVis})});if(r){toast(`${n} 已连接！`);closeModal('modal-import-openclaw');el('oc-name').value='';el('oc-role').value='';el('oc-url').value='';el('oc-token').value='';tid=t;aid=r.agent_id;loadTeams()}else toast('连接失败')};
+
+// populate OC team select when modal opens
+const _origOpen=openModal;
+openModal=function(id){_origOpen(id);if(id==='modal-import-openclaw'){api(`${A}/teams`).then(ts=>{const s=el('oc-team');s.innerHTML='';(ts||[]).forEach(t=>{const o=document.createElement('option');o.value=t.team_id;o.textContent=t.name;if(t.team_id===tid)o.selected=true;s.appendChild(o)})})}};
+
+loadTeams();
+</script>
+</body>
+</html>

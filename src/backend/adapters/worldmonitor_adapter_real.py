@@ -72,7 +72,7 @@ class WorldMonitorRealAdapter:
     async def initialize(self):
         """初始化 HTTP 会话"""
         if not self.api_key or self.api_key == "placeholder":
-            logger.warning("⚠️ WorldMonitor API key is not configured - using mock mode")
+            logger.info("ℹ️ WorldMonitor API key not configured — using mock mode")
             self._initialized = True
             return False
         

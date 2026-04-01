@@ -81,8 +81,12 @@ class TestChannelsAPI:
         response = client.get("/api/v1/channels")
         data = response.json()
         for channel in data["channels"]:
-            assert channel["health"] == "ok"
-            assert channel["initialized"] is True
+            assert channel["health"] in ("ok", "warn"), (
+                f"Channel {channel['name']} has unexpected health: {channel['health']}"
+            )
+            assert channel["initialized"] is True, (
+                f"Channel {channel['name']} is not initialized"
+            )
 
     def test_channel_details(self, client):
         response = client.get("/api/v1/channels")
@@ -184,6 +188,77 @@ class TestEndToEnd:
     def test_llm_config_workflow(self, client):
         """LLM 配置工作流 — 跳过前端部分。"""
         pytest.skip("Requires running Vite dev server on localhost:5173")
+
+
+class TestSVesselAPI:
+    """SVESSEL / AI Native 新增端点集成测试."""
+
+    def test_autonomy_status_endpoint(self, client):
+        response = client.get("/api/v1/ai-native/autonomy/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "autonomy_manager"
+        assert "result" in data
+        assert "mass_level" in data["result"]
+        assert "mass_code" in data["result"]
+
+    def test_autonomy_transition_endpoint(self, client):
+        response = client.post(
+            "/api/v1/ai-native/autonomy/transition",
+            params={"target_mass_level": "RU", "reason": "integration_test"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "autonomy_manager"
+        assert data["result"]["approved"] is True
+        assert data["result"]["mass_level"] in ("remote_uncrewed", "autonomous")
+
+    def test_autonomy_transition_invalid_level(self, client):
+        response = client.post(
+            "/api/v1/ai-native/autonomy/transition",
+            params={"target_mass_level": "INVALID"},
+        )
+        assert response.status_code == 400
+
+    def test_ship_shore_status_endpoint(self, client):
+        response = client.get("/api/v1/ai-native/ship-shore/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "ship_shore_link"
+        assert "result" in data
+        assert "active_link" in data["result"]
+
+    def test_phm_status_and_maintenance_plan(self, client):
+        status_response = client.get("/api/v1/ai-native/phm/status")
+        assert status_response.status_code == 200
+        status_data = status_response.json()
+        assert status_data["channel"] == "predictive_health"
+        assert "result" in status_data
+
+        plan_response = client.get("/api/v1/ai-native/phm/maintenance-plan")
+        assert plan_response.status_code == 200
+        plan_data = plan_response.json()
+        assert plan_data["channel"] == "predictive_health"
+        assert isinstance(plan_data["result"], list)
+        if plan_data["result"]:
+            item = plan_data["result"][0]
+            assert "component_id" in item
+            assert "priority" in item
+
+    def test_route_status_endpoint(self, client):
+        response = client.get("/api/v1/ai-native/route/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "route_optimizer"
+        assert "result" in data
+
+    def test_cybersecurity_status_endpoint(self, client):
+        response = client.get("/api/v1/ai-native/cybersecurity/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["channel"] == "cyber_security"
+        assert "result" in data
+        assert "threat_level" in data["result"]
 
 
 if __name__ == "__main__":

@@ -59,6 +59,13 @@
   </div>
 
   <script>
+    function escapeHtml(value) {
+      return String(value ?? '--')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     window.location.replace('/captain-cockpit.html');
 
     async function checkBackend() {
@@ -66,11 +73,11 @@
         const response = await fetch('http://localhost:8080/api/v1/sensors');
         const data = await response.json();
         document.getElementById('backend-status').innerHTML = 
-          `<p class="ok">✅ 后端服务正常 - ${data.sensors.length} 个传感器</p>`;
+          `<p class="ok">✅ 后端服务正常 - ${escapeHtml(data.sensors.length)} 个传感器</p>`;
         document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
       } catch (error) {
         document.getElementById('backend-status').innerHTML = 
-          `<p class="error">❌ 后端服务不可用：${error.message}</p>`;
+          `<p class="error">❌ 后端服务不可用：${escapeHtml(error.message)}</p>`;
       }
     }
 
@@ -80,7 +87,7 @@
         const data = await response.json();
         if (data.channels && data.channels.length > 0) {
           document.getElementById('channels-list').innerHTML = 
-            data.channels.map(ch => `<div>• ${ch.name} - ${ch.description || ''}</div>`).join('');
+            data.channels.map(ch => `<div>• ${escapeHtml(ch.name)} - ${escapeHtml(ch.description || ''}</div>`).join('');
         } else {
           document.getElementById('channels-list').innerHTML = '<div>暂无已注册 Channel</div>';
         }

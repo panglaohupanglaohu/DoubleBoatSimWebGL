@@ -70,6 +70,11 @@
             background: rgba(79,195,247,0.2);
         }
 
+        .status-bar a:active {
+            transform: scale(0.95);
+            background: rgba(79,195,247,0.35);
+        }
+
         .status-indicators {
             display: flex;
             gap: 20px;
@@ -127,7 +132,7 @@
             padding: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            max-height: calc(100vh - 90px);
+            max-height: calc(100vh - 90px - 42vh);
             overflow-y: auto;
         }
 
@@ -200,118 +205,21 @@
             border-left: 3px solid #4a90e2;
         }
 
-        /* 右侧报警面板 */
-        .alarm-panel {
+        .right-panel-stack {
             position: fixed;
             right: 20px;
             top: 70px;
-            width: 300px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 420px;
             max-height: calc(100vh - 90px);
-            overflow-y: auto;
-        }
-
-        html.embed-mode .alarm-panel {
-            right: 16px;
-            top: 16px;
-            width: 264px;
-            max-height: 228px;
-            background: linear-gradient(180deg, rgba(31, 10, 18, 0.88) 0%, rgba(18, 8, 14, 0.72) 100%);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
-        }
-
-        .alarm-panel h2 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #ff6b6b;
-            border-bottom: 2px solid #ff6b6b;
-            padding-bottom: 8px;
-        }
-
-        .alarm-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid #ff6b6b;
-        }
-
-        .alarm-item.level-INFO {
-            border-left-color: #4caf50;
-        }
-
-        .alarm-item.level-WARNING {
-            border-left-color: #ffb347;
-        }
-
-        .alarm-item.level-CRITICAL {
-            border-left-color: #ff6b6b;
-        }
-
-        .alarm-item.level-EMERGENCY {
-            border-left-color: #ff0000;
-        }
-
-        .alarm-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 100;
         }
-
-        .alarm-level {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .alarm-level.INFO {
-            background: #4caf50;
-            color: white;
-        }
-
-        .alarm-level.WARNING {
-            background: #ffb347;
-            color: black;
-        }
-
-        .alarm-level.CRITICAL {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .alarm-level.EMERGENCY {
-            background: #ff0000;
-            color: white;
-        }
-
-        .alarm-time {
-            font-size: 11px;
-            color: #a0a0a0;
-        }
-
-        .alarm-message {
-            font-size: 13px;
-            line-height: 1.4;
-        }
-
-        .alarm-source {
-            font-size: 11px;
-            color: #a0a0a0;
-            margin-top: 5px;
-        }
-
         .cockpit-panel {
-            position: fixed;
-            right: 340px;
-            top: 70px;
-            width: 460px;
-            max-height: calc(100vh - 90px);
+            position: static;
+            width: 100%;
+            max-height: 52vh;
             overflow-y: auto;
             background: linear-gradient(180deg, rgba(7, 18, 32, 0.94) 0%, rgba(9, 14, 26, 0.92) 100%);
             border-radius: 14px;
@@ -319,6 +227,12 @@
             border: 1px solid rgba(115, 230, 255, 0.18);
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
             backdrop-filter: blur(12px);
+        }
+        .ais-panel {
+            left: 16px;
+            bottom: 16px;
+            width: 288px;
+            max-height: 35vh;
         }
 
         html.embed-mode .cockpit-panel {
@@ -339,8 +253,7 @@
             padding: 12px;
         }
 
-        html.embed-mode .data-card,
-        html.embed-mode .alarm-item {
+        html.embed-mode .data-card {
             background: rgba(255, 255, 255, 0.04);
         }
 
@@ -466,6 +379,28 @@
             white-space: nowrap;
         }
 
+        .cockpit-action-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .cockpit-action-button {
+            border: 1px solid rgba(115, 230, 255, 0.18);
+            background: rgba(115, 230, 255, 0.08);
+            color: #d8f7ff;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .cockpit-action-button.is-active {
+            background: rgba(115, 230, 255, 0.16);
+            border-color: rgba(115, 230, 255, 0.34);
+        }
+
         .memory-stream {
             display: flex;
             flex-direction: column;
@@ -526,18 +461,21 @@
             color: #81c784;
         }
 
-        /* 底部 AIS 目标列表 */
+        /* 左侧 AIS 目标列表 */
         .ais-panel {
             position: fixed;
+            left: 20px;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 600px;
-            background: rgba(0, 0, 0, 0.7);
+            width: 320px;
+            max-height: 38vh;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.82);
             border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(115, 230, 255, 0.18);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            z-index: 100;
         }
 
         .ais-panel h2 {
@@ -568,6 +506,94 @@
             display: flex;
             gap: 15px;
             color: #a0a0a0;
+        }
+
+        .ais-target-card {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            border-left: 3px solid #81c784;
+        }
+
+        .ais-target-card.is-high-risk {
+            border-left-color: #ef5350;
+        }
+
+        .ais-target-card.is-selected {
+            background: rgba(79, 195, 247, 0.16);
+            box-shadow: 0 0 0 1px rgba(79, 195, 247, 0.35);
+        }
+
+        .ais-target-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .ais-target-title {
+            color: #4fc3f7;
+            font-weight: 600;
+        }
+
+        .ais-target-meta {
+            color: #888;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        .ais-target-body {
+            color: #aaa;
+            font-size: 10px;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        .ais-target-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .ais-target-flags {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .ais-target-flag {
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            background: rgba(255, 255, 255, 0.08);
+            color: #cfe9f6;
+        }
+
+        .ais-target-flag.is-recommended {
+            background: rgba(255, 183, 77, 0.18);
+            color: #ffd180;
+        }
+
+        .ais-target-flag.is-locked {
+            background: rgba(79, 195, 247, 0.18);
+            color: #7fd8ff;
+        }
+
+        .ais-target-button {
+            border: 1px solid rgba(79, 195, 247, 0.35);
+            background: rgba(8, 18, 36, 0.9);
+            color: #d9eef7;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .ais-target-button.is-primary {
+            background: rgba(79, 195, 247, 0.22);
+            color: #7fd8ff;
         }
 
         /* 搜索面板 */
@@ -674,7 +700,6 @@
 
         @media (max-width: 1200px) {
             .data-panel,
-            .alarm-panel,
             .cockpit-panel,
             .ais-panel {
                 position: static;
@@ -694,7 +719,6 @@
             }
 
             html.embed-mode .data-panel,
-            html.embed-mode .alarm-panel,
             html.embed-mode .cockpit-panel {
                 position: static;
                 width: calc(100% - 24px);
@@ -722,8 +746,8 @@
                 <span>🕐</span>
                 <span id="clock">--:--:--</span>
             </div>
-            <a href="/captain-cockpit.html" target="_blank">🎛️ 返回船长智能中控台</a>
-            <a href="/poseidon-config.html" target="_blank">⚙️ LLM 配置</a>
+            <a href="/captain-cockpit.html">🎛️ 返回船长智能中控台</a>
+            <a href="/poseidon-config.html">⚙️ LLM 配置</a>
             <div class="status-item" id="llm-status" style="font-size: 12px; color: #888;">
                 🧠 LLM: 未配置
             </div>
@@ -750,7 +774,9 @@
     </div>
 
     <!-- 左侧数据面板 -->
-    <div class="data-panel">
+        <div style="display:flex;flex-direction:row;align-items:flex-start;width:100vw;height:calc(100vh - 50px);margin-top:50px;">
+            <!-- 左侧数据面板 -->
+            <div class="data-panel" style="min-width:320px;max-width:360px;flex:0 0 340px;">
         <h2>📊 实时数据</h2>
         
         <!-- 导航数据 -->
@@ -947,7 +973,7 @@
             <div style="margin-bottom:15px;">
                 <div style="font-weight:600; color:#4fc3f7; margin-bottom:8px; font-size:13px;">🚢 AIS 目标列表</div>
                 <div id="wm-ais-list" style="max-height:200px; overflow-y:auto; font-size:11px;">
-                    <div style="color:#888; text-align:center; padding:10px;">加载中...</div>
+                    <div style="color:#ccc; padding:10px;">加载中...</div>
                 </div>
             </div>
             
@@ -968,7 +994,7 @@
             <div style="margin-bottom:15px;">
                 <div style="font-weight:600; color:#ffb74d; margin-bottom:8px; font-size:13px;">⚓ 附近港口</div>
                 <div id="wm-ports-list" style="max-height:120px; overflow-y:auto; font-size:11px;">
-                    <div style="color:#888; text-align:center; padding:10px;">加载中...</div>
+                    <div style="color:#ccc; padding:10px;">加载中...</div>
                 </div>
             </div>
             
@@ -976,7 +1002,7 @@
             <div>
                 <div style="font-weight:600; color:#ba68c8; margin-bottom:8px; font-size:13px;">🗺️ 航线规划</div>
                 <div id="wm-route-info" style="font-size:11px; color:#888; text-align:center; padding:10px;">
-                    航线规划功能开发中...
+                    <div style="color:#888; text-align:center;">加载航线数据...</div>
                 </div>
             </div>
         </div>
@@ -988,102 +1014,238 @@
                 <div style="text-align:center; color:#a0a0a0; padding:10px;">加载中...</div>
             </div>
         </div>
+      </div>
+      <!-- 中间 Bridge/WorldMonitor 面板 -->
+      <div class="bridge-panel" style="min-width:340px;max-width:400px;flex:0 0 360px;margin-left:8px;background:rgba(10,20,40,0.98);border-radius:14px;padding:18px 16px 16px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.12);display:flex;flex-direction:column;">
+        <h3 style="font-size:20px;font-weight:700;color:#4fc3f7;letter-spacing:0.04em;margin-bottom:10px;">🛳️ Bridge 操作台</h3>
+        <div id="bridge-status" style="font-size:15px;color:#a0a0a0;margin-bottom:8px;">状态：--</div>
+        <div id="bridge-controls" style="display:flex;gap:16px;margin-bottom:18px;">
+          <button style="padding:8px 18px;border-radius:8px;background:#4a90e2;color:#fff;border:none;font-size:15px;cursor:pointer;">主视角</button>
+          <button style="padding:8px 18px;border-radius:8px;background:#4fc3f7;color:#222;border:none;font-size:15px;cursor:pointer;">顶视图</button>
+          <button style="padding:8px 18px;border-radius:8px;background:#81c784;color:#222;border:none;font-size:15px;cursor:pointer;">自由视角</button>
+        </div>
+        <!-- WorldMonitor 方案层内容 -->
+        <div class="data-card" id="bridge-worldmonitor-card" style="background:rgba(255,255,255,0.05);border-radius:8px;padding:15px;margin-bottom:0;border-left:4px solid #4a90e2;">
+          <h3 style="font-size:14px;margin-bottom:10px;color:#a0a0a0;">🌍 WorldMonitor</h3>
+          <!-- 1. AIS 目标详细列表 -->
+          <div style="margin-bottom:15px;">
+              <div style="font-weight:600; color:#4fc3f7; margin-bottom:8px; font-size:13px;">🚢 AIS 目标列表</div>
+              <div id="bridge-wm-ais-list" style="max-height:200px; overflow-y:auto; font-size:11px;">
+                  <div style="color:#888; text-align:center; padding:10px;">加载中...</div>
+              </div>
+          </div>
+          <!-- 2. 气象详情 -->
+          <div style="margin-bottom:15px; padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">
+              <div style="font-weight:600; color:#81c784; margin-bottom:8px; font-size:13px;">🌤️ 气象详情</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px;">
+                  <div><span style="color:#888;">风速:</span> <span id="bridge-wm-wind" style="color:#fff;">--</span></div>
+                  <div><span style="color:#888;">风向:</span> <span id="bridge-wm-wind-dir" style="color:#fff;">--</span></div>
+                  <div><span style="color:#888;">浪高:</span> <span id="bridge-wm-wave" style="color:#fff;">--</span></div>
+                  <div><span style="color:#888;">流向:</span> <span id="bridge-wm-current" style="color:#fff;">--</span></div>
+                  <div><span style="color:#888;">能见度:</span> <span id="bridge-wm-visibility" style="color:#fff;">--</span></div>
+                  <div><span style="color:#888;">更新时间:</span> <span id="bridge-wm-weather-time" style="color:#fff;">--</span></div>
+              </div>
+          </div>
+          <!-- 3. 港口信息 -->
+          <div style="margin-bottom:15px;">
+              <div style="font-weight:600; color:#ffb74d; margin-bottom:8px; font-size:13px;">⚓ 附近港口</div>
+              <div id="bridge-wm-ports-list" style="max-height:120px; overflow-y:auto; font-size:11px;">
+                  <div style="color:#888; text-align:center; padding:10px;">加载中...</div>
+              </div>
+          </div>
+          <!-- 4. 航线规划 -->
+          <div>
+              <div style="font-weight:600; color:#ba68c8; margin-bottom:8px; font-size:13px;">🗺️ 航线规划</div>
+              <div id="bridge-wm-route-info" style="font-size:11px; color:#888; text-align:center; padding:10px;">
+                  <div style="color:#888; text-align:center;">加载航线数据...</div>
+              </div>
+          </div>
+        </div>
+      </div>
+      <!-- 右侧 Captain Cockpit + AIS -->
+      <div class="right-panel-stack" style="margin-left:auto;min-width:420px;max-width:520px;flex:1 1 420px;display:flex;flex-direction:column;height:100%;">
+<!-- Weather Control Panel -->
+<div class="wx-panel" id="wx-panel" style="background:rgba(10,20,40,0.95);border-radius:10px;padding:14px 16px;margin-bottom:12px;border:1px solid rgba(79,195,247,0.15);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <h3 style="font-size:14px;font-weight:700;color:#81c784;margin:0;">🌤️ Weather Control</h3>
+    <span id="wx-status" style="font-size:10px;color:#4fc3f7;">☀️ Clear | 3.0m/s S | 15.0km</span>
+  </div>
+  <div style="margin-bottom:10px;">
+    <select id="wx-type-select" style="width:100%;padding:6px 8px;border-radius:5px;border:1px solid rgba(79,195,247,0.25);background:rgba(0,0,0,0.4);color:#e0e0e0;font-size:12px;outline:none;">
+      <option value="clear">☀️ Clear</option>
+    </select>
+  </div>
+  <div style="background:rgba(0,0,0,0.25);border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+    <div style="font-size:10px;color:#4fc3f7;font-weight:600;margin-bottom:6px;">💨 WIND</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:10px;color:#888;min-width:36px;">Speed</span>
+      <input type="range" id="wx-wind-speed-slider" value="3" style="flex:1;height:4px;accent-color:#4fc3f7;">
+      <span id="wx-wind-speed-value" style="font-size:12px;color:#e0e0e0;min-width:56px;text-align:right;">3.0 m/s</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:10px;color:#888;min-width:36px;">Dir</span>
+      <input type="range" id="wx-wind-dir-slider" value="180" style="flex:1;height:4px;accent-color:#4fc3f7;">
+      <span id="wx-wind-dir-value" style="font-size:12px;color:#e0e0e0;min-width:32px;text-align:right;">180°</span>
+      <span id="wx-wind-dir-compass" style="font-size:11px;color:#4fc3f7;font-weight:600;min-width:20px;">S</span>
+    </div>
+  </div>
+  <div style="background:rgba(0,0,0,0.25);border-radius:6px;padding:8px 10px;margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span style="font-size:10px;color:#42a5f5;font-weight:600;">🌧️ PRECIPITATION</span>
+      <span id="wx-precip-type" style="font-size:10px;color:#aaa;">—</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:10px;color:#888;min-width:36px;">Int.</span>
+      <input type="range" id="wx-precip-slider" value="0" style="flex:1;height:4px;accent-color:#42a5f5;">
+      <span id="wx-precip-value" style="font-size:12px;color:#e0e0e0;min-width:36px;text-align:right;">0%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:10px;color:#888;min-width:36px;">Temp</span>
+      <button id="wx-temp-dec" type="button" style="width:24px;height:24px;border-radius:4px;border:1px solid rgba(79,195,247,0.3);background:transparent;color:#4fc3f7;font-size:14px;cursor:pointer;line-height:1;">−</button>
+      <span id="wx-temp-value" style="font-size:13px;color:#e0e0e0;font-weight:600;min-width:40px;text-align:center;">22°C</span>
+      <button id="wx-temp-inc" type="button" style="width:24px;height:24px;border-radius:4px;border:1px solid rgba(79,195,247,0.3);background:transparent;color:#4fc3f7;font-size:14px;cursor:pointer;line-height:1;">+</button>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(0,0,0,0.25);border-radius:6px;margin-bottom:8px;">
+    <span style="font-size:10px;color:#888;">👁️ Visibility</span>
+    <span id="wx-vis-value" style="font-size:13px;color:#81c784;font-weight:600;">15.0 km</span>
+    <span id="wx-vis-indicator" style="font-size:10px;">🔵 优秀</span>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button type="button" id="wx-toggle-wind" class="is-active" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(79,195,247,0.3);background:rgba(79,195,247,0.15);color:#4fc3f7;font-size:11px;cursor:pointer;">Wind</button>
+    <button type="button" id="wx-toggle-precip" class="is-active" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(79,195,247,0.3);background:rgba(79,195,247,0.15);color:#4fc3f7;font-size:11px;cursor:pointer;">Rain</button>
+    <button type="button" id="wx-toggle-fog" class="is-active" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(79,195,247,0.3);background:rgba(79,195,247,0.15);color:#4fc3f7;font-size:11px;cursor:pointer;">Fog</button>
+  </div>
+</div>
+<!-- Wave Settings Panel -->
+<div class="wave-panel" id="wave-panel" style="background:rgba(10,20,40,0.95);border-radius:10px;padding:12px 16px;margin-bottom:12px;border:1px solid rgba(66,165,245,0.15);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <h3 style="font-size:13px;font-weight:700;color:#42a5f5;margin:0;">🌊 Wave Settings</h3>
+    <button type="button" id="wave-toggle" class="is-active" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(66,165,245,0.3);background:rgba(66,165,245,0.15);color:#42a5f5;font-size:10px;cursor:pointer;">ON</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+    <span style="font-size:10px;color:#888;min-width:40px;">Height</span>
+    <input type="range" id="wave-height-slider" min="0" max="10" step="0.1" value="1" style="flex:1;height:4px;accent-color:#42a5f5;">
+    <span id="wave-height-value" style="font-size:12px;color:#e0e0e0;min-width:40px;text-align:right;">1.0 m</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:10px;color:#888;min-width:40px;">Period</span>
+    <input type="range" id="wave-period-slider" min="3" max="20" step="0.5" value="8" style="flex:1;height:4px;accent-color:#42a5f5;">
+    <span id="wave-period-value" style="font-size:12px;color:#e0e0e0;min-width:40px;text-align:right;">8.0 s</span>
+  </div>
+</div>
+        <div class="cockpit-panel" style="flex:1 1 60%;overflow-y:auto;">
+                    <div class="cockpit-header">
+                        <h2>🧑‍✈️ Captain Agents Cockpit</h2>
+                        <div class="cockpit-meta">智能决策 / 路径 / 约束 / 值班</div>
+                    </div>
+                    <div class="cockpit-status-bar" style="display:flex; gap:12px; justify-content:space-between; padding:6px 12px; background:rgba(0,180,255,0.08); border-radius:6px; margin-bottom:10px; font-size:11px;">
+                        <div><span style="color:#888;">循环</span> <span id="captain-loop-state" style="color:#4fc3f7;font-weight:600;">IDLE</span></div>
+                        <div><span style="color:#888;">轮次</span> <span id="captain-runs" style="color:#fff;">--</span></div>
+                        <div><span style="color:#888;">上次</span> <span id="captain-last-cycle" style="color:#fff;">--</span></div>
+                        <div><span style="color:#888;">记忆</span> <span id="captain-memory-availability" style="color:#fff;">--</span></div>
+                    </div>
+                    <div class="cockpit-summary" id="captain-decision-summary">等待决策包...</div>
+                    <div class="cockpit-kpi">
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">综合风险</div>
+                            <div class="cockpit-kpi-value" id="cockpit-risk-level">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">合规状态</div>
+                            <div class="cockpit-kpi-value" id="cockpit-compliance-status">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">事件数量</div>
+                            <div class="cockpit-kpi-value" id="cockpit-event-count">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">建议动作</div>
+                            <div class="cockpit-kpi-value" id="cockpit-action-count">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">船长协调</div>
+                            <div class="cockpit-kpi-value" id="cockpit-captain-cycle">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">记忆层</div>
+                            <div class="cockpit-kpi-value" id="cockpit-memory-store">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">云同步</div>
+                            <div class="cockpit-kpi-value" id="cockpit-cloud-sync">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">湖仓分析</div>
+                            <div class="cockpit-kpi-value" id="cockpit-analytics-state">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">融合轨迹</div>
+                            <div class="cockpit-kpi-value" id="cockpit-fusion-count">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">任务图节点</div>
+                            <div class="cockpit-kpi-value" id="cockpit-task-nodes">--</div>
+                        </div>
+                        <div class="cockpit-kpi-item">
+                            <div class="cockpit-kpi-label">海事情景</div>
+                            <div class="cockpit-kpi-value" id="cockpit-scene-type">--</div>
+                        </div>
+                    </div>
+                    <div class="cockpit-summary" style="margin-top:10px;" id="cockpit-summary-text">--</div>
+                    <div class="cockpit-list" id="captain-actions-list">
+                        <div class="cockpit-list-item"><span>当前无高优先动作，维持监控。</span><span>OK</span></div>
+                    </div>
+                    <div class="cockpit-list" id="captain-maintenance-list">
+                        <div class="cockpit-list-item"><span>暂无新增运维动作。</span><span>READY</span></div>
+                    </div>
+                    <div class="cockpit-list" id="captain-task-graph-list">
+                        <div class="cockpit-list-item"><span>任务图等待同步。</span><span>GRAPH</span></div>
+                    </div>
+                    <div class="cockpit-list" id="captain-fusion-list">
+                        <div class="cockpit-list-item"><span>暂无融合轨迹。</span><span>FUSION</span></div>
+                    </div>
+                    <div class="cockpit-list" id="openbridge-control-list">
+                        <div class="cockpit-list-item"><span>OpenBridge 控制就绪</span><span>READY</span></div>
+                    </div>
+                    <div class="cockpit-sync-footer" id="cockpit-last-sync" style="text-align:right; font-size:10px; color:#666; padding:4px 8px;">最近同步 --</div>
+                    <div class="cockpit-list" id="captain-memory-stream" style="max-height:150px; overflow-y:auto;">
+                        <div class="memory-event"><strong>暂无事件</strong><p>当前筛选条件下没有 replay 数据。</p></div>
+                    </div>
+                    <!-- Replay 筛选与刷新 -->
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:8px; padding:4px 8px;">
+                        <select id="cockpit-replay-filter" style="flex:1; padding:4px 8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:4px; color:#fff; font-size:11px;">
+                            <option value="all">全部</option>
+                            <option value="critical">关键</option>
+                            <option value="risk">风险</option>
+                            <option value="action">操作</option>
+                        </select>
+                        <button id="cockpit-replay-refresh" style="padding:4px 10px; background:rgba(79,195,247,0.15); border:1px solid rgba(79,195,247,0.3); border-radius:4px; color:#4fc3f7; font-size:11px; cursor:pointer;">🔄 刷新</button>
+                    </div>
+                    <!-- 决策反馈表单 -->
+                    <form id="cockpit-feedback-form" style="margin-top:10px; padding:8px; background:rgba(0,0,0,0.2); border-radius:6px;">
+                        <div style="font-size:11px; color:#888; margin-bottom:6px;">📝 决策反馈</div>
+                        <input id="feedback-action" type="text" placeholder="操作描述" style="width:100%; padding:4px 8px; margin-bottom:4px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:4px; color:#fff; font-size:11px;">
+                        <textarea id="feedback-outcome" placeholder="结果描述" rows="2" style="width:100%; padding:4px 8px; margin-bottom:4px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); border-radius:4px; color:#fff; font-size:11px; resize:vertical;"></textarea>
+                        <input id="feedback-confirmed-by" type="hidden" value="captain">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="feedback-status" class="feedback-status" style="font-size:10px; color:#888;"></span>
+                            <button type="submit" style="padding:4px 12px; background:rgba(76,175,80,0.2); border:1px solid rgba(76,175,80,0.4); border-radius:4px; color:#81c784; font-size:11px; cursor:pointer;">提交反馈</button>
+                        </div>
+                    </form>
+        </div>
+        </div>
+      </div>
     </div>
 
-    <!-- 右侧报警面板 -->
-    <div class="alarm-panel">
-        <h2>🚨 报警信息</h2>
-        <div id="alarm-list">
-            <div style="text-align: center; color: #a0a0a0; padding: 20px;">
-                暂无报警
-            </div>
-        </div>
-    </div>
-
-    <div class="cockpit-panel">
-        <div class="cockpit-header">
-            <div>
-                <h2>CAPTAIN-AGENT COCKPIT</h2>
-                <div class="cockpit-meta">协调节奏、决策摘要、记忆回放</div>
-            </div>
-            <div class="cockpit-meta" id="cockpit-last-sync">等待同步</div>
-        </div>
-        <div class="cockpit-controls">
-            <select id="cockpit-replay-filter">
-                <option value="decision_package_event,decision_feedback_event">决策与反馈</option>
-                <option value="decision_package_event">仅决策包</option>
-                <option value="decision_feedback_event">仅反馈</option>
-                <option value="navigation_event,engine_event,efficiency_event">导航/机舱/能效</option>
-            </select>
-            <button type="button" id="cockpit-replay-refresh">刷新 Replay</button>
-        </div>
-        <div class="cockpit-grid">
-            <div class="cockpit-card">
-                <h3>协调节奏</h3>
-                <div class="cockpit-kpi">
-                    <div class="cockpit-kpi-item">
-                        <div class="cockpit-kpi-label">协调状态</div>
-                        <div class="cockpit-kpi-value" id="captain-loop-state">--</div>
-                    </div>
-                    <div class="cockpit-kpi-item">
-                        <div class="cockpit-kpi-label">总轮次</div>
-                        <div class="cockpit-kpi-value" id="captain-runs">--</div>
-                    </div>
-                    <div class="cockpit-kpi-item">
-                        <div class="cockpit-kpi-label">最近回合</div>
-                        <div class="cockpit-kpi-value" id="captain-last-cycle">--</div>
-                    </div>
-                    <div class="cockpit-kpi-item">
-                        <div class="cockpit-kpi-label">记忆层</div>
-                        <div class="cockpit-kpi-value" id="captain-memory-availability">--</div>
-                    </div>
-                </div>
-            </div>
-            <div class="cockpit-card">
-                <h3>决策摘要</h3>
-                <div class="cockpit-summary" id="captain-decision-summary">等待决策包...</div>
-                <div class="cockpit-list" id="captain-actions-list"></div>
-            </div>
-            <div class="cockpit-card full-width">
-                <h3>运维动作与证据</h3>
-                <div class="cockpit-list" id="captain-maintenance-list"></div>
-            </div>
-            <div class="cockpit-card full-width">
-                <h3>Task Graph & Fusion Tracks</h3>
-                <div class="cockpit-list" id="captain-task-graph-list"></div>
-                <div class="cockpit-list" id="captain-fusion-list"></div>
-            </div>
-            <div class="cockpit-card full-width">
-                <h3>OpenBridge Control Strip</h3>
-                <div class="cockpit-list" id="openbridge-control-list"></div>
-            </div>
-            <div class="cockpit-card full-width">
-                <h3>Recent Memory Replay</h3>
-                <div class="memory-stream" id="captain-memory-stream">
-                    <div class="memory-event"><strong>等待记忆回放</strong><p>正在加载 AI Native 事件流...</p></div>
-                </div>
-            </div>
-            <div class="cockpit-card full-width">
-                <h3>Decision Feedback Writeback</h3>
-                <form class="feedback-form" id="cockpit-feedback-form">
-                    <input type="text" id="feedback-action" placeholder="动作，例如：hold course / reduce speed" required>
-                    <textarea id="feedback-outcome" rows="3" placeholder="反馈结果，例如：驾驶员接受建议并保持监控" required></textarea>
-                    <input type="text" id="feedback-confirmed-by" placeholder="确认人，例如：captain / operator" value="captain">
-                    <button type="submit">写回反馈到 AI Native Memory</button>
-                    <div class="feedback-status" id="feedback-status"></div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- 底部 AIS 目标列表 -->
+    <!-- 左侧 AIS 目标列表 (独立面板) -->
     <div class="ais-panel">
-        <h2>🎯 AIS 目标列表</h2>
-        <div id="ais-list">
-            <div style="text-align: center; color: #a0a0a0; padding: 10px;">
-                暂无 AIS 目标
-            </div>
+      <h2>🎯 AIS 目标列表</h2>
+      <div id="ais-list">
+        <div style="text-align: center; color: #a0a0a0; padding: 10px;">
+            暂无 AIS 目标
         </div>
+      </div>
     </div>
 
     <!-- 数字孪生主程序 (ES Module) -->
@@ -1179,28 +1341,87 @@
       }
       
       function updateAisList(targets) {
-        const container = document.getElementById('wm-ais-list');
-        if (!container) return;
-        
-        if (!targets || targets.length === 0) {
-          container.innerHTML = '<div style="color:#888; text-align:center; padding:10px;">暂无 AIS 目标</div>';
-          return;
-        }
-        
-        container.innerHTML = targets.slice(0, 5).map(t => `
-          <div style="padding:6px; margin-bottom:4px; background:rgba(0,0,0,0.3); border-radius:4px; border-left:3px solid ${t.risk_level === 'high' ? '#ef5350' : '#81c784'};">
-            <div style="display:flex; justify-content:space-between;">
-              <span style="color:#4fc3f7; font-weight:600;">${t.vessel_type || 'Unknown'}</span>
-              <span style="color:#888;">MMSI: ${t.mmsi}</span>
-            </div>
-            <div style="color:#aaa; font-size:10px; margin-top:4px;">
-              位置：${t.latitude?.toFixed(4) || '--'}, ${t.longitude?.toFixed(4) || '--'} | 
-              航向：${t.course?.toFixed(0) || '--'}° | 
-              航速：${t.speed?.toFixed(1) || '--'} kn
-            </div>
-          </div>
-        `).join('');
+                const containers = [document.getElementById('wm-ais-list'), document.getElementById('ais-list')].filter(Boolean);
+                if (!containers.length) return;
+
+                window.__digitalTwinAisTargets = Array.isArray(targets) ? targets.slice(0, 8) : [];
+                const cameraControl = window.DigitalTwin?.getCameraControlState?.() || {};
+                const selectedKey = cameraControl.currentSelectedTargetKey || cameraControl.lastSelectedTargetKey || null;
+                const recommendedTarget = getPriorityAisTarget(window.__digitalTwinAisTargets);
+                const recommendedKey = recommendedTarget
+                    ? String(recommendedTarget?.mmsi || recommendedTarget?.id || `${recommendedTarget?.latitude ?? recommendedTarget?.lat}-${recommendedTarget?.longitude ?? recommendedTarget?.lng}`)
+                    : null;
+
+                if (!window.__bindAisTargetActions) {
+                    window.__bindAisTargetActions = true;
+                    document.addEventListener('click', (event) => {
+                        const button = event.target.closest('[data-ais-action]');
+                        if (!button) return;
+
+                        const index = Number(button.dataset.aisIndex);
+                        const target = window.__digitalTwinAisTargets?.[index];
+                        if (!target) return;
+
+                        if (button.dataset.aisAction === 'select' && window.DigitalTwin?.setSelectedTarget) {
+                            window.DigitalTwin.setSelectedTarget(target, { cameraMode: 'bridge' });
+                            logBridgeCameraAction(`camera:select:${target.mmsi || target.id || 'target'}`);
+                        }
+
+                        if (button.dataset.aisAction === 'track' && window.DigitalTwin?.setSelectedTarget) {
+                            window.DigitalTwin.setSelectedTarget(target, { cameraMode: 'target-track' });
+                            logBridgeCameraAction(`camera:track:${target.mmsi || target.id || 'target'}`);
+                        }
+
+                        window.refreshDigitalTwinBridgeUi?.();
+                    });
+                }
+
+                if (!window.__getAisTargetKey) {
+                    window.__getAisTargetKey = (target) => String(target?.mmsi || target?.id || `${target?.latitude ?? target?.lat}-${target?.longitude ?? target?.lng}`);
+                }
+
+                const html = window.__digitalTwinAisTargets.length
+                    ? window.__digitalTwinAisTargets.map((target, index) => {
+                            const riskLevel = String(target.risk_level || 'low').toLowerCase();
+                            const targetKey = window.__getAisTargetKey(target);
+                            const isSelected = selectedKey && targetKey === selectedKey;
+                            const isRecommended = recommendedKey && targetKey === recommendedKey;
+                            const isManualLock = isSelected && cameraControl.manualTargetSelection;
+                            return `
+                                <div class="ais-target-card ${riskLevel === 'high' ? 'is-high-risk' : ''} ${isSelected ? 'is-selected' : ''}">
+                                    <div class="ais-target-head">
+                                        <span class="ais-target-title">${escapeHtml(target.vessel_type || target.name || 'Unknown')}</span>
+                                        <span class="ais-target-meta">MMSI: ${escapeHtml(target.mmsi || '--')}</span>
+                                    </div>
+                                    <div class="ais-target-body">
+                                        风险：${escapeHtml(riskLevel.toUpperCase())} | 位置：${escapeHtml(Number(target.latitude).toFixed?.(4) || '--')}, ${escapeHtml(Number(target.longitude).toFixed?.(4) || '--')}<br>
+                                        航向：${escapeHtml(Number(target.course).toFixed?.(0) || '--')}° | 航速：${escapeHtml(Number(target.speed).toFixed?.(1) || '--')} kn
+                                    </div>
+                                    <div class="ais-target-flags">
+                                        ${isRecommended ? '<span class="ais-target-flag is-recommended">RECOMMENDED</span>' : ''}
+                                        ${isManualLock ? '<span class="ais-target-flag is-locked">OPERATOR LOCK</span>' : ''}
+                                    </div>
+                                    <div class="ais-target-actions">
+                                        <button type="button" class="ais-target-button ${isSelected ? 'is-primary' : ''}" data-ais-action="select" data-ais-index="${index}">选中目标</button>
+                                        <button type="button" class="ais-target-button is-primary" data-ais-action="track" data-ais-index="${index}">开始跟踪</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')
+                    : '<div style="color:#888; text-align:center; padding:10px;">暂无 AIS 目标</div>';
+
+                containers.forEach((container) => {
+                    container.innerHTML = html;
+                });
       }
+
+            window.refreshDigitalTwinBridgeUi = async function refreshDigitalTwinBridgeUi() {
+                await updateDashboard();
+                updateAisList(window.__digitalTwinAisTargets || []);
+                if (typeof refreshReplayTimeline === 'function') {
+                    await refreshReplayTimeline();
+                }
+            };
       
       function updateWeatherDisplay(weather) {
         if (!weather) return;
@@ -1305,7 +1526,7 @@
             
             container.innerHTML = results.map(result => `
                 <div class="search-result-item" onclick="focusOnTarget('${result.id}')">
-                    📍 ${result.name}
+                    📍 ${escapeHtml(result.name)}
                 </div>
             `).join('');
         }
@@ -1330,9 +1551,9 @@
                     const good = ch.health === 'ok';
                     return `
                         <div style="padding:8px; border-radius:6px; background:${good ? 'rgba(76,175,80,0.15)' : 'rgba(255,167,38,0.15)'}; border-left:3px solid ${good ? '#4caf50' : '#ffa726'};">
-                            <div style="font-weight:600; color:#fff;">${ch.name}</div>
-                            <div style="font-size:11px; color:#a0a0a0;">${ch.description}</div>
-                            <div style="font-size:11px; color:${good ? '#81c784' : '#ffb74d'}; margin-top:4px;">${good ? '✅' : '⚠️'} ${ch.health}</div>
+                            <div style="font-weight:600; color:#fff;">${escapeHtml(ch.name)}</div>
+                            <div style="font-size:11px; color:#a0a0a0;">${escapeHtml(ch.description)}</div>
+                            <div style="font-size:11px; color:${good ? '#81c784' : '#ffb74d'}; margin-top:4px;">${good ? '✅' : '⚠️'} ${escapeHtml(ch.health)}</div>
                         </div>`;
                 }).join('');
 
@@ -1404,26 +1625,22 @@
                 const worldmonitor = data.worldmonitor || {};
                 const aiRiskEl = document.getElementById('ai-risk-level');
                 const aiComplianceEl = document.getElementById('ai-compliance-status');
-                const riskValue = (decision.risk_level || compliance.risk_level || '--').toUpperCase();
-                const complianceValue = (decision.compliance_status || compliance.compliance_status || '--').toUpperCase();
+                const captainSnapshot = buildCaptainCockpitSnapshot(data);
+                const riskValue = captainSnapshot.riskValue;
+                const complianceValue = captainSnapshot.complianceValue;
                 aiRiskEl.textContent = riskValue;
                 aiComplianceEl.textContent = complianceValue;
-                document.getElementById('ai-event-count').textContent = perception.event_count ?? '--';
-                document.getElementById('ai-action-count').textContent = Array.isArray(decision.recommended_actions) ? decision.recommended_actions.length : '--';
-                document.getElementById('ai-fusion-count').textContent = perception.fusion_state?.active_tracks?.length ?? '--';
-                document.getElementById('ai-task-nodes').textContent = decision.task_graph?.nodes?.length ?? '--';
-                document.getElementById('ai-scene-type').textContent = (data.navigation?.report?.scene_context?.scene_type || '--').toUpperCase();
+                setTextContent('ai-event-count', captainSnapshot.eventCount);
+                setTextContent('ai-action-count', captainSnapshot.actionCount);
+                setTextContent('ai-fusion-count', captainSnapshot.fusionCount);
+                setTextContent('ai-task-nodes', captainSnapshot.taskNodeCount);
+                setTextContent('ai-scene-type', captainSnapshot.sceneType);
                 const lastCycle = captain.coordination?.last_cycle || {};
-                const memoryStoreType = memory.local_store?.type || '--';
-                document.getElementById('ai-captain-cycle').textContent = lastCycle.timestamp ? `RUN ${lastCycle.coordination_runs || 0}` : 'IDLE';
-                document.getElementById('ai-memory-store').textContent = memoryStoreType.toUpperCase();
-                document.getElementById('ai-cloud-sync').textContent = lakehouseHealth.cloud_sync_available
-                    ? `${(cloudInfo.bucket || cloudSync.type || 'CLOUD').toUpperCase()}`
-                    : (lakehouseHealth.cloud_sync_configured ? 'DEGRADED' : 'LOCAL');
-                document.getElementById('ai-analytics-state').textContent = lakehouseHealth.analytics_ready
-                    ? `${(memory.storage_profile?.analytics_engine || 'duckdb').toUpperCase()}`
-                    : 'OFF';
-                document.getElementById('ai-summary').textContent = decision.summary || (Array.isArray(compliance.recommended_actions) ? compliance.recommended_actions[0] : '--');
+                setTextContent('ai-captain-cycle', captainSnapshot.captainCycleLabel);
+                setTextContent('ai-memory-store', captainSnapshot.memoryStoreLabel);
+                setTextContent('ai-cloud-sync', captainSnapshot.cloudSyncLabel);
+                setTextContent('ai-analytics-state', captainSnapshot.analyticsLabel);
+                setTextContent('ai-summary', captainSnapshot.summaryText);
                 const wmModeEl = document.getElementById('wm-mode');
                 if (wmModeEl) {
                     wmModeEl.textContent = (worldmonitor.mode || '--').toUpperCase();
@@ -1477,7 +1694,7 @@
                 if (lakehouseHealth.cloud_sync_available) aiCloudEl.classList.add('ok');
                 else if (lakehouseHealth.cloud_sync_configured) aiCloudEl.classList.add('warning');
                 if (lakehouseHealth.analytics_ready) aiAnalyticsEl.classList.add('ok');
-                renderCaptainCockpit(data);
+                renderCaptainCockpit(data, captainSnapshot);
             } catch (error) {
                 console.error('Failed to update dashboard:', error);
             }
@@ -1506,7 +1723,140 @@
             }
         }
 
-        function renderCaptainCockpit(data) {
+        function setTextContent(id, value, fallback = '--') {
+            const element = document.getElementById(id);
+            if (!element) return null;
+            const normalizedValue = value == null || value === '' ? fallback : value;
+            element.textContent = String(normalizedValue);
+            return element;
+        }
+
+        function toUpperDisplay(value, fallback = '--') {
+            const normalizedValue = value == null || value === '' ? fallback : value;
+            return String(normalizedValue).toUpperCase();
+        }
+
+        function getCaptainDecisionSummary(decision, compliance) {
+            if (decision.summary) return decision.summary;
+            if (Array.isArray(decision.recommended_actions) && decision.recommended_actions.length) {
+                return decision.recommended_actions[0];
+            }
+            if (Array.isArray(compliance.recommended_actions) && compliance.recommended_actions.length) {
+                return compliance.recommended_actions[0];
+            }
+            return '当前无高优先级决策，维持监控。';
+        }
+
+        function buildCaptainCockpitSnapshot(data) {
+            const compliance = data?.compliance || {};
+            const perception = data?.perception || {};
+            const decision = data?.decision || {};
+            const captain = data?.captain_agent || {};
+            const memory = data?.memory || {};
+            const lakehouseHealth = memory.health || {};
+            const cloudSync = memory.cloud_adapter || {};
+            const cloudInfo = cloudSync.info || {};
+            const coordination = captain.coordination || {};
+            const lastCycle = coordination.last_cycle || {};
+            const taskGraph = decision.task_graph || {};
+            const sceneType = data?.navigation?.report?.scene_context?.scene_type || 'open_sea';
+            const recommendedActions = Array.isArray(decision.recommended_actions) ? decision.recommended_actions : [];
+            const fusionTracks = Array.isArray(perception.fusion_state?.active_tracks) ? perception.fusion_state.active_tracks : [];
+            const memoryStoreType = memory.local_store?.type || 'local';
+            const cloudSyncLabel = lakehouseHealth.cloud_sync_available
+                ? toUpperDisplay(cloudInfo.bucket || cloudSync.type || 'cloud')
+                : (lakehouseHealth.cloud_sync_configured ? 'DEGRADED' : 'LOCAL');
+            const analyticsLabel = lakehouseHealth.analytics_ready
+                ? toUpperDisplay(memory.storage_profile?.analytics_engine || 'duckdb')
+                : 'OFF';
+            const coordinationRuns = coordination.total_runs ?? captain.runs ?? lastCycle.coordination_runs ?? 0;
+            const lastCycleTimestamp = lastCycle.timestamp || captain.last_cycle_at || decision.generated_at || null;
+            const lastSyncTimestamp = cloudInfo.last_sync_at
+                || cloudSync.last_sync_at
+                || memory.last_sync_at
+                || lakehouseHealth.last_sync_at
+                || captain.updated_at
+                || decision.generated_at
+                || lastCycleTimestamp;
+
+            return {
+                riskValue: toUpperDisplay(decision.risk_level || compliance.risk_level),
+                complianceValue: toUpperDisplay(decision.compliance_status || compliance.compliance_status),
+                eventCount: perception.event_count ?? 0,
+                actionCount: recommendedActions.length,
+                fusionCount: fusionTracks.length,
+                taskNodeCount: Array.isArray(taskGraph.nodes) ? taskGraph.nodes.length : 0,
+                sceneType: toUpperDisplay(sceneType),
+                summaryText: getCaptainDecisionSummary(decision, compliance),
+                captainCycleLabel: lastCycle.timestamp ? `RUN ${coordinationRuns}` : 'IDLE',
+                memoryStoreLabel: toUpperDisplay(memoryStoreType),
+                cloudSyncLabel,
+                analyticsLabel,
+                loopState: toUpperDisplay(coordination.loop_state || captain.loop_state || (lastCycle.timestamp ? 'running' : 'idle')),
+                coordinationRuns,
+                lastCycleLabel: lastCycleTimestamp ? formatTime(lastCycleTimestamp) : 'WAITING',
+                memoryAvailability: memory.local_store?.available
+                    ? `${toUpperDisplay(memoryStoreType)} READY`
+                    : (lakehouseHealth.cloud_sync_available ? 'CLOUD ONLY' : 'UNAVAILABLE'),
+                lastSyncLabel: `最近同步 ${formatTime(lastSyncTimestamp)}`,
+            };
+        }
+
+        function getCameraModeLabel(mode) {
+            const labels = {
+                free: 'FREE',
+                bridge: 'BRIDGE',
+                'target-track': 'TRACK',
+            };
+            return labels[mode] || 'BRIDGE';
+        }
+
+        function getPriorityAisTarget(targets = []) {
+            return targets.find((target) => ['high', 'medium'].includes(String(target.risk_level || '').toLowerCase())) || targets[0] || null;
+        }
+
+        async function logBridgeCameraAction(action, outcome = 'bridge_ui_control') {
+            try {
+                await fetch('/api/v1/ai-native/decision/feedback/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action,
+                        outcome,
+                        confirmed_by: 'bridge_ui',
+                    }),
+                });
+            } catch (error) {
+                console.warn('Failed to log bridge camera action:', error);
+            }
+        }
+
+        function bindOpenBridgeCameraControls() {
+            document.querySelectorAll('[data-camera-mode]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const mode = button.dataset.cameraMode;
+                    if (!mode || !window.DigitalTwin?.setCameraMode) {
+                        return;
+                    }
+                    window.DigitalTwin.setCameraMode(mode);
+                    await logBridgeCameraAction(`camera:${mode}`);
+                    await window.refreshDigitalTwinBridgeUi?.();
+                });
+            });
+
+            document.querySelectorAll('[data-camera-action]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const action = button.dataset.cameraAction;
+                    if (action === 'stop-track' && window.DigitalTwin?.stopTrackingTarget) {
+                        window.DigitalTwin.stopTrackingTarget();
+                        await logBridgeCameraAction('camera:stop_track');
+                        await window.refreshDigitalTwinBridgeUi?.();
+                    }
+                });
+            });
+        }
+
+        function renderCaptainCockpit(data, snapshot = null) {
             const captain = data.captain_agent || {};
             const decision = data.decision || {};
             const memory = data.memory || {};
@@ -1523,18 +1873,29 @@
             const sceneContext = data.navigation?.report?.scene_context || {};
             const rcs = data.rcs || {};
             const shm = data.shm || {};
+            const captainSnapshot = snapshot || buildCaptainCockpitSnapshot(data);
 
-            document.getElementById('captain-loop-state').textContent = coordination.running ? 'RUN' : 'IDLE';
-            document.getElementById('captain-runs').textContent = coordination.runs ?? '--';
-            document.getElementById('captain-last-cycle').textContent = formatTime(lastCycle.timestamp);
-            document.getElementById('captain-memory-availability').textContent = memory.local_store?.available
-                ? `${memory.local_store?.type || 'READY'} / ${lakehouseHealth.cloud_sync_available ? 'CLOUD' : (lakehouseHealth.cloud_sync_configured ? 'DEGRADED' : 'LOCAL')}`
-                : 'OFF';
-            document.getElementById('captain-decision-summary').textContent = decision.summary || '等待决策包...';
-            document.getElementById('cockpit-last-sync').textContent = `最近同步 ${formatTime(lastCycle.timestamp || new Date().toISOString())}`;
-
+            setTextContent('captain-loop-state', captainSnapshot.loopState);
+            setTextContent('captain-runs', captainSnapshot.coordinationRuns);
+            setTextContent('captain-last-cycle', captainSnapshot.lastCycleLabel);
+            setTextContent('captain-memory-availability', captainSnapshot.memoryAvailability);
+            setTextContent('captain-decision-summary', captainSnapshot.summaryText);
+            setTextContent('cockpit-risk-level', captainSnapshot.riskValue);
+            setTextContent('cockpit-compliance-status', captainSnapshot.complianceValue);
+            setTextContent('cockpit-event-count', captainSnapshot.eventCount);
+            setTextContent('cockpit-action-count', captainSnapshot.actionCount);
+            setTextContent('cockpit-captain-cycle', captainSnapshot.captainCycleLabel);
+            setTextContent('cockpit-memory-store', captainSnapshot.memoryStoreLabel);
+            setTextContent('cockpit-cloud-sync', captainSnapshot.cloudSyncLabel);
+            setTextContent('cockpit-analytics-state', captainSnapshot.analyticsLabel);
+            setTextContent('cockpit-fusion-count', captainSnapshot.fusionCount);
+            setTextContent('cockpit-task-nodes', captainSnapshot.taskNodeCount);
+            setTextContent('cockpit-scene-type', captainSnapshot.sceneType);
+            setTextContent('cockpit-summary-text', captainSnapshot.summaryText);
+            setTextContent('cockpit-last-sync', captainSnapshot.lastSyncLabel);
             const actionsList = document.getElementById('captain-actions-list');
-            actionsList.innerHTML = recommendedActions.length
+            if (actionsList) {
+                actionsList.innerHTML = recommendedActions.length
                 ? recommendedActions.slice(0, 4).map((action, index) => `
                     <div class="cockpit-list-item">
                         <span>${escapeHtml(action)}</span>
@@ -1542,9 +1903,11 @@
                     </div>
                 `).join('')
                 : '<div class="cockpit-list-item"><span>当前无高优先动作，维持监控。</span><span>OK</span></div>';
+            }
 
             const maintenanceList = document.getElementById('captain-maintenance-list');
-            maintenanceList.innerHTML = maintenanceActions.length
+            if (maintenanceList) {
+                maintenanceList.innerHTML = maintenanceActions.length
                 ? maintenanceActions.slice(0, 4).map((action, index) => `
                     <div class="cockpit-list-item">
                         <span>${escapeHtml(action)}</span>
@@ -1552,9 +1915,11 @@
                     </div>
                 `).join('')
                 : `<div class="cockpit-list-item"><span>暂无新增运维动作。云同步 ${escapeHtml(cloudInfo.bucket || cloudSync.type || 'local')} / 分析 ${escapeHtml(memory.storage_profile?.analytics_engine || '--')}</span><span>${lakehouseHealth.analytics_ready ? 'READY' : 'STANDBY'}</span></div>`;
+            }
 
             const taskGraphList = document.getElementById('captain-task-graph-list');
-            taskGraphList.innerHTML = Array.isArray(taskGraph.execution_order) && taskGraph.execution_order.length
+            if (taskGraphList) {
+                taskGraphList.innerHTML = Array.isArray(taskGraph.execution_order) && taskGraph.execution_order.length
                 ? taskGraph.execution_order.slice(0, 6).map((taskId, index) => `
                     <div class="cockpit-list-item">
                         <span>${escapeHtml(taskId)}</span>
@@ -1562,9 +1927,11 @@
                     </div>
                 `).join('')
                 : `<div class="cockpit-list-item"><span>场景 ${escapeHtml(sceneContext.scene_type || 'open_sea')}，任务图等待同步。</span><span>GRAPH</span></div>`;
+            }
 
             const fusionList = document.getElementById('captain-fusion-list');
-            fusionList.innerHTML = fusionTracks.length
+            if (fusionList) {
+                fusionList.innerHTML = fusionTracks.length
                 ? fusionTracks.slice(0, 4).map((track, index) => `
                     <div class="cockpit-list-item">
                         <span>${escapeHtml(track.track_id)} @ ${escapeHtml(track.position?.latitude)}, ${escapeHtml(track.position?.longitude)}</span>
@@ -1572,14 +1939,31 @@
                     </div>
                 `).join('')
                 : '<div class="cockpit-list-item"><span>暂无融合轨迹。</span><span>FUSION</span></div>';
+            }
 
             const openBridgeList = document.getElementById('openbridge-control-list');
-            openBridgeList.innerHTML = [
+            const cameraControl = window.DigitalTwin?.getCameraControlState?.() || { mode: 'bridge', hasSelectedTarget: false, lastAppliedAt: null, selectedTargetLabel: null, selectedTargetRisk: null, source: null, manualTargetSelection: false };
+            if (openBridgeList) {
+                openBridgeList.innerHTML = [
                 `<div class="cockpit-list-item"><span>Task Graph Nodes</span><span>${escapeHtml(taskGraph.nodes?.length ?? '--')}</span></div>`,
                 `<div class="cockpit-list-item"><span>Scene Context</span><span>${escapeHtml(sceneContext.scene_type || 'open_sea')}</span></div>`,
                 `<div class="cockpit-list-item"><span>RCS Foil / Trim</span><span>${escapeHtml(rcs.foil_angle_deg ?? '--')}° / ${escapeHtml(rcs.trim_tab_angle_deg ?? '--')}°</span></div>`,
                 `<div class="cockpit-list-item"><span>SHM Fatigue / Life</span><span>${escapeHtml(shm.fatigue_damage_index ?? '--')} / ${escapeHtml(shm.life_remaining_pct ?? '--')}%</span></div>`,
+                `<div class="cockpit-list-item"><span>Camera Mode</span><span>${escapeHtml(getCameraModeLabel(cameraControl.mode))}</span></div>`,
+                `<div class="cockpit-list-item"><span>Bridge Camera Logic</span><span>${cameraControl.hasSelectedTarget ? 'TARGET READY' : 'NO TARGET'}</span></div>`,
+                `<div class="cockpit-list-item"><span>Selected Target</span><span>${escapeHtml(cameraControl.selectedTargetLabel || 'NONE')}</span></div>`,
+                `<div class="cockpit-list-item"><span>Target Risk / Source</span><span>${escapeHtml((cameraControl.selectedTargetRisk || '--').toUpperCase())} / ${escapeHtml(cameraControl.source || '--')}</span></div>`,
+                `<div class="cockpit-list-item"><span>Target Ownership</span><span>${cameraControl.manualTargetSelection ? 'OPERATOR LOCK' : 'AUTO / SYNC'}</span></div>`,
+                `<div class="cockpit-list-item"><span>Camera Last Applied</span><span>${escapeHtml(formatTime(cameraControl.lastAppliedAt))}</span></div>`,
+                `<div class="cockpit-action-row">
+                    <button type="button" class="cockpit-action-button ${cameraControl.mode === 'free' ? 'is-active' : ''}" data-camera-mode="free">自由视角</button>
+                    <button type="button" class="cockpit-action-button ${cameraControl.mode === 'bridge' ? 'is-active' : ''}" data-camera-mode="bridge">Bridge 视角</button>
+                    <button type="button" class="cockpit-action-button ${cameraControl.mode === 'target-track' ? 'is-active' : ''}" data-camera-mode="target-track">聚焦目标</button>
+                    <button type="button" class="cockpit-action-button" data-camera-action="stop-track">停止跟踪</button>
+                </div>`,
             ].join('');
+            }
+            bindOpenBridgeCameraControls();
         }
 
         function renderReplayEvents(events) {
@@ -1648,16 +2032,43 @@
             }
         }
 
+        // === 航线规划数据加载 ===
+        async function loadRouteInfo() {
+            const ids = ['wm-route-info', 'bridge-wm-route-info'];
+            try {
+                const resp = await fetch('/api/v1/ai-native/navigation/route');
+                if (!resp.ok) throw new Error('API ' + resp.status);
+                const data = await resp.json();
+                const origin = data.origin || {};
+                const dest = data.destination || {};
+                const html = `
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                        <div><span style="color:#888;">起点:</span> <span style="color:#ba68c8;">${escapeHtml(origin.name || '--')}</span></div>
+                        <div><span style="color:#888;">终点:</span> <span style="color:#ba68c8;">${escapeHtml(dest.name || '--')}</span></div>
+                        <div><span style="color:#888;">距离:</span> <span style="color:#fff;">${escapeHtml(data.distance_nm ?? '--')} nm</span></div>
+                        <div><span style="color:#888;">航速:</span> <span style="color:#fff;">${escapeHtml(data.current_speed_kn ?? '--')} kn</span></div>
+                        <div style="grid-column:1/-1;"><span style="color:#888;">ETA:</span> <span style="color:#81c784;">${escapeHtml(data.eta ? new Date(data.eta).toLocaleString('zh-CN') : '--')}</span></div>
+                    </div>`;
+                ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = html; });
+            } catch (_e) {
+                const fallback = '<div style="color:#888; text-align:center;">暂无航线数据</div>';
+                ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = fallback; });
+            }
+        }
+
         updateChannelStatus();
         updateDashboard();
         refreshReplayTimeline();
         setInterval(updateChannelStatus, 10000);
         setInterval(updateDashboard, 5000);
         setInterval(refreshReplayTimeline, 8000);
+        loadRouteInfo();
+        setInterval(loadRouteInfo, 30000);
 
         document.getElementById('cockpit-feedback-form').addEventListener('submit', submitDecisionFeedback);
         document.getElementById('cockpit-replay-refresh').addEventListener('click', refreshReplayTimeline);
         document.getElementById('cockpit-replay-filter').addEventListener('change', refreshReplayTimeline);
     </script>
+    <script src="./digital-twin/weather-controls.js" defer></script>
 </body>
 </html>

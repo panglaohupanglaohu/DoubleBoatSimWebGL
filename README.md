@@ -11,9 +11,275 @@ AI Native 深海远洋 CPS 系统，目标不是“把船上子系统接到一�
 - 决策链路可以把跨域信号编排成任务化 action plan 和 mission brief。
 - 数字孪生前端可以统一消费本地 dashboard、AI Native 协调状态和外部海事态势。
 
+## 本轮架构改进（2026-03-25）
+
+本轮改进重点是把系统从“单链路能力演示”推进到“跨域协同可执行架构”，核心变化如下。
+
+- 新增 SVESSEL 扩展通道栈：
+        - `autonomy_manager`：统一 MASS/LR 等级映射、自治级别切换与控制权语义。
+        - `ship_shore_link`：多链路质量评估、最佳链路选择与时延预测。
+        - `predictive_health`：预测性健康摘要与维护计划输出。
+        - `route_optimizer`：航线优化状态接入与策略可视化。
+        - `voyage_planner`：航次态势与日计划输出接口。
+        - `cyber_security`：威胁态势、会话与审计摘要。
+
+- 决策编排升级：
+        - `decision_orchestrator` 由单域动作编排升级为跨域编排，动作计划可同时纳入导航、机舱、PHM、通信链路与网络安全约束。
+        - 任务输出增加 MASS 等级、链路质量、威胁级别等关键 KPI 维度，前后端共享同一语义。
+
+- API 面扩展：
+        - 新增 AI Native 端点用于自治状态、自治切换、船岸通信、PHM、航线与网络安全信息读取。
+        - 这些端点与现有 mission brief、decision package 形成“可观测 + 可执行 + 可回放”接口闭环。
+
+- 运行稳定性改进：
+        - 修复 `ship_shore_link` 默认配置对象复用导致的跨实例状态污染问题，避免测试序列中可用性漂移。
+        - 增加多处向后兼容层（感知融合输入格式、决策动作构建签名、机舱快照接口、湖仓 flush/status 字段），降低历史测试与新架构的耦合断裂风险。
+
+## 双智能体集合架构
+
+当前系统不是单一 Agent 控制，而是双智能体集合并行协同：
+
+- 船端执行智能体集合（Shipboard Execution Agent Set）
+        - 目标：实时感知、实时控制、局部决策、边缘容错。
+        - 关注：毫秒到秒级响应、自治级别可降级、失联可本地持续运行。
+
+- 岸端监督智能体集合（Shore Supervision Agent Set）
+        - 目标：全局监督、策略约束、合规与安全审计、远程协同接管。
+        - 关注：任务一致性、跨航段优化、治理闭环、船岸协同可解释性。
+
+两集合通过 ship-shore 链路在“共享任务图 + 共享约束 + 共享证据”层面对齐，不以 UI 对齐代替控制语义对齐。
+
+### 控制语义分层
+
+- L0-L1（感知与事件总线）
+        - 船端主导，岸端订阅。
+- L2-L3（任务图与自治执行）
+        - 船端执行，岸端监督约束。
+- L4（治理与安全）
+        - 船岸共同生效，岸端有强约束优先权。
+- L5（HMI 与操作交互）
+        - 双端呈现同一任务语义，但允许不同视角。
+
+## 模块隶属关系
+
+下面按“主隶属 + 协同方”定义模块归属，避免模块职责漂移。
+
+### 船端执行智能体集合（主隶属）
+
+- intelligent_navigation
+        - 主责：航行风险评估、COLREGs 规则判断、避碰动作建议。
+        - 协同：decision_orchestrator、ship_shore_link。
+
+- intelligent_engine
+        - 主责：机舱健康评分、告警、故障诊断、维护建议。
+        - 协同：predictive_health、decision_orchestrator。
+
+- energy_efficiency_channel
+        - 主责：能效状态、EEXI/CII 约束输入、优化建议。
+        - 协同：compliance_digital_expert、route_optimizer。
+
+- distributed_perception_hub
+        - 主责：多源事件采集与融合、风险关联、事件标准化。
+        - 协同：data_lakehouse、decision_orchestrator。
+
+- route_optimizer
+        - 主责：船端路径优化与航行策略候选生成。
+        - 协同：voyage_planner、intelligent_navigation。
+
+- predictive_health
+        - 主责：设备退化趋势、维护窗口、预测性健康输出。
+        - 协同：intelligent_engine、decision_orchestrator。
+
+### 岸端监督智能体集合（主隶属）
+
+- cyber_security
+        - 主责：威胁态势、会话与审计、访问控制治理。
+        - 协同：decision_orchestrator、openbridge_hmi。
+
+- compliance_digital_expert
+        - 主责：规则解释、合规快照、证据链生成。
+        - 协同：energy_efficiency_channel、decision_orchestrator。
+
+- voyage_planner
+        - 主责：航次级监督、计划一致性、航段状态管理。
+        - 协同：route_optimizer、ship_shore_link。
+
+### 船岸共享控制平面（双隶属）
+
+- decision_orchestrator
+        - 主责：跨域任务图编排、行动优先级、反馈闭环。
+        - 船端语义：执行计划。
+        - 岸端语义：监督约束。
+
+- autonomy_manager
+        - 主责：MASS/LR 等级映射、自治切换、控制权转移。
+        - 船端语义：当前执行权限。
+        - 岸端语义：监督与接管边界。
+
+- ship_shore_link
+        - 主责：链路质量评估、时延预测、冗余切换。
+        - 船端语义：执行连续性保障。
+        - 岸端语义：协同与接管可达性保障。
+
+- data_lakehouse
+        - 主责：事件持久化、回放、分析查询、云边同步。
+        - 船端语义：边缘记忆。
+        - 岸端语义：审计与策略复盘。
+
+- openbridge_hmi / captain-cockpit / digital-twin
+        - 主责：统一任务语义的人机呈现，不改变控制权本体。
+        - 船端语义：操作执行。
+        - 岸端语义：监督确认。
+
+## 双集合文本架构图
+
+### 图 A：双智能体集合总览（控制与监督）
+
+```text
+                                                                                                 ┌──────────────────────────────────────────┐
+                                                                                                 │ Shore Supervision Agent Set              │
+                                                                                                 │ 监督/治理/审计/策略约束                  │
+                                                                                                 │                                          │
+                                                                                                 │ compliance_digital_expert                │
+                                                                                                 │ cyber_security                           │
+                                                                                                 │ voyage_planner                           │
+                                                                                                 └───────────────┬──────────────────────────┘
+                                                                                                                                                                 │ policy/constraints/evidence
+                                                                                                                                                                 │
+                                                                                 ship_shore_link + autonomy_manager + data_lakehouse
+                                                                                                                                                                 │
+                                                                                                                                                                 │ execution state/telemetry/feedback
+                                                                                                 ┌───────────────▼──────────────────────────┐
+                                                                                                 │ Shipboard Execution Agent Set            │
+                                                                                                 │ 感知/控制/局部决策/边缘容错              │
+                                                                                                 │                                          │
+                                                                                                 │ distributed_perception_hub               │
+                                                                                                 │ intelligent_navigation                   │
+                                                                                                 │ intelligent_engine                       │
+                                                                                                 │ energy_efficiency_channel                │
+                                                                                                 │ predictive_health                        │
+                                                                                                 │ route_optimizer                          │
+                                                                                                 └───────────────┬──────────────────────────┘
+                                                                                                                                                                 │
+                                                                                                                                                                 ▼
+                                                                                                         decision_orchestrator (shared control plane)
+                                                                                                                                                                 │
+                                                                                                                                                                 ▼
+                                                                                                 openbridge_hmi / captain-cockpit / digital-twin
+```
+
+### 图 B：模块归属与主数据流（Who owns what）
+
+```text
+[Shipboard Owner]
+        distributed_perception_hub -> decision_orchestrator
+        intelligent_navigation      -> decision_orchestrator
+        intelligent_engine          -> predictive_health -> decision_orchestrator
+        energy_efficiency_channel   -> compliance_digital_expert -> decision_orchestrator
+        route_optimizer             -> voyage_planner (shore sync)
+
+[Shore Owner]
+        cyber_security              -> decision_orchestrator (governance constraints)
+        compliance_digital_expert   -> decision_orchestrator (rule/evidence)
+        voyage_planner              -> decision_orchestrator (voyage-level constraints)
+
+[Shared Control Plane]
+        ship_shore_link   : connectivity, latency, failover, RCC reachability
+        autonomy_manager  : MASS/LR mapping, authority transfer, autonomy transition
+        data_lakehouse    : event memory, replay, analytics, cloud-edge sync
+        decision_orchestrator : task graph, action plan, feedback closure
+
+[Northbound Interaction Layer]
+        openbridge_hmi / captain-cockpit / digital-twin
+        (shared mission semantics, different operational viewpoints)
+```
+
+## 系统持续构建模块（System Continuous Build）
+
+在双智能体集合之上，系统新增一个上层能力模块：系统持续构建。
+
+该模块不替代船端执行与岸端监督，而是为两者提供“自动化生成 + 持续改进”能力，包括：
+
+- 自动化生成：自动任务拆解、代码生成、测试补全、文档更新、配置修复。
+- 持续改进：性能与质量回归、缺陷闭环、架构演进建议、规范一致性治理。
+- 运行保障：版本化变更记录、可回溯验证证据、跨角色协作可审计。
+
+### 在整体架构中的位置
+
+```text
+双智能体集合（执行/监督）
+                                ▲
+                                │ 反馈、指标、缺陷、需求变更
+                                │
+系统持续构建模块（7 Agent Team）
+                                │
+                                ▼
+自动化生成与持续改进产物
+(代码/测试/文档/配置/流程)
+```
+
+## 7 Agent 职责矩阵（系统持续构建模块）
+
+下表为 Director/Architect/Marine/Dev/Code/QA/Doc 与当前核心模块的一一职责映射。
+
+| Agent 角色 | 在系统持续构建中的主责 | 对应模块（主） | 持续改进输出 |
+|---|---|---|---|
+| Director (Chief Director) | 目标分解、优先级编排、跨 Agent 节奏与验收门禁 | `decision_orchestrator`, `cps/mission-brief`, `coordination/status` | 冲刺目标、里程碑、验收清单、风险闭环 |
+| Architect (System Architect) | 架构边界、接口契约、依赖治理、演进路径 | `api_extensions`, `register_channels`, `main.py` | 架构蓝图、接口规范、兼容策略、重构路线 |
+| Marine (Marine Researcher) | 海事规则与场景知识注入、业务可行性校核 | `intelligent_navigation`, `maritime_scene_model`, `route_optimizer`, `voyage_planner` | 场景规则库、航行策略建议、约束模型 |
+| Dev (Development Lead) | 任务分派、实现协同、代码一致性把控 | `channels/*`, `storage/*`, `frontend/*` 协同面 | 实施计划、模块集成方案、交付编排 |
+| Code (Code Writer) | 功能实现、兼容修复、接口落地、测试对齐 | `autonomy_manager`, `ship_shore_link`, `predictive_health`, `cyber_security`, `data_lakehouse` | 可运行代码、补丁、回归修复、实现说明 |
+| QA (QA Engineer) | 测试策略、回归验证、质量基线维护 | `tests/unit/*`, `tests/integration/*`, `scripts/run_tests.py` | 测试矩阵、失败归因、质量报告、发布门禁 |
+| Doc (Documentation Writer) | 架构文档、API 文档、操作指南与变更说明 | `README.md`, `docs/`, `reports/` | 文档增量、版本说明、知识库维护 |
+
+### 角色协作链（持续构建闭环）
+
+```text
+Director
+        -> Architect (定义边界与契约)
+        -> Marine (注入海事规则与场景)
+        -> Dev (拆分实现任务)
+        -> Code (落地实现与修复)
+        -> QA (验证与门禁)
+        -> Doc (沉淀文档与报告)
+        -> Director (验收与下一轮规划)
+```
+
+该闭环即系统持续构建模块的执行主路径，用于持续增强当前系统的自动化生成与持续改进能力。
+
+### 持续构建执行入口（直接开干）
+
+- 持续构建 SOP：docs/process/SYSTEM_CONTINUOUS_BUILD_SOP.md
+- 持续构建主循环：scripts/system_continuous_build_loop.sh
+- 每小时状态汇报：scripts/hourly_status_report.sh
+
+启动主循环：
+
+```bash
+bash scripts/system_continuous_build_loop.sh
+```
+
+手动触发一次小时汇报：
+
+```bash
+bash scripts/hourly_status_report.sh
+```
+
+如需对接 OpenClaw 的 marine_engineer 作为研究员知识源，可在启动前配置：
+
+```bash
+export MARINE_FEED_CMD="openclaw ask marine_engineer --prompt 'Provide latest maritime tech/regulatory update for architecture handoff'"
+bash scripts/system_continuous_build_loop.sh
+```
+
+输出证据目录：
+
+- logs/team_logs/system_continuous_build.log
+- reports/status/HOURLY_STATUS_REPORT_*.md
+
 ## 当前交付状态
 
-当前分支已完成本轮 18 小时冲刺的核心交付，状态为“可运行、可验证、可联调”：
+当前分支已完成本轮多小时冲刺的核心交付，状态为“可运行、可验证、可联调”：
 
 - ECF feedback loop 已闭环，反馈事件会进入认知快照和 decision feedback 记录。
 - Orchestration graph 已落地，后端输出 `task_graph`，前端驾驶台和 3D twin 可消费。
@@ -192,6 +458,38 @@ WorldMonitor + Local Lakehouse
 - 生成任务化 `action_plan`
 - 记录反馈，形成闭环
 
+### 6. 气象航线避险
+
+文件：`src/backend/channels/weather_routing_channel.py`
+
+能力：
+
+- 天气预报缓存
+- 航线风险评估
+- 避险建议
+
+输出重点：
+
+- `risk_score`
+- `risk_level`
+- `recommendations`
+
+### 7. 船员疲劳监控
+
+文件：`src/backend/channels/crew_fatigue_monitor.py`
+
+能力：
+
+- 值班追踪
+- 疲劳评分
+- 轮班建议
+
+输出重点：
+
+- `fatigue_scores`
+- `risk_alerts`
+- `recommendations`
+
 ## 核心 API
 
 ### 运行态
@@ -220,6 +518,47 @@ WorldMonitor + Local Lakehouse
 - `GET /api/v1/ai-native/rcs/status`
 - `GET /api/v1/ai-native/shm/status`
 - `POST /api/v1/ai-native/openbridge/command`
+- `GET /api/v1/ai-native/weather-routing/status`
+- `GET /api/v1/ai-native/weather-routing/recommendations`
+- `GET /api/v1/ai-native/crew/fatigue-status`
+- `GET /api/v1/ai-native/crew/recommendations`
+- `GET /api/v1/ai-native/anchor/status`
+- `GET /api/v1/ai-native/cargo/status`
+- `GET /api/v1/ai-native/fire/status`
+- `POST /api/v1/ai-native/decision/feedback/log`
+
+### 设备与子系统 API
+
+- `GET /api/vdr/status` — VDR 状态
+- `GET /api/vdr/integrity` — VDR 数据完整性
+- `GET /api/dp/status` — 动态定位状态
+- `POST /api/dp/set-station` — 设定 DP 定点
+- `GET /api/ais/targets` — AIS 目标列表
+- `GET /api/ais/target/{mmsi}` — 单个 AIS 目标查询
+- `GET /api/hull/status` — 船体应力状态
+- `GET /api/hull/fatigue` — 船体疲劳分析
+- `GET /api/power/status` — 电力系统状态
+- `GET /api/power/efficiency` — 电力效率
+- `GET /api/bilge/status` — 舱底水状态
+- `GET /api/bilge/compliance` — MARPOL 舱底水合规
+- `GET /api/comms/status` — 通信系统 GMDSS 状态
+- `GET /api/compass/status` — 电罗经状态
+- `GET /api/speed-log/status` — 计程仪状态
+- `GET /api/weather-routing/grid` — 气象导航网格
+- `GET /api/rudder/status` — 舵机状态
+- `GET /api/tanks/summary` — 液舱汇总
+- `GET /api/tanks/fuel-endurance` — 燃油续航
+- `GET /api/alarms/active` — 当前活跃告警
+- `GET /api/alarms/summary` — 告警摘要
+- `GET /api/autopilot/status` — 自动舵状态
+- `GET /api/depth/status` — 测深仪状态
+- `GET /api/propulsion/status` — 推进系统状态
+- `GET /api/propulsion/engine/{engine_id}` — 单台主机状态
+- `GET /api/mooring/status` — 系泊状态
+- `GET /api/mob/status` — MOB 落水告警状态
+- `POST /api/mob/activate` — 激活 MOB 告警
+- `POST /api/mob/deactivate` — 解除 MOB 告警
+- `GET /api/safety/status` — 安全系统综合状态
 
 ### 外部态势
 
@@ -227,6 +566,12 @@ WorldMonitor + Local Lakehouse
 - `GET /api/v1/worldmonitor/weather?lat=<lat>&lng=<lng>`
 - `GET /api/v1/worldmonitor/ports`
 - `GET /api/v1/worldmonitor/routes`
+
+WorldMonitor 真实数据接入默认读取环境变量 `WORLDMONITOR_API_KEY`。若未配置（或为 `placeholder`），服务会自动进入 mock 模式，不会阻塞接口。
+
+- 日志识别：启动阶段会出现 `WorldMonitor API key is not configured - using mock mode`，请求阶段会出现 `WorldMonitor: using mock ... data (no API key)`。
+- 对测试环境影响：可继续联调与回归，但返回为模拟数据（含随机性），不适合作为真实海事态势精度基准。
+- 对生产环境影响：接口仍可用但数据不代表真实外部态势；上线前应配置有效 API key 并在启动日志中确认未进入 mock。
 
 ## 交付验收流程
 

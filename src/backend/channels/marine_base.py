@@ -103,9 +103,8 @@ class MarineChannel(ABC):
         self._config.update(kwargs)
         self._created_at = datetime.now()
         
-        # 类属性默认值
-        if MarineChannel.dependencies is None:
-            MarineChannel.dependencies = []
+        # 实例化依赖列表，避免修改类属性
+        self.dependencies = list(self.dependencies or [])
     
     @abstractmethod
     def initialize(self) -> bool:

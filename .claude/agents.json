@@ -1,0 +1,4 @@
+{
+  "_note": "Claude Code 智能体已迁移至 claude-agent-team/ 子目录。请 cd claude-agent-team && claude --agent <name> 使用。",
+  "_copilot": "Copilot 智能体配置位于 .github/agents/*.agent.md"
+}

@@ -286,13 +286,22 @@ class DistributedPerceptionHubChannel(MarineChannel):
     def fuse_ais_with_navigation(self, ais_payload: Dict[str, Any], nav_payload: Dict[str, Any]) -> Optional[FusionEvent]:
         """融合 AIS 数据与导航数据"""
         try:
+            # Backward compatibility: accept both a single AIS target payload
+            # and a worldmonitor-style payload with `targets: []`.
+            ais_target = ais_payload
+            if isinstance(ais_payload, dict) and isinstance(ais_payload.get("targets"), list):
+                targets = ais_payload.get("targets") or []
+                if not targets:
+                    return None
+                ais_target = targets[0] or {}
+
             # 检查是否可以融合 (基于位置、时间相近)
-            ais_lat = ais_payload.get("latitude")
-            ais_lng = ais_payload.get("longitude")
+            ais_lat = ais_target.get("latitude")
+            ais_lng = ais_target.get("longitude")
             nav_lat = nav_payload.get("own_ship", {}).get("latitude")
             nav_lng = nav_payload.get("own_ship", {}).get("longitude")
             
-            if not all([ais_lat, ais_lng, nav_lat, nav_lng]):
+            if any(value is None for value in [ais_lat, ais_lng, nav_lat, nav_lng]):
                 return None
             
             # 计算距离（简化版）
@@ -306,7 +315,7 @@ class DistributedPerceptionHubChannel(MarineChannel):
             
             # 创建融合事件
             fused_payload = {
-                "ais_target": ais_payload,
+                "ais_target": ais_target,
                 "navigation_context": nav_payload,
                 "distance_nm": round(distance_nm, 3),
                 "fusion_confidence": min(0.95, 0.7 + (0.3 * (1 - distance_nm/20.0)))  # 距离越近，置信度越高
@@ -356,7 +365,7 @@ class DistributedPerceptionHubChannel(MarineChannel):
             lat1, lng1 = pos1.get("lat"), pos1.get("lng")
             lat2, lng2 = pos2.get("latitude"), pos2.get("longitude")
             
-            if not all([lat1, lng1, lat2, lng2]):
+            if any(v is None for v in [lat1, lng1, lat2, lng2]):
                 return None
             
             import math
@@ -557,7 +566,7 @@ class DistributedPerceptionHubChannel(MarineChannel):
             wm_lat = matching_target.get("latitude")
             wm_lon = matching_target.get("longitude")
             
-            if not all([nmea_lat, nmea_lon, wm_lat, wm_lon]):
+            if any(v is None for v in [nmea_lat, nmea_lon, wm_lat, wm_lon]):
                 return None
             
             import math

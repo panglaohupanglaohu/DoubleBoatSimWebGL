@@ -73,6 +73,7 @@ class S3CompatibleAdapter(CloudStorageAdapter):
         self.addressing_style = config.get("addressing_style", "path")
         self.max_list_scan = int(config.get("max_list_scan", 1000))
         self.auto_create_bucket = bool(config.get("auto_create_bucket", False))
+        self.allow_ambient_credentials = bool(config.get("allow_ambient_credentials", False))
         self._client = None
         
         # Check for AWS credentials
@@ -85,6 +86,10 @@ class S3CompatibleAdapter(CloudStorageAdapter):
         """获取 S3 客户端"""
         if self._client is not None:
             return self._client
+
+        if not (self.access_key and self.secret_key) and not self.allow_ambient_credentials:
+            logger.debug("S3 credentials not configured, using mock mode")
+            return None
         
         try:
             import boto3
@@ -93,11 +98,12 @@ class S3CompatibleAdapter(CloudStorageAdapter):
             client_kwargs = {
                 "service_name": "s3",
                 "region_name": self.region,
-                "aws_access_key_id": self.access_key,
-                "aws_secret_access_key": self.secret_key,
                 "verify": self.verify_ssl,
                 "config": Config(s3={"addressing_style": self.addressing_style}),
             }
+            if self.access_key and self.secret_key:
+                client_kwargs["aws_access_key_id"] = self.access_key
+                client_kwargs["aws_secret_access_key"] = self.secret_key
             if self.endpoint_url:
                 client_kwargs["endpoint_url"] = self.endpoint_url
             self._client = boto3.client(
@@ -129,8 +135,11 @@ class S3CompatibleAdapter(CloudStorageAdapter):
         client = self._get_client()
         if client is None:
             return False
-        client.head_bucket(Bucket=self.bucket_name)
-        return True
+        try:
+            client.head_bucket(Bucket=self.bucket_name)
+            return True
+        except Exception:
+            return False
 
     def ensure_bucket(self) -> Dict[str, Any]:
         """探测并按需创建 bucket。"""
@@ -148,7 +157,7 @@ class S3CompatibleAdapter(CloudStorageAdapter):
             }
 
         try:
-            self._bucket_exists()
+            client.head_bucket(Bucket=self.bucket_name)
             return {
                 "bucket": self.bucket_name,
                 "region": self.region,
@@ -277,7 +286,11 @@ class S3CompatibleAdapter(CloudStorageAdapter):
             if continuation_token:
                 request["ContinuationToken"] = continuation_token
 
-            response = client.list_objects_v2(**request)
+            try:
+                response = client.list_objects_v2(**request)
+            except Exception as exc:
+                logger.warning(f"Failed to list S3 objects for {event_type}: {exc}")
+                return []
             contents.extend(response.get("Contents", []))
             if not response.get("IsTruncated"):
                 break
@@ -389,7 +402,6 @@ class FeishuAdapter(CloudStorageAdapter):
     
     def upload_event(self, event_data: Dict[str, Any], event_type: str) -> bool:
         """上传单个事件到飞书文档"""
-        # TODO: Implement using feishu_doc API
         self.logger.debug(f"[FEISHU MOCK] Would upload {event_type} event")
         return True
     

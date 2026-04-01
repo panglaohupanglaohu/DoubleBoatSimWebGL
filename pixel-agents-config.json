@@ -1,0 +1,70 @@
+{
+  "agents": [
+    {
+      "name": "Code Writer",
+      "id": "code_writer_9419",
+      "pid": 9419,
+      "role": "code_development",
+      "description": "负责代码编写，每分钟不低于10行代码",
+      "performance_target": "10_lines_per_minute"
+    },
+    {
+      "name": "System Architect",
+      "id": "system_architect_10088",
+      "pid": 10088,
+      "role": "system_architecture",
+      "description": "负责系统架构设计和评审，每分钟不低于0.5个模块",
+      "performance_target": "0.5_modules_per_minute"
+    },
+    {
+      "name": "QA Engineer",
+      "id": "qa_engineer_10540",
+      "pid": 10540,
+      "role": "quality_assurance",
+      "description": "负责测试用例编写，每10分钟不低于1个test case",
+      "performance_target": "0.1_testcases_per_minute"
+    },
+    {
+      "name": "Marine Researcher",
+      "id": "marine_researcher_10314",
+      "pid": 10314,
+      "role": "research",
+      "description": "负责海洋技术研究，每10分钟不低于1个网站调研",
+      "performance_target": "0.1_websites_per_minute"
+    },
+    {
+      "name": "Doc Writer",
+      "id": "doc_writer_9863",
+      "pid": 9863,
+      "role": "documentation",
+      "description": "负责文档编写，每15分钟不低于1个文档",
+      "performance_target": "0.067_docs_per_minute"
+    },
+    {
+      "name": "Dev Lead",
+      "id": "dev_lead_9641",
+      "pid": 9641,
+      "role": "development_leadership",
+      "description": "负责开发管理协调工作",
+      "performance_target": "management_coordination"
+    },
+    {
+      "name": "Chief Director",
+      "id": "chief_director_9065",
+      "pid": 9065,
+      "role": "project_director",
+      "description": "项目总监，负责整体协调和监督",
+      "performance_target": "oversight_coordination"
+    }
+  ],
+  "performance_monitoring": {
+    "interval_minutes": 15,
+    "metrics": {
+      "code_writer": {"unit": "lines_per_minute", "target": 10},
+      "system_architect": {"unit": "modules_per_minute", "target": 0.5},
+      "qa_engineer": {"unit": "testcases_per_minute", "target": 0.1},
+      "marine_researcher": {"unit": "websites_per_minute", "target": 0.1},
+      "doc_writer": {"unit": "docs_per_minute", "target": 0.067}
+    }
+  }
+}

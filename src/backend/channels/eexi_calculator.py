@@ -29,25 +29,25 @@ class EEXICalculator:
     参考：IMO MEPC.346(78) Annex 4
     """
     
-    # 参考线公式系数 (a, b, c) - 基于船型和尺寸
+    # 参考线公式系数 (a, b, c) - 基于 IMO MEPC.333(76)
     REFERENCE_LINE_COEFFICIENTS = {
-        VesselType.BULK_CARRIER: {"a": 9617.9, "b": -0.479, "c": 0},
-        VesselType.OIL_TANKER: {"a": 1219.0, "b": -0.488, "c": 0},
-        VesselType.CHEMICAL_TANKER: {"a": 1384.0, "b": -0.488, "c": 0},
+        VesselType.BULK_CARRIER: {"a": 961.79, "b": -0.477, "c": 0},
+        VesselType.OIL_TANKER: {"a": 1218.80, "b": -0.488, "c": 0},
+        VesselType.CHEMICAL_TANKER: {"a": 1218.80, "b": -0.488, "c": 0},
         VesselType.CONTAINER_SHIP: {"a": 174.22, "b": -0.201, "c": 0},
-        VesselType.LNG_CARRIER: {"a": 3000.0, "b": -0.5, "c": 0},
-        VesselType.LPG_CARRIER: {"a": 2500.0, "b": -0.5, "c": 0},
+        VesselType.LNG_CARRIER: {"a": 2253.7, "b": -0.474, "c": 0},
+        VesselType.LPG_CARRIER: {"a": 3025.2, "b": -0.561, "c": 0},
         VesselType.RO_RO_CARGO: {"a": 5000.0, "b": -0.5, "c": 0},
-        VesselType.GENERAL_CARGO: {"a": 2000.0, "b": -0.45, "c": 0},
-        VesselType.REFRIGERATED_CARGO: {"a": 3500.0, "b": -0.45, "c": 0},
-        VesselType.COMBINATION_CARRIER: {"a": 1219.0, "b": -0.488, "c": 0},
+        VesselType.GENERAL_CARGO: {"a": 107.48, "b": -0.216, "c": 0},
+        VesselType.REFRIGERATED_CARGO: {"a": 4600.0, "b": -0.557, "c": 0},
+        VesselType.COMBINATION_CARRIER: {"a": 1218.80, "b": -0.488, "c": 0},
     }
     
     # EEXI 减排因子 (2023 生效)
     REDUCTION_FACTORS = {
         (2014, 2019): 0.0,  # 2014-2019 年建造：无减排要求
         (2020, 2022): 0.0,  # 2020-2022 年建造：无减排要求
-        (2023, 2024): 0.0,  # 2023 及以后：按 EEDI Phase 3
+        (2023, 2024): 0.30,  # 2023 及以后：按 EEDI Phase 3
     }
     
     def __init__(self, vessel: VesselInfo):
@@ -135,7 +135,10 @@ class EEXICalculator:
         self,
         installed_power: float,
         specific_fuel_consumption: float = 180.0,
-        capacity_utilization: float = 1.0
+        capacity_utilization: float = 1.0,
+        fj: float = 1.0,
+        fi: float = 1.0,
+        feff: float = 0.0,
     ) -> EEXIResult:
         """计算实际 EEXI 值.
         
@@ -143,6 +146,9 @@ class EEXICalculator:
             installed_power: 安装功率 (kW) - 考虑功率限制 (EPL)
             specific_fuel_consumption: 特定燃油消耗 (g/kWh), 默认 180
             capacity_utilization: 容量利用率 (0.0-1.0), 默认 1.0
+            fj: 船型修正系数, 默认 1.0
+            fi: 容量修正系数, 默认 1.0
+            feff: 节能技术折减功率 (kW), 默认 0.0
             
         Returns:
             EEXIResult: EEXI 计算结果
@@ -156,18 +162,21 @@ class EEXICalculator:
         # 要求 EEXI = 参考线 × (1 - 减排因子)
         required_eexi = reference_line * (1.0 - reduction_factor)
         
-        # 实际 EEXI = (P × CF × SFC) / (Capacity × Vref)
+        # 实际 EEXI = fj × (P - feff) × CF × SFC / (fi × Capacity × Vref)
         # 单位转换：SFC 从 g/kWh 转换为 kg/kWh (÷1000)
         cf = self.vessel.fuel_type.emission_factor  # g CO2 / g fuel
         sfc_kg = specific_fuel_consumption / 1000.0  # kg/kWh
         
-        # EEXI 分子：CO2 排放率 (g/h)
-        # P (kW) × SFC (kg/kWh) × CF (g/g) × 1000 (g/kg) = g CO2 / h
-        co2_emission_rate = installed_power * sfc_kg * cf * 1000
+        # 有效功率 = 安装功率 - 节能技术折减
+        effective_power = max(installed_power - feff, 0.0)
         
-        # EEXI 分母：运输功 (tonne-mile/h)
-        # Capacity (tonne) × Vref (nm/h) = tonne-mile/h
-        transport_work_rate = capacity * vref
+        # EEXI 分子：CO2 排放率 (g/h)，应用船型修正系数 fj
+        # fj × P_eff (kW) × SFC (kg/kWh) × CF (g/g) × 1000 (g/kg) = g CO2 / h
+        co2_emission_rate = fj * effective_power * sfc_kg * cf * 1000
+        
+        # EEXI 分母：运输功 (tonne-mile/h)，应用容量修正系数 fi
+        # fi × Capacity (tonne) × Vref (nm/h) = tonne-mile/h
+        transport_work_rate = fi * capacity * vref
         
         # EEXI = CO2 / transport work (g CO2 / tonne-mile)
         attained_eexi = co2_emission_rate / transport_work_rate if transport_work_rate > 0 else float('inf')

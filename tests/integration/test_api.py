@@ -76,6 +76,34 @@ class TestBackendAPI:
         assert "alerts" in data
 
 
+class TestAINativeEndpoints:
+    """AI-Native Channel API 端点测试 — weather-routing & crew fatigue"""
+
+    def test_weather_routing_recommendations(self, client):
+        """GET /api/v1/ai-native/weather-routing/recommendations 返回 200 或 404（channel 未注册）"""
+        response = client.get("/api/v1/ai-native/weather-routing/recommendations")
+        assert response.status_code in (200, 404)
+        if response.status_code == 200:
+            data = response.json()
+            assert "recommendations" in data
+
+    def test_crew_recommendations(self, client):
+        """GET /api/v1/ai-native/crew/recommendations 返回 200 或 404"""
+        response = client.get("/api/v1/ai-native/crew/recommendations")
+        assert response.status_code in (200, 404)
+        if response.status_code == 200:
+            data = response.json()
+            assert "recommendations" in data
+
+    def test_weather_routing_status(self, client):
+        """GET /api/v1/ai-native/weather-routing/status 返回 200 或 404"""
+        response = client.get("/api/v1/ai-native/weather-routing/status")
+        assert response.status_code in (200, 404)
+        if response.status_code == 200:
+            data = response.json()
+            assert data["channel"] == "weather_routing"
+
+
 class TestWebSocket:
     """WebSocket 集成测试（同步 TestClient 版本）"""
 

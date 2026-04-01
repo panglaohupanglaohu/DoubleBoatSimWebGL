@@ -80,6 +80,7 @@ class IntelligentEngineChannel(MarineChannel):
             "health": self._health.status.value,
             "health_message": self._health.message,
             "engine_health_score": self.calculate_health_score(),
+            "snapshot_count": len(self.snapshots),
             "alerts": self.get_alerts(),
             "latest_snapshot": latest.to_dict() if latest else None,
             "trend": self.get_trend_summary(),
@@ -102,6 +103,21 @@ class IntelligentEngineChannel(MarineChannel):
             self._set_health(ChannelStatus.WARN, f"主机存在关注项 ({score})")
         else:
             self._set_health(ChannelStatus.ERROR, f"主机健康较差 ({score})")
+
+    def record_snapshot(self, payload: Dict[str, Any]) -> None:
+        """Backward-compatible snapshot ingestion API.
+
+        Older callers provide a partial dict with keys like `temperature`.
+        """
+        latest = self.get_latest_snapshot()
+        rpm = float(payload.get("rpm", latest.rpm if latest else 0.0))
+        load = float(payload.get("load", payload.get("engine_load", latest.load if latest else 0.0)))
+        coolant_temp = float(
+            payload.get("coolant_temp", payload.get("temperature", latest.coolant_temp if latest else 0.0))
+        )
+        oil_pressure = float(payload.get("oil_pressure", latest.oil_pressure if latest else 0.0))
+        fuel_rate = float(payload.get("fuel_rate", latest.fuel_rate if latest else 0.0))
+        self.update_snapshot(rpm, load, coolant_temp, oil_pressure, fuel_rate)
 
     def get_latest_snapshot(self) -> Optional[EngineSnapshot]:
         return self.snapshots[-1] if self.snapshots else None

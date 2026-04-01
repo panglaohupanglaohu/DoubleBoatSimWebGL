@@ -10,6 +10,8 @@ import { GLTFLoader } from 'https://esm.sh/three@0.165.0/examples/jsm/loaders/GL
 
 // 导入现有模块
 import { waveParams, waterUniforms, getWaveHeight } from './waves.js';
+import AgentTeamMonitor from './layer1-interface/AgentTeamMonitor.js';
+import WeatherEffects from './WeatherEffects.js';
 
 // ==================== 全局状态 ====================
 
@@ -35,6 +37,15 @@ const state = {
         source: null,
         updatedAt: null,
     },
+    cameraControl: {
+        mode: 'bridge',
+        lastSelectedTargetKey: null,
+        lastAppliedAt: null,
+        animationToken: 0,
+        manualTargetSelection: false,
+    },
+    agentTeamMonitor: null,
+    weatherEffects: null,
 };
 
 // ==================== 初始化 ====================
@@ -75,8 +86,11 @@ export function init() {
     // 创建控制器
     state.controls = new OrbitControls(state.camera, state.renderer.domElement);
     state.controls.enableDamping = true;
+    state.controls.enableZoom = true;
     state.controls.maxPolarAngle = Math.PI * 0.49;
     state.controls.target.set(0, 0, 0);
+    state.controls.minDistance = 10;
+    state.controls.maxDistance = 120;
     
     // 设置灯光
     setupLights();
@@ -92,11 +106,89 @@ export function init() {
     
     // 窗口大小调整
     window.addEventListener('resize', onWindowResize);
+    window.addEventListener('beforeunload', () => {
+        if (state.agentTeamMonitor) {
+            state.agentTeamMonitor.stop();
+        }
+    });
     
     // 开始动画循环
     animate();
+
+    // 初始化双智能体团队监控浮层
+    // Init weather effects
+    state.weatherEffects = new WeatherEffects(state.scene);
+    window.DigitalTwin.weatherEffects = state.weatherEffects;
+
+    initAgentTeamMonitor();
     
     console.log('✅ Digital Twin initialized');
+
+    // 默认进入 Bridge 视角，禁止外部同步直接把相机拉到目标上。
+    setCameraMode('bridge');
+}
+
+function makeDraggable(element, handleSelector) {
+    let dragState = null;
+    const handle = handleSelector ? element.querySelector(handleSelector) : element;
+    if (!handle) return;
+    handle.style.cursor = 'move';
+    handle.style.userSelect = 'none';
+
+    handle.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+        e.preventDefault();
+        const rect = element.getBoundingClientRect();
+        dragState = { startX: e.clientX, startY: e.clientY, startLeft: rect.left, startTop: rect.top };
+        element.style.transition = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!dragState) return;
+        const dx = e.clientX - dragState.startX;
+        const dy = e.clientY - dragState.startY;
+        const newLeft = Math.max(0, Math.min(dragState.startLeft + dx, window.innerWidth - element.offsetWidth));
+        const newTop = Math.max(0, Math.min(dragState.startTop + dy, window.innerHeight - element.offsetHeight));
+        element.style.left = newLeft + 'px';
+        element.style.top = newTop + 'px';
+        element.style.right = 'auto';
+        element.style.bottom = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (dragState) {
+            dragState = null;
+            element.style.transition = 'box-shadow 0.2s';
+        }
+    });
+}
+
+function initAgentTeamMonitor() {
+    const container = document.createElement('div');
+    container.id = 'agent-team-monitor-container';
+    container.style.position = 'fixed';
+    container.style.right = '12px';
+    container.style.bottom = '12px';
+    container.style.width = '520px';
+    container.style.maxWidth = 'calc(100vw - 24px)';
+    container.style.maxHeight = '46vh';
+    container.style.overflow = 'auto';
+    container.style.zIndex = '999';
+    container.style.background = 'rgba(5, 12, 20, 0.72)';
+    container.style.border = '1px solid rgba(79, 195, 247, 0.28)';
+    container.style.borderRadius = '10px';
+    container.style.backdropFilter = 'blur(8px)';
+
+    document.body.appendChild(container);
+
+    state.agentTeamMonitor = new AgentTeamMonitor(container, {
+        refreshInterval: 5000,
+        apiBase: '/api/v1/agent-teams',
+    });
+    state.agentTeamMonitor.start();
+
+    // Make the panel draggable by its header
+    setTimeout(() => makeDraggable(container, 'h2'), 200);
 }
 
 // ==================== 灯光 ====================
@@ -127,7 +219,7 @@ function createWater() {
     geometry.rotateX(-Math.PI / 2);
     
     const material = new THREE.ShaderMaterial({
-        uniforms: waterUniforms,
+        uniforms: { time: { value: 0 }, color: { value: new THREE.Color(0x004488) } },
         vertexShader: `
             uniform float time;
             varying vec2 vUv;
@@ -416,35 +508,9 @@ function updateUI(data) {
         if (countEl) countEl.textContent = Object.keys(data.ais_targets).length;
     }
     
-    // 更新报警列表
-    const mergedAlarms = [
-        ...(Array.isArray(data.alarms) ? data.alarms : []),
-        ...(Array.isArray(state.externalSync.alarms) ? state.externalSync.alarms : []),
-    ];
-
-    if (mergedAlarms.length > 0) {
-        updateAlarmPanel(mergedAlarms);
-    }
-    
     // 隐藏加载动画
     const loading = document.getElementById('loading');
     if (loading) loading.style.display = 'none';
-}
-
-function updateAlarmPanel(alarms) {
-    const listEl = document.getElementById('alarm-list');
-    if (!listEl) return;
-    
-    listEl.innerHTML = alarms.slice().reverse().map(alarm => `
-        <div class="alarm-item level-${alarm.level}">
-            <div class="alarm-header">
-                <span class="alarm-level level-${alarm.level}">${alarm.level}</span>
-                <span class="alarm-time">${new Date(alarm.timestamp).toLocaleTimeString('zh-CN')}</span>
-            </div>
-            <div class="alarm-message">${alarm.message}</div>
-            <div class="alarm-source">来源：${alarm.source}</div>
-        </div>
-    `).join('');
 }
 
 function updateConnectionStatus(status) {
@@ -559,11 +625,16 @@ function focusOnCoordinates(target = {}) {
     const startTarget = state.controls.target.clone();
     const durationMs = 900;
     const startTime = performance.now();
+    const token = ++state.cameraControl.animationToken;
 
     function animateFocus(now) {
+        if (token !== state.cameraControl.animationToken) {
+            return;
+        }
         const progress = Math.min((now - startTime) / durationMs, 1);
         state.camera.position.lerpVectors(startCameraPosition, nextCameraPosition, progress);
         state.controls.target.lerpVectors(startTarget, targetPosition, progress);
+        state.controls.update();
 
         if (progress < 1) {
             requestAnimationFrame(animateFocus);
@@ -573,23 +644,164 @@ function focusOnCoordinates(target = {}) {
     requestAnimationFrame(animateFocus);
 }
 
+function animateCameraTo(targetPosition, cameraPosition, durationMs = 900) {
+    if (!state.camera || !state.controls) return;
+
+    const startCameraPosition = state.camera.position.clone();
+    const startTarget = state.controls.target.clone();
+    const startTime = performance.now();
+    const token = ++state.cameraControl.animationToken;
+
+    function animateStep(now) {
+        if (token !== state.cameraControl.animationToken) {
+            return;
+        }
+        const progress = Math.min((now - startTime) / durationMs, 1);
+        state.camera.position.lerpVectors(startCameraPosition, cameraPosition, progress);
+        state.controls.target.lerpVectors(startTarget, targetPosition, progress);
+        state.controls.update();
+        if (progress < 1) {
+            requestAnimationFrame(animateStep);
+        }
+    }
+
+    requestAnimationFrame(animateStep);
+}
+
+function computeBridgeView() {
+    const bridgeTarget = new THREE.Vector3(0, 2.8, 2.2);
+    const bridgeCamera = new THREE.Vector3(8.5, 6.5, 14.5);
+    return { target: bridgeTarget, camera: bridgeCamera };
+}
+
+function getSelectedTargetKey(target = {}) {
+    return String(target.mmsi || target.id || `${target.latitude ?? target.lat}-${target.longitude ?? target.lng}`);
+}
+
+function getTargetLabel(target = {}) {
+    return String(target.vessel_type || target.name || target.mmsi || target.id || 'UNSPECIFIED');
+}
+
+function getTargetScenePosition(target = {}) {
+    const latitude = Number(target.latitude ?? target.lat ?? 0);
+    const longitude = Number(target.longitude ?? target.lng ?? 0);
+    const heading = Number(target.course ?? target.heading ?? 0);
+    const relativeX = ((longitude % 1) - 0.5) * 20;
+    const relativeZ = ((latitude % 1) - 0.5) * 20;
+    const relativeY = 2 + Math.abs(Math.sin((heading * Math.PI) / 180)) * 4;
+    return new THREE.Vector3(relativeX, relativeY, relativeZ);
+}
+
+function focusOnSelectedTarget() {
+    if (!state.externalSync.selectedTarget) {
+        return;
+    }
+    focusOnCoordinates(state.externalSync.selectedTarget);
+    state.cameraControl.lastSelectedTargetKey = getSelectedTargetKey(state.externalSync.selectedTarget);
+    state.cameraControl.lastAppliedAt = new Date().toISOString();
+}
+
+function setSelectedTarget(target = null, options = {}) {
+    state.externalSync.selectedTarget = target;
+    state.externalSync.source = options.source || (target ? 'bridge-operator' : state.externalSync.source);
+    state.externalSync.updatedAt = new Date().toISOString();
+    state.cameraControl.manualTargetSelection = options.manual !== false && Boolean(target);
+
+    if (!target) {
+        state.cameraControl.lastSelectedTargetKey = null;
+        if (options.cameraMode) {
+            setCameraMode(options.cameraMode);
+        }
+        return;
+    }
+
+    state.cameraControl.lastSelectedTargetKey = getSelectedTargetKey(target);
+
+    if (options.cameraMode) {
+        setCameraMode(options.cameraMode);
+    } else {
+        updateUI(state.latestData || {});
+    }
+}
+
+function stopTrackingTarget() {
+    setCameraMode('bridge');
+}
+
+function setCameraMode(mode = 'bridge') {
+    state.cameraControl.mode = mode;
+    state.cameraControl.lastAppliedAt = new Date().toISOString();
+
+    if (mode === 'free') {
+        return;
+    }
+
+    if (mode === 'bridge') {
+        const bridgeView = computeBridgeView();
+        animateCameraTo(bridgeView.target, bridgeView.camera, 700);
+        return;
+    }
+
+    if (mode === 'target-track') {
+        focusOnSelectedTarget();
+        return;
+    }
+
+    // Extended camera presets
+    const presets = {
+        'top':       { target: new THREE.Vector3(0, 0, 0),   camera: new THREE.Vector3(0, 60, 0.1) },
+        'bow':       { target: new THREE.Vector3(0, 2, 0),   camera: new THREE.Vector3(0, 6, -25) },
+        'stern':     { target: new THREE.Vector3(0, 2, 0),   camera: new THREE.Vector3(0, 6, 25) },
+        'port':      { target: new THREE.Vector3(0, 2, 0),   camera: new THREE.Vector3(-25, 8, 0) },
+        'starboard': { target: new THREE.Vector3(0, 2, 0),   camera: new THREE.Vector3(25, 8, 0) },
+        'overview':  { target: new THREE.Vector3(0, 0, 0),   camera: new THREE.Vector3(40, 30, 40) },
+    };
+
+    const preset = presets[mode];
+    if (preset) {
+        animateCameraTo(preset.target, preset.camera, 700);
+    }
+}
+
+function getCameraControlState() {
+    return {
+        mode: state.cameraControl.mode,
+        hasSelectedTarget: Boolean(state.externalSync.selectedTarget),
+        currentSelectedTargetKey: state.externalSync.selectedTarget ? getSelectedTargetKey(state.externalSync.selectedTarget) : null,
+        lastSelectedTargetKey: state.cameraControl.lastSelectedTargetKey,
+        lastAppliedAt: state.cameraControl.lastAppliedAt,
+        selectedTargetLabel: state.externalSync.selectedTarget ? getTargetLabel(state.externalSync.selectedTarget) : null,
+        selectedTargetRisk: state.externalSync.selectedTarget?.risk_level || null,
+        source: state.externalSync.source || null,
+        manualTargetSelection: state.cameraControl.manualTargetSelection,
+    };
+}
+
 function applyExternalSync(payload = {}) {
+    const nextSelectedTarget = state.cameraControl.manualTargetSelection && state.externalSync.selectedTarget
+        ? state.externalSync.selectedTarget
+        : (payload.selectedTarget || state.externalSync.selectedTarget);
+    const nextSource = state.cameraControl.manualTargetSelection && state.externalSync.selectedTarget
+        ? state.externalSync.source || 'bridge-operator'
+        : (payload.source || state.externalSync.source || 'worldmonitor');
+
     state.externalSync = {
         ownShip: payload.ownShip || state.externalSync.ownShip,
-        selectedTarget: payload.selectedTarget || state.externalSync.selectedTarget,
+        selectedTarget: nextSelectedTarget,
         alarms: Array.isArray(payload.alarms) ? payload.alarms.map(normalizeExternalAlarm) : state.externalSync.alarms,
         weather: payload.weather || state.externalSync.weather,
         fusionTracks: Array.isArray(payload.fusionTracks) ? payload.fusionTracks : state.externalSync.fusionTracks,
         taskGraph: payload.taskGraph || state.externalSync.taskGraph,
-        source: payload.source || state.externalSync.source || 'worldmonitor',
+        source: nextSource,
         updatedAt: payload.updatedAt || new Date().toISOString(),
     };
 
-    if (state.externalSync.selectedTarget) {
-        focusOnCoordinates(state.externalSync.selectedTarget);
-    }
-
     renderFusionTracks(state.externalSync.fusionTracks || []);
+
+    // Sync weather effects
+    if (state.weatherEffects && state.externalSync.weather) {
+        state.weatherEffects.setWeather(state.externalSync.weather);
+    }
 
     updateUI(state.latestData || {});
 }
@@ -610,20 +822,37 @@ function handleWindowMessage(event) {
 function animate() {
     requestAnimationFrame(animate);
     
-    const delta = state.controls.update();
+    state.controls.update();
     
     // 更新水面
     if (state.waterMesh) {
-        state.waterMesh.material.uniforms.time = performance.now() * 0.001;
+        state.waterMesh.material.uniforms.time.value = performance.now() * 0.001;
     }
     
-    // 船体轻微摇摆
+    // 船体运动响应波浪 (WPC穿浪双体船 RAO模型)
     if (state.boatMesh) {
         const time = Date.now() * 0.001;
-        state.boatMesh.rotation.z = Math.sin(time) * 0.02;
-        state.boatMesh.rotation.x = Math.cos(time * 0.5) * 0.01;
+        let waveHeight = 0.5;
+        let wavePeriod = 8.0;
+        if (state.weatherEffects) {
+            waveHeight = state.weatherEffects.weather.wave.height;
+            wavePeriod = Math.max(state.weatherEffects.weather.wave.period, 3);
+        }
+        // WPC RAO: roll=0.045 rad/m, pitch=0.025 rad/m, heave=0.35 m/m
+        const rollAmp = Math.min(waveHeight * 0.045, 0.35);
+        const pitchAmp = Math.min(waveHeight * 0.025, 0.20);
+        const heaveAmp = Math.min(waveHeight * 0.35, 3.5);
+        const waveFreq = (2 * Math.PI) / wavePeriod;
+        state.boatMesh.rotation.z = Math.sin(time * waveFreq) * rollAmp;
+        state.boatMesh.rotation.x = Math.cos(time * waveFreq * 0.9) * pitchAmp;
+        state.boatMesh.position.y = Math.sin(time * waveFreq * 1.1) * heaveAmp;
     }
     
+    // Weather effects update
+    if (state.weatherEffects) {
+        state.weatherEffects.update(0.016);
+    }
+
     state.renderer.render(state.scene, state.camera);
 }
 
@@ -697,7 +926,13 @@ window.DigitalTwin = {
     searchAndFocus,
     applyExternalSync,
     focusOnCoordinates,
+    setCameraMode,
+    focusOnSelectedTarget,
+    setSelectedTarget,
+    stopTrackingTarget,
+    getCameraControlState,
     getState: () => state,
+    getWeatherEffects: () => state.weatherEffects,
 };
 
 // 自动初始化

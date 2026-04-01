@@ -1,0 +1,50 @@
+{
+  "agents": [
+    {
+      "name": "Chief Director",
+      "id": "chief_director",
+      "role": "project_management",
+      "description": "项目总监 - 整体协调、任务分解、进度跟踪"
+    },
+    {
+      "name": "System Architect",
+      "id": "system_architect",
+      "role": "architecture",
+      "description": "架构设计师 - 系统架构、技术选型、接口规范"
+    },
+    {
+      "name": "Marine Researcher",
+      "id": "marine_researcher",
+      "role": "research",
+      "description": "海洋研究员 - 双体船技术研究、需求分析"
+    },
+    {
+      "name": "Dev Lead",
+      "id": "dev_lead",
+      "role": "development",
+      "description": "开发主管 - 代码管理、任务分配、技术指导"
+    },
+    {
+      "name": "Code Writer",
+      "id": "code_writer",
+      "role": "coding",
+      "description": "代码开发者 - 功能开发、代码实现、单元测试"
+    },
+    {
+      "name": "QA Engineer",
+      "id": "qa_engineer",
+      "role": "testing",
+      "description": "测试工程师 - 质量保证、自动化测试"
+    },
+    {
+      "name": "Doc Writer",
+      "id": "doc_writer",
+      "role": "documentation",
+      "description": "文档工程师 - 技术文档、API文档、用户手册"
+    }
+  ],
+  "settings": {
+    "refresh_interval": 5000,
+    "debug": true
+  }
+}

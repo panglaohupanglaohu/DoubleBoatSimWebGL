@@ -16,6 +16,7 @@ Round: 14 - Channel Messaging & Transpacific Route Simulation
 from __future__ import annotations
 
 import asyncio
+import inspect
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -379,7 +380,7 @@ class MarineMessageBus:
             # 调用回调
             if subscription.callback:
                 try:
-                    if asyncio.iscoroutinefunction(subscription.callback):
+                    if inspect.iscoroutinefunction(subscription.callback):
                         asyncio.create_task(subscription.callback(message))
                     else:
                         subscription.callback(message)

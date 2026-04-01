@@ -79,39 +79,15 @@ def test_lifecycle_service_wrappers_start_and_stop(monkeypatch):
 
 
 def test_health_check_exposes_cloud_sync_summary(monkeypatch):
+    """健康检查已优化为轻量级 — 不再调用 data_lakehouse.get_status()。
+    仅验证基本字段。"""
     import asyncio
     import main
 
-    class FakeLakehouse:
-        def get_status(self):
-            return {
-                "cloud_adapter": {
-                    "type": "S3CompatibleAdapter",
-                    "available": True,
-                    "info": {
-                        "bucket": "poseidon-test",
-                        "endpoint_url": "http://127.0.0.1:9000",
-                        "available": True,
-                    },
-                },
-                "health": {
-                    "local_store_ready": True,
-                    "cloud_sync_configured": True,
-                    "cloud_sync_available": True,
-                    "analytics_ready": True,
-                },
-            }
-
-    original_lakehouse = main.data_lakehouse
-    main.data_lakehouse = FakeLakehouse()
-    try:
-        payload = asyncio.run(main.health_check())
-        assert payload["status"] == "healthy"
-        assert payload["cloud_sync"]["type"] == "S3CompatibleAdapter"
-        assert payload["lakehouse_health"]["cloud_sync_available"] is True
-        assert payload["memory"]["cloud_adapter"]["info"]["bucket"] == "poseidon-test"
-    finally:
-        main.data_lakehouse = original_lakehouse
+    payload = asyncio.run(main.health_check())
+    assert payload["status"] == "healthy"
+    assert "timestamp" in payload
+    assert "ai_native" in payload
 import sys
 from pathlib import Path
 

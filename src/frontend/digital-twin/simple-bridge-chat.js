@@ -11,9 +11,12 @@ export class SimpleBridgeChat {
     this.isExpanded = true; // 默认展开
     this.dragState = null;
     this.shipContext = {};
+    this.recognition = null;
+    this.isListening = false;
     
     this.init();
     this.initializeShipContext();
+    this.initVoice();
     setInterval(() => this.updateShipContextFromAPI(), 5000);
   }
   
@@ -33,7 +36,7 @@ export class SimpleBridgeChat {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 320px;
+      width: 420px;
       background: rgba(11, 21, 37, 0.95);
       border: 2px solid ${this.config.apiKey ? '#4caf50' : '#ffb74d'};
       border-radius: 12px;
@@ -87,7 +90,7 @@ export class SimpleBridgeChat {
     // 输入区域
     const quickBar = document.createElement('div');
     quickBar.style.cssText = `padding: 8px 12px; display:flex; gap:6px; flex-wrap:wrap; border-top: 1px solid rgba(255,255,255,0.08);`;
-    ['任务图','碰撞风险','舒适控制','结构健康','主机状态'].forEach(text => {
+    ['任务图','碰撞风险','自由视角','Bridge视角','顶视图','全景','跟踪高风险目标','停止跟踪'].forEach(text => {
       const btn = document.createElement('button');
       btn.textContent = text;
       btn.style.cssText = 'padding:4px 8px; border:none; border-radius:999px; background:rgba(79,195,247,0.16); color:#b3e5fc; cursor:pointer; font-size:11px;';
@@ -109,7 +112,7 @@ export class SimpleBridgeChat {
     const input = document.createElement('input');
     input.type = 'text';
     input.id = 'bridge-input';
-    input.placeholder = this.config.apiKey ? '输入桥楼指令或询问状态...' : '可直接输入桥楼指令（离线命令可用）';
+    input.placeholder = this.config.apiKey ? '输入桥楼指令，例如：Bridge视角 / 跟踪高风险目标' : '可直接输入桥楼指令，例如：自由视角 / 停止跟踪';
     input.disabled = false;
     input.style.cssText = `flex: 1; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; font-size: 13px;`;
     
@@ -118,7 +121,16 @@ export class SimpleBridgeChat {
     sendBtn.textContent = '发送';
     sendBtn.style.cssText = 'padding: 8px 16px; background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%); border: none; border-radius: 6px; color: #fff; cursor: pointer; font-size: 13px;';
     
+    // 语音按钮
+    const voiceBtn = document.createElement('button');
+    voiceBtn.id = 'bridge-voice';
+    voiceBtn.innerHTML = '🎤';
+    voiceBtn.title = '按住说话 / 点击切换语音输入';
+    voiceBtn.style.cssText = 'width: 36px; height: 36px; background: rgba(79,195,247,0.2); border: 1px solid rgba(79,195,247,0.4); border-radius: 6px; color: #fff; font-size: 18px; cursor: pointer; transition: all 0.3s; flex-shrink: 0; display: flex; align-items: center; justify-content: center;';
+    voiceBtn.addEventListener('click', () => this.toggleVoice());
+    
     inputArea.appendChild(input);
+    inputArea.appendChild(voiceBtn);
     inputArea.appendChild(sendBtn);
     
     this.container.appendChild(header);
@@ -144,9 +156,9 @@ export class SimpleBridgeChat {
     // 添加欢迎消息
     setTimeout(() => {
       if (!this.config.apiKey) {
-        this.addMessage('system', '⚠️ 当前未配置外部 LLM，但本地桥楼命令和状态联动仍可使用。');
+        this.addMessage('system', '⚠️ 当前未配置外部 LLM，但本地桥楼命令和状态联动仍可使用。可直接输入：自由视角、Bridge视角、跟踪高风险目标、停止跟踪。');
       } else {
-        this.addMessage('system', `✅ LLM 已配置 (${this.config.llmProvider || 'minimax'})，同时本地桥楼命令也已启用。`);
+        this.addMessage('system', `✅ LLM 已配置 (${this.config.llmProvider || 'minimax'})，同时本地桥楼命令也已启用。可直接输入：自由视角、Bridge视角、跟踪高风险目标、停止跟踪。`);
       }
     }, 500);
     
@@ -168,6 +180,124 @@ export class SimpleBridgeChat {
       messagesContainer.style.maxHeight = '0';
       messagesContainer.style.padding = '0 16px';
       inputArea.style.display = 'none';
+    }
+  }
+  
+  /**
+   * 初始化 Web Speech API 语音识别
+   */
+  initVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('⚠️ Web Speech API not supported in this browser');
+      return;
+    }
+    
+    this.recognition = new SpeechRecognition();
+    this.recognition.lang = 'zh-CN';
+    this.recognition.continuous = false;
+    this.recognition.interimResults = true;
+    
+    this.recognition.onresult = (event) => {
+      const input = document.getElementById('bridge-input');
+      if (!input) return;
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      input.value = transcript;
+      // 如果是最终结果，自动发送
+      if (event.results[event.results.length - 1].isFinal) {
+        setTimeout(() => {
+          if (input.value.trim()) {
+            this.sendMessage();
+          }
+        }, 300);
+      }
+    };
+    
+    this.recognition.onerror = (event) => {
+      console.error('🎤 Voice error:', event.error);
+      if (event.error === 'not-allowed') {
+        this.addMessage('system', '⚠️ 麦克风权限被拒绝。请在浏览器设置中允许麦克风访问。');
+      }
+      this.stopListening();
+    };
+    
+    this.recognition.onend = () => {
+      this.stopListening();
+    };
+    
+    console.log('🎤 Voice input ready');
+  }
+  
+  /**
+   * 切换语音输入
+   */
+  toggleVoice() {
+    if (!this.recognition) {
+      this.addMessage('system', '⚠️ 当前浏览器不支持语音识别 (Web Speech API)。请使用 Chrome 或 Edge。');
+      return;
+    }
+    
+    if (this.isListening) {
+      this.recognition.stop();
+    } else {
+      try {
+        this.recognition.start();
+        this.startListening();
+      } catch (e) {
+        // 可能已经在监听
+        console.warn('Voice start error:', e);
+      }
+    }
+  }
+  
+  /**
+   * 开始监听 UI 状态
+   */
+  startListening() {
+    this.isListening = true;
+    const btn = document.getElementById('bridge-voice');
+    if (btn) {
+      btn.style.background = 'rgba(244, 67, 54, 0.5)';
+      btn.style.borderColor = '#f44336';
+      btn.style.animation = 'bridge-pulse 1.5s infinite';
+      btn.innerHTML = '🔴';
+      btn.title = '正在录音... 点击停止';
+    }
+    const input = document.getElementById('bridge-input');
+    if (input) {
+      input.placeholder = '🎤 正在聆听...';
+      input.value = '';
+    }
+    // 添加脉冲动画
+    if (!document.getElementById('bridge-pulse-style')) {
+      const style = document.createElement('style');
+      style.id = 'bridge-pulse-style';
+      style.textContent = '@keyframes bridge-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }';
+      document.head.appendChild(style);
+    }
+  }
+  
+  /**
+   * 停止监听 UI 状态
+   */
+  stopListening() {
+    this.isListening = false;
+    const btn = document.getElementById('bridge-voice');
+    if (btn) {
+      btn.style.background = 'rgba(79,195,247,0.2)';
+      btn.style.borderColor = 'rgba(79,195,247,0.4)';
+      btn.style.animation = 'none';
+      btn.innerHTML = '🎤';
+      btn.title = '按住说话 / 点击切换语音输入';
+    }
+    const input = document.getElementById('bridge-input');
+    if (input && input.placeholder.includes('聆听')) {
+      input.placeholder = this.config.apiKey 
+        ? '输入桥楼指令，例如：Bridge视角 / 跟踪高风险目标' 
+        : '可直接输入桥楼指令，例如：自由视角 / 停止跟踪';
     }
   }
   
@@ -317,7 +447,156 @@ export class SimpleBridgeChat {
     return await response.json();
   }
 
+  async persistBridgeActionFeedback(action, outcome) {
+    try {
+      await fetch('/api/v1/ai-native/decision/feedback/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          outcome,
+          confirmed_by: 'bridge_chat',
+        }),
+      });
+    } catch (error) {
+      console.warn('Failed to persist bridge action feedback:', error);
+    }
+  }
+
+  findPriorityAisTarget() {
+    const targets = Array.isArray(window.__digitalTwinAisTargets) ? window.__digitalTwinAisTargets : [];
+    return targets.find((target) => ['high', 'medium'].includes(String(target.risk_level || '').toLowerCase())) || targets[0] || null;
+  }
+
+  async executeLocalBridgeCommand(command) {
+    const text = String(command || '').trim().toLowerCase();
+    const twin = window.DigitalTwin;
+    if (!text || !twin) {
+      return null;
+    }
+
+    const refreshUi = async () => {
+      if (typeof window.refreshDigitalTwinBridgeUi === 'function') {
+        await window.refreshDigitalTwinBridgeUi();
+      }
+    };
+
+    if ((text.includes('自由视角') || text.includes('free view') || text.includes('free camera')) && twin.setCameraMode) {
+      twin.setCameraMode('free');
+      await this.persistBridgeActionFeedback('camera:free', 'bridge_chat_local_control');
+      await refreshUi();
+      return {
+        result: {
+          recognized_intent: 'camera_control',
+          execution_mode: 'local_bridge_control',
+          summary: '已切换到自由视角，相机不会被桥楼逻辑自动接管。',
+          operator_action: '可手动拖拽观察，如需回到舰桥输入“Bridge视角”。',
+          focus_items: [{ label: 'Camera Mode', value: 'FREE' }],
+        },
+      };
+    }
+
+    if ((text.includes('bridge视角') || text.includes('舰桥视角') || text.includes('桥楼视角')) && twin.setCameraMode) {
+      twin.setCameraMode('bridge');
+      await this.persistBridgeActionFeedback('camera:bridge', 'bridge_chat_local_control');
+      await refreshUi();
+      return {
+        result: {
+          recognized_intent: 'camera_control',
+          execution_mode: 'local_bridge_control',
+          summary: '已切换到 Bridge 视角。',
+          operator_action: '继续监控目标列表，必要时可输入“跟踪高风险目标”。',
+          focus_items: [{ label: 'Camera Mode', value: 'BRIDGE' }],
+        },
+      };
+    }
+
+
+    // Extended camera view commands (top, bow, stern, port, starboard, overview)
+    const viewMap = {
+      'top view': 'top', '顶视图': 'top', '俯视图': 'top', '鸟瞰': 'top',
+      'bow view': 'bow', '船首视角': 'bow', '前视图': 'bow',
+      'stern view': 'stern', '船尾视角': 'stern', '后视图': 'stern',
+      'port view': 'port', '左舷视角': 'port', '左视图': 'port',
+      'starboard view': 'starboard', '右舷视角': 'starboard', '右视图': 'starboard',
+      'overview': 'overview', '全局视图': 'overview', '总览': 'overview', '全景': 'overview',
+    };
+    const viewLabels = {
+      top: 'TOP (俯视)', bow: 'BOW (船首)', stern: 'STERN (船尾)',
+      port: 'PORT (左舷)', starboard: 'STARBOARD (右舷)', overview: 'OVERVIEW (全景)',
+    };
+    for (const [keyword, mode] of Object.entries(viewMap)) {
+      if (text.includes(keyword) && twin.setCameraMode) {
+        twin.setCameraMode(mode);
+        await this.persistBridgeActionFeedback('camera:' + mode, 'bridge_chat_local_control');
+        await refreshUi();
+        return {
+          result: {
+            recognized_intent: 'camera_control',
+            execution_mode: 'local_bridge_control',
+            summary: '已切换到 ' + (viewLabels[mode] || mode) + ' 视角。',
+            operator_action: '可输入其他视角名称切换: top view / bow view / stern view / port view / starboard view / overview / Bridge视角。',
+            focus_items: [{ label: 'Camera Mode', value: viewLabels[mode] || mode.toUpperCase() }],
+          },
+        };
+      }
+    }
+    if ((text.includes('停止跟踪') || text.includes('stop tracking') || text.includes('取消跟踪')) && twin.stopTrackingTarget) {
+      twin.stopTrackingTarget();
+      await this.persistBridgeActionFeedback('camera:stop_track', 'bridge_chat_local_control');
+      await refreshUi();
+      return {
+        result: {
+          recognized_intent: 'camera_control',
+          execution_mode: 'local_bridge_control',
+          summary: '已停止目标跟踪并返回 Bridge 视角。',
+          operator_action: '如需重新锁定目标，可点击 AIS 列表或输入“跟踪高风险目标”。',
+          focus_items: [{ label: 'Camera Mode', value: 'BRIDGE' }],
+        },
+      };
+    }
+
+    if ((text.includes('跟踪') || text.includes('track')) && twin.setSelectedTarget) {
+      const target = this.findPriorityAisTarget();
+      if (!target) {
+        return {
+          result: {
+            recognized_intent: 'camera_control',
+            execution_mode: 'local_bridge_control',
+            summary: '当前没有可跟踪的 AIS 目标。',
+            operator_action: '等待 AIS 数据刷新后再尝试跟踪。',
+            focus_items: [],
+          },
+        };
+      }
+
+      twin.setSelectedTarget(target, { cameraMode: 'target-track', source: 'bridge-chat' });
+      await this.persistBridgeActionFeedback(`camera:track:${target.mmsi || target.id || 'target'}`, 'bridge_chat_local_control');
+      await refreshUi();
+      return {
+        result: {
+          recognized_intent: 'camera_control',
+          execution_mode: 'local_bridge_control',
+          summary: `已开始跟踪目标 ${target.vessel_type || target.name || target.mmsi || 'UNKNOWN'}。`,
+          operator_action: '继续观察风险变化，必要时输入“停止跟踪”回到 Bridge 视角。',
+          focus_items: [
+            { label: 'Camera Mode', value: 'TRACK' },
+            { label: 'Target', value: target.vessel_type || target.name || target.mmsi || 'UNKNOWN' },
+            { label: 'Risk', value: String(target.risk_level || '--').toUpperCase() },
+          ],
+        },
+      };
+    }
+
+    return null;
+  }
+
     async executeOpenBridgeCommand(command) {
+      const localResult = await this.executeLocalBridgeCommand(command);
+      if (localResult) {
+        return localResult;
+      }
+
       const response = await fetch('/api/v1/ai-native/openbridge/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

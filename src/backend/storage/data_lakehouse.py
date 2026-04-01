@@ -43,16 +43,22 @@ class DataLakehouse:
         self.local_store: Optional[EventStore] = None
         self.cloud_adapter: Optional[CloudStorageAdapter] = None
         self.event_buffer: List[Dict[str, Any]] = []
-        self.buffer_max_size = self.config.get("buffer_max_size", 100)
+        self.buffer_max_size = int(self.config.get("buffer_max_size", self.config.get("buffer_size", 100)))
         self.analytics_cache_dir = Path(self.config.get("analytics_cache_dir", "./storage/analytics_cache"))
         self.analytics_cache_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize local store
         store_type = self.config.get("store_type", "sqlite")
-        store_config = self.config.get("store_config", {
-            "db_path": "./storage/events.db",
-            "storage_path": "./storage/events"
-        })
+        store_config = dict(self.config.get("store_config", {}))
+        if "storage_path" in self.config and "storage_path" not in store_config:
+            store_config["storage_path"] = self.config["storage_path"]
+        if "db_path" in self.config and "db_path" not in store_config:
+            store_config["db_path"] = self.config["db_path"]
+        if not store_config:
+            store_config = {
+                "db_path": "./storage/events.db",
+                "storage_path": "./storage/events",
+            }
         
         try:
             self.local_store = get_store(store_type, store_config)
@@ -190,9 +196,14 @@ class DataLakehouse:
 
         import duckdb
 
-        conn = duckdb.connect(database=':memory:')
+        conn = duckdb.connect(database=':memory:', read_only=False)
         escaped_path = archive_path.replace("'", "''")
         conn.execute(f"CREATE VIEW lakehouse_events AS SELECT * FROM read_parquet('{escaped_path}')")
+        # Safety: only allow SELECT queries to prevent data modification
+        sql_stripped = sql.strip().upper()
+        if not sql_stripped.startswith("SELECT"):
+            conn.close()
+            raise ValueError("Only SELECT queries are allowed on the analytics lakehouse")
         result = conn.execute(sql)
         columns = [item[0] for item in result.description]
         rows = [dict(zip(columns, row)) for row in result.fetchall()]
@@ -235,10 +246,23 @@ class DataLakehouse:
             self.event_buffer = []
         except Exception as e:
             logger.error(f"Failed to flush buffer: {e}")
+
+    def flush(self) -> bool:
+        """Backward-compatible public flush API."""
+        try:
+            self._flush_buffer_to_local()
+            return True
+        except Exception as exc:
+            logger.error(f"Flush failed: {exc}")
+            return False
     
     def get_status(self) -> Dict[str, Any]:
         """获取湖仓状态"""
+        store_type = self.config.get("store_type", "sqlite")
+        cloud_type = self.config.get("cloud_type", "none")
         status = {
+            "store_type": store_type,
+            "cloud_type": cloud_type,
             "local_store": {
                 "type": type(self.local_store).__name__ if self.local_store else "none",
                 "available": self.local_store is not None
@@ -260,8 +284,8 @@ class DataLakehouse:
                 info = getattr(self.local_store, "get_info", None)
                 if info:
                     status["local_store"]["info"] = info()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Storage info skip: {e}")
 
         if self.cloud_adapter:
             try:

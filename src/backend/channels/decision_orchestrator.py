@@ -29,6 +29,11 @@ class DecisionOrchestratorChannel(MarineChannel):
         "intelligent_navigation",
         "intelligent_engine",
         "energy_efficiency",
+        "autonomy_manager",
+        "ship_shore_link",
+        "predictive_health",
+        "route_optimizer",
+        "cyber_security",
     ]
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -53,10 +58,20 @@ class DecisionOrchestratorChannel(MarineChannel):
 
     def _build_action_plan(
         self,
-        snapshot: Dict[str, Any],
-        nav_report: Dict[str, Any],
-        engine_status: Dict[str, Any],
+        snapshot: Optional[Dict[str, Any]] = None,
+        nav_report: Optional[Dict[str, Any]] = None,
+        engine_status: Optional[Dict[str, Any]] = None,
+        weather_risk: Optional[Dict[str, Any]] = None,
+        crew_fatigue: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
+
+
+        snapshot = snapshot or {}
+        nav_report = nav_report or {}
+        engine_status = engine_status or {}
+        weather_risk = weather_risk or {}
+        crew_fatigue = crew_fatigue or {}
+
         action_plan: List[Dict[str, Any]] = []
         generated_at = datetime.now().isoformat()
 
@@ -103,6 +118,134 @@ class DecisionOrchestratorChannel(MarineChannel):
                     "execute_before": generated_at,
                 }
             )
+
+
+        # Weather risk actions
+        wr_score = weather_risk.get("risk_score", 0) or 0
+        if wr_score > 60:
+            action_plan.append({
+                "id": "weather-review",
+                "domain": "navigation",
+                "priority": "critical" if wr_score >= 70 else "high",
+                "title": weather_risk.get("recommendation", "Weather risk detected"),
+                "rationale": f"Weather risk score {wr_score} exceeds threshold.",
+                "rule": "Weather Routing Safety",
+                "recommended_action": "review_route",
+                "execute_before": generated_at,
+            })
+
+        # Crew fatigue actions
+        fatigue_scores = crew_fatigue.get("fatigue_scores", {}) or {}
+        for crew_name, score in fatigue_scores.items():
+            if score is not None and score < 50:
+                action_plan.append({
+                    "id": f"fatigue-{crew_name}",
+                    "domain": "crew",
+                    "priority": "critical" if score < 30 else "high",
+                    "title": f"Crew fatigue alert: {crew_name} ({score})",
+                    "rationale": f"Fatigue score {score} below safety threshold.",
+                    "rule": "MLC/STCW Rest Hours",
+                    "recommended_action": "recommend_watch_change",
+                    "execute_before": generated_at,
+                })
+
+        # ── Registry-based subsystem integration ──
+        _reg = get_default_registry()
+
+        # Hull stress monitor
+        _hull = _reg.get("hull_stress_monitor")
+        if _hull and hasattr(_hull, "get_structural_health"):
+            _hs = (_hull.get_structural_health() or {})
+            _sr = _hs.get("stress_ratio", 0) or 0
+            if _sr > 0.8:
+                if _hs.get("alarm_active"):
+                    action_plan.append({"id": "hull-alarm", "domain": "structure", "priority": "critical", "title": "Hull stress alarm", "rationale": f"Stress ratio {_sr:.2f}", "rule": "Hull Integrity", "recommended_action": "emergency_hull_stress", "execute_before": generated_at})
+                action_plan.append({"id": "hull-reduce", "domain": "structure", "priority": "critical" if _sr > 0.9 else "high", "title": f"Hull stress {_sr:.0%}", "rationale": f"Stress ratio {_sr:.2f} > 0.8", "rule": "Hull Integrity", "recommended_action": "reduce_speed_hull_stress", "execute_before": generated_at})
+
+        # Power management
+        _pwr = _reg.get("power_management")
+        if _pwr and hasattr(_pwr, "get_power_balance"):
+            _ps = (_pwr.get_power_balance() or {})
+            if _ps.get("load_shedding_needed"):
+                action_plan.append({"id": "power-shed", "domain": "power", "priority": "high", "title": "Load shedding required", "rationale": "Power reserve below threshold", "rule": "Power Management", "recommended_action": "load_shedding_required", "execute_before": generated_at})
+
+        # Echo sounder
+        _echo = _reg.get("echo_sounder_monitor")
+        if _echo and hasattr(_echo, "get_depth_status"):
+            _ds = (_echo.get_depth_status() or {})
+            if _ds.get("grounding_risk"):
+                action_plan.append({"id": "echo-ground", "domain": "navigation", "priority": "critical", "title": "Grounding risk", "rationale": "Echo sounder grounding detection", "rule": "SOLAS Ch V", "recommended_action": "grounding_risk_alert", "execute_before": generated_at})
+            if _ds.get("shallow_alarm"):
+                action_plan.append({"id": "echo-shallow", "domain": "navigation", "priority": "high", "title": "Shallow water warning", "rationale": "Echo sounder shallow alarm", "rule": "SOLAS Ch V", "recommended_action": "shallow_water_warning", "execute_before": generated_at})
+
+        # Propulsion monitor
+        _prop = _reg.get("propulsion_monitor")
+        if _prop and hasattr(_prop, "get_propulsion_status"):
+            _pp = (_prop.get_propulsion_status() or {})
+            if _pp.get("any_alarm"):
+                action_plan.append({"id": "prop-alarm", "domain": "propulsion", "priority": "critical", "title": "Propulsion alarm", "rationale": "Propulsion system alarm", "rule": "Machinery Safety", "recommended_action": "propulsion_alarm", "execute_before": generated_at})
+            _eff = _pp.get("efficiency_percent", 100)
+            if _eff is not None and _eff < 50:
+                action_plan.append({"id": "prop-eff", "domain": "propulsion", "priority": "high", "title": f"Low propulsion efficiency {_eff}%", "rationale": "Propulsion efficiency degraded", "rule": "Engine Performance", "recommended_action": "low_propulsion_efficiency", "execute_before": generated_at})
+
+        # Gyro compass
+        _gyro = _reg.get("gyro_compass_monitor")
+        if _gyro and hasattr(_gyro, "get_heading_consensus"):
+            _gc = (_gyro.get_heading_consensus() or {})
+            if not _gc.get("agreement", True):
+                action_plan.append({"id": "gyro-disagree", "domain": "navigation", "priority": "high", "title": "Heading disagreement", "rationale": "Gyro compasses disagree", "rule": "SOLAS Ch V", "recommended_action": "heading_disagreement", "execute_before": generated_at})
+
+        # Autopilot
+        _ap = _reg.get("autopilot_monitor")
+        if _ap and hasattr(_ap, "get_autopilot_status"):
+            _as = (_ap.get_autopilot_status() or {})
+            if not _as.get("on_course", True):
+                action_plan.append({"id": "ap-offcourse", "domain": "navigation", "priority": "high", "title": "Off course warning", "rationale": "Autopilot reports off course", "rule": "Navigation Safety", "recommended_action": "off_course_warning", "execute_before": generated_at})
+
+        # Mooring
+        _moor = _reg.get("mooring_monitor")
+        if _moor and hasattr(_moor, "get_mooring_status"):
+            _ms = (_moor.get_mooring_status() or {})
+            if _ms.get("any_parted"):
+                action_plan.append({"id": "moor-parted", "domain": "mooring", "priority": "critical", "title": "Mooring line parted", "rationale": "Mooring system reports parted line", "rule": "Mooring Safety", "recommended_action": "mooring_line_parted", "execute_before": generated_at})
+
+
+        # Bilge water monitor - MARPOL compliance
+        _bilge = _reg.get('bilge_water_monitor')
+        if _bilge and hasattr(_bilge, 'get_status'):
+            _bs = (_bilge.get_status() or {})
+            if not _bs.get('marpol_compliant', True):
+                action_plan.append({'id': 'bilge-marpol', 'domain': 'compliance', 'priority': 'critical', 'title': 'MARPOL bilge water violation', 'rationale': 'Bilge water system non-compliant with MARPOL Annex I', 'rule': 'MARPOL Annex I', 'recommended_action': 'marpol_violation_bilge', 'execute_before': generated_at})
+
+        # Communication manager - GMDSS and distress
+        _comms = _reg.get('communication_manager')
+        if _comms and hasattr(_comms, 'get_status'):
+            _cs = (_comms.get_status() or {})
+            if _cs.get('distress_active'):
+                action_plan.append({'id': 'comms-distress', 'domain': 'communication', 'priority': 'critical', 'title': 'Distress signal active', 'rationale': 'Vessel distress signal activated', 'rule': 'SOLAS Ch IV', 'recommended_action': 'distress_active', 'execute_before': generated_at})
+            if not _cs.get('gmdss_compliant', True):
+                action_plan.append({'id': 'comms-gmdss', 'domain': 'communication', 'priority': 'high', 'title': 'GMDSS non-compliant', 'rationale': 'GMDSS equipment requirements not met', 'rule': 'SOLAS Ch IV', 'recommended_action': 'gmdss_non_compliant', 'execute_before': generated_at})
+
+        # Rudder control - SOLAS steering compliance
+        _rudder = _reg.get('rudder_control_monitor')
+        if _rudder and hasattr(_rudder, 'get_status'):
+            _rs = (_rudder.get_status() or {})
+            if not _rs.get('solas_compliant', True):
+                action_plan.append({'id': 'rudder-fault', 'domain': 'steering', 'priority': 'critical', 'title': 'Steering system fault', 'rationale': 'Rudder control non-compliant with SOLAS requirements', 'rule': 'SOLAS Ch II-1/Reg.29', 'recommended_action': 'steering_fault', 'execute_before': generated_at})
+
+        # Tank level monitor - fuel level
+        _tank = _reg.get('tank_level_monitor')
+        if _tank and hasattr(_tank, 'get_tank_summary'):
+            _ts2 = (_tank.get_tank_summary() or {})
+            if len(_ts2.get('low_level_alarms', []) or []) > 0:
+                action_plan.append({'id': 'tank-fuel', 'domain': 'fuel', 'priority': 'high', 'title': 'Low fuel level warning', 'rationale': 'Tank level below safe threshold', 'rule': 'Fuel Management', 'recommended_action': 'low_fuel_warning', 'execute_before': generated_at})
+
+        # Alarm management - emergency alarms
+        _alarm = _reg.get('alarm_management')
+        if _alarm and hasattr(_alarm, 'get_alarm_summary'):
+            _als = (_alarm.get_alarm_summary() or {})
+            if (_als.get('emergency_count', 0) or 0) > 0:
+                action_plan.append({'id': 'alarm-emergency', 'domain': 'alarm', 'priority': 'critical', 'title': 'Emergency alarm active', 'rationale': 'One or more emergency alarms active', 'rule': 'IMO A.1021(26)', 'recommended_action': 'emergency_alarm_active', 'execute_before': generated_at})
 
         if not action_plan:
             action_plan.append(
@@ -191,20 +334,111 @@ class DecisionOrchestratorChannel(MarineChannel):
         perception = registry.get("distributed_perception_hub")
         navigation = registry.get("intelligent_navigation")
         engine = registry.get("intelligent_engine")
+
+        # 新增模块引用
+        autonomy_mgr = registry.get("autonomy_manager")
+        ship_shore = registry.get("ship_shore_link")
+        phm = registry.get("predictive_health")
+        route_opt = registry.get("route_optimizer")
+        cyber_sec = registry.get("cyber_security")
+        weather_routing = registry.get("weather_routing")
+        crew_fatigue_ch = registry.get("crew_fatigue")
+
         logger.debug("📦 Building decision package...")
-        snapshot = compliance.query_compliance_status("overall") if compliance and hasattr(compliance, "query_compliance_status") else {}
+        snapshot = (compliance.query_compliance_status("overall") if compliance and hasattr(compliance, "query_compliance_status") else {}) or {}
         latest_events = perception.get_latest_events(10) if perception and hasattr(perception, "get_latest_events") else []
-        nav_report = navigation.generate_navigation_report() if navigation and hasattr(navigation, "generate_navigation_report") else {}
-        engine_status = engine.get_status() if engine else {}
-        action_plan = self._build_action_plan(snapshot, nav_report, engine_status)
-        autonomy_mode = "supervised_autonomy" if snapshot.get("risk_level") in {"medium", "high"} else "advisory"
+        nav_report = (navigation.generate_navigation_report() if navigation and hasattr(navigation, "generate_navigation_report") else {}) or {}
+        engine_status = (engine.get_status() if engine else {}) or {}
+
+        # 新模块数据采集
+        autonomy_status = autonomy_mgr.get_status() if autonomy_mgr else {}
+        link_status = ship_shore.get_status() if ship_shore else {}
+        phm_status = phm.get_status() if phm else {}
+        route_status = route_opt.get_status() if route_opt else {}
+        cyber_status = cyber_sec.get_status() if cyber_sec else {}
+
+        weather_risk_data = {}
+        if weather_routing and hasattr(weather_routing, "get_status"):
+            wr_status = weather_routing.get_status() or {}
+            weather_risk_data = wr_status.get("weather_risk", wr_status)
+        crew_fatigue_data = {}
+        if crew_fatigue_ch and hasattr(crew_fatigue_ch, "get_status"):
+            cf_status = crew_fatigue_ch.get_status() or {}
+            crew_fatigue_data = cf_status.get("fatigue", cf_status)
+
+        action_plan = self._build_action_plan(snapshot, nav_report, engine_status, weather_risk_data, crew_fatigue_data)
+
+        # PHM 高优先级维护动作
+        if phm and hasattr(phm, "generate_maintenance_plan"):
+            maint_list = phm.generate_maintenance_plan()
+            # Returns a list of MaintenanceRecommendation dataclasses
+            if isinstance(maint_list, list):
+                for rec in maint_list[:3]:
+                    priority_raw = getattr(rec, "priority", "monitor")
+                    priority_val = getattr(priority_raw, "value", priority_raw)
+                    component_val = getattr(rec, "component_id", "unknown")
+                    action_val = getattr(rec, "action", "检查设备")
+                    if str(priority_val).lower() in ("immediate", "next_port"):
+                        action_plan.append({
+                            "id": f"phm-{component_val}",
+                            "domain": "maintenance",
+                            "priority": "critical" if "immediate" in str(priority_val).lower() else "high",
+                            "title": f"PHM: {component_val} - {action_val}",
+                            "rationale": f"Predictive health alert",
+                            "rule": "Predictive Health Management",
+                            "recommended_action": action_val,
+                            "execute_before": datetime.now().isoformat(),
+                        })
+
+        # 通信链路降级动作
+        if ship_shore and hasattr(ship_shore, "select_best_link"):
+            best_link = ship_shore.select_best_link()
+            # select_best_link returns a LinkType enum or None
+            link_health = link_status.get("health", "ok")
+            if best_link is None or link_health in ("error", "warn"):
+                action_plan.append({
+                    "id": "link-degraded",
+                    "domain": "communication",
+                    "priority": "high",
+                    "title": f"Ship-shore link degraded: {best_link.value if best_link else 'none'}",
+                    "rationale": f"Link health: {link_health}",
+                    "rule": "Communication Safety",
+                    "recommended_action": "切换备用通信链路或降低自主等级",
+                    "execute_before": datetime.now().isoformat(),
+                })
+
+        action_plan.sort(key=lambda item: PRIORITY_RANK.get(item["priority"], 9))
+
+        # 自主等级决定执行模式
+        mass_level_raw = autonomy_status.get("mass_code") or autonomy_status.get("mass_level", "M")
+        mass_level_map = {
+            "m": "M",
+            "manual": "M",
+            "r": "R",
+            "remote_crewed": "R",
+            "ru": "RU",
+            "remote_uncrewed": "RU",
+            "a": "A",
+            "autonomous": "A",
+        }
+        mass_level = mass_level_map.get(str(mass_level_raw).strip().lower(), "M")
+        if mass_level in ("RU", "A"):
+            autonomy_mode = "autonomous"
+        elif mass_level == "R":
+            autonomy_mode = "remote_supervised"
+        elif snapshot.get("risk_level") in {"medium", "high"}:
+            autonomy_mode = "supervised_autonomy"
+        else:
+            autonomy_mode = "advisory"
+
         task_graph = self._build_task_graph(action_plan, autonomy_mode, snapshot)
         package = {
             "generated_at": datetime.now().isoformat(),
             "risk_level": snapshot.get("risk_level", "unknown"),
             "compliance_status": snapshot.get("compliance_status", "unknown"),
-            "summary": f"航行风险 {snapshot.get('risk_level', 'unknown')}，当前需要执行 {len(action_plan)} 个跨域动作。",
+            "summary": f"航行风险 {snapshot.get('risk_level', 'unknown')}，MASS={mass_level}，需执行 {len(action_plan)} 个跨域动作。",
             "autonomy_mode": autonomy_mode,
+            "mass_level": mass_level,
             "recommended_actions": snapshot.get("recommended_actions", []),
             "action_plan": action_plan,
             "task_graph": task_graph,
@@ -214,16 +448,42 @@ class DecisionOrchestratorChannel(MarineChannel):
                     "active_risks": len(nav_report.get("collision_risks", [])),
                     "engine_alerts": len(engine_status.get("alerts", [])),
                     "recent_events": len(latest_events),
+                    "threat_level": cyber_status.get("threat_level", "none"),
+                    "link_quality": link_status.get(
+                        "best_link_quality",
+                        link_status.get("latency_prediction", {}).get("confidence", "N/A"),
+                    ),
                 },
                 "control_objectives": [
                     "Preserve safe CPA/TCPA margins under COLREGs constraints.",
                     "Protect propulsion and cooling subsystem availability.",
                     "Maintain efficiency and compliance within voyage limits.",
+                    "Ensure ship-shore communication continuity.",
+                    "Enforce cybersecurity posture per SVESSEL BIG policy.",
                 ],
                 "execution_style": autonomy_mode,
                 "watchstanding_note": snapshot.get("recommended_actions", ["Maintain normal watch."])[0],
+                "weather_summary": {
+                    "risk_level": weather_risk_data.get("risk_level", "unknown") if weather_risk_data else "unknown",
+                    "risk_score": weather_risk_data.get("risk_score", 0) if weather_risk_data else 0,
+                    "recommendation": weather_risk_data.get("recommendation", "No data"),
+                },
+                "crew_fatigue_warning": {
+                    "alerts": [
+                        {"crew": k, "score": v}
+                        for k, v in (crew_fatigue_data.get("fatigue_scores", {}) or {}).items()
+                        if v is not None and v < 50
+                    ],
+                    "total_crew": len(crew_fatigue_data.get("fatigue_scores", {}) or {}),
+                },
             },
             "maintenance_report": snapshot.get("maintenance_report", {}),
+            "phm_summary": phm_status,
+            "communication": link_status,
+            "cybersecurity": cyber_status,
+            "route_optimization": route_status,
+            "weather_risk": weather_risk_data,
+            "crew_fatigue_alert": crew_fatigue_data,
             "supporting_evidence": snapshot.get("evidence", []),
             "latest_events": latest_events,
             "feedback_records": self.feedback_records[-10:],
@@ -233,12 +493,19 @@ class DecisionOrchestratorChannel(MarineChannel):
                     "health": engine_status.get("health"),
                     "health_score": engine_status.get("engine_health_score"),
                 },
+                "autonomy": autonomy_status,
+                "ship_shore_link": link_status,
+                "predictive_health": phm_status,
+                "route_optimizer": route_status,
+                "cyber_security": cyber_status,
             },
             "kpi_targets": {
                 "minimum_dcpa_nm": getattr(navigation, "dcpa_limit", None),
                 "maximum_tcpa_min": getattr(navigation, "tcpa_limit", None),
                 "engine_health_score_floor": 85,
                 "decision_latency_target_ms": 200,
+                "link_quality_floor": 0.6,
+                "phm_rul_warning_hours": 200,
             },
         }
         self.latest_package = package

@@ -7,6 +7,10 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
+      '/health': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true
+      },
       '/api': {
         target: 'http://127.0.0.1:8080',
         changeOrigin: true
@@ -19,7 +23,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: resolve(__dirname, 'dist'),
+    outDir: resolve(process.cwd(), 'dist'),
     emptyOutDir: true
   }
 })

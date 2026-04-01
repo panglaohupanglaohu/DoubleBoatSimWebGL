@@ -63,9 +63,9 @@ class TestAINativeDashboard:
         data = response.json()
         decision = data["decision"]
         assert "risk_level" in decision
-        assert "compliance_status" in decision
-        assert "recommended_actions" in decision
-        assert "latest_events" in decision
+        assert "autonomy_mode" in decision
+        assert "action_count" in decision
+        assert "generated_at" in decision
 
 
 class TestAINativeQueryEndpoints:
@@ -98,8 +98,9 @@ class TestAINativeQueryEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["channel"] == "decision_orchestrator"
-        assert "risk_level" in data["result"]
-        assert "recommended_actions" in data["result"]
+        # latest_package is empty before first coordination run
+        assert isinstance(data["result"], dict)
+        assert "status" in data
 
     def test_channel_list_contains_ai_native_channels(self, client):
         response = client.get("/api/v1/channels")

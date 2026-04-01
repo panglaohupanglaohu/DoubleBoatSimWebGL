@@ -15,9 +15,11 @@ export class DataAggregator {
       worldmonitorAisUrl: '/api/v1/worldmonitor/ais',
       worldmonitorWeatherUrl: '/api/v1/worldmonitor/weather',
       refreshIntervalMs: 15000,
+      cacheTtlMs: 3000,
       ...config,
     };
     this.cache = new Map();
+    this._inflight = new Map();
   }
 
   async fetchJson(url) {
@@ -28,41 +30,53 @@ export class DataAggregator {
     return response.json();
   }
 
+  /**
+   * TTL-aware fetch with in-flight dedup.
+   * Returns cached data if fresh; coalesces concurrent requests to same URL.
+   */
+  async _cachedFetch(key, url) {
+    const cached = this.cache.get(key);
+    if (cached && (Date.now() - cached.ts) < this.config.cacheTtlMs) {
+      return cached.data;
+    }
+    if (this._inflight.has(key)) {
+      return this._inflight.get(key);
+    }
+    const promise = this.fetchJson(url).then(data => {
+      this.cache.set(key, { ts: Date.now(), data });
+      this._inflight.delete(key);
+      return data;
+    }).catch(err => {
+      this._inflight.delete(key);
+      throw err;
+    });
+    this._inflight.set(key, promise);
+    return promise;
+  }
+
   async getLocalDashboard() {
-    const data = await this.fetchJson(this.config.dashboardUrl);
-    this.cache.set('dashboard', { ts: Date.now(), data });
-    return data;
+    return this._cachedFetch('dashboard', this.config.dashboardUrl);
   }
 
   async getCoordinationStatus() {
-    const data = await this.fetchJson(this.config.coordinationUrl);
-    this.cache.set('ai-native:coordination', { ts: Date.now(), data });
-    return data;
+    return this._cachedFetch('ai-native:coordination', this.config.coordinationUrl);
   }
 
   async getMissionBrief() {
-    const data = await this.fetchJson(this.config.missionBriefUrl);
-    this.cache.set('ai-native:mission-brief', { ts: Date.now(), data });
-    return data;
+    return this._cachedFetch('ai-native:mission-brief', this.config.missionBriefUrl);
   }
 
   async getFusionState() {
-    const data = await this.fetchJson(this.config.fusionStateUrl);
-    this.cache.set('ai-native:fusion-state', { ts: Date.now(), data });
-    return data;
+    return this._cachedFetch('ai-native:fusion-state', this.config.fusionStateUrl);
   }
 
   async getWorldMonitorAis() {
-    const data = await this.fetchJson(this.config.worldmonitorAisUrl);
-    this.cache.set('worldmonitor:ais', { ts: Date.now(), data });
-    return data;
+    return this._cachedFetch('worldmonitor:ais', this.config.worldmonitorAisUrl);
   }
 
   async getWorldMonitorWeather(lat, lng) {
     const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
-    const data = await this.fetchJson(`${this.config.worldmonitorWeatherUrl}?${params.toString()}`);
-    this.cache.set('worldmonitor:weather', { ts: Date.now(), data });
-    return data;
+    return this._cachedFetch('worldmonitor:weather', `${this.config.worldmonitorWeatherUrl}?${params.toString()}`);
   }
 
   async buildUnifiedView() {

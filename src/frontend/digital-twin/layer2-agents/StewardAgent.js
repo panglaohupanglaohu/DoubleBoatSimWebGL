@@ -200,19 +200,24 @@ export class StewardAgent extends AgentBase {
     this.registerTool('checkInventory', async (params) => {
       const { itemName } = params;
       
-      // 模拟库存查询（实际应该查询 RFID 数据库）
-      const mockInventory = {
-        '大米': { quantity: 500, unit: 'kg', expiryDate: '2026-06-30', location: 'Warehouse-A-03' },
-        '鸡肉': { quantity: 150, unit: 'kg', expiryDate: '2026-02-15', location: 'Freezer-01' },
-        '蔬菜': { quantity: 80, unit: 'kg', expiryDate: '2026-02-05', location: 'Refrigerator-02' },
-        '淡水': { quantity: 45000, unit: 'L', expiryDate: null, location: 'FreshWaterTank' }
-      };
-      
-      const item = mockInventory[itemName] || { quantity: 0, unit: 'unknown', expiryDate: null, location: 'unknown' };
-      
-      // 计算剩余天数
-      let daysRemaining = null;
-      if (item.expiryDate) {
+      // 尝试从后端获取真实库存，失败则用 mock
+      let inventory;
+      try {
+        const resp = await fetch("/api/v1/ai-native/crew-comfort/status");
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.inventory) inventory = data.inventory;
+        }
+      } catch (_e) { /* fallback */ }
+      if (!inventory) {
+        inventory = {
+          '大米': { quantity: 500, unit: "kg", expiryDate: "2026-06-30", location: "Warehouse-A-03" },
+          '鸡肉': { quantity: 150, unit: "kg", expiryDate: "2026-02-15", location: "Freezer-01" },
+          '蔬菜': { quantity: 80, unit: "kg", expiryDate: "2026-02-05", location: "Refrigerator-02" },
+          '淡水': { quantity: 45000, unit: "L", expiryDate: null, location: "FreshWaterTank" },
+        };
+      }
+      const item = inventory[itemName] || { quantity: 0, unit: "unknown", expiryDate: null, location: "unknown" };
         const expiry = new Date(item.expiryDate);
         const now = new Date();
         daysRemaining = Math.ceil((expiry - now) / 86400000);

@@ -12,6 +12,21 @@ import { BridgeChat } from './layer1-interface/BridgeChat.js';
 import { DigitalTwinMap } from './layer1-interface/DigitalTwinMap.js';
 import { ContextWindow } from './layer1-interface/ContextWindow.js';
 import { MarineEngineeringPanel } from './layer1-interface/MarineEngineeringPanel.js';
+import { WeatherRoutingPanel } from './layer1-interface/WeatherRoutingPanel.js';
+import { CrewFatiguePanel } from './layer1-interface/CrewFatiguePanel.js';
+import { AnchorWatchPanel } from './layer1-interface/AnchorWatchPanel.js';
+import { HullStressPanel } from './layer1-interface/HullStressPanel.js';
+import { PowerManagementPanel } from './layer1-interface/PowerManagementPanel.js';
+import { DPStatusPanel } from './layer1-interface/DPStatusPanel.js';
+import { VDRStatusPanel } from './layer1-interface/panels/VDRStatusPanel.js';
+import { AlarmPanel } from './layer1-interface/panels/AlarmPanel.js';
+import { TankLevelPanel } from './layer1-interface/panels/TankLevelPanel.js';
+import { CommsStatusPanel } from './layer1-interface/panels/CommsStatusPanel.js';
+import { MOBPanel } from './layer1-interface/panels/MOBPanel.js';
+import { PropulsionPanel } from './layer1-interface/panels/PropulsionPanel.js';
+import { SafetyPanel } from './layer1-interface/panels/SafetyPanel.js';
+import { AutopilotPanel } from './layer1-interface/panels/AutopilotPanel.js';
+import { RudderPanel } from './layer1-interface/panels/RudderPanel.js';
 
 // Layer 2: 智能体
 import { NavigatorAgent } from './layer2-agents/NavigatorAgent.js';
@@ -215,7 +230,127 @@ export class PoseidonX extends EventEmitter {
       this.marinePanel.initialize(marineContainer);
       console.log('  ✅ Marine Engineering Panel initialized');
     }
-    
+
+    // Weather Routing Panel（天气航线面板）
+    const wrContainer = document.getElementById('weather-routing-panel');
+    if (wrContainer) {
+      this.weatherRoutingPanel = new WeatherRoutingPanel(wrContainer);
+      await this.weatherRoutingPanel.initialize();
+      console.log('  ✅ Weather Routing Panel initialized');
+    }
+
+    // Crew Fatigue Panel（船员疲劳面板）
+    const cfContainer = document.getElementById('crew-fatigue-panel');
+    if (cfContainer) {
+      this.crewFatiguePanel = new CrewFatiguePanel(cfContainer);
+      await this.crewFatiguePanel.initialize();
+      console.log('  ✅ Crew Fatigue Panel initialized');
+    }
+
+    // Anchor Watch Panel（锚泊监控面板）
+    const awContainer = document.getElementById('anchor-watch-panel');
+    if (awContainer) {
+      this.anchorWatchPanel = new AnchorWatchPanel(awContainer);
+      await this.anchorWatchPanel.initialize();
+      console.log('  ✅ Anchor Watch Panel initialized');
+    }
+
+    // Hull Stress Panel（船体应力监测面板）
+    const hsContainer = document.getElementById('hull-stress-panel');
+    if (hsContainer) {
+      this.hullStressPanel = new HullStressPanel(hsContainer);
+      await this.hullStressPanel.initialize();
+      console.log('  ✅ Hull Stress Panel initialized');
+    }
+
+    // Power Management Panel（电力管理面板）
+    const pmContainer = document.getElementById('power-management-panel');
+    if (pmContainer) {
+      this.powerManagementPanel = new PowerManagementPanel(pmContainer);
+      await this.powerManagementPanel.initialize();
+      console.log('  ✅ Power Management Panel initialized');
+    }
+
+    // DP Status Panel（动态定位面板）
+    const dpContainer = document.getElementById('dp-status-panel');
+    if (dpContainer) {
+      this.dpStatusPanel = new DPStatusPanel(dpContainer);
+      await this.dpStatusPanel.initialize();
+      console.log('  ✅ DP Status Panel initialized');
+    }
+
+    // VDR Status Panel（VDR 状态面板）
+    const vdrContainer = document.getElementById('vdr-status-panel');
+    if (vdrContainer) {
+      this.vdrStatusPanel = new VDRStatusPanel(vdrContainer);
+      await this.vdrStatusPanel.initialize();
+      console.log('  ✅ VDR Status Panel initialized');
+    }
+
+    // Alarm Panel（告警中心面板）
+    const alarmContainer = document.getElementById('alarm-panel');
+    if (alarmContainer) {
+      this.alarmPanel = new AlarmPanel(alarmContainer);
+      await this.alarmPanel.initialize();
+      console.log('  ✅ Alarm Panel initialized');
+    }
+
+    // Tank Level Panel（液舱水位面板）
+    const tankContainer = document.getElementById('tank-level-panel');
+    if (tankContainer) {
+      this.tankLevelPanel = new TankLevelPanel(tankContainer);
+      await this.tankLevelPanel.initialize();
+      console.log('  ✅ Tank Level Panel initialized');
+    }
+
+    // Comms Status Panel（通信状态面板）
+    const commsContainer = document.getElementById('comms-status-panel');
+    if (commsContainer) {
+      this.commsStatusPanel = new CommsStatusPanel(commsContainer);
+      await this.commsStatusPanel.initialize();
+      console.log('  ✅ Comms Status Panel initialized');
+    }
+
+    // MOB Panel（落水告警面板）
+    const mobContainer = document.getElementById('mob-panel');
+    if (mobContainer) {
+      this.mobPanel = new MOBPanel(mobContainer);
+      await this.mobPanel.initialize();
+      console.log('  ✅ MOB Panel initialized');
+    }
+
+    // Propulsion Panel（推进系统面板）
+    const propContainer = document.getElementById('propulsion-panel');
+    if (propContainer) {
+      this.propulsionPanel = new PropulsionPanel(propContainer);
+      await this.propulsionPanel.initialize();
+      console.log('  ✅ Propulsion Panel initialized');
+    }
+
+    // Safety Panel（安全系统面板）
+    const safetyContainer = document.getElementById('safety-panel');
+    if (safetyContainer) {
+      this.safetyPanel = new SafetyPanel(safetyContainer);
+      await this.safetyPanel.initialize();
+      console.log('  ✅ Safety Panel initialized');
+    }
+
+    // Autopilot Panel（自动舵面板）
+    const apContainer = document.getElementById('autopilot-panel');
+    if (apContainer) {
+      this.autopilotPanel = new AutopilotPanel(apContainer);
+      await this.autopilotPanel.initialize();
+      console.log('  ✅ Autopilot Panel initialized');
+    }
+
+    // Rudder Panel（舵机面板）
+    const rudderContainer = document.getElementById('rudder-panel');
+    if (rudderContainer) {
+      this.rudderPanel = new RudderPanel(rudderContainer);
+      await this.rudderPanel.initialize();
+      console.log('  ✅ Rudder Panel initialized');
+    }
+
     console.log('✅ Layer 1 initialized');
   }
   

@@ -1,0 +1,95 @@
+# 代码开发者 (Code Writer)
+
+你是 **PoseidonX** 的核心代码开发者，团队中产出代码最多的 Agent。
+
+## 目标项目
+
+项目路径: `/Users/panglaohu/Downloads/DoubleBoatClawSystem`  
+⚠️ 所有代码修改和测试都在上级目录进行。
+
+## 技术栈
+
+- Python 3.14 + FastAPI（后端）
+- Three.js + MapLibre GL + Vanilla JS（前端）
+- pytest + `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`
+
+## 项目结构
+
+```
+/Users/panglaohu/Downloads/DoubleBoatClawSystem/src/backend/
+├── main.py                              # FastAPI 入口
+├── register_channels.py                 # 新 Channel 必须在这里注册
+├── channels/                            # 46 个 MarineChannel
+│   ├── marine_base.py                   # 基类 — 所有 Channel 继承
+│   ├── marine_message_bus.py            # 消息总线
+│   ├── decision_orchestrator.py         # L3 决策编排
+│   ├── colregs_brain.py                 # L3 避碰引擎
+│   ├── intelligent_engine.py            # L3 机舱诊断
+│   ├── distributed_perception_hub.py    # L2 多源融合
+│   ├── energy_efficiency_channel.py     # L2 能效监控
+│   ├── wpc_attitude_control.py          # L4 姿态控制
+│   ├── openbridge_hmi.py              # L5 HMI
+│   ├── ship_shore_link.py             # L1 船岸通信
+│   └── ...
+├── storage/
+│   ├── data_lakehouse.py               # SQLite + DuckDB + Parquet
+│   ├── event_store.py
+│   └── cloud_sync.py
+└── adapters/
+
+/Users/panglaohu/Downloads/DoubleBoatClawSystem/src/frontend/digital-twin/
+├── main.js, PoseidonX.js
+├── layer1-interface/
+├── layer2-agents/
+└── layer3-platform/
+
+/Users/panglaohu/Downloads/DoubleBoatClawSystem/tests/
+├── unit/                               # 30+ 单元测试
+└── integration/                        # 6 集成测试
+```
+
+## Channel 开发模板
+
+```python
+from channels.marine_base import MarineChannel
+
+class MyChannel(MarineChannel):
+    def __init__(self, config=None):
+        super().__init__(name="my_channel", config=config or {})
+
+    async def process_event(self, event: dict) -> dict:
+        return {"status": "processed"}
+
+    def get_status(self) -> dict:
+        return {"name": self.name, "active": self._active}
+
+    async def start(self):
+        self._active = True
+
+    async def stop(self):
+        self._active = False
+```
+
+## 关键编码原则
+
+1. **向后兼容** — 新参数必须有默认值
+2. **工厂模式** — 可变默认值用工厂函数，不用模块级 dict/list
+3. **零值安全** — `if any(v is None for v in [lat, lon])` 不用 `if not all([lat, lon])`
+4. **错误隔离** — Channel 内部错误不传播到其他 Channel
+5. **凭证安全** — S3 操作需要 `allow_ambient_credentials` 守护
+
+## 常用命令
+
+```bash
+cd /Users/panglaohu/Downloads/DoubleBoatClawSystem
+source venv/bin/activate
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -q --tb=short         # 全量
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/unit/test_xxx.py -v     # 单文件
+```
+
+## 红线规则
+
+- **修改前先运行测试** — 确认基线
+- **修改后立即运行测试** — 确认无回归
+- 不允许删除已有测试
+- 不允许 `@pytest.mark.skip`

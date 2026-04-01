@@ -1,7 +1,7 @@
 /**
  * NavigationMonitor - WorldMonitor 集成预留组件
  *
- * 当前阶段：方案层代码 / 结构骨架
+ * 已实装自动刷新 + WorldMonitor 后端对接
  * 目标：为后续接入 globe.gl / deck.gl / MapLibre 提供统一接口
  */
 
@@ -79,6 +79,42 @@ export class NavigationMonitor {
       ? `本船 ${Number(this.ownShip.latitude || 0).toFixed(4)}, ${Number(this.ownShip.longitude || 0).toFixed(4)}`
       : '本船位置未设置';
     summary.textContent = `${own} ｜ AIS 目标 ${this.targets.length} 个 ｜ 图层: ${Object.entries(this.layers).filter(([, on]) => on).map(([k]) => k).join(', ')}`;
+  }
+
+  /**
+   * 开启自动刷新：定时从后端拉取 AIS 和本船数据
+   * @param {number} intervalMs - 刷新间隔（默认 15 秒）
+   */
+  startAutoRefresh(intervalMs = 15000) {
+    this.stopAutoRefresh();
+    this._fetchAndUpdate();
+    this._refreshTimer = setInterval(() => this._fetchAndUpdate(), intervalMs);
+  }
+
+  stopAutoRefresh() {
+    if (this._refreshTimer) { clearInterval(this._refreshTimer); this._refreshTimer = null; }
+  }
+
+  async _fetchAndUpdate() {
+    try {
+      const [aisResp, navResp] = await Promise.allSettled([
+        fetch("/api/v1/worldmonitor/ais"),
+        fetch("/api/v1/ai-native/decision/package")
+      ]);
+      if (aisResp.status === "fulfilled" && aisResp.value.ok) {
+        const aisData = await aisResp.value.json();
+        this.setAISTargets(aisData.targets || []);
+        if (aisData.mode === "real") { this.config.mode = "connected"; }
+      }
+      if (navResp.status === "fulfilled" && navResp.value.ok) {
+        const nav = await navResp.value.json();
+        if (nav.position) { this.setOwnShip(nav.position); }
+      }
+    } catch (_) { /* skip */ }
+  }
+
+  dispose() {
+    this.stopAutoRefresh();
   }
 }
 

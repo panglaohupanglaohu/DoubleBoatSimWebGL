@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PoseidonX — Agent 团队配置</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#e0e0e0;min-height:100vh}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(0,0,0,.2)}::-webkit-scrollbar-thumb{background:#4fc3f7;border-radius:3px}
+.header{background:rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.08);padding:16px 32px;display:flex;align-items:center;gap:16px}
+.header h1{font-size:22px;color:#4fc3f7;font-weight:700}
+.header .badge{background:rgba(79,195,247,.15);color:#4fc3f7;padding:3px 10px;border-radius:20px;font-size:12px}
+.tab-bar{display:flex;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.08);padding:0 24px;overflow-x:auto}
+.tab-btn{padding:14px 22px;cursor:pointer;font-size:14px;color:#888;border:none;background:none;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;font-weight:500}
+.tab-btn:hover{color:#ccc}.tab-btn.active{color:#4fc3f7;border-bottom-color:#4fc3f7}
+.main{padding:24px 32px;max-width:1400px;margin:0 auto}.tab-panel{display:none}.tab-panel.active{display:block}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-2px);border-color:rgba(79,195,247,.3)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.card-header h3{font-size:16px;color:#fff}
+.card-desc{color:#999;font-size:13px;margin-bottom:12px;line-height:1.5}.card-meta{display:flex;gap:12px;flex-wrap:wrap}
+.meta-tag{background:rgba(79,195,247,.12);color:#4fc3f7;padding:3px 10px;border-radius:12px;font-size:12px}
+.meta-tag.green{background:rgba(76,175,80,.15);color:#81c784}.meta-tag.orange{background:rgba(255,152,0,.15);color:#ffb74d}
+.meta-tag.red{background:rgba(244,67,54,.15);color:#ef5350}.meta-tag.purple{background:rgba(156,39,176,.15);color:#ce93d8}
+.btn{background:linear-gradient(135deg,#4fc3f7 0%,#2196f3 100%);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}.btn-sm{padding:6px 14px;font-size:12px}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.2);color:#ccc}.btn-ghost:hover{border-color:#4fc3f7;color:#4fc3f7}
+.btn-icon{width:32px;height:32px;border-radius:8px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#aaa;cursor:pointer;font-size:16px}
+.btn-icon:hover{border-color:#ef5350;color:#ef5350}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap}.toolbar .spacer{flex:1}
+.section-title{font-size:18px;color:#4fc3f7;margin-bottom:16px;font-weight:600}
+.team-selector{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.2);padding:12px 16px;border-radius:10px;margin-bottom:20px;border:1px solid rgba(255,255,255,.08)}
+.team-selector label{color:#888;font-size:13px;white-space:nowrap}
+.team-selector select{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;padding:8px 12px;font-size:14px}
+.team-selector select:focus{outline:none;border-color:#4fc3f7}
+.form-group{margin-bottom:16px}.form-group label{display:block;margin-bottom:6px;color:#aaa;font-size:13px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:14px}
+.form-group textarea{resize:vertical;min-height:80px;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#4fc3f7}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:linear-gradient(135deg,#1e1e3a 0%,#1a2744 100%);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:28px;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;position:relative}
+.modal h2{font-size:20px;color:#4fc3f7;margin-bottom:20px}
+.modal-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:#888;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(244,67,54,.2);color:#ef5350}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+.wizard-steps{display:flex;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:12px}
+.wizard-step{flex:1;text-align:center;padding:8px 4px;font-size:12px;color:#666}
+.wizard-step .step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.08);margin-bottom:4px;font-size:11px}
+.wizard-step.active{color:#4fc3f7}.wizard-step.active .step-num{background:#4fc3f7;color:#111}
+.wizard-step.done{color:#81c784}.wizard-step.done .step-num{background:#4caf50;color:#fff}
+.wizard-step-title{display:block;font-size:11px;margin-top:2px}
+.wizard-panel{display:none}.wizard-panel.active{display:block}
+.wizard-nav{display:flex;justify-content:space-between;margin-top:24px}
+.accordion{margin-bottom:12px}
+.accordion-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;cursor:pointer;user-select:none}
+.accordion-header:hover{background:rgba(255,255,255,.07)}
+.accordion-header .arrow{transition:transform .2s;font-size:12px;color:#888}
+.accordion.open .arrow{transform:rotate(90deg)}
+.accordion-header .cat-name{font-size:14px;color:#ccc;font-weight:500}
+.accordion-header .cat-count{margin-left:auto;font-size:12px;color:#666}
+.accordion-body{display:none;padding:8px 0 0 0}.accordion.open .accordion-body{display:block}
+.tool-item,.skill-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tool-item:last-child,.skill-item:last-child{border-bottom:none}
+.tool-name{font-size:14px;color:#ddd;min-width:160px}.tool-desc{font-size:12px;color:#888;flex:1}
+.toggle{position:relative;width:40px;height:22px;background:rgba(255,255,255,.12);border-radius:11px;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:#4fc3f7}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle.on::after{transform:translateX(18px)}
+.tags-input{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);border-radius:8px;min-height:42px;align-items:center;cursor:text}
+.tags-input:focus-within{border-color:#4fc3f7}
+.tags-input .tag{background:rgba(79,195,247,.15);color:#4fc3f7;padding:2px 8px;border-radius:6px;font-size:12px;display:flex;align-items:center;gap:4px}
+.tags-input .tag .remove{cursor:pointer;font-size:14px;color:#4fc3f7;opacity:.7}.tags-input .tag .remove:hover{opacity:1}
+.tags-input input{border:none;background:none;color:#fff;font-size:13px;flex:1;min-width:80px;padding:2px 0;outline:none}
+.agent-card{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px 20px;transition:all .15s;cursor:pointer}
+.agent-card:hover{border-color:rgba(79,195,247,.3);transform:translateY(-1px)}
+.agent-avatar{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#4fc3f7 0%,#2196f3 100%);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:700;flex-shrink:0}
+.agent-info{flex:1;min-width:0}.agent-info h4{font-size:15px;color:#fff;margin-bottom:2px}.agent-info .agent-role{font-size:12px;color:#888}
+.state-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.state-dot.idle{background:#888}.state-dot.working{background:#4caf50;box-shadow:0 0 6px rgba(76,175,80,.5)}
+.state-dot.paused{background:#ff9800}.state-dot.error{background:#f44336;box-shadow:0 0 6px rgba(244,67,54,.5)}.state-dot.stopped{background:#555}
+.check-list{max-height:300px;overflow-y:auto}
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.check-item input[type=checkbox]{width:16px;height:16px;accent-color:#4fc3f7;flex-shrink:0}
+.check-item .check-label{font-size:13px;color:#ccc;flex:1}.check-item .check-desc{font-size:11px;color:#777}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;text-align:center}
+.stat-num{font-size:36px;font-weight:700;color:#4fc3f7}.stat-label{font-size:13px;color:#888;margin-top:4px}
+.toast-container{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:10px;font-size:13px;animation:toastIn .3s ease;min-width:250px;display:flex;align-items:center;gap:8px}
+.toast.success{background:rgba(76,175,80,.9);color:#fff}.toast.error{background:rgba(244,67,54,.9);color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateX(40px)}}
+.slider-group{display:flex;align-items:center;gap:12px}
+.slider-group input[type=range]{flex:1;accent-color:#4fc3f7;height:4px}
+.slider-group .slider-val{min-width:50px;text-align:right;color:#4fc3f7;font-size:14px;font-weight:600}
+.perm-row{display:grid;grid-template-columns:1fr 120px 1fr 32px;gap:10px;align-items:start;margin-bottom:10px}
+.channel-row{display:grid;grid-template-columns:1fr 80px 80px 80px 32px;gap:10px;align-items:center;margin-bottom:10px}
+.channel-row label{font-size:12px;color:#888;text-align:center}
+.empty{text-align:center;padding:60px 20px;color:#555;font-size:14px}.empty .empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+@media(max-width:768px){.header{padding:12px 16px;flex-wrap:wrap}.main{padding:16px}.tab-bar{padding:0 8px}.tab-btn{padding:12px 14px;font-size:13px}.card-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.modal{width:95%;padding:20px}}
+
+.search-box{position:relative;min-width:240px}
+.search-box input{width:100%;padding:8px 14px 8px 34px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;color:#e0e0e0;font-size:13px;outline:none;transition:border-color .2s}
+.search-box input:focus{border-color:#4fc3f7}
+.search-box .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#666;font-size:14px;pointer-events:none}
+.search-dropdown{position:absolute;top:100%;left:0;right:0;margin-top:6px;background:#1e1e3a;border:1px solid rgba(255,255,255,.12);border-radius:12px;max-height:380px;overflow-y:auto;z-index:500;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.search-dropdown.show{display:block}
+.search-group-label{padding:8px 14px;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,.06)}
+.search-item{padding:10px 14px;cursor:pointer;font-size:13px;color:#ccc;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.search-item:hover{background:rgba(79,195,247,.08);color:#fff}
+.search-item .si-name{flex:1}.search-item .si-type{font-size:11px;color:#666}
+.search-no-results{padding:20px;text-align:center;color:#555;font-size:13px}
+.card-header .card-title-area{cursor:pointer;flex:1;min-width:0}.card-header .card-title-area:hover h3{color:#4fc3f7}
+.btn-danger{background:linear-gradient(135deg,#ef5350 0%,#c62828 100%)}.btn-danger:hover{transform:translateY(-1px)}
+.btn-warning{background:linear-gradient(135deg,#ff9800 0%,#e65100 100%)}.btn-warning:hover{transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#4caf50 0%,#2e7d32 100%)}.btn-success:hover{transform:translateY(-1px)}
+.detail-section{margin-bottom:20px;padding:16px;background:rgba(0,0,0,.15);border-radius:10px;border:1px solid rgba(255,255,255,.06)}
+.detail-section h3{font-size:14px;color:#4fc3f7;margin-bottom:12px;font-weight:600}
+.detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px}
+.detail-row:last-child{border-bottom:none}
+.detail-row .dl{color:#888}.detail-row .dv{color:#ddd}
+.agent-detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.log-container{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;font-family:"SF Mono",Monaco,monospace;font-size:12px;color:#aaa;line-height:1.6}
+.log-container .log-time{color:#666}.log-container .log-level-info{color:#4fc3f7}.log-container .log-level-warn{color:#ff9800}.log-container .log-level-error{color:#ef5350}
+</style></head><body>
+
+<div class="header">
+  <h1>&#x1F916; Agent 团队配置</h1>
+  <span class="badge">PoseidonX</span>
+  <div class="search-box">
+    <span class="search-icon">&#x1F50D;</span>
+    <input type="text" id="globalSearchInput" placeholder="搜索团队、智能体、工具、技能..." autocomplete="off">
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+  <div style="flex:1"></div>
+  <span style="color:#666;font-size:13px" id="connStatus">&#x2B24; 未连接</span>
+</div>
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="teams">&#x1F3E2; 公司信息</button>
+  <button class="tab-btn" data-tab="models">&#x1F9E0; 模型池</button>
+  <button class="tab-btn" data-tab="tools">&#x1F527; 工具</button>
+  <button class="tab-btn" data-tab="skills">&#x26A1; 技能</button>
+  <button class="tab-btn" data-tab="agents">&#x1F916; 智能体</button>
+  <button class="tab-btn" data-tab="overview">&#x1F4CA; 总览</button>
+</div>
+<div class="main">
+<div class="tab-panel active" id="panel-teams">
+  <div class="toolbar"><h2 class="section-title">团队列表</h2><div class="spacer"></div>
+    <button class="btn" onclick="openCreateTeamModal()">+ 创建团队</button></div>
+  <div class="card-grid" id="teamsGrid"></div>
+  <div class="empty" id="teamsEmpty" style="display:none"><div class="empty-icon">&#x1F3E2;</div><p>暂无团队，点击"创建团队"开始</p></div>
+</div>
+<div class="tab-panel" id="panel-models">
+  <div class="team-selector"><label>当前团队:</label><select id="modelTeamSelect" onchange="onTeamSelectChange('models')"></select></div>
+  <div class="toolbar"><h2 class="section-title">模型池</h2><div class="spacer"></div>
+    <button class="btn" onclick="openAddModelModal()">+ 添加模型</button></div>
+  <div class="card-grid" id="modelsGrid"></div>
+  <div class="empty" id="modelsEmpty" style="display:none"><div class="empty-icon">&#x1F9E0;</div><p>该团队暂无模型</p></div>
+</div>
+<div class="tab-panel" id="panel-tools">
+  <div class="team-selector"><label>当前团队:</label><select id="toolTeamSelect" onchange="onTeamSelectChange('tools')"></select></div>
+  <h2 class="section-title">工具目录</h2>
+  <div id="toolsContainer"></div>
+</div>
+<div class="tab-panel" id="panel-skills">
+  <div class="team-selector"><label>当前团队:</label><select id="skillTeamSelect" onchange="onTeamSelectChange('skills')"></select></div>
+  <h2 class="section-title">技能目录</h2>
+  <div id="skillsContainer"></div>
+</div>
+<div class="tab-panel" id="panel-agents">
+  <div class="team-selector"><label>当前团队:</label><select id="agentTeamSelect" onchange="onTeamSelectChange('agents')"></select></div>
+  <div class="toolbar"><h2 class="section-title">智能体列表</h2><div class="spacer"></div>
+    <button class="btn" onclick="openAgentWizard()">+ 创建智能体</button></div>
+  <div class="card-grid" id="agentsGrid"></div>
+  <div class="empty" id="agentsEmpty" style="display:none"><div class="empty-icon">&#x1F916;</div><p>该团队暂无智能体</p></div>
+</div>
+<div class="tab-panel" id="panel-overview">
+  <h2 class="section-title">系统总览</h2>
+  <div class="stats-grid" id="overviewStats"></div>
+  <h2 class="section-title" style="margin-top:20px">团队摘要</h2>
+  <div class="card-grid" id="overviewTeams"></div>
+</div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<div class="modal-overlay" id="createTeamModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('createTeamModal')">&times;</button>
+    <h2>创建新团队</h2>
+    <div class="form-group"><label>团队名称 *</label><input id="newTeamName" placeholder="例: PoseidonX Alpha Team" maxlength="128"></div>
+    <div class="form-group"><label>描述</label><textarea id="newTeamDesc" placeholder="团队描述..." rows="3"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('createTeamModal')">取消</button><button class="btn" onclick="createTeam()">创建</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="addModelModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addModelModal')">&times;</button>
+    <h2>添加模型</h2>
+    <div class="form-group"><label>Provider</label><select id="newModelProvider"><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="google">Google</option><option value="mistral">Mistral</option><option value="local">Local</option></select></div>
+    <div class="form-group"><label>模型名称</label><input id="newModelName" value="claude-sonnet-4-20250514"></div>
+    <div class="form-group"><label>Max Tokens</label><div class="slider-group"><input type="range" id="newModelTokens" min="1024" max="200000" step="1024" value="8192" oninput="document.getElementById('tokensVal').textContent=this.value"><span class="slider-val" id="tokensVal">8192</span></div></div>
+    <div class="form-group"><label>Temperature</label><div class="slider-group"><input type="range" id="newModelTemp" min="0" max="2" step="0.05" value="0.7" oninput="document.getElementById('tempVal').textContent=parseFloat(this.value).toFixed(2)"><span class="slider-val" id="tempVal">0.70</span></div></div>
+    <div class="form-group" style="display:flex;align-items:center;gap:10px"><label style="margin:0">默认模型</label><div class="toggle" id="newModelDefault" onclick="this.classList.toggle('on')"></div></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('addModelModal')">取消</button><button class="btn" onclick="addModel()">添加</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="agentWizardModal">
+  <div class="modal" style="max-width:700px">
+    <button class="modal-close" onclick="closeModal('agentWizardModal')">&times;</button>
+    <h2>创建智能体</h2>
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="0"><div class="step-num">1</div><span class="wizard-step-title">基本信息</span></div>
+      <div class="wizard-step" data-step="1"><div class="step-num">2</div><span class="wizard-step-title">个性设置</span></div>
+      <div class="wizard-step" data-step="2"><div class="step-num">3</div><span class="wizard-step-title">技能配置</span></div>
+      <div class="wizard-step" data-step="3"><div class="step-num">4</div><span class="wizard-step-title">权限设置</span></div>
+      <div class="wizard-step" data-step="4"><div class="step-num">5</div><span class="wizard-step-title">通道绑定</span></div>
+    </div>
+    <div class="wizard-panel active" id="wizStep0">
+      <div class="form-group"><label>名称 *</label><input id="wizName" placeholder="例: 航海专家"></div>
+      <div class="form-row"><div class="form-group"><label>角色</label><input id="wizRole" placeholder="例: navigator"></div>
+      <div class="form-group"><label>模板类型</label><select id="wizTemplate"><option value="custom">自定义</option><option value="researcher">研究员</option><option value="developer">开发者</option><option value="analyst">分析师</option><option value="navigator">导航员</option><option value="engineer">工程师</option><option value="coordinator">协调员</option></select></div></div>
+      <div class="form-group"><label>描述</label><textarea id="wizDesc" placeholder="智能体描述..." rows="2"></textarea></div>
+      <div class="form-group"><label>关联模型</label><select id="wizModelId"><option value="">-- 未指定 --</option></select></div>
+      <div class="form-group"><label>System Prompt</label><textarea id="wizSysPrompt" placeholder="系统提示词..." rows="4"></textarea></div>
+    </div>
+    <div class="wizard-panel" id="wizStep1">
+      <div class="form-row"><div class="form-group"><label>语气</label><select id="wizTone"><option value="professional">专业</option><option value="friendly">友好</option><option value="formal">正式</option><option value="casual">随意</option></select></div>
+      <div class="form-group"><label>语言</label><select id="wizLang"><option value="zh-CN">中文(简体)</option><option value="en-US">English</option><option value="ja-JP">日本語</option></select></div></div>
+      <div class="form-group"><label>专长领域 (回车添加)</label><div class="tags-input" id="wizExpertise" onclick="this.querySelector('input').focus()"><input placeholder="输入后按回车..." onkeydown="handleTagInput(event,'wizExpertise')"></div></div>
+      <div class="form-group"><label>回复风格</label><select id="wizResponseStyle"><option value="concise">简洁</option><option value="detailed">详细</option><option value="step_by_step">逐步</option></select></div>
+      <div class="form-group"><label>创造力</label><div class="slider-group"><input type="range" id="wizCreativity" min="0" max="1" step="0.05" value="0.5" oninput="document.getElementById('creativityVal').textContent=parseFloat(this.value).toFixed(2)"><span class="slider-val" id="creativityVal">0.50</span></div></div>
+    </div>
+    <div class="wizard-panel" id="wizStep2">
+      <p style="color:#888;font-size:13px;margin-bottom:12px">勾选需要的技能。红色标签的必备技能自动启用且不可取消。</p>
+      <div class="check-list" id="wizSkillList"></div>
+    </div>
+    <div class="wizard-panel" id="wizStep3">
+      <p style="color:#888;font-size:13px;margin-bottom:12px">配置该智能体的资源访问权限。</p>
+      <div id="wizPermList"></div>
+      <button class="btn btn-sm btn-ghost" onclick="addPermRow()" style="margin-top:8px">+ 添加权限</button>
+    </div>
+    <div class="wizard-panel" id="wizStep4">
+      <p style="color:#888;font-size:13px;margin-bottom:12px">配置该智能体的消息通道订阅。</p>
+      <div id="wizChannelList"></div>
+      <button class="btn btn-sm btn-ghost" onclick="addChannelRow()" style="margin-top:8px">+ 添加通道</button>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-ghost" id="wizPrev" onclick="wizardPrev()" style="visibility:hidden">&larr; 上一步</button>
+      <button class="btn" id="wizNext" onclick="wizardNext()">下一步 &rarr;</button>
+    </div>
+  </div>
+</div>
+<script>
+var API='http://localhost:8080/api/v1/agent-config';
+var teams=[],selectedTeamId=null,allTools=[],allSkills=[],wizardStep=0,createdAgentId=null;
+
+function toast(msg,type){type=type||'success';var c=document.getElementById('toastContainer');var t=document.createElement('div');t.className='toast '+type;t.textContent=msg;c.appendChild(t);setTimeout(function(){t.style.animation='toastOut .3s ease forwards'},2500);setTimeout(function(){t.remove()},2900)}
+
+async function api(path,opts){opts=opts||{};try{var res=await fetch(API+path,{headers:Object.assign({'Content-Type':'application/json'},opts.headers||{}),method:opts.method||'GET',body:opts.body||undefined});if(!res.ok){var err={};try{err=await res.json()}catch(e){}throw new Error(err.detail||'HTTP '+res.status)}return await res.json()}catch(e){toast('请求失败: '+e.message,'error');throw e}}
+
+document.querySelectorAll('.tab-btn').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active')});btn.classList.add('active');document.getElementById('panel-'+btn.dataset.tab).classList.add('active');onTabActivated(btn.dataset.tab)})})
+
+function onTabActivated(tab){switch(tab){case 'teams':loadTeams();break;case 'models':populateTeamSelects();loadModels();break;case 'tools':populateTeamSelects();loadTools();break;case 'skills':loadSkills();break;case 'agents':populateTeamSelects();loadAgents();break;case 'overview':loadOverview();break}}
+
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function openModal(id){document.getElementById(id).classList.add('show')}
+
+function populateTeamSelects(){['modelTeamSelect','toolTeamSelect','agentTeamSelect'].forEach(function(id){var sel=document.getElementById(id);if(!sel)return;var prev=sel.value;if(teams.length===0){sel.innerHTML='<option value="">-- 无团队 --</option>'}else{sel.innerHTML=teams.map(function(t){return '<option value="'+esc(t.team_id)+'">'+esc(t.name)+'</option>'}).join('')}if(prev&&teams.some(function(t){return t.team_id===prev}))sel.value=prev;else if(teams.length>0)sel.value=teams[0].team_id;selectedTeamId=sel.value||null})}
+
+function onTeamSelectChange(ctx){var sid=ctx==='models'?'modelTeamSelect':ctx==='tools'?'toolTeamSelect':'agentTeamSelect';selectedTeamId=document.getElementById(sid).value;['modelTeamSelect','toolTeamSelect','agentTeamSelect'].forEach(function(id){var el=document.getElementById(id);if(el&&el.value!==selectedTeamId)el.value=selectedTeamId});if(ctx==='models')loadModels();else if(ctx==='tools')loadTools();else if(ctx==='agents')loadAgents()}
+
+async function loadTeams(){try{teams=await api('/teams');renderTeams();document.getElementById('connStatus').innerHTML='\u2B24 已连接';document.getElementById('connStatus').style.color='#4caf50'}catch(e){document.getElementById('connStatus').innerHTML='\u2B24 连接失败';document.getElementById('connStatus').style.color='#f44336'}}
+
+function renderTeams(){var grid=document.getElementById('teamsGrid');var empty=document.getElementById('teamsEmpty');if(teams.length===0){grid.innerHTML='';empty.style.display='block';return}empty.style.display='none';grid.innerHTML=teams.map(function(t){return '<div class="card"><div class="card-header"><h3>'+esc(t.name)+'</h3><button class="btn-icon" title="删除" onclick="deleteTeam(\''+esc(t.team_id)+'\')">&times;</button></div><div class="card-desc">'+(esc(t.description)||'暂无描述')+'</div><div class="card-meta"><span class="meta-tag">'+(t.agent_count||0)+' 个 Agent</span><span class="meta-tag green">'+(t.model_count||0)+' 个模型</span></div></div>'}).join('')}
+
+function openCreateTeamModal(){openModal('createTeamModal');document.getElementById('newTeamName').value='';document.getElementById('newTeamDesc').value=''}
+
+async function createTeam(){var name=document.getElementById('newTeamName').value.trim();if(!name){toast('请输入团队名称','error');return}await api('/teams',{method:'POST',body:JSON.stringify({name:name,description:document.getElementById('newTeamDesc').value.trim()})});closeModal('createTeamModal');toast('团队创建成功');await loadTeams();populateTeamSelects()}
+
+async function deleteTeam(id){if(!confirm('确定删除该团队?'))return;await api('/teams/'+id,{method:'DELETE'});toast('团队已删除');await loadTeams();populateTeamSelects()}
+
+async function loadModels(){if(!selectedTeamId)return;var models=[];try{models=await api('/teams/'+selectedTeamId+'/models')}catch(e){}var grid=document.getElementById('modelsGrid');var empty=document.getElementById('modelsEmpty');if(!models||models.length===0){grid.innerHTML='';empty.style.display='block';return}empty.style.display='none';grid.innerHTML=models.map(function(m){return '<div class="card"><div class="card-header"><h3>'+esc(m.name)+'</h3><button class="btn-icon" title="删除" onclick="deleteModel(\''+esc(m.model_id)+'\')">&times;</button></div><div class="card-meta"><span class="meta-tag purple">'+esc(m.provider)+'</span><span class="meta-tag">max_tokens: '+m.max_tokens+'</span><span class="meta-tag orange">temp: '+m.temperature+'</span>'+(m.is_default?'<span class="meta-tag green">默认</span>':'')+'</div></div>'}).join('')}
+
+function openAddModelModal(){if(!selectedTeamId){toast('请先选择团队','error');return}openModal('addModelModal')}
+
+async function addModel(){var body={provider:document.getElementById('newModelProvider').value,name:document.getElementById('newModelName').value.trim(),max_tokens:parseInt(document.getElementById('newModelTokens').value),temperature:parseFloat(document.getElementById('newModelTemp').value),is_default:document.getElementById('newModelDefault').classList.contains('on')};if(!body.name){toast('请输入模型名称','error');return}await api('/teams/'+selectedTeamId+'/models',{method:'POST',body:JSON.stringify(body)});closeModal('addModelModal');toast('模型添加成功');loadModels()}
+
+async function deleteModel(mid){await api('/teams/'+selectedTeamId+'/models/'+mid,{method:'DELETE'});toast('模型已删除');loadModels()}
+
+var TOOL_CAT_LABELS={browser:'\uD83C\uDF10 浏览器',code_execution:'\uD83D\uDCBB 代码执行',communication:'\uD83D\uDCAC 通讯',file_operation:'\uD83D\uDCC1 文件操作',triggers:'\u23F0 触发器',discovery:'\uD83D\uDD0D 发现',digital_twin:'\uD83C\uDFAE 数字孪生',maritime:'\uD83D\uDEA2 海事'};
+
+async function loadTools(){try{allTools=await api('/tools');renderTools()}catch(e){}}
+
+function renderTools(){var c=document.getElementById('toolsContainer');var g={};allTools.forEach(function(t){var cat=t.category||'other';if(!g[cat])g[cat]=[];g[cat].push(t)});var html='';Object.keys(TOOL_CAT_LABELS).forEach(function(cat){var label=TOOL_CAT_LABELS[cat];var items=g[cat]||[];if(items.length===0)return;html+='<div class="accordion" onclick="this.classList.toggle(\'open\')"><div class="accordion-header"><span class="arrow">\u25B6</span><span class="cat-name">'+label+'</span><span class="cat-count">'+items.length+' 个工具</span></div><div class="accordion-body" onclick="event.stopPropagation()">';items.forEach(function(t){html+='<div class="tool-item"><span class="tool-name">'+esc(t.name)+'</span><span class="tool-desc">'+esc(t.description)+'</span><div class="toggle '+(t.enabled?'on':'')+' " onclick="toggleTool(this,\''+esc(t.tool_id)+'\','+(!t.enabled)+')"></div></div>'});html+='</div></div>'});c.innerHTML=html}
+
+async function toggleTool(el,tid,en){if(!selectedTeamId){toast('请先选择团队','error');return}var act=en?'enable':'disable';try{await api('/teams/'+selectedTeamId+'/tools/'+tid+'/'+act,{method:'POST'});el.classList.toggle('on',en)}catch(e){}}
+
+var SKILL_CAT_LABELS={general:'\uD83C\uDFAF 通用',digital_twin:'\uD83C\uDFAE 数字孪生',maritime:'\uD83D\uDEA2 海事'};
+
+async function loadSkills(){try{allSkills=await api('/skills');renderSkills()}catch(e){}}
+
+function renderSkills(){var c=document.getElementById('skillsContainer');var g={};allSkills.forEach(function(s){var cat=s.category||'general';if(!g[cat])g[cat]=[];g[cat].push(s)});var html='';Object.keys(SKILL_CAT_LABELS).forEach(function(cat){var label=SKILL_CAT_LABELS[cat];var items=g[cat]||[];if(items.length===0)return;html+='<div class="accordion open" onclick="this.classList.toggle(\'open\')"><div class="accordion-header"><span class="arrow">\u25B6</span><span class="cat-name">'+label+'</span><span class="cat-count">'+items.length+' 个技能</span></div><div class="accordion-body" onclick="event.stopPropagation()">';items.forEach(function(s){html+='<div class="skill-item"><span class="tool-name">'+esc(s.name)+'</span><span class="tool-desc">'+esc(s.description)+'</span>'+(s.required?'<span class="meta-tag red">必备</span>':'')+'</div>'});html+='</div></div>'});c.innerHTML=html}
+
+async function loadAgents(){if(!selectedTeamId)return;var agents=[];try{agents=await api('/teams/'+selectedTeamId+'/agents')}catch(e){}var grid=document.getElementById('agentsGrid');var empty=document.getElementById('agentsEmpty');if(!agents||agents.length===0){grid.innerHTML='';empty.style.display='block';return}empty.style.display='none';grid.innerHTML=agents.map(function(ag){var ini=(ag.name||'?')[0].toUpperCase();return '<div class="agent-card"><div class="agent-avatar">'+ini+'</div><div class="agent-info"><h4>'+esc(ag.name)+'</h4><span class="agent-role">'+esc(ag.role||ag.template_type||'未定义')+'</span></div><div class="state-dot '+(ag.state||'idle')+'" title="'+(ag.state||'idle')+'"></div><button class="btn-icon" title="删除" onclick="deleteAgent(\''+esc(ag.agent_id)+'\')">&times;</button></div>'}).join('')}
+
+async function deleteAgent(aid){if(!confirm('确定删除该智能体?'))return;await api('/teams/'+selectedTeamId+'/agents/'+aid,{method:'DELETE'});toast('智能体已删除');loadAgents()}
+
+function openAgentWizard(){if(!selectedTeamId){toast('请先选择团队','error');return}wizardStep=0;createdAgentId=null;['wizName','wizRole','wizDesc','wizSysPrompt'].forEach(function(id){document.getElementById(id).value=''});document.getElementById('wizTemplate').value='custom';loadModelsForWizard();loadSkillsForWizard();document.getElementById('wizPermList').innerHTML='';document.getElementById('wizChannelList').innerHTML='';var ec=document.getElementById('wizExpertise');ec.querySelectorAll('.tag').forEach(function(t){t.remove()});document.getElementById('wizCreativity').value='0.5';document.getElementById('creativityVal').textContent='0.50';updateWizardUI();openModal('agentWizardModal')}
+
+async function loadModelsForWizard(){try{var models=await api('/teams/'+selectedTeamId+'/models');var sel=document.getElementById('wizModelId');sel.innerHTML='<option value="">-- 未指定 --</option>'+models.map(function(m){return '<option value="'+esc(m.model_id)+'">'+esc(m.name)+' ('+esc(m.provider)+')</option>'}).join('')}catch(e){}}
+
+async function loadSkillsForWizard(){if(allSkills.length===0){try{allSkills=await api('/skills')}catch(e){return}}var list=document.getElementById('wizSkillList');list.innerHTML=allSkills.map(function(s){return '<div class="check-item"><input type="checkbox" value="'+esc(s.skill_id)+'" '+(s.required?'checked disabled':'')+' ><div><div class="check-label">'+esc(s.name)+'</div><div class="check-desc">'+esc(s.description)+'</div></div>'+(s.required?'<span class="meta-tag red" style="margin-left:auto">必备</span>':'')+'</div>'}).join('')}
+
+function updateWizardUI(){document.querySelectorAll('.wizard-step').forEach(function(el,i){el.className='wizard-step'+(i===wizardStep?' active':(i<wizardStep?' done':''))});document.querySelectorAll('.wizard-panel').forEach(function(el,i){el.classList.toggle('active',i===wizardStep)});document.getElementById('wizPrev').style.visibility=wizardStep===0?'hidden':'visible';document.getElementById('wizNext').innerHTML=wizardStep===4?'&#x2713; 完成':'下一步 &rarr;'}
+
+function wizardPrev(){if(wizardStep>0){wizardStep--;updateWizardUI()}}
+
+async function wizardNext(){
+  if(wizardStep===0){var name=document.getElementById('wizName').value.trim();if(!name){toast('请输入智能体名称','error');return}
+    var body={name:name,role:document.getElementById('wizRole').value.trim(),description:document.getElementById('wizDesc').value.trim(),template_type:document.getElementById('wizTemplate').value,model_id:document.getElementById('wizModelId').value,system_prompt:document.getElementById('wizSysPrompt').value.trim()};
+    try{var agent=await api('/teams/'+selectedTeamId+'/agents',{method:'POST',body:JSON.stringify(body)});createdAgentId=agent.agent_id;toast('智能体已创建，继续配置...')}catch(e){return}}
+  else if(wizardStep===1){var tags=getTagValues('wizExpertise');var b2={tone:document.getElementById('wizTone').value,language:document.getElementById('wizLang').value,expertise_areas:tags,response_style:document.getElementById('wizResponseStyle').value,creativity:parseFloat(document.getElementById('wizCreativity').value)};try{await api('/teams/'+selectedTeamId+'/agents/'+createdAgentId+'/personality',{method:'PUT',body:JSON.stringify(b2)})}catch(e){return}}
+  else if(wizardStep===2){var checked=[];document.querySelectorAll('#wizSkillList input[type=checkbox]:checked').forEach(function(el){checked.push(el.value)});try{await api('/teams/'+selectedTeamId+'/agents/'+createdAgentId+'/skills',{method:'PUT',body:JSON.stringify({skill_ids:checked})})}catch(e){return}}
+  else if(wizardStep===3){var perms=collectPermissions();try{await api('/teams/'+selectedTeamId+'/agents/'+createdAgentId+'/permissions',{method:'PUT',body:JSON.stringify({permissions:perms})})}catch(e){return}}
+  else if(wizardStep===4){var channels=collectChannels();try{await api('/teams/'+selectedTeamId+'/agents/'+createdAgentId+'/channels',{method:'PUT',body:JSON.stringify({channels:channels})});toast('智能体配置完成！');closeModal('agentWizardModal');loadAgents();return}catch(e){return}}
+  wizardStep++;updateWizardUI()}
+
+function handleTagInput(e,cid){if(e.key!=='Enter')return;e.preventDefault();var input=e.target;var val=input.value.trim();if(!val)return;var container=document.getElementById(cid);var tag=document.createElement('span');tag.className='tag';tag.innerHTML=esc(val)+'<span class="remove" onclick="this.parentElement.remove()">&times;</span>';container.insertBefore(tag,input);input.value=''}
+
+function getTagValues(cid){var r=[];document.getElementById(cid).querySelectorAll('.tag').forEach(function(t){var c=t.cloneNode(true);var rm=c.querySelector('.remove');if(rm)rm.remove();r.push(c.textContent.trim())});return r}
+
+function addPermRow(){var list=document.getElementById('wizPermList');var row=document.createElement('div');row.className='perm-row';row.innerHTML='<div class="form-group" style="margin:0"><input placeholder="资源名称" class="perm-resource"></div><div class="form-group" style="margin:0"><select class="perm-level"><option value="read">Read</option><option value="write">Write</option><option value="admin">Admin</option></select></div><div class="form-group" style="margin:0"><input placeholder="通道(逗号分隔)" class="perm-channels"></div><button class="btn-icon" onclick="this.parentElement.remove()" title="删除">&times;</button>';list.appendChild(row)}
+
+function collectPermissions(){var r=[];document.querySelectorAll('#wizPermList .perm-row').forEach(function(row){var res=row.querySelector('.perm-resource').value.trim();if(!res)return;r.push({resource:res,access_level:row.querySelector('.perm-level').value,channels:row.querySelector('.perm-channels').value.split(',').map(function(s){return s.trim()}).filter(Boolean)})});return r}
+
+function addChannelRow(){var list=document.getElementById('wizChannelList');var row=document.createElement('div');row.className='channel-row';row.innerHTML='<div class="form-group" style="margin:0"><input placeholder="通道名称" class="ch-name"></div><label><input type="checkbox" class="ch-sub" checked> 订阅</label><label><input type="checkbox" class="ch-pub"> 发布</label><div class="form-group" style="margin:0"><input type="number" class="ch-priority" value="0" min="0" max="99" style="width:60px"></div><button class="btn-icon" onclick="this.parentElement.remove()" title="删除">&times;</button>';list.appendChild(row)}
+
+function collectChannels(){var r=[];document.querySelectorAll('#wizChannelList .channel-row').forEach(function(row){var cn=row.querySelector('.ch-name').value.trim();if(!cn)return;r.push({channel_name:cn,subscribe:row.querySelector('.ch-sub').checked,publish:row.querySelector('.ch-pub').checked,priority:parseInt(row.querySelector('.ch-priority').value)||0})});return r}
+
+async function loadOverview(){try{var ov=await api('/overview');document.getElementById('overviewStats').innerHTML='<div class="stat-card"><div class="stat-num">'+ov.total_teams+'</div><div class="stat-label">团队总数</div></div><div class="stat-card"><div class="stat-num">'+ov.total_agents+'</div><div class="stat-label">智能体总数</div></div><div class="stat-card"><div class="stat-num">'+ov.total_models+'</div><div class="stat-label">模型总数</div></div>';document.getElementById('overviewTeams').innerHTML=(ov.teams||[]).map(function(t){return '<div class="card"><div class="card-header"><h3>'+esc(t.name)+'</h3></div><div class="card-meta"><span class="meta-tag">'+t.agent_count+' Agent</span><span class="meta-tag green">'+t.model_count+' 模型</span><span class="meta-tag orange">'+t.tool_count+' 工具</span><span class="meta-tag purple">'+t.skill_count+' 技能</span></div></div>'}).join('')||'<div class="empty"><p>暂无数据</p></div>'}catch(e){}}
+
+window.addEventListener('DOMContentLoaded',function(){loadTeams()})
+document.querySelectorAll('.modal-overlay').forEach(function(ov){ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('show')})})
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay.show').forEach(function(m){m.classList.remove('show')})})
+</script>
+</body></html>

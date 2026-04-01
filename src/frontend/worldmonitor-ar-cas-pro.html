@@ -254,6 +254,68 @@
         .camera-info { padding: 14px; }
         .camera-name { font-weight: 700; color: #fff; margin-bottom: 6px; font-size: 13px; }
         .camera-status { font-size: 11px; color: #48bb78; }
+        .alarm-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .alarm-card {
+            background: rgba(0,0,0,0.35);
+            border-radius: 10px;
+            padding: 12px;
+            border-left: 4px solid #48bb78;
+        }
+        .alarm-card.level-WARNING {
+            border-left-color: #f6ad55;
+        }
+        .alarm-card.level-CRITICAL,
+        .alarm-card.level-EMERGENCY {
+            border-left-color: #f56565;
+        }
+        .alarm-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .alarm-card-level {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            background: rgba(72,187,120,0.2);
+            color: #9ae6b4;
+        }
+        .alarm-card-level.WARNING {
+            background: rgba(246,173,85,0.2);
+            color: #fbd38d;
+        }
+        .alarm-card-level.CRITICAL,
+        .alarm-card-level.EMERGENCY {
+            background: rgba(245,101,101,0.2);
+            color: #feb2b2;
+        }
+        .alarm-card-time {
+            font-size: 11px;
+            color: #718096;
+        }
+        .alarm-card-message {
+            font-size: 12px;
+            color: #e2e8f0;
+            line-height: 1.5;
+        }
+        .alarm-card-source {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #90cdf4;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
         .route-info { background: rgba(0,0,0,0.35); border-radius: 10px; padding: 16px; }
         .route-point {
             display: flex;
@@ -313,7 +375,7 @@
             gap: 10px;
             font-size: 14px;
         }
-        .integrated-twin {
+        .vr-menu {
             position: fixed;
             right: 388px;
             bottom: 18px;
@@ -331,14 +393,14 @@
             flex-direction: column;
             backdrop-filter: blur(14px);
         }
-        .integrated-twin.collapsed {
+        .vr-menu.collapsed {
             height: 68px;
             min-height: 68px;
         }
-        .integrated-twin.hidden {
+        .vr-menu.hidden {
             display: none;
         }
-        .twin-toolbar {
+        .vr-toolbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -347,21 +409,21 @@
             border-bottom: 1px solid rgba(79,195,247,0.18);
             background: linear-gradient(90deg, rgba(14,26,44,0.98) 0%, rgba(11,19,35,0.92) 100%);
         }
-        .twin-toolbar-title {
+        .vr-toolbar-title {
             display: flex;
             flex-direction: column;
             gap: 3px;
         }
-        .twin-toolbar-title strong {
+        .vr-toolbar-title strong {
             color: #dff7ff;
             font-size: 13px;
             letter-spacing: 0.04em;
         }
-        .twin-toolbar-title span {
+        .vr-toolbar-title span {
             color: #7fa0b5;
             font-size: 11px;
         }
-        .twin-toolbar-meta {
+        .vr-toolbar-meta {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -370,7 +432,7 @@
             flex-wrap: wrap;
             justify-content: flex-end;
         }
-        .twin-badge {
+        .vr-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -379,31 +441,32 @@
             background: rgba(79,195,247,0.1);
             border: 1px solid rgba(79,195,247,0.2);
         }
-        .twin-badge strong {
+        .vr-badge strong {
             color: #e9fbff;
             font-size: 11px;
         }
-        .twin-toolbar-controls {
+        .vr-toolbar-controls {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        .twin-frame-wrap {
+        .vr-stage {
             position: relative;
             flex: 1;
             min-height: 0;
             background: rgba(4,8,16,0.94);
+            overflow: hidden;
         }
-        .integrated-twin.collapsed .twin-frame-wrap {
+        .vr-menu.collapsed .vr-stage {
             display: none;
         }
-        .twin-frame {
+        .vr-canvas {
             width: 100%;
             height: 100%;
-            border: 0;
             background: #08101b;
+            display: block;
         }
-        .twin-overlay-note {
+        .vr-overlay-note {
             position: absolute;
             left: 14px;
             bottom: 12px;
@@ -416,8 +479,199 @@
             backdrop-filter: blur(8px);
             pointer-events: none;
         }
+        .vr-control-rack {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            display: grid;
+            gap: 10px;
+            z-index: 2;
+        }
+        .vr-control-group {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(5,10,18,0.7);
+            border: 1px solid rgba(79,195,247,0.14);
+            display: grid;
+            gap: 8px;
+            min-width: 192px;
+            backdrop-filter: blur(8px);
+        }
+        .vr-control-group small {
+            color: #7fa0b5;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .vr-control-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .vr-chip {
+            border: 1px solid rgba(79,195,247,0.2);
+            background: rgba(79,195,247,0.08);
+            color: #d7f7ff;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .vr-chip.active {
+            background: rgba(79,195,247,0.22);
+            border-color: rgba(79,195,247,0.4);
+        }
+        .vr-hud {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            width: 220px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(5,10,18,0.72);
+            border: 1px solid rgba(79,195,247,0.14);
+            display: grid;
+            gap: 8px;
+            z-index: 2;
+            backdrop-filter: blur(8px);
+        }
+        .vr-hud-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 11px;
+            color: #9ec7d9;
+        }
+        .vr-hud-item strong {
+            color: #ffffff;
+        }
+        .vr-semantic-menu {
+            position: absolute;
+            left: 14px;
+            right: 248px;
+            bottom: 52px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(5,10,18,0.72);
+            border: 1px solid rgba(79,195,247,0.14);
+            display: grid;
+            gap: 10px;
+            z-index: 2;
+            backdrop-filter: blur(8px);
+        }
+        .vr-semantic-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: #dff7ff;
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .vr-semantic-header span {
+            color: #7fa0b5;
+            font-size: 10px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .vr-semantic-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .vr-semantic-card {
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(79,195,247,0.08);
+            border: 1px solid rgba(79,195,247,0.12);
+            display: grid;
+            gap: 6px;
+        }
+        .vr-semantic-label {
+            color: #7fa0b5;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .vr-semantic-value {
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .vr-focus-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .vr-focus-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            color: #d7f7ff;
+            font-size: 10px;
+        }
+        .vr-focus-pill strong {
+            color: #ffffff;
+        }
+        .vr-target-tooltip {
+            position: absolute;
+            min-width: 160px;
+            max-width: 220px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(3, 8, 16, 0.9);
+            border: 1px solid rgba(79,195,247,0.22);
+            color: #dff7ff;
+            font-size: 11px;
+            line-height: 1.45;
+            pointer-events: none;
+            transform: translate(-50%, calc(-100% - 14px));
+            box-shadow: 0 14px 34px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            z-index: 3;
+            display: none;
+        }
+        .vr-target-tooltip.visible {
+            display: block;
+        }
+        .vr-target-tooltip strong {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .vr-legend {
+            position: absolute;
+            right: 14px;
+            bottom: 52px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(5,10,18,0.7);
+            border: 1px solid rgba(79,195,247,0.14);
+            display: grid;
+            gap: 6px;
+            z-index: 2;
+            backdrop-filter: blur(8px);
+        }
+        .vr-legend-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #a6c3d3;
+            font-size: 10px;
+        }
+        .vr-swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            box-shadow: 0 0 14px currentColor;
+        }
         @media (max-width: 1400px) {
-            .integrated-twin {
+            .vr-menu {
                 right: 20px;
                 width: min(46vw, 620px);
             }
@@ -443,13 +697,20 @@
             .right-panel {
                 display: none;
             }
-            .integrated-twin {
+            .vr-menu {
                 right: 12px;
                 left: 12px;
                 width: auto;
                 min-width: 0;
                 height: 46vh;
                 bottom: 12px;
+            }
+            .vr-semantic-menu {
+                right: 14px;
+                bottom: 124px;
+            }
+            .vr-semantic-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -479,11 +740,11 @@
         </div>
         <div class="header-actions">
             <div class="status-item">
-                <span>驾驶台：</span>
-                <span style="color: #81c784;" id="twin-status-label">已集成</span>
+                <span>VR 菜单：</span>
+                <span style="color: #81c784;" id="vr-status-label">已生成</span>
             </div>
             <a class="action-link" href="/captain-cockpit.html" target="_blank" rel="noopener noreferrer">返回船长智能中控台</a>
-            <button type="button" class="action-button active" id="toggle-twin-panel">隐藏数字孪生</button>
+            <button type="button" class="action-button active" id="toggle-vr-panel">隐藏 VR 菜单</button>
             <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">独立打开驾驶台</a>
         </div>
     </div>
@@ -586,6 +847,13 @@
 
         <div class="right-panel">
             <div class="panel">
+                <h3>🚨 驾驶台报警菜单</h3>
+                <div class="alarm-feed" id="worldmonitor-alarm-list">
+                    <div style="color: #718096; text-align: center; padding: 20px;">暂无报警</div>
+                </div>
+            </div>
+
+            <div class="panel">
                 <h3>🚢 本船信息</h3>
                 <div class="route-info">
                     <div class="route-point">
@@ -645,42 +913,220 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="integrated-twin" id="integrated-twin-panel">
-        <div class="twin-toolbar">
-            <div class="twin-toolbar-title">
-                <strong>数字孪生驾驶台</strong>
-                <span>在 WorldMonitor 主平台内直接联动 3D 船体、机舱与 AI Native 驾驶舱</span>
-            </div>
-            <div class="twin-toolbar-meta">
-                <div class="twin-badge">本船 <strong id="twin-own-ship">--</strong></div>
-                <div class="twin-badge">AIS <strong id="twin-ais-count">0</strong></div>
-                <div class="twin-badge">同步 <strong id="twin-sync-time">等待中</strong></div>
-                <div class="twin-toolbar-controls">
-                    <button type="button" class="action-button" id="collapse-twin-panel">折叠</button>
-                    <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">全屏</a>
+            <div class="panel" id="agent-insight-panel">
+                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="age                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="a   <div id="agent-team-status" style="margin-bottom:12px">
+                        <div style="color:#718096;font-size:12px">加载中...</div>
+                    </div>
+                    <div id="agent-decision-summary" style="margin-bottom:12px;display:none">
+                        <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">决策摘要</div>
+                        <div id="agent-decision-content" style="font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5"></div>
+                    </div>
+                    <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">快捷命令</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        <button onclick="sendAgentCommand('分析当前AIS态势')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">分析 AIS 态势</button>
+                        <button onclick="sendAgentCommand('评估当前碰撞风险')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">评估碰撞风险</button>
+                        <button onclick="sendAgentCommand('提供航线优化建议')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">航线建议</button>
+                    </div>
+                    <div id="agent-cmd-result" style="display:none;margin-top:10px;font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5;max-height:200px;overflow-y:auto"></div>
                 </div>
             </div>
+
+            <div class="panel" id="agent-insight-panel">
+                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="age                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="a   <div id="agent-team-status" style="margin-bottom:12px">
+                        <div style="color:#718096;font-size:12px">加载中...</div>
+                    </div>
+                    <div id="agent-decision-summary" style="margin-bottom:12px;display:none">
+                        <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">决策摘要</div>
+                        <div id="agent-decision-content" style="font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5"></div>
+                    </div>
+                    <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">快捷命令</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        <button onclick="sendAgentCommand('分析当前AIS态势')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">分析 AIS 态势</button>
+                        <button onclick="sendAgentCommand('评估当前碰撞风险')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">评估碰撞风险</button>
+                        <button onclick="sendAgentCommand('提供航线优化建议')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">航线建议</button>
+                    </div>
+                    <div id="agent-cmd-result" style="display:none;margin-top:10px;font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5;max-height:200px;overflow-y:auto"></div>
+                </div>
+            </div>
+
+    </div>
+
+    <div class="vr-menu" id="vr-menu-panel" style="width:900px;height:540px;min-width:480px;min-height:320px;max-width:98vw;max-height:90vh;">
+        <div class="vr-toolbar" id="vr-toolbar">
+            <div class="vr-toolbar-title">
+                <strong>VR 航行菜单</strong>
+                <span>在 WorldMonitor 主平台内生成船体与周边环境的原生 VR 视图，而不是嵌套数字孪生页面</span>
+            </div>
+            <div class="vr-toolbar-meta">
+                <div class="vr-badge">本船 <strong id="vr-own-ship">--</strong></div>
+                <div class="vr-badge">AIS <strong id="vr-ais-count">0</strong></div>
+                <div class="vr-badge">同步 <strong id="vr-sync-time">等待中</strong></div>
+                <div class="vr-toolbar-controls">
+                    <button type="button" class="action-button" id="collapse-vr-panel">折叠</button>
+                    <button type="button" class="action-button" id="topview-btn">顶视图</button>
+                    <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">全屏</a>
+                </div>
+                <div class="vr-resize-handle" id="vr-resize-handle" style="position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:se-resize;z-index:1001;background:linear-gradient(135deg,rgba(79,195,247,0.18) 0%,rgba(8,16,30,0.0) 100%);"></div>
+                    <script>
+                    // --- VR MENU DRAG & RESIZE ---
+                    (function enableVrMenuDragResize() {
+                        const vrMenu = document.getElementById('vr-menu-panel');
+                        const toolbar = document.getElementById('vr-toolbar');
+                        const resizeHandle = document.getElementById('vr-resize-handle');
+                        let dragStart = null;
+                        let resizeStart = null;
+                        let lastRect = null;
+
+                        toolbar.style.cursor = 'move';
+                        toolbar.addEventListener('mousedown', (e) => {
+                            if (e.button !== 0) return;
+                            dragStart = { x: e.clientX, y: e.clientY };
+                            lastRect = vrMenu.getBoundingClientRect();
+                            vrMenu.classList.add('dragging');
+                            document.body.style.userSelect = 'none';
+                        });
+                        document.addEventListener('mousemove', (e) => {
+                            if (!dragStart) return;
+                            const dx = e.clientX - dragStart.x;
+                            const dy = e.clientY - dragStart.y;
+                            vrMenu.style.right = 'auto';
+                            vrMenu.style.left = (lastRect.left + dx) + 'px';
+                            vrMenu.style.top = (lastRect.top + dy) + 'px';
+                            vrMenu.style.bottom = 'auto';
+                        });
+                        document.addEventListener('mouseup', () => {
+                            if (dragStart) {
+                                dragStart = null;
+                                vrMenu.classList.remove('dragging');
+                                document.body.style.userSelect = '';
+                            }
+                        });
+                        resizeHandle.addEventListener('mousedown', (e) => {
+                            if (e.button !== 0) return;
+                            resizeStart = { x: e.clientX, y: e.clientY, width: vrMenu.offsetWidth, height: vrMenu.offsetHeight };
+                            vrMenu.classList.add('resizing');
+                            document.body.style.userSelect = 'none';
+                            e.stopPropagation();
+                        });
+                        document.addEventListener('mousemove', (e) => {
+                            if (!resizeStart) return;
+                            const dw = e.clientX - resizeStart.x;
+                            const dh = e.clientY - resizeStart.y;
+                            let newW = Math.max(480, Math.min(resizeStart.width + dw, window.innerWidth - 40));
+                            let newH = Math.max(320, Math.min(resizeStart.height + dh, window.innerHeight - 40));
+                            vrMenu.style.width = newW + 'px';
+                            vrMenu.style.height = newH + 'px';
+                        });
+                        document.addEventListener('mouseup', () => {
+                            if (resizeStart) {
+                                resizeStart = null;
+                                vrMenu.classList.remove('resizing');
+                                document.body.style.userSelect = '';
+                            }
+                        });
+                    })();
+
+                    // --- VR TOPVIEW BUTTON ---
+                    document.getElementById('topview-btn').addEventListener('click', () => {
+                        vrState.viewMode = 'overhead';
+                        setActiveVrControls();
+                    });
+                    </script>
+            </div>
         </div>
-        <div class="twin-frame-wrap">
-            <iframe class="twin-frame" src="/digital-twin.html" title="数字孪生驾驶台"></iframe>
-            <div class="twin-overlay-note">当前为同页集成视图，保留独立驾驶台入口用于全屏操作。</div>
+        <div class="vr-stage">
+            <canvas class="vr-canvas" id="vr-scene-canvas" width="1280" height="720"></canvas>
+            <div class="vr-control-rack">
+                <div class="vr-control-group">
+                    <small>View Mode</small>
+                    <div class="vr-control-buttons">
+                        <button type="button" class="vr-chip active" data-vr-view="bridge">Bridge</button>
+                        <button type="button" class="vr-chip" data-vr-view="overhead">Overhead</button>
+                        <button type="button" class="vr-chip" data-vr-view="corridor">Corridor</button>
+                    </div>
+                </div>
+                <div class="vr-control-group">
+                    <small>Environment Layer</small>
+                    <div class="vr-control-buttons">
+                        <button type="button" class="vr-chip active" data-vr-layer="all">All</button>
+                        <button type="button" class="vr-chip" data-vr-layer="traffic">Traffic</button>
+                        <button type="button" class="vr-chip" data-vr-layer="weather">Weather</button>
+                    </div>
+                </div>
+            </div>
+            <div class="vr-hud">
+                <div class="vr-hud-item"><span>Hull State</span><strong id="vr-hull-state">STEADY</strong></div>
+                <div class="vr-hud-item"><span>Sea Surface</span><strong id="vr-sea-state">CALM</strong></div>
+                <div class="vr-hud-item"><span>Threat Focus</span><strong id="vr-threat-focus">NONE</strong></div>
+                <div class="vr-hud-item"><span>Gaussian Splats</span><strong id="vr-splat-count">0</strong></div>
+            </div>
+            <div class="vr-semantic-menu">
+                <div class="vr-semantic-header">
+                    <strong>VR 语义菜单</strong>
+                    <span id="vr-semantic-summary">等待环境同步</span>
+                </div>
+                <div class="vr-semantic-grid">
+                    <div class="vr-semantic-card">
+                        <div class="vr-semantic-label">Focus Target</div>
+                        <div class="vr-semantic-value" id="vr-semantic-target">未锁定</div>
+                        <div class="vr-focus-list" id="vr-focus-pills">
+                            <span class="vr-focus-pill"><strong>环境</strong> 同步中</span>
+                        </div>
+                    </div>
+                    <div class="vr-semantic-card">
+                        <div class="vr-semantic-label">Environment</div>
+                        <div class="vr-semantic-value" id="vr-semantic-environment">Open Sea</div>
+                        <div class="vr-focus-list">
+                            <span class="vr-focus-pill"><strong>风浪</strong> <span id="vr-semantic-sea">轻浪</span></span>
+                            <span class="vr-focus-pill"><strong>能见度</strong> <span id="vr-semantic-visibility">--</span></span>
+                        </div>
+                    </div>
+                    <div class="vr-semantic-card">
+                        <div class="vr-semantic-label">Alarm Posture</div>
+                        <div class="vr-semantic-value" id="vr-semantic-alarm">正常监视</div>
+                        <div class="vr-focus-list">
+                            <span class="vr-focus-pill"><strong>高风险</strong> <span id="vr-semantic-threats">0</span></span>
+                            <span class="vr-focus-pill"><strong>场景</strong> <span id="vr-semantic-scenario">普通海域</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="vr-target-tooltip" id="vr-target-tooltip"></div>
+            <div class="vr-legend">
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:#48bb78; background:#48bb78;"></span><span>安全目标</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:#f6ad55; background:#f6ad55;"></span><span>中风险目标</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:#f56565; background:#f56565;"></span><span>高风险目标 / 冰山</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:#4fc3f7; background:#4fc3f7;"></span><span>船体 / 环境流场</span></div>
+            </div>
+            <div class="vr-overlay-note">当前场景通过高斯泼溅式语义粒子绘制周边环境，并以本船为中心生成可切换的 VR 观察菜单。</div>
         </div>
     </div>
 
     <script>
-        const twinPanel = document.getElementById('integrated-twin-panel');
-        const toggleTwinButton = document.getElementById('toggle-twin-panel');
-        const collapseTwinButton = document.getElementById('collapse-twin-panel');
-        const twinStatusLabel = document.getElementById('twin-status-label');
-        const twinFrame = document.querySelector('.twin-frame');
+        const vrMenuPanel = document.getElementById('vr-menu-panel');
+        const toggleVrButton = document.getElementById('toggle-vr-panel');
+        const collapseVrButton = document.getElementById('collapse-vr-panel');
+        const vrStatusLabel = document.getElementById('vr-status-label');
+        const vrCanvas = document.getElementById('vr-scene-canvas');
+        const vrTooltip = document.getElementById('vr-target-tooltip');
+        const vrContext = vrCanvas.getContext('2d');
+        const aisMarkers = [];
         const bridgeState = {
             ownShip: null,
             selectedTarget: null,
+            hoveredTarget: null,
             alarms: [],
             weather: null,
+            targets: [],
+            cpaResults: [],
             updatedAt: null
+        };
+        const vrState = {
+            viewMode: 'bridge',
+            layerMode: 'all',
+            animationTick: 0,
+            lastSplatCount: 0,
+            renderedTraffic: [],
         };
 
         const map = new maplibregl.Map({
@@ -714,70 +1160,75 @@
             loadAISData();
             loadWeatherData();
             checkSpecialScenarios();
-            syncIntegratedTwinState();
+            syncVrOwnShipState();
         });
 
-        function updateTwinPanelButtons() {
-            const isHidden = twinPanel.classList.contains('hidden');
-            const isCollapsed = twinPanel.classList.contains('collapsed');
+        function updateVrPanelButtons() {
+            const isHidden = vrMenuPanel.classList.contains('hidden');
+            const isCollapsed = vrMenuPanel.classList.contains('collapsed');
 
             if (isHidden) {
-                toggleTwinButton.textContent = '显示数字孪生';
-                toggleTwinButton.classList.remove('active');
-                twinStatusLabel.textContent = '已隐藏';
-                twinStatusLabel.style.color = '#f6ad55';
+                toggleVrButton.textContent = '显示 VR 菜单';
+                toggleVrButton.classList.remove('active');
+                vrStatusLabel.textContent = '已隐藏';
+                vrStatusLabel.style.color = '#f6ad55';
                 return;
             }
 
-            toggleTwinButton.textContent = '隐藏数字孪生';
-            toggleTwinButton.classList.add('active');
-            twinStatusLabel.textContent = isCollapsed ? '已折叠' : '已集成';
-            twinStatusLabel.style.color = isCollapsed ? '#f6ad55' : '#81c784';
-            collapseTwinButton.textContent = isCollapsed ? '展开' : '折叠';
+            toggleVrButton.textContent = '隐藏 VR 菜单';
+            toggleVrButton.classList.add('active');
+            vrStatusLabel.textContent = isCollapsed ? '已折叠' : '已生成';
+            vrStatusLabel.style.color = isCollapsed ? '#f6ad55' : '#81c784';
+            collapseVrButton.textContent = isCollapsed ? '展开' : '折叠';
         }
 
-        toggleTwinButton.addEventListener('click', () => {
-            twinPanel.classList.toggle('hidden');
-            if (!twinPanel.classList.contains('hidden')) {
-                twinPanel.classList.remove('collapsed');
+        toggleVrButton.addEventListener('click', () => {
+            vrMenuPanel.classList.toggle('hidden');
+            if (!vrMenuPanel.classList.contains('hidden')) {
+                vrMenuPanel.classList.remove('collapsed');
             }
-            updateTwinPanelButtons();
+            updateVrPanelButtons();
         });
 
-        collapseTwinButton.addEventListener('click', () => {
-            twinPanel.classList.toggle('collapsed');
-            twinPanel.classList.remove('hidden');
-            updateTwinPanelButtons();
+        collapseVrButton.addEventListener('click', () => {
+            vrMenuPanel.classList.toggle('collapsed');
+            vrMenuPanel.classList.remove('hidden');
+            updateVrPanelButtons();
         });
 
-        function postTwinMessage(payload) {
-            if (!twinFrame?.contentWindow) {
-                return;
-            }
-
-            twinFrame.contentWindow.postMessage({
-                source: 'worldmonitor-ar-cas-pro',
-                type: 'bridge_sync',
-                payload
-            }, window.location.origin);
-        }
-
-        function syncTwinBridge(overrides = {}) {
+        function syncVrScene(overrides = {}) {
             Object.assign(bridgeState, overrides, {
                 updatedAt: new Date().toISOString()
             });
 
-            postTwinMessage({
-                ownShip: bridgeState.ownShip,
-                selectedTarget: bridgeState.selectedTarget,
-                alarms: bridgeState.alarms,
-                weather: bridgeState.weather,
-                source: 'worldmonitor-ar-cas-pro',
-                updatedAt: bridgeState.updatedAt
-            });
+            renderWorldMonitorAlarms(bridgeState.alarms || []);
+            updateVrHud();
         }
 
-        function buildTwinAlarms(cpaResults = [], targets = []) {
+        function renderWorldMonitorAlarms(alarms = []) {
+            const listEl = document.getElementById('worldmonitor-alarm-list');
+            if (!listEl) {
+                return;
+            }
+
+            if (!Array.isArray(alarms) || alarms.length === 0) {
+                listEl.innerHTML = '<div style="color: #718096; text-align: center; padding: 20px;">暂无报警</div>';
+                return;
+            }
+
+            listEl.innerHTML = alarms.slice().reverse().map((alarm) => `
+                <div class="alarm-card level-${alarm.level || 'INFO'}">
+                    <div class="alarm-card-header">
+                        <span class="alarm-card-level ${alarm.level || 'INFO'}">${escapeHtml(alarm.level || 'INFO')}</span>
+                        <span class="alarm-card-time">${new Date(alarm.timestamp || Date.now()).toLocaleTimeString('zh-CN')}</span>
+                    </div>
+                    <div class="alarm-card-message">${escapeHtml(alarm.message || '外部告警')}</div>
+                    <div class="alarm-card-source">来源: ${escapeHtml(alarm.source || 'worldmonitor')}</div>
+                </div>
+            `).join('');
+        }
+
+        function buildVrAlarms(cpaResults = [], targets = []) {
             const alarms = [];
 
             cpaResults.forEach((result, index) => {
@@ -816,11 +1267,351 @@
             return alarms;
         }
 
-        twinFrame?.addEventListener('load', () => {
-            syncTwinBridge();
+        function formatVrTargetLabel(target) {
+            if (!target) {
+                return '未锁定';
+            }
+            return escapeHtml((target.vessel_type || 'AIS') + ' / ' + (target.mmsi || '--'));
+        }
+
+        function isSameTarget(left, right) {
+            if (!left || !right) {
+                return false;
+            }
+            if (left.mmsi && right.mmsi) {
+                return String(left.mmsi) === String(right.mmsi);
+            }
+            return Number(left.latitude) === Number(right.latitude) && Number(left.longitude) === Number(right.longitude);
+        }
+
+        function getScenarioLabel() {
+            const scenario = getSpecialScenario();
+            if (scenario.hasIceberg) {
+                return '冰山区';
+            }
+            if (scenario.inCanyon) {
+                return '峡谷水道';
+            }
+            return '普通海域';
+        }
+
+        function updateVrSemanticMenu() {
+            const weather = bridgeState.weather || {};
+            const visibility = Number(weather.visibility || 0);
+            const waveHeight = Number(weather.wave?.height || 0);
+            const highThreats = (bridgeState.cpaResults || []).filter((item) => item.risk === 'high').length;
+            const mediumThreats = (bridgeState.cpaResults || []).filter((item) => item.risk === 'medium').length;
+            const pills = [];
+            const focusTarget = bridgeState.selectedTarget || bridgeState.hoveredTarget;
+
+            if (focusTarget) {
+                pills.push(`<span class="vr-focus-pill"><strong>目标</strong> ${formatVrTargetLabel(focusTarget)}</span>`);
+            }
+            pills.push(`<span class="vr-focus-pill"><strong>交通</strong> ${(bridgeState.targets || []).length} 个目标</span>`);
+            pills.push(`<span class="vr-focus-pill"><strong>中风险</strong> ${mediumThreats}</span>`);
+
+            document.getElementById('vr-semantic-summary').textContent = `${vrState.viewMode.toUpperCase()} / ${vrState.layerMode.toUpperCase()} / ${getScenarioLabel()}`;
+            document.getElementById('vr-semantic-target').textContent = formatVrTargetLabel(focusTarget);
+            document.getElementById('vr-focus-pills').innerHTML = pills.join('');
+            document.getElementById('vr-semantic-environment').textContent = getScenarioLabel();
+            document.getElementById('vr-semantic-sea').textContent = waveHeight > 2.5 ? '大浪' : waveHeight > 1.2 ? '中浪' : '轻浪';
+            document.getElementById('vr-semantic-visibility').textContent = visibility ? `${visibility.toFixed(1)} km` : '--';
+            document.getElementById('vr-semantic-alarm').textContent = highThreats > 0 ? '冲突规避' : mediumThreats > 0 ? '加强监视' : '正常监视';
+            document.getElementById('vr-semantic-threats').textContent = String(highThreats);
+            document.getElementById('vr-semantic-scenario').textContent = getScenarioLabel();
+        }
+
+        function setActiveVrControls() {
+            document.querySelectorAll('[data-vr-view]').forEach((button) => {
+                button.classList.toggle('active', button.dataset.vrView === vrState.viewMode);
+            });
+            document.querySelectorAll('[data-vr-layer]').forEach((button) => {
+                button.classList.toggle('active', button.dataset.vrLayer === vrState.layerMode);
+            });
+        }
+
+        function resizeVrCanvas() {
+            const bounds = vrCanvas.getBoundingClientRect();
+            if (!bounds.width || !bounds.height) {
+                return;
+            }
+            const ratio = window.devicePixelRatio || 1;
+            vrCanvas.width = Math.floor(bounds.width * ratio);
+            vrCanvas.height = Math.floor(bounds.height * ratio);
+            vrContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+        }
+
+        function drawGaussianSplat(x, y, radius, color, alpha = 0.35) {
+            const gradient = vrContext.createRadialGradient(x, y, 0, x, y, radius);
+            gradient.addColorStop(0, color.replace('ALPHA', String(alpha)));
+            gradient.addColorStop(0.55, color.replace('ALPHA', String(alpha * 0.35)));
+            gradient.addColorStop(1, color.replace('ALPHA', '0'));
+            vrContext.fillStyle = gradient;
+            vrContext.beginPath();
+            vrContext.arc(x, y, radius, 0, Math.PI * 2);
+            vrContext.fill();
+        }
+
+        function getVrPalette(risk) {
+            if (risk === 'high') return 'rgba(245,101,101,ALPHA)';
+            if (risk === 'medium') return 'rgba(246,173,85,ALPHA)';
+            return 'rgba(72,187,120,ALPHA)';
+        }
+
+        function drawVrBackground(width, height) {
+            const sky = vrContext.createLinearGradient(0, 0, 0, height);
+            sky.addColorStop(0, '#06121f');
+            sky.addColorStop(0.5, '#0a1f34');
+            sky.addColorStop(1, '#07131e');
+            vrContext.fillStyle = sky;
+            vrContext.fillRect(0, 0, width, height);
+
+            for (let index = 0; index < 10; index += 1) {
+                const y = height * (0.55 + index * 0.04);
+                vrContext.strokeStyle = `rgba(79,195,247,${0.04 + index * 0.01})`;
+                vrContext.beginPath();
+                vrContext.moveTo(0, y);
+                vrContext.quadraticCurveTo(width * 0.5, y - 18 + Math.sin(vrState.animationTick / 20 + index) * 4, width, y);
+                vrContext.stroke();
+            }
+        }
+
+        function drawOwnShipHull(width, height) {
+            const centerX = width * 0.5;
+            const centerY = vrState.viewMode === 'overhead' ? height * 0.56 : height * 0.68;
+            const hullLength = vrState.viewMode === 'corridor' ? 160 : 124;
+            const hullWidth = vrState.viewMode === 'overhead' ? 44 : 62;
+            const glowRadius = vrState.viewMode === 'bridge' ? 90 : 64;
+
+            drawGaussianSplat(centerX, centerY, glowRadius, 'rgba(79,195,247,ALPHA)', 0.22);
+            vrContext.save();
+            if (vrState.viewMode === 'corridor') {
+                vrContext.translate(centerX, centerY + 10);
+                vrContext.scale(1.15, 0.88);
+                vrContext.translate(-centerX, -(centerY + 10));
+            }
+            vrContext.fillStyle = '#dff7ff';
+            vrContext.strokeStyle = 'rgba(79,195,247,0.9)';
+            vrContext.lineWidth = 2;
+            vrContext.beginPath();
+            vrContext.moveTo(centerX, centerY - hullLength * 0.5);
+            vrContext.quadraticCurveTo(centerX + hullWidth * 0.45, centerY - hullLength * 0.18, centerX + hullWidth * 0.42, centerY + hullLength * 0.36);
+            vrContext.quadraticCurveTo(centerX, centerY + hullLength * 0.54, centerX - hullWidth * 0.42, centerY + hullLength * 0.36);
+            vrContext.quadraticCurveTo(centerX - hullWidth * 0.45, centerY - hullLength * 0.18, centerX, centerY - hullLength * 0.5);
+            vrContext.closePath();
+            vrContext.fill();
+            vrContext.stroke();
+            vrContext.fillStyle = '#0a2438';
+            vrContext.fillRect(centerX - 18, centerY - 18, 36, 28);
+            vrContext.restore();
+        }
+
+        function drawEnvironmentSplats(width, height) {
+            const targets = Array.isArray(bridgeState.targets) ? bridgeState.targets : [];
+            const cpaResults = Array.isArray(bridgeState.cpaResults) ? bridgeState.cpaResults : [];
+            const ownShip = bridgeState.ownShip || { latitude: 18.25, longitude: 109.5 };
+            const scenario = getSpecialScenario();
+            let splatCount = 0;
+            const renderedTraffic = [];
+
+            const centerX = width * 0.5;
+            const centerY = vrState.viewMode === 'overhead' ? height * 0.56 : height * 0.68;
+            const perspectiveFactor = vrState.viewMode === 'overhead' ? 1.0 : 0.68;
+
+            if (vrState.layerMode === 'all' || vrState.layerMode === 'weather') {
+                const weather = bridgeState.weather || {};
+                const windSpeed = Number(weather.wind?.speed || 5);
+                const waveHeight = Number(weather.wave?.height || 0.8);
+                for (let index = 0; index < 18; index += 1) {
+                    const angle = (vrState.animationTick * 0.01 + index / 18) * Math.PI * 2;
+                    const orbit = 70 + index * 10 + waveHeight * 12;
+                    const x = centerX + Math.cos(angle) * orbit;
+                    const y = centerY - 80 + Math.sin(angle * 1.4) * (20 + windSpeed * 1.2) * perspectiveFactor;
+                    drawGaussianSplat(x, y, 26 + waveHeight * 10, 'rgba(79,195,247,ALPHA)', 0.08 + (index % 4) * 0.02);
+                    splatCount += 1;
+                }
+            }
+
+            if (vrState.layerMode === 'all' || vrState.layerMode === 'traffic') {
+                targets.slice(0, 8).forEach((target, index) => {
+                    const result = cpaResults[index] || { risk: 'low' };
+                    const deltaLng = Number(target.longitude || 0) - Number(ownShip.longitude || 0);
+                    const deltaLat = Number(target.latitude || 0) - Number(ownShip.latitude || 0);
+                    const x = centerX + deltaLng * 680 + Math.sin(vrState.animationTick / 14 + index) * 4;
+                    const y = centerY - 120 - deltaLat * 580 * perspectiveFactor;
+                    const radius = result.risk === 'high' ? 38 : result.risk === 'medium' ? 28 : 22;
+                    drawGaussianSplat(x, y, radius, getVrPalette(result.risk), result.risk === 'high' ? 0.34 : 0.22);
+                    vrContext.fillStyle = '#ffffff';
+                    vrContext.font = '11px sans-serif';
+                    vrContext.fillText(target.vessel_type || `AIS ${index + 1}`, x - 16, y - radius - 8);
+                    splatCount += 1;
+                    renderedTraffic.push({
+                        target,
+                        result,
+                        x,
+                        y,
+                        radius: radius + 10,
+                    });
+
+                    if (bridgeState.hoveredTarget && isSameTarget(target, bridgeState.hoveredTarget)) {
+                        vrContext.strokeStyle = 'rgba(79,195,247,0.95)';
+                        vrContext.lineWidth = 2;
+                        vrContext.beginPath();
+                        vrContext.arc(x, y, radius + 6, 0, Math.PI * 2);
+                        vrContext.stroke();
+                    }
+
+                    if (bridgeState.selectedTarget && isSameTarget(target, bridgeState.selectedTarget)) {
+                        vrContext.strokeStyle = 'rgba(255,255,255,0.85)';
+                        vrContext.lineWidth = 2;
+                        vrContext.beginPath();
+                        vrContext.arc(x, y, radius + 10, 0, Math.PI * 2);
+                        vrContext.stroke();
+                    }
+                });
+            }
+
+            if (scenario.inCanyon) {
+                [0.16, 0.84].forEach((position) => {
+                    for (let index = 0; index < 9; index += 1) {
+                        drawGaussianSplat(width * position, height * (0.22 + index * 0.08), 34, 'rgba(124,92,58,ALPHA)', 0.14 + index * 0.01);
+                        splatCount += 1;
+                    }
+                });
+            }
+
+            if (scenario.hasIceberg) {
+                scenario.icebergs.forEach((iceberg, index) => {
+                    const x = centerX + (iceberg.lng - Number(ownShip.longitude || 109.5)) * 720;
+                    const y = centerY - 150 - (iceberg.lat - Number(ownShip.latitude || 18.25)) * 620 * perspectiveFactor;
+                    drawGaussianSplat(x, y, 42, 'rgba(135,206,250,ALPHA)', 0.32);
+                    vrContext.fillStyle = '#dff7ff';
+                    vrContext.fillText(`ICE-${index + 1}`, x - 12, y - 48);
+                    splatCount += 1;
+                });
+            }
+
+            vrState.lastSplatCount = splatCount;
+            vrState.renderedTraffic = renderedTraffic;
+        }
+
+        function updateVrTooltip(hoverEntry) {
+            if (!hoverEntry) {
+                vrTooltip.classList.remove('visible');
+                vrTooltip.innerHTML = '';
+                return;
+            }
+
+            const { target, result, x, y } = hoverEntry;
+            vrTooltip.style.left = `${x}px`;
+            vrTooltip.style.top = `${y}px`;
+            vrTooltip.innerHTML = `
+                <strong>${escapeHtml(target.vessel_type || 'AIS 目标')}</strong>
+                <div>MMSI: ${escapeHtml(target.mmsi || '--')}</div>
+                <div>CPA: ${result.cpa.toFixed(2)} NM | TCPA: ${result.tcpa.toFixed(0)} min</div>
+                <div>风险: ${escapeHtml(String(result.risk || 'low').toUpperCase())}</div>
+            `;
+            vrTooltip.classList.add('visible');
+        }
+
+        function getVrTrafficHit(clientX, clientY) {
+            const bounds = vrCanvas.getBoundingClientRect();
+            const localX = clientX - bounds.left;
+            const localY = clientY - bounds.top;
+
+            return vrState.renderedTraffic.find((entry) => {
+                const dx = localX - entry.x;
+                const dy = localY - entry.y;
+                return Math.sqrt(dx * dx + dy * dy) <= entry.radius;
+            }) || null;
+        }
+
+        function updateVrHud() {
+            const weather = bridgeState.weather || {};
+            const waveHeight = Number(weather.wave?.height || 0);
+            const threats = (bridgeState.cpaResults || []).filter((item) => item.risk === 'high').length;
+            document.getElementById('vr-own-ship').textContent = bridgeState.ownShip ? `${Number(bridgeState.ownShip.latitude || bridgeState.ownShip.lat || 0).toFixed(2)}, ${Number(bridgeState.ownShip.longitude || bridgeState.ownShip.lng || 0).toFixed(2)}` : '--';
+            document.getElementById('vr-ais-count').textContent = String((bridgeState.targets || []).length || 0);
+            document.getElementById('vr-sync-time').textContent = bridgeState.updatedAt ? new Date(bridgeState.updatedAt).toLocaleTimeString('zh-CN') : '等待中';
+            document.getElementById('vr-hull-state').textContent = threats > 0 ? 'STRESSED' : 'STEADY';
+            document.getElementById('vr-sea-state').textContent = waveHeight > 2.5 ? 'ROUGH' : waveHeight > 1.2 ? 'ACTIVE' : 'CALM';
+            document.getElementById('vr-threat-focus').textContent = bridgeState.selectedTarget ? 'LOCKED' : threats > 0 ? 'TRAFFIC' : 'NONE';
+            document.getElementById('vr-splat-count').textContent = String(vrState.lastSplatCount);
+            updateVrSemanticMenu();
+        }
+
+        function renderVrScene() {
+            const bounds = vrCanvas.getBoundingClientRect();
+            const width = bounds.width || 640;
+            const height = bounds.height || 360;
+            vrContext.save();
+            applyVrTransform(vrContext, width, height);
+            vrContext.clearRect(0, 0, width, height);
+            drawVrBackground(width, height);
+            drawEnvironmentSplats(width, height);
+            drawOwnShipHull(width, height);
+            vrContext.restore();
+            vrState.animationTick += 1;
+            updateVrHud();
+            requestAnimationFrame(renderVrScene);
+        }
+
+        document.querySelectorAll('[data-vr-view]').forEach((button) => {
+            button.addEventListener('click', () => {
+                vrState.viewMode = button.dataset.vrView;
+                setActiveVrControls();
+            });
+        });
+        document.querySelectorAll('[data-vr-layer]').forEach((button) => {
+            button.addEventListener('click', () => {
+                vrState.layerMode = button.dataset.vrLayer;
+                setActiveVrControls();
+            });
         });
 
-        updateTwinPanelButtons();
+        window.addEventListener('resize', resizeVrCanvas);
+        vrCanvas.addEventListener('mousemove', (event) => {
+            const hit = getVrTrafficHit(event.clientX, event.clientY);
+            bridgeState.hoveredTarget = hit ? hit.target : null;
+            vrCanvas.style.cursor = hit ? 'pointer' : 'default';
+            updateVrTooltip(hit);
+        });
+        vrCanvas.addEventListener('mouseleave', () => {
+            bridgeState.hoveredTarget = null;
+            vrCanvas.style.cursor = 'default';
+            updateVrTooltip(null);
+        });
+        vrCanvas.addEventListener('click', (event) => {
+            const hit = getVrTrafficHit(event.clientX, event.clientY);
+            if (!hit) {
+                bridgeState.selectedTarget = null;
+                updateVrTooltip(null);
+                updateVrHud();
+                return;
+            }
+
+            focusOnTarget(hit.target.latitude, hit.target.longitude, bridgeState.targets.findIndex((target) => isSameTarget(target, hit.target)));
+        });
+        setActiveVrControls();
+        updateVrPanelButtons();
+        resizeVrCanvas();
+        requestAnimationFrame(renderVrScene);
+
+        function escapeHtml(value) {
+            return String(value ?? '--')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function clearAisMarkers() {
+            while (aisMarkers.length > 0) {
+                const marker = aisMarkers.pop();
+                marker.remove();
+            }
+        }
 
         async function loadAISData() {
             try {
@@ -829,7 +1620,7 @@
                 
                 if (data.targets && data.targets.length > 0) {
                     document.getElementById('ais-count').textContent = data.targets.length;
-                    document.getElementById('twin-ais-count').textContent = data.targets.length;
+                    document.getElementById('vr-ais-count').textContent = data.targets.length;
                     
                     const syncedOwnShip = bridgeState.ownShip || {};
                     const ownShip = {
@@ -851,6 +1642,7 @@
                     
                     updateCPARisk(minCPA, minTCPA);
                     updateCOLREGsAlerts(cpaResults, targets);
+                    clearAisMarkers();
                     
                     const aisList = document.getElementById('ais-targets-list');
                     aisList.innerHTML = targets.map((target, index) => {
@@ -858,10 +1650,10 @@
                         const riskClass = cpaResult.risk === 'high' ? 'high-risk' : cpaResult.risk === 'medium' ? 'medium-risk' : '';
                         
                         return `
-                            <div class="ais-target ${riskClass}" onclick="focusOnTarget(${target.latitude}, ${target.longitude})">
+                            <div class="ais-target ${riskClass}" onclick="focusOnTarget(${target.latitude}, ${target.longitude}, ${index})">
                                 <div class="ais-target-header">
-                                    <span class="ais-target-type">${target.vessel_type || 'Unknown'} <span class="risk-badge ${cpaResult.risk}">${cpaResult.risk}</span></span>
-                                    <span class="ais-target-mmsi">MMSI: ${target.mmsi}</span>
+                                    <span class="ais-target-type">${escapeHtml(target.vessel_type || 'Unknown')} <span class="risk-badge ${cpaResult.risk}">${escapeHtml(cpaResult.risk)}</span></span>
+                                    <span class="ais-target-mmsi">MMSI: ${escapeHtml(target.mmsi)}</span>
                                 </div>
                                 <div class="ais-target-info">
                                     <span>位置：${target.latitude?.toFixed(4) || '--'}, ${target.longitude?.toFixed(4) || '--'}</span>
@@ -870,7 +1662,7 @@
                                     <span>CPA: ${cpaResult.cpa.toFixed(2)} NM | TCPA: ${cpaResult.tcpa.toFixed(0)} min</span>
                                 </div>
                                 <div style="margin-top: 8px; font-size: 10px; color: #9f7aea;">
-                                    DCPA: ${cpaResult.dcpa.toFixed(2)} NM | ${cpaResult.colregsRule || '无 COLREGs 冲突'}
+                                    DCPA: ${cpaResult.dcpa.toFixed(2)} NM | ${escapeHtml(cpaResult.colregsRule || '无 COLREGs 冲突')}
                                 </div>
                             </div>
                         `;
@@ -891,28 +1683,31 @@
                                 cursor: pointer;
                                 box-shadow: 0 0 20px ${color};
                             `;
-                            el.onclick = () => focusOnTarget(target.latitude, target.longitude);
-                            
-                            new maplibregl.Marker({ element: el })
+                            el.onclick = () => focusOnTarget(target.latitude, target.longitude, index);
+                            const marker = new maplibregl.Marker({ element: el })
                                 .setLngLat([target.longitude, target.latitude])
                                 .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
                                     <div style="padding: 8px;">
-                                        <div style="font-weight: 700; color: #4fc3f7;">${target.vessel_type || 'Unknown'}</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">MMSI: ${target.mmsi}</div>
+                                        <div style="font-weight: 700; color: #4fc3f7;">${escapeHtml(target.vessel_type || 'Unknown')}</div>
+                                        <div style="font-size: 11px; color: #a0aec0;">MMSI: ${escapeHtml(target.mmsi)}</div>
                                         <div style="font-size: 11px; color: #a0aec0;">CPA: ${cpaResult.cpa.toFixed(2)} NM</div>
                                         <div style="font-size: 11px; color: #a0aec0;">TCPA: ${cpaResult.tcpa.toFixed(0)} min</div>
                                         <div style="font-size: 11px; color: #a0aec0;">DCPA: ${cpaResult.dcpa.toFixed(2)} NM</div>
-                                        <div style="font-size: 11px; color: #f56565;">风险：${cpaResult.risk.toUpperCase()}</div>
-                                        ${cpaResult.colregsRule ? `<div style="font-size: 10px; color: #9f7aea; margin-top: 4px;">${cpaResult.colregsRule}</div>` : ''}
+                                        <div style="font-size: 11px; color: #f56565;">风险：${escapeHtml(cpaResult.risk.toUpperCase())}</div>
+                                        ${cpaResult.colregsRule ? `<div style="font-size: 10px; color: #9f7aea; margin-top: 4px;">${escapeHtml(cpaResult.colregsRule)}</div>` : ''}
                                     </div>
                                 `))
                                 .addTo(map);
+
+                            aisMarkers.push(marker);
                         }
                     });
                     
                     updateAROverlays(targets, cpaResults);
-                    syncTwinBridge({
-                        alarms: buildTwinAlarms(cpaResults, targets)
+                    syncVrScene({
+                        targets,
+                        cpaResults,
+                        alarms: buildVrAlarms(cpaResults, targets)
                     });
                 }
             } catch (error) {
@@ -920,7 +1715,7 @@
             }
         }
 
-        async function syncIntegratedTwinState() {
+        async function syncVrOwnShipState() {
             try {
                 const response = await fetch('/api/v1/dashboard');
                 const data = await response.json();
@@ -932,7 +1727,7 @@
 
                 const headerPosition = `${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E`;
                 document.getElementById('own-ship-position').textContent = headerPosition;
-                document.getElementById('twin-own-ship').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                document.getElementById('vr-own-ship').textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
 
                 const ownShipInfo = document.querySelectorAll('.route-label');
                 if (ownShipInfo.length >= 3) {
@@ -941,8 +1736,8 @@
                     ownShipInfo[2].textContent = `航速：${speed.toFixed(1)} kn`;
                 }
 
-                document.getElementById('twin-sync-time').textContent = new Date().toLocaleTimeString('zh-CN');
-                syncTwinBridge({
+                document.getElementById('vr-sync-time').textContent = new Date().toLocaleTimeString('zh-CN');
+                syncVrScene({
                     ownShip: {
                         latitude,
                         longitude,
@@ -950,9 +1745,10 @@
                         speed
                     }
                 });
+                checkSpecialScenarios();
             } catch (error) {
-                console.error('Failed to sync digital twin state:', error);
-                document.getElementById('twin-sync-time').textContent = '失败';
+                console.error('Failed to sync VR own ship state:', error);
+                document.getElementById('vr-sync-time').textContent = '失败';
             }
         }
 
@@ -1007,17 +1803,19 @@
 
         function updateCOLREGsAlerts(cpaResults, targets) {
             const alertsDiv = document.getElementById('colregs-alerts');
-            const alerts = cpaResults.filter(r => r.colregsRule && r.risk !== 'low');
+            const alerts = cpaResults
+                .map((result, index) => ({ result, target: targets[index] }))
+                .filter(({ result }) => result.colregsRule && result.risk !== 'low');
             
             if (alerts.length === 0) {
                 alertsDiv.innerHTML = '<div style="color: #718096; text-align: center; padding: 20px;">无警告</div>';
                 return;
             }
             
-            alertsDiv.innerHTML = alerts.map((alert, i) => `
+            alertsDiv.innerHTML = alerts.map(({ result, target }) => `
                 <div class="colregs-alert">
-                    <div class="colregs-alert-title">⚠️ ${targets[i].vessel_type || 'Unknown'} (MMSI: ${targets[i].mmsi})</div>
-                    <div class="colregs-rule">${alert.colregsRule} - CPA: ${alert.cpa.toFixed(2)} NM, TCPA: ${alert.tcpa.toFixed(0)} min, DCPA: ${alert.dcpa.toFixed(2)} NM</div>
+                    <div class="colregs-alert-title">⚠️ ${escapeHtml((target && target.vessel_type) || 'Unknown')} (MMSI: ${escapeHtml((target && target.mmsi) || '--')})</div>
+                    <div class="colregs-rule">${escapeHtml(result.colregsRule)} - CPA: ${result.cpa.toFixed(2)} NM, TCPA: ${result.tcpa.toFixed(0)} min, DCPA: ${result.dcpa.toFixed(2)} NM</div>
                 </div>
             `).join('');
         }
@@ -1037,7 +1835,7 @@
                 
                 html += `
                     <div class="ar-target" style="left: ${x}%; top: ${y}%; background: ${color}; border-color: #fff;">
-                        <div class="ar-target-label" style="color: #fff;">${target.vessel_type || 'Unknown'}</div>
+                        <div class="ar-target-label" style="color: #fff;">${escapeHtml(target.vessel_type || 'Unknown')}</div>
                     </div>
                 `;
             });
@@ -1069,8 +1867,8 @@
         }
 
         function getSpecialScenario() {
-            const ownShipLat = 18.25;
-            const ownShipLng = 109.50;
+            const ownShipLat = Number(bridgeState.ownShip?.latitude ?? bridgeState.ownShip?.lat ?? 18.25);
+            const ownShipLng = Number(bridgeState.ownShip?.longitude ?? bridgeState.ownShip?.lng ?? 109.50);
             
             const inCanyon = ownShipLat > 18.3 && ownShipLat < 18.5;
             const hasIceberg = ownShipLat > 18.4;
@@ -1109,7 +1907,9 @@
 
         async function loadWeatherData() {
             try {
-                const response = await fetch('/api/v1/worldmonitor/weather?lat=18.25&lng=109.50');
+            const ownShipLat = Number(bridgeState.ownShip?.latitude ?? bridgeState.ownShip?.lat ?? 18.25);
+            const ownShipLng = Number(bridgeState.ownShip?.longitude ?? bridgeState.ownShip?.lng ?? 109.50);
+            const response = await fetch(`/api/v1/worldmonitor/weather?lat=${ownShipLat}&lng=${ownShipLng}`);
                 const data = await response.json();
                 
                 if (data.weather) {
@@ -1120,22 +1920,26 @@
                     document.getElementById('current-dir').textContent = weather.current?.direction?.toFixed(0) ? `${weather.current.direction.toFixed(0)}°` : '--';
                     document.getElementById('visibility').textContent = weather.visibility?.toFixed(1) ? `${weather.visibility.toFixed(1)} km` : '--';
                     document.getElementById('weather-time').textContent = weather.timestamp ? new Date(weather.timestamp).toLocaleTimeString('zh-CN') : '--';
-                    syncTwinBridge({ weather });
+                    syncVrScene({ weather });
                 }
             } catch (error) {
                 console.error('Failed to load weather data:', error);
             }
         }
 
-        function focusOnTarget(lat, lng) {
+        function focusOnTarget(lat, lng, targetIndex = null) {
             map.flyTo({
                 center: [lng, lat],
                 zoom: 14,
                 duration: 2000
             });
 
-            syncTwinBridge({
-                selectedTarget: {
+            const selectedTarget = Number.isInteger(targetIndex) && Array.isArray(bridgeState.targets)
+                ? bridgeState.targets[targetIndex] || null
+                : null;
+
+            syncVrScene({
+                selectedTarget: selectedTarget || {
                     latitude: Number(lat),
                     longitude: Number(lng)
                 }
@@ -1144,8 +1948,254 @@
 
         setInterval(loadAISData, 15000);
         setInterval(loadWeatherData, 15000);
+
+        // -- Agent Insight Panel --
+        function toggleAgentPanel() {
+            var body = document.getElementById('agent-insight-body');
+            var arrow = document.getElementById('agent-panel-arrow');
+            if (body.style.display === 'none') {
+                body.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                body.style.display = 'none';
+                arrow.textContent = '▶';
+            }
+        }
+
+        async function loadAgentInsight() {
+            var statusEl = document.getElementById('agent-team-status');
+            var decEl = document.getElementById('agent-decision-summary');
+            var decContent = document.getElementById('agent-decision-content');
+            try {
+                var r = await fetch('/api/v1/agent-teams/overview');
+                var ov = r.ok ? await r.json() : null;
+                if (ov) {
+                    var bt = ov.build_team || {};
+                    var et = ov.execution_team || {};
+                    var sch = ov.scheduler || {};
+                    var schColor = sch.running ? '#48bb78' : '#fc8181';
+                    var schText = sch.running ? '运行中' : '已停止';
+                    statusEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+                        '<span style="font-size:12px;color:#e2e8f0">Agent 团队</span>' +
+                        '<span style="font-size:11px;color:' + schColor + '">● ' + escapeHtml(schText) + '</span></div>' +
+                        '<div style="display:flex;gap:12px;font-size:11px;color:#a0aec0">' +
+                        '<span>构建: ' + (bt.agent_count || 0) + ' 位</span>' +
+                        '<span>执行: ' + (et.agent_count || 0) + ' 位</span>' +
+                        '<span>Tick: ' + (sch.tick_count || 0) + '</span></div>';
+                } else {
+                    statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+                }
+            } catch(e) {
+                statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+            }
+            try {
+                var r2 = await fetch('/api/v1/ai-native/decision/package');
+                var dp = r2.ok ? await r2.json() : null;
+                if (dp && dp.risk_summary) {
+                    decEl.style.display = 'block';
+                    var rs = dp.risk_summary || {};
+                    var level = rs.overall_risk || 'unknown';
+                    var levelColor = level === 'high' ? '#fc8181' : level === 'medium' ? '#f6ad55' : '#48bb78';
+                    var html = '<div style="margin-bottom:6px"><span style="color:' + levelColor + ';font-weight:600">风险: ' + escapeHtml(level.toUpperCase()) + '</span></div>';
+                    if (rs.factors && rs.factors.length) {
+                        html += rs.factors.slice(0, 3).map(function(f){ return '<div style="font-size:11px;color:#a0aec0">• ' + escapeHtml(String(f)) + '</div>'; }).join('');
+                    }
+                    if (dp.action_plan && dp.action_plan.length) {
+                        html += '<div style="margin-top:6px;font-size:11px;color:#718096">建议动作:</div>';
+                        html += dp.action_plan.slice(0, 2).map(function(a){ return '<div style="font-size:11px;color:#a0aec0">→ ' + escapeHtml(String(a.action || a)) + '</div>'; }).join('');
+                    }
+                    decContent.innerHTML = html;
+                } else {
+                    decEl.style.display = 'none';
+                }
+            } catch(e) {
+                decEl.style.display = 'none';
+            }
+        }
+
+        async function sendAgentCommand(cmd) {
+            var resultEl = document.getElementById('agent-cmd-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span style="color:#718096">处理中...</span>';
+            try {
+                var resp = await fetch('/api/v1/agent-config/bridge/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: cmd, source: 'worldmonitor' })
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var data = await resp.json();
+                var html = '';
+                if (data.agent) {
+                    html += '<div style="font-size:11px;color:#4fc3f7;margin-bottom:4px">Agent: ' + escapeHtml(data.agent) + '</div>';
+                }
+                if (data.response) {
+                    html += '<div>' + escapeHtml(String(data.response)).replace(/\n/g, '<br>') + '</div>';
+                } else if (data.message) {
+                    html += '<div>' + escapeHtml(String(data.message)) + '</div>';
+                } else {
+                    html += '<div>' + escapeHtml(JSON.stringify(data)) + '</div>';
+                }
+                resultEl.innerHTML = html;
+            } catch(e) {
+                resultEl.innerHTML = '<span style="color:#fc8181">请求失败: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        loadAgentInsight();
+        setInterval(loadAgentInsight, 30000);
+
+
+        // -- Agent Insight Panel --
+        function toggleAgentPanel() {
+            var body = document.getElementById('agent-insight-body');
+            var arrow = document.getElementById('agent-panel-arrow');
+            if (body.style.display === 'none') {
+                body.style.display = 'block';
+                arrow.textContent = '▼';
+            } else {
+                body.style.display = 'none';
+                arrow.textContent = '▶';
+            }
+        }
+
+        async function loadAgentInsight() {
+            var statusEl = document.getElementById('agent-team-status');
+            var decEl = document.getElementById('agent-decision-summary');
+            var decContent = document.getElementById('agent-decision-content');
+            try {
+                var r = await fetch('/api/v1/agent-teams/overview');
+                var ov = r.ok ? await r.json() : null;
+                if (ov) {
+                    var bt = ov.build_team || {};
+                    var et = ov.execution_team || {};
+                    var sch = ov.scheduler || {};
+                    var schColor = sch.running ? '#48bb78' : '#fc8181';
+                    var schText = sch.running ? '运行中' : '已停止';
+                    statusEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+                        '<span style="font-size:12px;color:#e2e8f0">Agent 团队</span>' +
+                        '<span style="font-size:11px;color:' + schColor + '">● ' + escapeHtml(schText) + '</span></div>' +
+                        '<div style="display:flex;gap:12px;font-size:11px;color:#a0aec0">' +
+                        '<span>构建: ' + (bt.agent_count || 0) + ' 位</span>' +
+                        '<span>执行: ' + (et.agent_count || 0) + ' 位</span>' +
+                        '<span>Tick: ' + (sch.tick_count || 0) + '</span></div>';
+                } else {
+                    statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+                }
+            } catch(e) {
+                statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+            }
+            try {
+                var r2 = await fetch('/api/v1/ai-native/decision/package');
+                var dp = r2.ok ? await r2.json() : null;
+                if (dp && dp.risk_summary) {
+                    decEl.style.display = 'block';
+                    var rs = dp.risk_summary || {};
+                    var level = rs.overall_risk || 'unknown';
+                    var levelColor = level === 'high' ? '#fc8181' : level === 'medium' ? '#f6ad55' : '#48bb78';
+                    var html = '<div style="margin-bottom:6px"><span style="color:' + levelColor + ';font-weight:600">风险: ' + escapeHtml(level.toUpperCase()) + '</span></div>';
+                    if (rs.factors && rs.factors.length) {
+                        html += rs.factors.slice(0, 3).map(function(f){ return '<div style="font-size:11px;color:#a0aec0">• ' + escapeHtml(String(f)) + '</div>'; }).join('');
+                    }
+                    if (dp.action_plan && dp.action_plan.length) {
+                        html += '<div style="margin-top:6px;font-size:11px;color:#718096">建议动作:</div>';
+                        html += dp.action_plan.slice(0, 2).map(function(a){ return '<div style="font-size:11px;color:#a0aec0">→ ' + escapeHtml(String(a.action || a)) + '</div>'; }).join('');
+                    }
+                    decContent.innerHTML = html;
+                } else {
+                    decEl.style.display = 'none';
+                }
+            } catch(e) {
+                decEl.style.display = 'none';
+            }
+        }
+
+        async function sendAgentCommand(cmd) {
+            var resultEl = document.getElementById('agent-cmd-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '<span style="color:#718096">处理中...</span>';
+            try {
+                var resp = await fetch('/api/v1/agent-config/bridge/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: cmd, source: 'worldmonitor' })
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                var data = await resp.json();
+                var html = '';
+                if (data.agent) {
+                    html += '<div style="font-size:11px;color:#4fc3f7;margin-bottom:4px">Agent: ' + escapeHtml(data.agent) + '</div>';
+                }
+                if (data.response) {
+                    html += '<div>' + escapeHtml(String(data.response)).replace(/\n/g, '<br>') + '</div>';
+                } else if (data.message) {
+                    html += '<div>' + escapeHtml(String(data.message)) + '</div>';
+                } else {
+                    html += '<div>' + escapeHtml(JSON.stringify(data)) + '</div>';
+                }
+                resultEl.innerHTML = html;
+            } catch(e) {
+                resultEl.innerHTML = '<span style="color:#fc8181">请求失败: ' + escapeHtml(e.message) + '</span>';
+            }
+        }
+
+        loadAgentInsight();
+        setInterval(loadAgentInsight, 30000);
+
         setInterval(checkSpecialScenarios, 10000);
-        setInterval(syncIntegratedTwinState, 15000);
+        setInterval(syncVrOwnShipState, 15000);
+    </script>
+<!-- The misplaced JS above has been removed. It will be re-inserted in a proper <script> block below. -->
+    <script>
+    // --- VR CANVAS INTERACTION: ZOOM & PAN ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const vrCanvas = document.getElementById('vr-scene-canvas');
+        let panStart = null;
+        let lastPan = { x: 0, y: 0 };
+        let zoomLevel = 1.0;
+        let zoomCenter = { x: 0.5, y: 0.5 };
+
+        function applyVrTransform(ctx, width, height) {
+            ctx.setTransform(zoomLevel, 0, 0, zoomLevel, width * (1 - zoomLevel) * zoomCenter.x, height * (1 - zoomLevel) * zoomCenter.y);
+        }
+
+        if (vrCanvas) {
+            vrCanvas.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                const bounds = vrCanvas.getBoundingClientRect();
+                const mx = (event.clientX - bounds.left) / bounds.width;
+                const my = (event.clientY - bounds.top) / bounds.height;
+                zoomLevel *= event.deltaY < 0 ? 1.08 : 0.92;
+                zoomLevel = Math.max(0.5, Math.min(zoomLevel, 3.5));
+                // Adjust zoom center to mouse
+                zoomCenter.x = mx;
+                zoomCenter.y = my;
+            }, { passive: false });
+
+            vrCanvas.addEventListener('mousedown', (event) => {
+                if (event.button !== 0) return;
+                panStart = { x: event.clientX, y: event.clientY };
+                lastPan = { ...zoomCenter };
+                vrCanvas.style.cursor = 'grabbing';
+            });
+            document.addEventListener('mousemove', (event) => {
+                if (!panStart) return;
+                const bounds = vrCanvas.getBoundingClientRect();
+                const dx = (event.clientX - panStart.x) / bounds.width;
+                const dy = (event.clientY - panStart.y) / bounds.height;
+                zoomCenter.x = Math.max(0, Math.min(1, lastPan.x - dx / zoomLevel));
+                zoomCenter.y = Math.max(0, Math.min(1, lastPan.y - dy / zoomLevel));
+            });
+            document.addEventListener('mouseup', () => {
+                if (panStart) {
+                    panStart = null;
+                    vrCanvas.style.cursor = 'default';
+                }
+            });
+        }
+        // Expose for use in other scripts if needed
+        window.applyVrTransform = applyVrTransform;
+    });
     </script>
 </body>
 </html>

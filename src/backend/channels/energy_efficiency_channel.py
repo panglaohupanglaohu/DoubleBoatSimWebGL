@@ -17,6 +17,9 @@ from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EnergyEfficiencyChannel(MarineChannel):
     """能效管理 Channel - 主入口类.
@@ -137,7 +140,8 @@ class EnergyEfficiencyChannel(MarineChannel):
             self._initialized = False
             self._set_health(ChannelStatus.OFF, "Shutdown")
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Energy calc skip: {e}")
             return False
     
     def check(self) -> Tuple[str, str]:

@@ -271,27 +271,42 @@ export class NavigatorAgent extends AgentBase {
    * @private
    */
   async _handleCollisionQuery(task, context) {
-    // 模拟 AIS 数据（实际应该从真实传感器获取）
-    const mockAISTarget = {
-      mmsi: '413123456',
-      name: '集装箱船 EVER GIVEN',
-      position: { x: 50, z: 30 },
-      velocity: { x: -2, z: 0 },
-      heading: 270,
-      length: 400,
-      beam: 59
-    };
-
-    const ownShip = {
-      position: { x: 0, z: 0 },
-      velocity: { x: 5, z: 0 },
-      heading: 90
-    };
-
-    // 计算 CPA/TCPA
+    // 尝试从后端获取真实 AIS 数据，失败则回退 mock
+    let aisTarget, ownShip;
+    try {
+      const aisResp = await fetch("/api/v1/worldmonitor/ais");
+      if (aisResp.ok) {
+        const aisData = await aisResp.json();
+        const t = (aisData.targets || [])[0];
+        if (t) {
+          aisTarget = {
+            mmsi: t.mmsi || "413000000",
+            name: t.vessel_type || "AIS Target",
+            position: { x: (t.longitude || 121.5) - 121.47, z: (t.latitude || 31.23) - 31.23 },
+            velocity: { x: -(t.speed || 0) * Math.sin((t.course || 0) * Math.PI / 180), z: (t.speed || 0) * Math.cos((t.course || 0) * Math.PI / 180) },
+            heading: t.heading || t.course || 0,
+            length: 200, beam: 32
+          };
+        }
+      }
+    } catch (_e) { /* fallback below */ }
+    if (!aisTarget) {
+      aisTarget = { mmsi: "413123456", name: "集装箱船 EVER GIVEN", position: { x: 50, z: 30 }, velocity: { x: -2, z: 0 }, heading: 270, length: 400, beam: 59 };
+    }
+    try {
+      const navResp = await fetch("/api/v1/ai-native/decision/package");
+      if (navResp.ok) {
+        const nav = await navResp.json();
+        const pos = nav.position || {};
+        ownShip = { position: { x: 0, z: 0 }, velocity: { x: pos.speed || 5, z: 0 }, heading: pos.heading || 90 };
+      }
+    } catch (_e) { /* fallback */ }
+    if (!ownShip) {
+      ownShip = { position: { x: 0, z: 0 }, velocity: { x: 5, z: 0 }, heading: 90 };
+    }
     const { cpa, tcpa } = await this.useTool('calculateCPA', {
       ownShip,
-      targetShip: mockAISTarget
+      targetShip: aisTarget
     });
 
     // 评估风险
@@ -303,7 +318,7 @@ export class NavigatorAgent extends AgentBase {
     // 构建响应
     const response = {
       type: 'collision_assessment',
-      target: mockAISTarget,
+      target: aisTarget,
       cpa: cpa.toFixed(2),
       tcpa: tcpa > 0 ? `${(tcpa / 60).toFixed(1)} 分钟` : '已通过',
       riskLevel,
@@ -317,7 +332,7 @@ export class NavigatorAgent extends AgentBase {
     } else {
       const maneuvers = await this.useTool('generateAvoidanceManeuver', {
         ownShip,
-        targetShip: mockAISTarget,
+        targetShip: aisTarget,
         riskLevel
       });
 

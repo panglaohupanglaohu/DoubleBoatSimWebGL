@@ -97,6 +97,31 @@
             justify-content: flex-end;
         }
 
+        .sync-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .sync-item {
+            border-radius: 16px;
+            padding: 12px 14px;
+            background: rgba(10, 23, 39, 0.82);
+            border: 1px solid rgba(125, 220, 255, 0.14);
+            box-shadow: var(--shadow);
+        }
+
+        .sync-item small {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .sync-item strong {
+            font-size: 14px;
+        }
+
         .action-link,
         .chip,
         .command-button {
@@ -119,10 +144,172 @@
             border-color: rgba(125, 220, 255, 0.4);
         }
 
+        .chip.is-active {
+            background: rgba(125, 220, 255, 0.22);
+            border-color: rgba(125, 220, 255, 0.48);
+            box-shadow: 0 0 0 1px rgba(125, 220, 255, 0.1) inset;
+        }
+
         .metrics {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+            grid-template-columns: repeat(9, minmax(0, 1fr));
             gap: 12px;
+        }
+
+        .domain-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .mission-rail {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .briefing-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .briefing-card {
+            border-radius: 18px;
+            padding: 16px;
+            background: linear-gradient(180deg, rgba(7, 20, 36, 0.95), rgba(8, 14, 24, 0.98));
+            border: 1px solid rgba(125, 220, 255, 0.14);
+            display: grid;
+            gap: 8px;
+            min-height: 122px;
+            box-shadow: var(--shadow);
+        }
+
+        .briefing-card.is-focus {
+            border-color: rgba(125, 220, 255, 0.36);
+            background: linear-gradient(180deg, rgba(12, 33, 56, 0.96), rgba(8, 18, 31, 0.98));
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+        }
+
+        .briefing-card.is-dim {
+            opacity: 0.72;
+        }
+
+        .briefing-kicker {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--cyan);
+        }
+
+        .briefing-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .briefing-copy {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .mission-card {
+            border-radius: 18px;
+            padding: 16px;
+            background: linear-gradient(180deg, rgba(8, 25, 43, 0.92), rgba(7, 17, 30, 0.98));
+            border: 1px solid rgba(125, 220, 255, 0.14);
+            display: grid;
+            gap: 8px;
+            min-height: 132px;
+            box-shadow: var(--shadow);
+        }
+
+        .mission-card-label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .mission-card-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .mission-card-note {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .domain-card {
+            border-radius: 18px;
+            padding: 16px;
+            background: linear-gradient(180deg, rgba(12, 28, 47, 0.9), rgba(7, 18, 32, 0.92));
+            border: 1px solid rgba(125, 220, 255, 0.14);
+            box-shadow: var(--shadow);
+            display: grid;
+            gap: 8px;
+            min-height: 148px;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .domain-card:hover,
+        .domain-card.is-active {
+            transform: translateY(-2px);
+            border-color: rgba(125, 220, 255, 0.34);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+        }
+
+        .domain-card.theme-rcc,
+        .pathway-stage.theme-rcc {
+            border-left: 3px solid rgba(125, 220, 255, 0.52);
+        }
+
+        .domain-card.theme-environment,
+        .pathway-stage.theme-environment {
+            border-left: 3px solid rgba(152, 245, 167, 0.5);
+        }
+
+        .domain-card.theme-governance,
+        .pathway-stage.theme-governance {
+            border-left: 3px solid rgba(255, 125, 125, 0.52);
+        }
+
+        .domain-kicker {
+            font-family: 'IBM Plex Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--cyan);
+            font-size: 11px;
+        }
+
+        .domain-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .domain-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .domain-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .domain-copy {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .domain-copy strong {
+            color: var(--text);
+            font-weight: 600;
         }
 
         .metric {
@@ -217,7 +404,7 @@
         .sidebar {
             display: grid;
             gap: 16px;
-            grid-template-rows: auto auto minmax(260px, 1fr) minmax(260px, 1fr);
+            align-content: start;
         }
 
         .panel {
@@ -248,6 +435,13 @@
             display: block;
             font-size: 13px;
             margin-bottom: 4px;
+        }
+
+        .list-item p {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+            margin-top: 6px;
         }
 
         .list-item span,
@@ -300,6 +494,197 @@
             flex-wrap: wrap;
         }
 
+        .command-deck {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .command-deck-card {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: grid;
+            gap: 6px;
+            color: var(--text);
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .command-deck-card.is-primary {
+            border-color: rgba(125, 220, 255, 0.3);
+            background: rgba(125, 220, 255, 0.1);
+        }
+
+        .command-deck-card small {
+            color: var(--muted);
+            line-height: 1.4;
+            font-size: 11px;
+        }
+
+        .command-deck-card strong {
+            font-size: 13px;
+        }
+
+        .command-deck-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .command-inline-button {
+            border: 1px solid rgba(125, 220, 255, 0.2);
+            background: rgba(125, 220, 255, 0.08);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .command-inline-button.is-primary {
+            background: rgba(125, 220, 255, 0.16);
+            border-color: rgba(125, 220, 255, 0.36);
+        }
+
+        .pathway-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .constraint-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .constraint-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .constraint-item strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .constraint-item small {
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .doctrine-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .doctrine-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .doctrine-item strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .doctrine-item small {
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .focus-console {
+            display: grid;
+            gap: 10px;
+        }
+
+        .focus-console-card {
+            padding: 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(9, 24, 42, 0.94), rgba(8, 16, 28, 0.98));
+            border: 1px solid rgba(125, 220, 255, 0.16);
+            display: grid;
+            gap: 8px;
+        }
+
+        .focus-console-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .focus-console-card strong {
+            font-size: 14px;
+        }
+
+        .focus-console-card small {
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .pathway-stage {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: grid;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .pathway-stage:hover,
+        .pathway-stage.is-active {
+            transform: translateY(-1px);
+            border-color: rgba(125, 220, 255, 0.28);
+            background: rgba(125, 220, 255, 0.08);
+        }
+
+        .pathway-stage-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .pathway-stage strong {
+            font-size: 13px;
+        }
+
+        .pathway-stage small {
+            color: var(--muted);
+            display: block;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .pathway-track {
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .pathway-meter {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--cyan-strong), #9af6bd);
+        }
+
         .map-frame {
             min-height: 320px;
         }
@@ -325,6 +710,7 @@
         }
 
         .map-summary,
+        .map-focus-note,
         .traffic-strip {
             pointer-events: auto;
             border-radius: 14px;
@@ -352,6 +738,43 @@
             font-size: 13px;
         }
 
+        .map-focus-note {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .map-focus-stack {
+            display: grid;
+            gap: 8px;
+        }
+
+        .map-focus-copy {
+            display: grid;
+            gap: 3px;
+        }
+
+        .map-focus-copy small {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .map-focus-copy strong {
+            font-size: 13px;
+        }
+
+        .map-focus-hint {
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
         .traffic-strip {
             padding: 10px;
             display: flex;
@@ -365,6 +788,7 @@
             border-radius: 12px;
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
         }
 
         .traffic-chip small {
@@ -381,6 +805,18 @@
         .traffic-chip.is-high {
             border-color: rgba(255, 114, 114, 0.28);
             background: rgba(255, 114, 114, 0.12);
+        }
+
+        .traffic-chip.is-meta {
+            border-color: rgba(125, 220, 255, 0.18);
+            background: rgba(125, 220, 255, 0.08);
+            min-width: 156px;
+        }
+
+        .traffic-chip.is-focus {
+            border-color: rgba(125, 220, 255, 0.3);
+            background: rgba(125, 220, 255, 0.12);
+            box-shadow: 0 0 0 1px rgba(125, 220, 255, 0.08) inset;
         }
 
         .ownship-marker,
@@ -411,6 +847,13 @@
             background: #ff7272;
         }
 
+        .target-marker.is-focus {
+            width: 20px;
+            height: 20px;
+            box-shadow: 0 0 20px rgba(125, 220, 255, 0.5);
+            border-color: rgba(125, 220, 255, 0.9);
+        }
+
         .maplibregl-popup-content {
             background: rgba(7, 18, 32, 0.96);
             color: var(--text);
@@ -432,7 +875,36 @@
             padding: 0 6px;
         }
 
+        /* SVESSEL status color hints */
+        .metric-value.is-ok { color: var(--lime); }
+        .metric-value.is-warn { color: var(--amber); }
+        .metric-value.is-danger { color: var(--red); }
+        .badge.is-ok { background: rgba(152, 245, 167, 0.15); color: var(--lime); }
+        .badge.is-warn { background: rgba(255, 207, 112, 0.15); color: var(--amber); }
+        .badge.is-danger { background: rgba(255, 125, 125, 0.18); color: var(--red); }
+        .badge.is-neutral { background: rgba(125, 220, 255, 0.12); color: var(--cyan); }
+
+        /* Glow effect on critical metrics */
+        .metric.has-alert {
+            border-color: rgba(255, 125, 125, 0.35);
+            box-shadow: 0 0 24px rgba(255, 125, 125, 0.08);
+        }
+
+        /* Pulse animation for active link */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(125, 220, 255, 0.2); }
+            50% { box-shadow: 0 0 18px rgba(125, 220, 255, 0.45); }
+        }
+        .badge.is-live {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
         @media (max-width: 1440px) {
+            .sync-strip,
+            .briefing-strip,
+            .mission-rail,
+            .domain-grid,
+            .command-deck,
             .metrics {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
@@ -443,8 +915,12 @@
                 grid-template-columns: 1fr;
             }
 
-            .sidebar {
-                grid-template-rows: auto auto auto auto;
+            .sync-strip,
+            .briefing-strip,
+            .mission-rail,
+            .domain-grid,
+            .command-deck {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .twin-frame {
@@ -453,8 +929,13 @@
         }
 
         @media (max-width: 720px) {
+            .sync-strip,
+            .briefing-strip,
+            .mission-rail,
+            .domain-grid,
+            .command-deck,
             .metrics {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: 1fr;
             }
 
             .topbar {
@@ -470,15 +951,124 @@
             <div class="title-wrap">
                 <div class="eyebrow">Poseidon-X / Captain Console</div>
                 <h1>船长智能中控台</h1>
-                <div class="subtitle">同屏整合数字孪生、WorldMonitor、AI Native 任务图、RCS/SHM 与 OpenBridge 命令交互。</div>
+                <div class="subtitle">围绕船舶平台、航行感知、船岸协同、港口环境与治理监管五类要素，重组智能航运运行态势、路径能力与船长决策支持。</div>
             </div>
             <div class="action-row">
                 <a class="action-link" href="/worldmonitor-ar-cas-pro.html" target="_blank" rel="noopener noreferrer">打开 AR-CAS Pro</a>
                 <a class="action-link" href="/worldmonitor-map.html" target="_blank" rel="noopener noreferrer">打开 WorldMonitor 地图</a>
                 <a class="action-link" href="/digital-twin.html" target="_blank" rel="noopener noreferrer">打开数字孪生</a>
                 <a class="action-link" href="/poseidon-config.html" target="_blank" rel="noopener noreferrer">LLM 配置</a>
+                <a class="action-link" href="/agent-team-config.html" target="_blank" rel="noopener noreferrer">🤖 智能体团队</a>
             </div>
         </header>
+
+        <section class="sync-strip" id="sync-strip">
+            <article class="sync-item">
+                <small>数据新鲜度</small>
+                <strong id="sync-freshness">等待同步</strong>
+            </article>
+            <article class="sync-item">
+                <small>上次协调周期</small>
+                <strong id="sync-last-cycle">--</strong>
+            </article>
+            <article class="sync-item">
+                <small>本地时钟</small>
+                <strong id="sync-clock">--:--:--</strong>
+            </article>
+            <article class="sync-item">
+                <small>运行说明</small>
+                <strong id="sync-summary">等待 AI Native</strong>
+            </article>
+        </section>
+
+        <section class="domain-grid" id="domain-grid">
+            <article class="domain-card">
+                <div class="domain-kicker">Vessel Platform</div>
+                <div class="domain-head">
+                    <div class="domain-title">船舶平台</div>
+                    <div class="badge">INIT</div>
+                </div>
+                <div class="domain-value">--</div>
+                <div class="domain-copy">等待平台健康、结构寿命与 PHM 数据。</div>
+            </article>
+            <article class="domain-card">
+                <div class="domain-kicker">Navigation Sensing</div>
+                <div class="domain-head">
+                    <div class="domain-title">航行感知</div>
+                    <div class="badge">INIT</div>
+                </div>
+                <div class="domain-value">--</div>
+                <div class="domain-copy">等待碰撞风险、场景态势与目标感知数据。</div>
+            </article>
+            <article class="domain-card">
+                <div class="domain-kicker">Ship-Shore RCC</div>
+                <div class="domain-head">
+                    <div class="domain-title">船岸协同</div>
+                    <div class="badge">INIT</div>
+                </div>
+                <div class="domain-value">--</div>
+                <div class="domain-copy">等待链路质量、自主等级与控制权信息。</div>
+            </article>
+            <article class="domain-card">
+                <div class="domain-kicker">Port Environment</div>
+                <div class="domain-head">
+                    <div class="domain-title">港口环境</div>
+                    <div class="badge">INIT</div>
+                </div>
+                <div class="domain-value">--</div>
+                <div class="domain-copy">等待海图、风浪和场景上下文同步。</div>
+            </article>
+            <article class="domain-card">
+                <div class="domain-kicker">People Governance</div>
+                <div class="domain-head">
+                    <div class="domain-title">人员治理</div>
+                    <div class="badge">INIT</div>
+                </div>
+                <div class="domain-value">--</div>
+                <div class="domain-copy">等待合规、网络安全与人工监管状态。</div>
+            </article>
+        </section>
+
+        <section class="mission-rail" id="mission-rail">
+            <article class="mission-card">
+                <div class="mission-card-label">运行模式</div>
+                <div class="mission-card-value">--</div>
+                <div class="mission-card-note">等待 AI Native 任务模式。</div>
+            </article>
+            <article class="mission-card">
+                <div class="mission-card-label">RCC 接管准备</div>
+                <div class="mission-card-value">--</div>
+                <div class="mission-card-note">等待链路与控制权信息。</div>
+            </article>
+            <article class="mission-card">
+                <div class="mission-card-label">运行约束</div>
+                <div class="mission-card-value">--</div>
+                <div class="mission-card-note">等待风险、链路和治理约束汇总。</div>
+            </article>
+            <article class="mission-card">
+                <div class="mission-card-label">治理状态</div>
+                <div class="mission-card-value">--</div>
+                <div class="mission-card-note">等待网络安全与合规状态。</div>
+            </article>
+        </section>
+
+        <section class="briefing-strip" id="briefing-strip">
+            <article class="briefing-card">
+                <div class="briefing-kicker">Operational Bottleneck</div>
+                <div class="briefing-title">等待系统简报</div>
+                <div class="briefing-copy">正在汇总当前运行路径中的关键瓶颈。</div>
+            </article>
+            <article class="briefing-card">
+                <div class="briefing-kicker">Ship-Shore Advice</div>
+                <div class="briefing-title">等待船岸建议</div>
+                <div class="briefing-copy">正在分析 RCC 协同、链路冗余与人工接管条件。</div>
+            </article>
+            <article class="briefing-card">
+                <div class="briefing-kicker">Governance Signal</div>
+                <div class="briefing-title">等待治理提醒</div>
+                <div class="briefing-copy">正在整理网络安全、合规和人工监管要求。</div>
+            </article>
+        </section>
 
         <section class="metrics">
             <div class="panel metric">
@@ -497,6 +1087,21 @@
                 <div class="metric-note" id="metric-scene">Scene --</div>
             </div>
             <div class="panel metric">
+                <div class="metric-label">MASS 自主等级</div>
+                <div class="metric-value" id="metric-mass">--</div>
+                <div class="metric-note" id="metric-lr-al">LR AL --</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">船岸链路</div>
+                <div class="metric-value" id="metric-link">--</div>
+                <div class="metric-note" id="metric-latency">Latency --</div>
+            </div>
+            <div class="panel metric">
+                <div class="metric-label">PHM 健康</div>
+                <div class="metric-value" id="metric-phm">--</div>
+                <div class="metric-note" id="metric-rul">RUL --</div>
+            </div>
+            <div class="panel metric">
                 <div class="metric-label">RCS 控制</div>
                 <div class="metric-value" id="metric-rcs">--</div>
                 <div class="metric-note" id="metric-comfort">MSDV --</div>
@@ -507,9 +1112,9 @@
                 <div class="metric-note" id="metric-life">Life --</div>
             </div>
             <div class="panel metric">
-                <div class="metric-label">记忆与态势</div>
-                <div class="metric-value" id="metric-memory">--</div>
-                <div class="metric-note" id="metric-ais">AIS --</div>
+                <div class="metric-label">网络安全</div>
+                <div class="metric-value" id="metric-cyber">--</div>
+                <div class="metric-note" id="metric-threat">Threat --</div>
             </div>
         </section>
 
@@ -541,6 +1146,90 @@
                     </div>
                 </section>
 
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>Focus Console</strong>
+                            <span>当前聚焦航道 / 下一条命令 / 操作问题</span>
+                        </div>
+                        <div class="badge" id="focus-badge">OVERVIEW</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="focus-console" id="focus-console">
+                            <div class="focus-console-card">
+                                <div class="focus-console-top">
+                                    <strong>总览模式</strong>
+                                    <div class="badge">INIT</div>
+                                </div>
+                                <small>点击任一要素域或路径卡片，将这里切换到对应的操作焦点。</small>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>智能航运路径看板</strong>
+                            <span>感知 / 通信 / 规划 / 自主 / 治理 readiness</span>
+                        </div>
+                        <div class="badge" id="pathway-badge">INIT</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="pathway-list" id="pathway-list">
+                            <div class="pathway-stage">
+                                <div class="pathway-stage-head">
+                                    <div>
+                                        <strong>等待路径状态</strong>
+                                        <small>正在整理智能航运核心能力链。</small>
+                                    </div>
+                                    <div class="badge">WAIT</div>
+                                </div>
+                                <div class="pathway-track"><div class="pathway-meter" style="width: 12%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>运行约束与冗余</strong>
+                            <span>风险阈值 / RCC 准备 / 降级动作 / 安全冗余</span>
+                        </div>
+                        <div class="badge" id="constraint-badge">INIT</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="constraint-list" id="constraint-list">
+                            <div class="constraint-item">
+                                <div>
+                                    <strong>等待约束评估</strong>
+                                    <small>正在汇总链路、风险、网络安全和人工监管要求。</small>
+                                </div>
+                                <div class="badge">WAIT</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>值班 Doctrine</strong>
+                            <span>优先动作 / 授权链 / 稳态目标</span>
+                        </div>
+                        <div class="badge" id="doctrine-badge">INIT</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="doctrine-grid" id="doctrine-grid">
+                            <div class="doctrine-item">
+                                <strong>等待值班策略</strong>
+                                <small>正在推导当前值班重点、授权链和稳态目标。</small>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="frame-card map-frame">
                     <div class="frame-header">
                         <div class="frame-title">
@@ -558,10 +1247,33 @@
                                 <div class="map-summary-item"><small>气象风浪</small><strong id="map-weather-summary">风 -- / 浪 --</strong></div>
                                 <div class="map-summary-item"><small>值班提示</small><strong id="map-watch-summary">等待同步</strong></div>
                             </div>
+                            <div class="map-focus-stack">
+                                <div class="map-focus-note" id="map-focus-note">
+                                    <div class="map-focus-copy">
+                                        <small>地图视角</small>
+                                        <strong id="map-focus-title">总览模式</strong>
+                                    </div>
+                                    <div class="badge" id="map-focus-badge">OVERVIEW</div>
+                                </div>
+                                <div class="map-focus-hint" id="map-focus-hint">当前按总体态势排序目标，优先展示高风险 AIS 目标和本船附近上下文。</div>
+                            </div>
                             <div class="traffic-strip" id="map-traffic-list">
                                 <div class="traffic-chip"><small>TRAFFIC</small><strong>等待 AIS 数据</strong></div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                <section class="panel" id="agent-team-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>⚓ 智能体团队</strong>
+                            <span>agent-team-config 实时状态</span>
+                        </div>
+                        <div class="badge" id="agent-team-badge">加载中</div>
+                    </div>
+                    <div class="panel-body" id="agent-team-body">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap" id="agent-team-cards"></div>
                     </div>
                 </section>
 
@@ -580,12 +1292,40 @@
                             <button class="chip" type="button" data-command="舒适控制">舒适控制</button>
                             <button class="chip" type="button" data-command="结构健康">结构健康</button>
                             <button class="chip" type="button" data-command="主机状态">主机状态</button>
+                            <button class="chip" type="button" data-command="自主等级">自主等级</button>
+                            <button class="chip" type="button" data-command="通信链路">通信链路</button>
+                            <button class="chip" type="button" data-command="设备健康">设备健康</button>
+                            <button class="chip" type="button" data-command="航线优化">航线优化</button>
+                            <button class="chip" type="button" data-command="岸基协同">岸基协同</button>
+                            <button class="chip" type="button" data-command="合规监管">合规监管</button>
+                        </div>
+                        <div class="command-deck" id="command-deck">
+                            <div class="command-deck-card is-primary">
+                                <small>Primary</small>
+                                <strong>等待焦点建议</strong>
+                                <small>选择要素域后，这里会给出优先命令序列。</small>
+                            </div>
                         </div>
                         <form class="command-form" id="command-form" style="margin-top: 12px;">
                             <input class="command-input" id="command-input" type="text" placeholder="输入船长命令，例如：请切到舒适控制并摘要当前任务图">
                             <button class="command-button" type="submit">执行命令</button>
                         </form>
                         <div class="command-response" id="command-response">等待命令输入...</div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <strong>SVESSEL 综合态势</strong>
+                            <span>自主等级 / 船岸通信 / PHM / 航线优化 / 网络安全</span>
+                        </div>
+                        <div class="badge" id="svessel-badge">INIT</div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="list" id="svessel-list">
+                            <div class="list-item"><div><strong>等待同步</strong><small>SVESSEL 模块初始化中</small></div><div class="badge">WAIT</div></div>
+                        </div>
                     </div>
                 </section>
 
@@ -642,6 +1382,29 @@
         const mapTargetCount = document.getElementById('map-target-count');
         const mapWeatherSummary = document.getElementById('map-weather-summary');
         const mapWatchSummary = document.getElementById('map-watch-summary');
+        const mapFocusTitle = document.getElementById('map-focus-title');
+        const mapFocusBadge = document.getElementById('map-focus-badge');
+        const mapFocusHint = document.getElementById('map-focus-hint');
+        const syncFreshness = document.getElementById('sync-freshness');
+        const syncLastCycle = document.getElementById('sync-last-cycle');
+        const syncClock = document.getElementById('sync-clock');
+        const syncSummary = document.getElementById('sync-summary');
+        const domainGrid = document.getElementById('domain-grid');
+        const missionRail = document.getElementById('mission-rail');
+        const briefingStrip = document.getElementById('briefing-strip');
+        const pathwayList = document.getElementById('pathway-list');
+        const pathwayBadge = document.getElementById('pathway-badge');
+        const constraintList = document.getElementById('constraint-list');
+        const constraintBadge = document.getElementById('constraint-badge');
+        const doctrineGrid = document.getElementById('doctrine-grid');
+        const doctrineBadge = document.getElementById('doctrine-badge');
+        const commandDeck = document.getElementById('command-deck');
+        const focusConsole = document.getElementById('focus-console');
+        const focusBadge = document.getElementById('focus-badge');
+        let activeFocusKey = 'overview';
+        let latestSmartShippingView = null;
+        let latestActionPlanWithFocus = [];
+        let latestMapContext = null;
 
         const analyticsQueries = {
             'event-type': {
@@ -668,6 +1431,89 @@
             return `${value}${suffix}`;
         }
 
+        function escapeHtml(value) {
+            return String(value ?? '--')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+
+
+        function setActiveCommandChip(command) {
+            chips.forEach((chip) => {
+                chip.classList.toggle('is-active', chip.dataset.command === command);
+            });
+        }
+
+        function renderFocusAwareCommandResult(result) {
+            const focus = describeFocus(activeFocusKey);
+            const summary = result.summary || '未返回摘要';
+            const operatorAction = result.operator_action || '保持当前值班';
+            const executionMode = result.execution_mode || '--';
+            const intent = result.recognized_intent || '--';
+
+            const lead = {
+                overview: `当前命令用于刷新总体任务判断，先确认跨域动作，再决定收敛顺序。`,
+                'vessel-platform': `当前命令应回答平台是否还能支撑当前运行强度，以及是否需要降级自治。`,
+                'navigation-sensing': `当前命令应优先解释近场目标、避碰裕度和让路关系。`,
+                'ship-shore-rcc': `当前命令应优先解释链路、接管窗口和岸侧协同方式。`,
+                'port-environment': `当前命令应优先解释环境约束如何影响路径、速度和时间窗。`,
+                'people-governance': `当前命令应优先解释授权、留痕和人工确认边界。`,
+            };
+
+            const nextStep = {
+                overview: '先比对跨域动作，再决定下一条收敛命令。',
+                'vessel-platform': '若平台无法支撑当前运行，应先降级而不是继续提自治。',
+                'navigation-sensing': '若避碰裕度不足，应先确保安全动作，再讨论效率。',
+                'ship-shore-rcc': '若链路或接管窗口不稳，应优先保住人工接管链。',
+                'port-environment': '若环境约束变化明显，应优先更新路径与速度窗口。',
+                'people-governance': '若授权边界不清，应先确认审批与留痕要求。',
+            };
+
+            const keyMetrics = {
+                overview: '跨域动作数量、当前风险等级、任务图节点数。',
+                'vessel-platform': 'PHM 退化项、结构寿命、主机/设备健康分。',
+                'navigation-sensing': '高风险目标数、CPA/TCPA、近场场景类型。',
+                'ship-shore-rcc': '链路质量、预测时延、控制权与 RCC 接管准备。',
+                'port-environment': '路径模式、流量密度、天气和时间窗压力。',
+                'people-governance': 'Threat level、合规状态、授权和审计闭环。',
+            };
+
+            const decisionBoundary = {
+                overview: '若跨域约束互相冲突，先保安全与接管能力。',
+                'vessel-platform': '平台健康不足时，不应继续维持高强度自治。',
+                'navigation-sensing': '避碰裕度不足时，不应优先追求效率或舒适性。',
+                'ship-shore-rcc': '链路或接管窗口不稳时，不应提升对岸侧协同的依赖。',
+                'port-environment': '环境窗口变化明显时，不应沿用旧路径和速度假设。',
+                'people-governance': '授权和留痕未闭环时，不应推进更高等级自动化动作。',
+            };
+
+            return [
+                `焦点: ${focus.title}`,
+                `解释框架: ${lead[activeFocusKey] || lead.overview}`,
+                '',
+                `执行识别`,
+                `- 意图: ${intent}`,
+                `- 模式: ${executionMode}`,
+                '',
+                `当前判断`,
+                `- 摘要: ${summary}`,
+                `- 操作建议: ${operatorAction}`,
+                '',
+                `关注指标`,
+                `- ${keyMetrics[activeFocusKey] || keyMetrics.overview}`,
+                '',
+                `决策边界`,
+                `- ${decisionBoundary[activeFocusKey] || decisionBoundary.overview}`,
+                '',
+                `下一步口径`,
+                `- ${nextStep[activeFocusKey] || nextStep.overview}`,
+            ].join('\n');
+        }
+
         function formatCommandResult(result) {
             const focusItems = Array.isArray(result.focus_items) ? result.focus_items.slice(0, 3) : [];
             const focus = focusItems.map((item) => {
@@ -678,10 +1524,7 @@
                 return `- ${JSON.stringify(item)}`;
             }).join('\n');
             return [
-                `意图: ${result.recognized_intent}`,
-                `模式: ${result.execution_mode}`,
-                `摘要: ${result.summary}`,
-                `操作建议: ${result.operator_action}`,
+                renderFocusAwareCommandResult(result),
                 focus ? `重点:\n${focus}` : ''
             ].filter(Boolean).join('\n');
         }
@@ -795,6 +1638,112 @@
             return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
         }
 
+        function buildFocusMapSummary(mapContext) {
+            const focus = describeFocus(activeFocusKey);
+            const ownShip = mapContext?.ownShip || {};
+            const targets = Array.isArray(mapContext?.targets) ? mapContext.targets : [];
+            const weather = mapContext?.weather || {};
+            const riskLevel = mapContext?.riskLevel;
+            const highRiskCount = targets.filter((target) => String(target.risk_level).toLowerCase() === 'high').length;
+            const mediumRiskCount = targets.filter((target) => String(target.risk_level).toLowerCase() === 'medium').length;
+            const watchLabel = riskLevel ? `${String(riskLevel).toUpperCase()} watch` : '保持值班';
+            const weatherLabel = `风 ${weather?.wind?.speed?.toFixed?.(1) ?? '--'} m/s / 浪 ${weather?.wave?.height?.toFixed?.(1) ?? '--'} m`;
+
+            const base = {
+                ownship: formatCoordinate(Number(ownShip?.latitude), Number(ownShip?.longitude)),
+                targets: `AIS ${targets.length} / HIGH ${highRiskCount}`,
+                weather: weatherLabel,
+                watch: watchLabel,
+                focusTitle: `${focus.title} · 海图总览`,
+                focusBadge: focus.badge,
+            };
+
+            if (activeFocusKey === 'navigation-sensing') {
+                return {
+                    ...base,
+                    targets: `HIGH ${highRiskCount} / MED ${mediumRiskCount}`,
+                    watch: `${focus.badge} · 优先确认让路关系与 CPA/TCPA`,
+                    focusTitle: '按避碰与感知风险排序当前目标',
+                };
+            }
+            if (activeFocusKey === 'ship-shore-rcc') {
+                return {
+                    ...base,
+                    targets: `AIS ${targets.length} / RCC 协同关注`,
+                    weather: '船岸链路与值班链正在协同评估',
+                    watch: `${focus.badge} · 检查接管窗口与链路冗余`,
+                    focusTitle: '地图作为船岸协同与接管态势背景',
+                };
+            }
+            if (activeFocusKey === 'port-environment') {
+                return {
+                    ...base,
+                    weather: weatherLabel,
+                    watch: `${focus.badge} · 环境约束驱动路径选择`,
+                    focusTitle: '按环境与路径约束观察当前海图区',
+                };
+            }
+            if (activeFocusKey === 'people-governance') {
+                return {
+                    ...base,
+                    targets: `AIS ${targets.length} / 操作需留痕`,
+                    watch: `${focus.badge} · 高等级动作需人工授权`,
+                    focusTitle: '地图仅作为治理与授权动作的证据背景',
+                };
+            }
+            if (activeFocusKey === 'vessel-platform') {
+                return {
+                    ...base,
+                    weather: '平台健康优先，环境仅作运行背景',
+                    watch: `${focus.badge} · 先判断平台是否支持当前强度`,
+                    focusTitle: '地图保持总览，平台健康是当前主判断轴',
+                };
+            }
+
+            return base;
+        }
+
+        function buildFocusMapHint() {
+            const hints = {
+                overview: '当前按总体态势排序目标，优先展示高风险 AIS 目标和本船附近上下文。',
+                'vessel-platform': '当前地图只保留总体背景语义，操作者应把主要注意力放在平台健康是否支撑任务。',
+                'navigation-sensing': '当前目标带按避碰与感知风险优先排序，高/中风险目标优先展示，并强调 CPA/TCPA 线索。',
+                'ship-shore-rcc': '当前地图作为船岸协同背景，优先帮助判断链路、接管窗口和岸侧协同是否需要介入。',
+                'port-environment': '当前优先从环境与路径约束解释目标顺序，强调时间窗、流量和近场海图区影响。',
+                'people-governance': '当前地图仅作为证据背景，主要用于支撑授权、留痕和人工确认决策。',
+            };
+            return hints[activeFocusKey] || hints.overview;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            syncClock.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+        }
+
+        function updateSyncStrip(health, decisionRiskLevel) {
+            const lastCycle = health.ai_native?.last_cycle?.timestamp;
+            if (!lastCycle) {
+                syncFreshness.textContent = '无周期数据';
+                syncLastCycle.textContent = '--';
+                syncSummary.textContent = '协调循环未返回最新状态';
+                return;
+            }
+
+            const cycleTime = new Date(lastCycle);
+            const ageSeconds = Math.max(0, Math.round((Date.now() - cycleTime.getTime()) / 1000));
+            syncLastCycle.textContent = cycleTime.toLocaleTimeString('zh-CN', { hour12: false });
+
+            if (ageSeconds <= 20) {
+                syncFreshness.textContent = `LIVE · ${ageSeconds}s`;
+            } else if (ageSeconds <= 60) {
+                syncFreshness.textContent = `FRESH · ${ageSeconds}s`;
+            } else {
+                syncFreshness.textContent = `STALE · ${ageSeconds}s`;
+            }
+
+            syncSummary.textContent = `运行 ${health.ai_native?.runs ?? '--'} 次 / 风险 ${String(decisionRiskLevel || '--').toUpperCase()}`;
+        }
+
         function clearTrafficMarkers() {
             cockpitTrafficMarkers.forEach((marker) => marker.remove());
             cockpitTrafficMarkers = [];
@@ -806,17 +1755,15 @@
             return element;
         }
 
-        function updateMapSummary({ ownShip, targets, weather, riskLevel }) {
-            const latitude = Number(ownShip?.latitude);
-            const longitude = Number(ownShip?.longitude);
-            const safeLat = Number.isFinite(latitude) ? latitude : null;
-            const safeLng = Number.isFinite(longitude) ? longitude : null;
-            const highRiskCount = targets.filter((target) => String(target.risk_level).toLowerCase() === 'high').length;
-
-            mapOwnshipPosition.textContent = formatCoordinate(safeLat, safeLng);
-            mapTargetCount.textContent = `AIS ${targets.length} / HIGH ${highRiskCount}`;
-            mapWeatherSummary.textContent = `风 ${weather?.wind?.speed?.toFixed?.(1) ?? '--'} m/s / 浪 ${weather?.wave?.height?.toFixed?.(1) ?? '--'} m`;
-            mapWatchSummary.textContent = riskLevel ? `${String(riskLevel).toUpperCase()} watch` : '保持值班';
+        function updateMapSummary(mapContext) {
+            const summary = buildFocusMapSummary(mapContext);
+            mapOwnshipPosition.textContent = summary.ownship;
+            mapTargetCount.textContent = summary.targets;
+            mapWeatherSummary.textContent = summary.weather;
+            mapWatchSummary.textContent = summary.watch;
+            mapFocusTitle.textContent = summary.focusTitle;
+            mapFocusBadge.textContent = summary.focusBadge;
+            mapFocusHint.textContent = buildFocusMapHint();
         }
 
         function updateTrafficStrip(targets) {
@@ -825,19 +1772,103 @@
                 return;
             }
 
-            mapTrafficList.innerHTML = targets.slice(0, 4).map((target) => {
+            const filteredTargets = activeFocusKey === 'navigation-sensing'
+                ? targets.filter((target) => ['high', 'medium'].includes(String(target.risk_level || '').toLowerCase()))
+                : targets;
+            const renderedTargets = (filteredTargets.length ? filteredTargets : targets).slice(0, 4);
+            const sortHint = {
+                overview: { title: '总体排序', detail: '按风险优先显示 AIS 目标' },
+                'vessel-platform': { title: '背景视图', detail: '地图退到平台判断背景' },
+                'navigation-sensing': { title: '感知筛选', detail: '仅突出高/中风险与 CPA/TCPA' },
+                'ship-shore-rcc': { title: 'RCC 视角', detail: '优先支撑接管与链路判断' },
+                'port-environment': { title: '环境排序', detail: '按路径/时间窗语义解释目标' },
+                'people-governance': { title: '治理视角', detail: '目标仅作授权证据背景' },
+            }[activeFocusKey] || { title: '总体排序', detail: '按风险优先显示 AIS 目标' };
+
+            mapTrafficList.innerHTML = [`
+                <div class="traffic-chip is-meta">
+                    <small>${sortHint.title}</small>
+                    <strong>${sortHint.detail}</strong>
+                </div>
+            `].concat(renderedTargets.map((target, index) => {
                 const riskLevel = String(target.risk_level || 'low').toLowerCase();
-                const vesselLabel = target.vessel_type || `MMSI ${target.mmsi || '--'}`;
+                const vesselLabel = escapeHtml(target.vessel_type || `MMSI ${target.mmsi || '--'}`);
                 const speed = Number.isFinite(Number(target.speed)) ? `${Number(target.speed).toFixed(1)} kn` : '--';
                 const course = Number.isFinite(Number(target.course)) ? `${Number(target.course).toFixed(0)}°` : '--';
+                const focusLabel = activeFocusKey === 'navigation-sensing'
+                    ? `CPA ${target.dcpa_nm ? Number(target.dcpa_nm).toFixed(2) : '--'} nm`
+                    : (activeFocusKey === 'port-environment'
+                        ? `TCPA ${target.tcpa_min ? Number(target.tcpa_min).toFixed(0) : '--'} min`
+                        : `${speed} / ${course}`);
                 return `
-                    <div class="traffic-chip ${riskLevel === 'high' ? 'is-high' : ''}">
+                    <div class="traffic-chip ${riskLevel === 'high' ? 'is-high' : ''} ${index === 0 && activeFocusKey !== 'overview' ? 'is-focus' : ''}" data-traffic-index="${index}">
                         <small>${riskLevel.toUpperCase()}</small>
                         <strong>${vesselLabel}</strong>
-                        <small>${speed} / ${course}</small>
+                        <small>${focusLabel}</small>
                     </div>
                 `;
-            }).join('');
+            })).join('');
+
+            [...document.querySelectorAll('[data-traffic-index]')].forEach((node) => {
+                node.onclick = () => {
+                    const index = Number(node.dataset.trafficIndex);
+                    const target = renderedTargets[index];
+                    if (!target) {
+                        return;
+                    }
+                    const resolvedFocus = resolveFocusFromTarget(target);
+                    activateFocus(
+                        resolvedFocus.focusKey,
+                        resolvedFocus.command,
+                        {
+                            badge: 'TRAFFIC',
+                            message: `已从目标带切换到 ${describeFocus(resolvedFocus.focusKey).title}\n建议动作：${resolvedFocus.command}`,
+                        }
+                    );
+                };
+            });
+        }
+
+        function renderMapFocusState() {
+            if (!latestMapContext) {
+                return;
+            }
+            updateMapSummary(latestMapContext);
+            updateTrafficStrip(latestMapContext.targets || []);
+        }
+
+        function getFocusMarkerDescriptor(target, index) {
+            const riskLevel = String(target.risk_level || 'low').toLowerCase();
+            const isTopRisk = index === 0;
+            const classNames = ['target-marker'];
+            if (riskLevel === 'high') {
+                classNames.push('is-high');
+            } else if (riskLevel === 'medium') {
+                classNames.push('is-medium');
+            }
+
+            let headline = `航向 ${formatValue(target.course, '°')} / 航速 ${formatValue(target.speed, ' kn')}`;
+            let note = `风险 ${riskLevel.toUpperCase()} / MMSI ${target.mmsi || '--'}`;
+
+            if (activeFocusKey === 'navigation-sensing') {
+                headline = `CPA ${target.dcpa_nm ? Number(target.dcpa_nm).toFixed(2) : '--'} nm / TCPA ${target.tcpa_min ? Number(target.tcpa_min).toFixed(0) : '--'} min`;
+                note = '当前感知焦点优先观察避碰裕度与让路关系';
+                if (isTopRisk) {
+                    classNames.push('is-focus');
+                }
+            } else if (activeFocusKey === 'port-environment') {
+                headline = `环境约束下目标 ${riskLevel.toUpperCase()}`;
+                note = '当前环境焦点优先判断路径、流量与时间窗影响';
+                if (isTopRisk) {
+                    classNames.push('is-focus');
+                }
+            } else if (activeFocusKey === 'ship-shore-rcc' && isTopRisk) {
+                classNames.push('is-focus');
+                headline = `RCC 关注目标 / ${formatValue(target.speed, ' kn')}`;
+                note = '链路或接管评估时优先看最敏感目标';
+            }
+
+            return { className: classNames.join(' '), headline, note };
         }
 
         async function refreshMapPanel(dashboard) {
@@ -866,13 +1897,13 @@
                     (riskRank[String(left.risk_level).toLowerCase()] || 0)
                 ));
 
-                updateMapSummary({
+                latestMapContext = {
                     ownShip,
                     targets: sortedTargets,
                     weather,
                     riskLevel: dashboard.decision?.risk_level || dashboard.navigation?.report?.overall_status
-                });
-                updateTrafficStrip(sortedTargets);
+                };
+                renderMapFocusState();
 
                 if (cockpitOwnShipMarker) {
                     cockpitOwnShipMarker.remove();
@@ -888,25 +1919,37 @@
                     .addTo(mapInstance);
 
                 clearTrafficMarkers();
-                sortedTargets.slice(0, 10).forEach((target) => {
+                sortedTargets.slice(0, 10).forEach((target, index) => {
                     const targetLatitude = Number(target.latitude);
                     const targetLongitude = Number(target.longitude);
                     if (!Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
                         return;
                     }
 
-                    const riskLevel = String(target.risk_level || 'low').toLowerCase();
+                    const markerDescriptor = getFocusMarkerDescriptor(target, index);
                     const marker = new maplibregl.Marker({
-                        element: buildMarkerElement(`target-marker ${riskLevel === 'high' ? 'is-high' : riskLevel === 'medium' ? 'is-medium' : ''}`.trim())
+                        element: buildMarkerElement(markerDescriptor.className)
                     })
                         .setLngLat([targetLongitude, targetLatitude])
                         .setPopup(new maplibregl.Popup({ offset: 18 }).setHTML(`
                             <strong>${target.vessel_type || 'AIS Target'}</strong><br>
                             MMSI: ${target.mmsi || '--'}<br>
-                            航向: ${formatValue(target.course, '°')}<br>
-                            航速: ${formatValue(target.speed, ' kn')}
+                            ${markerDescriptor.headline}<br>
+                            ${markerDescriptor.note}
                         `))
                         .addTo(mapInstance);
+
+                    marker.getElement().addEventListener('click', () => {
+                        const resolvedFocus = resolveFocusFromTarget(target);
+                        activateFocus(
+                            resolvedFocus.focusKey,
+                            resolvedFocus.command,
+                            {
+                                badge: 'MAP',
+                                message: `已从海图目标切换到 ${describeFocus(resolvedFocus.focusKey).title}\n建议动作：${resolvedFocus.command}`,
+                            }
+                        );
+                    });
 
                     cockpitTrafficMarkers.push(marker);
                 });
@@ -922,13 +1965,719 @@
             }
         }
 
+        function setMetricTone(metricValueId, tone) {
+            const valueEl = document.getElementById(metricValueId);
+            if (!valueEl) {
+                return;
+            }
+            valueEl.classList.remove('is-ok', 'is-warn', 'is-danger');
+            if (tone === 'ok') {
+                valueEl.classList.add('is-ok');
+            } else if (tone === 'warn') {
+                valueEl.classList.add('is-warn');
+            } else if (tone === 'danger') {
+                valueEl.classList.add('is-danger');
+            }
+        }
+
+        function setMetricAlert(metricValueId, enabled) {
+            const valueEl = document.getElementById(metricValueId);
+            const panelEl = valueEl?.closest('.metric');
+            if (!panelEl) {
+                return;
+            }
+            panelEl.classList.toggle('has-alert', Boolean(enabled));
+        }
+
+        function normalizeSvesselData(autonomyData, linkData, phmData, routeData, cyberData) {
+            const activeLinkType = linkData.active_link || linkData.best_link_type || linkData.health || '--';
+            const predictedLatency = linkData.best_link_latency ?? linkData.latency_prediction?.predicted_ms;
+            const monitoredComponents = phmData.monitored_components ?? phmData.total_components ?? 0;
+            const degradingCount = phmData.degrading_count ?? phmData.critical_components ?? 0;
+            const linkHealth = String(linkData.health || (activeLinkType && activeLinkType !== '--' ? 'ok' : 'warn')).toLowerCase();
+            const threatLevel = String(cyberData.threat_level || 'none').toLowerCase();
+
+            let linkQualityPct = '--';
+            let linkQualityScore = null;
+            if (typeof linkData.best_link_quality === 'number') {
+                linkQualityScore = Math.max(0, Math.min(100, Math.round(linkData.best_link_quality * 100)));
+                linkQualityPct = `${Math.round(linkData.best_link_quality * 100)}%`;
+            } else if (activeLinkType && linkData.links && linkData.links[activeLinkType]) {
+                const activeMetrics = linkData.links[activeLinkType];
+                const loss = Number(activeMetrics.packet_loss_pct || 0);
+                const latency = Number(activeMetrics.latency_ms || 0);
+                const quality = Math.max(0, 100 - loss * 2 - latency / 20);
+                linkQualityScore = Math.round(quality);
+                linkQualityPct = `${Math.round(quality)}%`;
+            }
+
+            const massLevelRaw = autonomyData.mass_code || autonomyData.mass_level || '--';
+            const massLevelMap = {
+                m: 'M',
+                manual: 'M',
+                r: 'R',
+                remote_crewed: 'R',
+                ru: 'RU',
+                remote_uncrewed: 'RU',
+                a: 'A',
+                autonomous: 'A',
+            };
+            const massLevel = massLevelMap[String(massLevelRaw).trim().toLowerCase()] || String(massLevelRaw || '--').toUpperCase();
+
+            return {
+                massLevel,
+                lrLevel: autonomyData.lr_level || '--',
+                authority: autonomyData.control_authority || '--',
+                linkType: String(activeLinkType).toUpperCase(),
+                linkLatency: Number.isFinite(Number(predictedLatency)) ? Number(predictedLatency).toFixed(0) : '--',
+                linkQuality: linkQualityPct,
+                linkQualityScore,
+                linkHealth,
+                monitoredComponents,
+                degradingCount,
+                routeMode: routeData.optimization_mode || '--',
+                threatLevel: threatLevel.toUpperCase(),
+                threatLevelRaw: threatLevel,
+                auditEntries: cyberData.audit_entries || 0,
+                activeSessions: cyberData.active_sessions || 0,
+            };
+        }
+
+        function toneToBadgeClass(tone) {
+            if (tone === 'ok') return 'is-ok';
+            if (tone === 'warn') return 'is-warn';
+            if (tone === 'danger') return 'is-danger';
+            return 'is-neutral';
+        }
+
+        function toneLabel(tone) {
+            if (tone === 'ok') return 'READY';
+            if (tone === 'warn') return 'WATCH';
+            if (tone === 'danger') return 'ALERT';
+            return 'INIT';
+        }
+
+        function computeToneFromRisk(value) {
+            const normalized = String(value || '').toLowerCase();
+            if (normalized === 'high' || normalized === 'critical') return 'danger';
+            if (normalized === 'medium' || normalized === 'attention' || normalized === 'warn') return 'warn';
+            if (normalized === 'low' || normalized === 'good' || normalized === 'ok' || normalized === 'operational') return 'ok';
+            return 'warn';
+        }
+
+        function mapActionFocusKey(item) {
+            const text = `${item?.title || ''} ${item?.domain || ''} ${item?.recommended_action || ''} ${item?.rationale || ''}`.toLowerCase();
+            if (text.includes('maintenance') || text.includes('phm') || text.includes('设备') || text.includes('结构')) return 'vessel-platform';
+            if (text.includes('communication') || text.includes('链路') || text.includes('岸') || text.includes('remote')) return 'ship-shore-rcc';
+            if (text.includes('route') || text.includes('航线') || text.includes('weather') || text.includes('环境')) return 'port-environment';
+            if (text.includes('cyber') || text.includes('security') || text.includes('合规') || text.includes('governance')) return 'people-governance';
+            return 'navigation-sensing';
+        }
+
+        function describeFocus(activeKey) {
+            const mapping = {
+                overview: {
+                    title: '总览模式',
+                    badge: 'OVERVIEW',
+                    tone: 'is-neutral',
+                    why: '同时观察风险、链路、平台健康和治理状态，适合进入值班前的总体判断。',
+                    nextCommand: '任务图',
+                    question: '当前最先收敛的约束是什么？',
+                },
+                'vessel-platform': {
+                    title: '聚焦船舶平台',
+                    badge: 'PLATFORM',
+                    tone: 'is-ok',
+                    why: '先判断平台是否还能支持持续自治或高强度运行。',
+                    nextCommand: '设备健康',
+                    question: 'PHM、结构寿命或主机状态是否限制了任务图执行？',
+                },
+                'navigation-sensing': {
+                    title: '聚焦航行感知',
+                    badge: 'SENSING',
+                    tone: 'is-warn',
+                    why: '先把态势感知、碰撞风险和环境识别稳定下来，再谈效率优化。',
+                    nextCommand: '碰撞风险',
+                    question: '当前场景下需要谁先让路，系统依据是否充分？',
+                },
+                'ship-shore-rcc': {
+                    title: '聚焦船岸协同',
+                    badge: 'RCC',
+                    tone: 'is-warn',
+                    why: '检查当前链路质量是否足以支撑控制权和自主等级。',
+                    nextCommand: '岸基协同',
+                    question: '若当前链路进一步恶化，谁来接管、怎么接管？',
+                },
+                'port-environment': {
+                    title: '聚焦港口环境',
+                    badge: 'ENV',
+                    tone: 'is-ok',
+                    why: '把海图、近场目标、风浪和路径约束当成统一运行面处理。',
+                    nextCommand: '航线优化',
+                    question: '当前环境约束下，路径和速度应该如何调整？',
+                },
+                'people-governance': {
+                    title: '聚焦人员治理',
+                    badge: 'GOV',
+                    tone: 'is-danger',
+                    why: '任何较高等级自动化动作都必须服从合规、网络安全和人工监管。',
+                    nextCommand: '合规监管',
+                    question: '这一步动作是否需要人工确认、日志留痕或权限提升？',
+                },
+            };
+            return mapping[activeKey] || mapping.overview;
+        }
+
+        function getFocusBriefingIndex() {
+            if (activeFocusKey === 'ship-shore-rcc') return 1;
+            if (activeFocusKey === 'people-governance') return 2;
+            return 0;
+        }
+
+        function getFocusAwareBriefings(briefings) {
+            const focus = describeFocus(activeFocusKey);
+            if (activeFocusKey === 'overview') {
+                return briefings.map((item) => ({ ...item, emphasis: 'normal' }));
+            }
+
+            const focusIndex = getFocusBriefingIndex();
+            return briefings.map((item, index) => {
+                if (index !== focusIndex) {
+                    return { ...item, emphasis: 'dim' };
+                }
+
+                return {
+                    ...item,
+                    title: `${focus.title} · ${item.title}`,
+                    copy: `${focus.why} ${item.copy}`,
+                    emphasis: 'focus',
+                };
+            });
+        }
+
+        function getFocusCommandDeck() {
+            const focus = describeFocus(activeFocusKey);
+            const mapping = {
+                overview: [
+                    { label: 'Primary', command: '任务图', note: '先读取当前任务图和跨域动作。', primary: true },
+                    { label: 'Risk', command: '碰撞风险', note: '确认当前值班压力是否来自近场目标。' },
+                    { label: 'Governance', command: '合规监管', note: '核对授权链和日志要求。' },
+                ],
+                'vessel-platform': [
+                    { label: 'Primary', command: '设备健康', note: '先看 PHM、结构寿命和平台退化项。', primary: true },
+                    { label: 'Secondary', command: '主机状态', note: '确认动力与冷却链是否限制任务执行。' },
+                    { label: 'Control', command: '自主等级', note: '平台不足时应准备降级自治。' },
+                ],
+                'navigation-sensing': [
+                    { label: 'Primary', command: '碰撞风险', note: '先确认高风险目标与避碰裕度。', primary: true },
+                    { label: 'Secondary', command: '航线优化', note: '再判断路径和速度是否需要调整。' },
+                    { label: 'Context', command: '任务图', note: '最后把感知判断带回任务图。' },
+                ],
+                'ship-shore-rcc': [
+                    { label: 'Primary', command: '岸基协同', note: '先确认 RCC 待命、接管窗口和协同方式。', primary: true },
+                    { label: 'Secondary', command: '通信链路', note: '核查链路质量、延迟和冗余。' },
+                    { label: 'Control', command: '自主等级', note: '链路恶化时同步检查自治等级。' },
+                ],
+                'port-environment': [
+                    { label: 'Primary', command: '航线优化', note: '先按环境约束重估路径和速度。', primary: true },
+                    { label: 'Secondary', command: '碰撞风险', note: '确认近场态势是否推高环境压力。' },
+                    { label: 'Context', command: '任务图', note: '把路径调整回写到运行计划。' },
+                ],
+                'people-governance': [
+                    { label: 'Primary', command: '合规监管', note: '先核查授权、留痕和合规边界。', primary: true },
+                    { label: 'Secondary', command: '岸基协同', note: '确认岸侧是否需要参与审批或接管。' },
+                    { label: 'Control', command: '自主等级', note: '治理压力偏高时不应盲目提高自治。' },
+                ],
+            };
+            return { focus, items: mapping[activeFocusKey] || mapping.overview };
+        }
+
+        function stageCommand(command, badge = 'FOCUS', message) {
+            if (!command) {
+                return;
+            }
+            setActiveCommandChip(command);
+            commandInput.value = command;
+            commandResponse.textContent = message || `建议动作：${command}\n按回车或点击“执行命令”继续拉取摘要。`;
+            document.getElementById('command-badge').textContent = badge;
+        }
+
+        function activateFocus(focusKey, focusCommand = '', options = {}) {
+            activeFocusKey = focusKey || 'overview';
+            if (focusCommand && activeFocusKey !== 'overview') {
+                stageCommand(
+                    focusCommand,
+                    options.badge || 'FOCUS',
+                    options.message || `已聚焦：${focusCommand}\n按回车或点击“执行命令”可拉取针对性摘要。`
+                );
+            } else if (activeFocusKey === 'overview') {
+                setActiveCommandChip('');
+                document.getElementById('command-badge').textContent = 'READY';
+            }
+            applyFocusState();
+        }
+
+        function resolveFocusFromTarget(target) {
+            const riskLevel = String(target?.risk_level || 'low').toLowerCase();
+            if (riskLevel === 'high' || riskLevel === 'medium') {
+                return { focusKey: 'navigation-sensing', command: '碰撞风险' };
+            }
+            if (Number.isFinite(Number(target?.tcpa_min)) || Number.isFinite(Number(target?.dcpa_nm))) {
+                return { focusKey: 'port-environment', command: '航线优化' };
+            }
+            return { focusKey: 'navigation-sensing', command: '任务图' };
+        }
+
+        function renderCommandDeck() {
+            const deck = getFocusCommandDeck();
+            commandDeck.innerHTML = deck.items.map((item) => `
+                <div class="command-deck-card ${item.primary ? 'is-primary' : ''}">
+                    <small>${escapeHtml(item.label)}</small>
+                    <strong>${escapeHtml(item.command)}</strong>
+                    <small>${escapeHtml(item.note)}</small>
+                    <div class="command-deck-actions">
+                        <button class="command-inline-button ${item.primary ? 'is-primary' : ''}" type="button" data-command-deck-stage="${item.command}">加入命令台</button>
+                        ${item.primary ? `<button class="command-inline-button is-primary" type="button" data-command-deck-run="${item.command}">立即执行</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            [...document.querySelectorAll('[data-command-deck-stage]')].forEach((node) => {
+                node.onclick = () => {
+                    const command = node.dataset.commandDeckStage || '';
+                    if (!command) {
+                        return;
+                    }
+                    stageCommand(command, 'DECK', `建议动作：${command}\n当前焦点：${deck.focus.title}\n按回车或点击“执行命令”继续拉取摘要。`);
+                };
+            });
+
+            [...document.querySelectorAll('[data-command-deck-run]')].forEach((node) => {
+                node.onclick = () => {
+                    const command = node.dataset.commandDeckRun || '';
+                    if (!command) {
+                        return;
+                    }
+                    stageCommand(command, 'RUN', `正在执行焦点主推荐：${command}\n当前焦点：${deck.focus.title}`);
+                    executeCommand(command);
+                };
+            });
+        }
+
+        function buildSmartShippingViewModel({ health, dashboard, mission, svessel }) {
+            const decision = dashboard.decision || {};
+            const navigation = dashboard.navigation || {};
+            const scene = navigation.report?.scene_context || {};
+            const shm = dashboard.shm || {};
+            const worldmonitor = dashboard.worldmonitor || {};
+            const collisionRisks = navigation.report?.collision_risks?.length ?? 0;
+            const riskLevel = String(decision.risk_level || navigation.report?.overall_status || 'unknown').toLowerCase();
+            const lifeRemaining = Number(shm.life_remaining_pct ?? 0);
+            const autonomyMode = mission.autonomy_mode || decision.autonomy_mode || '--';
+            const complianceStatus = String(decision.compliance_status || 'unknown').toLowerCase();
+            const aiRuns = Number(health.ai_native?.runs ?? 0);
+
+            const vesselTone = (svessel.degradingCount > 1 || (lifeRemaining > 0 && lifeRemaining < 35))
+                ? 'danger'
+                : (svessel.degradingCount > 0 || (lifeRemaining > 0 && lifeRemaining < 65) ? 'warn' : 'ok');
+
+            const navigationTone = computeToneFromRisk(riskLevel);
+            const shoreTone = svessel.linkHealth !== 'ok'
+                ? (svessel.massLevel === 'A' || svessel.massLevel === 'RU' ? 'danger' : 'warn')
+                : 'ok';
+
+            const environmentTone = collisionRisks > 2 || String(scene.scene_type || '').toLowerCase().includes('restricted')
+                ? 'warn'
+                : (worldmonitor.mode || navigation.report ? 'ok' : 'warn');
+
+            const governanceTone = (svessel.threatLevelRaw === 'high' || svessel.threatLevelRaw === 'critical' || complianceStatus === 'non_compliant')
+                ? 'danger'
+                : (svessel.threatLevelRaw === 'medium' || complianceStatus === 'partial' || complianceStatus === 'unknown' ? 'warn' : 'ok');
+
+            const domains = [
+                {
+                    kicker: 'Vessel Platform',
+                    title: '船舶平台',
+                    focusKey: 'vessel-platform',
+                    command: '设备健康',
+                    tone: vesselTone,
+                    value: `PHM ${svessel.monitoredComponents}`,
+                    evidence: `结构寿命 ${lifeRemaining || '--'}% / PHM 退化 ${svessel.degradingCount}`,
+                    implication: '聚合平台健康、结构寿命与设备退化，判断是否具备持续自主运行基础。',
+                },
+                {
+                    kicker: 'Navigation Sensing',
+                    title: '航行感知',
+                    focusKey: 'navigation-sensing',
+                    command: '碰撞风险',
+                    tone: navigationTone,
+                    value: `${String(riskLevel || '--').toUpperCase()}`,
+                    evidence: `碰撞风险 ${collisionRisks} / 场景 ${scene.scene_type || 'open_sea'}`,
+                    implication: '突出态势感知、目标识别和避碰压力，作为决策优先级入口。',
+                },
+                {
+                    kicker: 'Ship-Shore RCC',
+                    title: '船岸协同',
+                    focusKey: 'ship-shore-rcc',
+                    command: '岸基协同',
+                    tone: shoreTone,
+                    value: `${svessel.massLevel}`,
+                    evidence: `链路 ${svessel.linkType} / 质量 ${svessel.linkQuality} / 控制权 ${svessel.authority}`,
+                    implication: '表达 RCC 协作、自主等级与链路质量是否匹配。',
+                },
+                {
+                    kicker: 'Port Environment',
+                    title: '港口环境',
+                    focusKey: 'port-environment',
+                    command: '航线优化',
+                    tone: environmentTone,
+                    value: `${worldmonitor.mode || 'LIVE MAP'}`,
+                    evidence: `海图 ${worldmonitor.data_source || 'native'} / watch ${String(riskLevel || '--').toUpperCase()}`,
+                    implication: '把海图、风浪、目标流量和近场环境作为单独运行面，而不是地图附属。',
+                },
+                {
+                    kicker: 'People Governance',
+                    title: '人员治理',
+                    focusKey: 'people-governance',
+                    command: '合规监管',
+                    tone: governanceTone,
+                    value: `${svessel.threatLevel}`,
+                    evidence: `合规 ${decision.compliance_status || '--'} / 审计 ${svessel.auditEntries} / 会话 ${svessel.activeSessions}`,
+                    implication: '强调智能航运仍受船员监管、网络安全与合规要求共同约束。',
+                },
+            ];
+
+            const pathways = [
+                {
+                    title: '感知融合',
+                    focusKey: 'navigation-sensing',
+                    command: '碰撞风险',
+                    tone: navigationTone,
+                    score: Math.max(20, 100 - collisionRisks * 18),
+                    note: `场景 ${scene.scene_type || 'open_sea'} / 风险 ${String(riskLevel || '--').toUpperCase()} / AI runs ${aiRuns}`,
+                },
+                {
+                    title: '通信与 RCC',
+                    focusKey: 'ship-shore-rcc',
+                    command: '岸基协同',
+                    tone: shoreTone,
+                    score: svessel.linkQualityScore ?? (svessel.linkHealth === 'ok' ? 76 : 42),
+                    note: `${svessel.linkType} / Lat ${svessel.linkLatency} ms / 控制权 ${svessel.authority}`,
+                },
+                {
+                    title: '路径规划与避碰',
+                    focusKey: 'port-environment',
+                    command: '航线优化',
+                    tone: collisionRisks > 0 ? 'warn' : 'ok',
+                    score: collisionRisks > 0 ? Math.max(38, 80 - collisionRisks * 12) : 84,
+                    note: `航线模式 ${svessel.routeMode} / 高风险目标 ${collisionRisks}`,
+                },
+                {
+                    title: '自主执行',
+                    focusKey: 'vessel-platform',
+                    command: '自主等级',
+                    tone: (svessel.massLevel === 'A' || svessel.massLevel === 'RU') && svessel.linkHealth !== 'ok' ? 'danger' : 'ok',
+                    score: svessel.massLevel === 'A' ? 92 : (svessel.massLevel === 'RU' ? 82 : (svessel.massLevel === 'R' ? 68 : 52)),
+                    note: `MASS ${svessel.massLevel} / 模式 ${autonomyMode} / LR ${svessel.lrLevel}`,
+                },
+                {
+                    title: '安全与治理',
+                    focusKey: 'people-governance',
+                    command: '合规监管',
+                    tone: governanceTone,
+                    score: governanceTone === 'danger' ? 38 : (governanceTone === 'warn' ? 62 : 86),
+                    note: `Threat ${svessel.threatLevel} / 合规 ${decision.compliance_status || '--'}`,
+                },
+            ];
+
+            const highestSeverity = [vesselTone, navigationTone, shoreTone, environmentTone, governanceTone].includes('danger')
+                ? 'danger'
+                : ([vesselTone, navigationTone, shoreTone, environmentTone, governanceTone].includes('warn') ? 'warn' : 'ok');
+
+            const constraints = [
+                {
+                    title: '链路冗余约束',
+                    tone: shoreTone,
+                    note: svessel.linkHealth === 'ok'
+                        ? `活跃链路 ${svessel.linkType}，质量 ${svessel.linkQuality}，可支撑当前控制权。`
+                        : `链路 ${svessel.linkType} 不稳定，建议保留人工监控并准备 RCC/桥楼降级。`,
+                },
+                {
+                    title: '避碰与环境约束',
+                    tone: navigationTone,
+                    note: collisionRisks > 0
+                        ? `当前高/中风险目标 ${collisionRisks} 个，需优先保证 CPA/TCPA 裕度。`
+                        : `目标流量可控，环境约束主要来自海图/天气和近场态势。`,
+                },
+                {
+                    title: '平台健康约束',
+                    tone: vesselTone,
+                    note: svessel.degradingCount > 0
+                        ? `PHM 检出退化 ${svessel.degradingCount} 项，平台连续自治能力受限。`
+                        : `PHM 与结构寿命未见显著退化，可维持现有运行强度。`,
+                },
+                {
+                    title: '治理与人工监管',
+                    tone: governanceTone,
+                    note: governanceTone === 'danger'
+                        ? `Threat ${svessel.threatLevel} 或合规状态异常，需提升人工复核强度。`
+                        : `网络安全与治理状态可控，但仍需保留人工授权和日志审计闭环。`,
+                },
+            ];
+
+            const missionCards = [
+                {
+                    label: '运行模式',
+                    value: String(autonomyMode || '--').toUpperCase(),
+                    note: `MASS ${svessel.massLevel} / LR ${svessel.lrLevel} / 任务图 ${mission.task_graph?.nodes?.length ?? 0} 节点`,
+                },
+                {
+                    label: 'RCC 接管准备',
+                    value: shoreTone === 'danger' ? 'LIMITED' : (shoreTone === 'warn' ? 'STANDBY' : 'READY'),
+                    note: `控制权 ${svessel.authority} / 链路 ${svessel.linkType} / Lat ${svessel.linkLatency} ms`,
+                },
+                {
+                    label: '运行约束',
+                    value: highestSeverity === 'danger' ? 'HARD' : (highestSeverity === 'warn' ? 'ACTIVE' : 'LOW'),
+                    note: `风险 ${String(riskLevel || '--').toUpperCase()} / PHM 退化 ${svessel.degradingCount} / 高风险目标 ${collisionRisks}`,
+                },
+                {
+                    label: '治理状态',
+                    value: governanceTone === 'danger' ? 'GUARDED' : (governanceTone === 'warn' ? 'WATCH' : 'CONTROLLED'),
+                    note: `Threat ${svessel.threatLevel} / 合规 ${decision.compliance_status || '--'} / 审计 ${svessel.auditEntries}`,
+                },
+            ];
+
+            const briefings = [
+                {
+                    kicker: 'Operational Bottleneck',
+                    title: highestSeverity === 'danger' ? '关键瓶颈需要立即处置' : (highestSeverity === 'warn' ? '存在活跃运行约束' : '当前运行链条总体顺畅'),
+                    copy: collisionRisks > 0
+                        ? `当前避碰压力来自 ${collisionRisks} 个高/中风险目标，系统需要优先保证安全裕度，再优化速度和能效。`
+                        : `当前主要瓶颈不在避碰，而在链路、平台健康和治理状态之间的动态平衡。`,
+                },
+                {
+                    kicker: 'Ship-Shore Advice',
+                    title: shoreTone === 'danger' ? '降低自治并准备岸桥接管' : (shoreTone === 'warn' ? '保持 RCC 待命' : '可维持当前船岸协同模式'),
+                    copy: shoreTone === 'danger'
+                        ? `通信链路与当前 MASS/控制权组合不匹配，建议优先确保桥楼或 RCC 的人工接管路径。`
+                        : `当前链路 ${svessel.linkType}，质量 ${svessel.linkQuality}，适合维持现有协同，但仍需持续校验延迟与冗余。`,
+                },
+                {
+                    kicker: 'Governance Signal',
+                    title: governanceTone === 'danger' ? '治理信号偏紧' : (governanceTone === 'warn' ? '治理侧需持续复核' : '治理状态受控'),
+                    copy: governanceTone === 'danger'
+                        ? `Threat ${svessel.threatLevel} 或合规状态异常，任何更高等级自动化动作都应附带人工确认和审计留痕。`
+                        : `网络安全、合规和人工监管闭环基本完整，但仍应把授权、日志与异常处置作为固定操作程序。`,
+                },
+            ];
+
+            const doctrines = [
+                {
+                    title: '当前优先动作',
+                    note: highestSeverity === 'danger'
+                        ? '优先处理红色约束，再讨论效率与舒适性目标。'
+                        : (highestSeverity === 'warn' ? '先压缩活跃风险，再恢复到计划运行窗口。' : '维持现有路径能力，持续监视链路、风险和治理状态。'),
+                },
+                {
+                    title: '授权链',
+                    note: shoreTone === 'danger'
+                        ? `桥楼优先，RCC 待接管，当前控制权 ${svessel.authority} 需保留人工确认。`
+                        : `当前控制权 ${svessel.authority}，可维持船岸协同，但重要动作仍应留痕并可人工覆盖。`,
+                },
+                {
+                    title: '稳态目标',
+                    note: governanceTone === 'danger'
+                        ? '稳态目标是降风险、保合规、保接管链路，而不是追求更高自治等级。'
+                        : '稳态目标是在安全、链路、平台健康和治理可控前提下维持计划任务图。',
+                },
+            ];
+
+            return { domains, pathways, constraints, missionCards, briefings, doctrines, highestSeverity };
+        }
+
+        function renderDomainGrid(domains) {
+            domainGrid.innerHTML = domains.map((domain) => `
+                <article class="domain-card ${activeFocusKey === domain.focusKey ? 'is-active' : ''} ${domain.focusKey === 'ship-shore-rcc' ? 'theme-rcc' : (domain.focusKey === 'port-environment' ? 'theme-environment' : (domain.focusKey === 'people-governance' ? 'theme-governance' : ''))}" data-focus-key="${domain.focusKey}" data-focus-command="${domain.command}">
+                    <div class="domain-kicker">${escapeHtml(domain.kicker)}</div>
+                    <div class="domain-head">
+                        <div class="domain-title">${escapeHtml(domain.title)}</div>
+                        <div class="badge ${toneToBadgeClass(domain.tone)}">${toneLabel(domain.tone)}</div>
+                    </div>
+                    <div class="domain-value">${escapeHtml(domain.value)}</div>
+                    <div class="domain-copy"><strong>Evidence:</strong> ${escapeHtml(domain.evidence)}</div>
+                    <div class="domain-copy">${escapeHtml(domain.implication)}</div>
+                </article>
+            `).join('');
+            bindFocusCards();
+        }
+
+        function renderMissionRail(cards, highestSeverity) {
+            missionRail.innerHTML = cards.map((card, index) => {
+                const tone = index === 0
+                    ? 'ok'
+                    : (index === 1 ? (card.value === 'LIMITED' ? 'danger' : (card.value === 'STANDBY' ? 'warn' : 'ok'))
+                    : (index === 2 ? (card.value === 'HARD' ? 'danger' : (card.value === 'ACTIVE' ? 'warn' : 'ok'))
+                    : (card.value === 'GUARDED' ? 'danger' : (card.value === 'WATCH' ? 'warn' : 'ok'))));
+                return `
+                    <article class="mission-card">
+                        <div class="mission-card-label">${escapeHtml(card.label)}</div>
+                        <div class="mission-card-value ${tone === 'ok' ? 'is-ok' : (tone === 'warn' ? 'is-warn' : 'is-danger')}">${escapeHtml(card.value)}</div>
+                        <div class="mission-card-note">${escapeHtml(card.note)}</div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function renderBriefings(briefings) {
+            briefingStrip.innerHTML = briefings.map((item) => `
+                <article class="briefing-card ${item.emphasis === 'focus' ? 'is-focus' : (item.emphasis === 'dim' ? 'is-dim' : '')}">
+                    <div class="briefing-kicker">${escapeHtml(item.kicker)}</div>
+                    <div class="briefing-title">${escapeHtml(item.title)}</div>
+                    <div class="briefing-copy">${escapeHtml(item.copy)}</div>
+                </article>
+            `).join('');
+        }
+
+        function renderPathwayList(pathways, highestSeverity) {
+            pathwayBadge.textContent = toneLabel(highestSeverity);
+            pathwayBadge.className = `badge ${toneToBadgeClass(highestSeverity)}`;
+            pathwayList.innerHTML = pathways.map((stage) => `
+                <div class="pathway-stage ${activeFocusKey === stage.focusKey ? 'is-active' : ''} ${stage.focusKey === 'ship-shore-rcc' ? 'theme-rcc' : (stage.focusKey === 'port-environment' ? 'theme-environment' : (stage.focusKey === 'people-governance' ? 'theme-governance' : ''))}" data-focus-key="${stage.focusKey}" data-focus-command="${stage.command}">
+                    <div class="pathway-stage-head">
+                        <div>
+                            <strong>${stage.title}</strong>
+                            <small>${stage.note}</small>
+                        </div>
+                        <div class="badge ${toneToBadgeClass(stage.tone)}">${toneLabel(stage.tone)}</div>
+                    </div>
+                    <div class="pathway-track">
+                        <div class="pathway-meter" style="width: ${Math.max(8, Math.min(100, stage.score))}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            bindFocusCards();
+        }
+
+        function updateFocusHighlights() {
+            [...document.querySelectorAll('.domain-card')].forEach((card) => {
+                card.classList.toggle('is-active', card.dataset.focusKey === activeFocusKey);
+            });
+            [...document.querySelectorAll('.pathway-stage')].forEach((card) => {
+                card.classList.toggle('is-active', card.dataset.focusKey === activeFocusKey);
+            });
+        }
+
+        function renderActionPlan(actionPlanWithFocus) {
+            const visibleActionPlan = activeFocusKey === 'overview'
+                ? actionPlanWithFocus
+                : actionPlanWithFocus.filter((item) => item.focusKey === activeFocusKey);
+            const renderedActionPlan = visibleActionPlan.length ? visibleActionPlan : actionPlanWithFocus;
+            const focus = describeFocus(activeFocusKey);
+
+            actionPlanList.innerHTML = renderedActionPlan.length
+                ? renderedActionPlan.slice(0, 5).map((item) => `
+                    <div class="list-item">
+                        <div>
+                            <strong>${escapeHtml(item.title || 'Untitled action')}</strong>
+                            <span>${escapeHtml(item.recommended_action || item.rationale || 'No details')}</span>
+                            <p>${item.rationale || item.domain || '保持当前运行窗口'}</p>
+                        </div>
+                        <div class="badge ${activeFocusKey === item.focusKey ? 'is-live' : ''}">${(item.priority || 'low').toUpperCase()}</div>
+                    </div>
+                `).join('')
+                : `<div class="list-item"><div><strong>${focus.title} 暂无专属动作</strong><span>可执行“${focus.nextCommand}”继续收敛当前焦点。</span></div><div class="badge">OK</div></div>`;
+        }
+
+        function applyFocusState() {
+            updateFocusHighlights();
+            if (latestSmartShippingView) {
+                renderBriefings(getFocusAwareBriefings(latestSmartShippingView.briefings));
+            }
+            renderCommandDeck();
+            renderFocusConsole();
+            renderActionPlan(latestActionPlanWithFocus);
+            renderMapFocusState();
+        }
+
+        function bindFocusCards() {
+            [...document.querySelectorAll('[data-focus-key]')].forEach((node) => {
+                node.onclick = () => {
+                    const requestedFocusKey = node.dataset.focusKey || 'overview';
+                    const nextFocusKey = activeFocusKey === requestedFocusKey ? 'overview' : requestedFocusKey;
+                    const focusCommand = node.dataset.focusCommand || '';
+                    activateFocus(nextFocusKey, focusCommand);
+                };
+            });
+        }
+
+        function renderConstraints(constraints, highestSeverity) {
+            constraintBadge.textContent = toneLabel(highestSeverity);
+            constraintBadge.className = `badge ${toneToBadgeClass(highestSeverity)}`;
+            constraintList.innerHTML = constraints.map((item) => `
+                <div class="constraint-item">
+                    <div>
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <small>${escapeHtml(item.note)}</small>
+                    </div>
+                    <div class="badge ${toneToBadgeClass(item.tone)}">${toneLabel(item.tone)}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderDoctrine(doctrines, highestSeverity) {
+            doctrineBadge.textContent = toneLabel(highestSeverity);
+            doctrineBadge.className = `badge ${toneToBadgeClass(highestSeverity)}`;
+            doctrineGrid.innerHTML = doctrines.map((item) => `
+                <div class="doctrine-item">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <small>${escapeHtml(item.note)}</small>
+                </div>
+            `).join('');
+        }
+
+        function renderFocusConsole() {
+            const focus = describeFocus(activeFocusKey);
+            const focusedDomain = latestSmartShippingView?.domains?.find((item) => item.focusKey === activeFocusKey);
+            const focusedPathway = latestSmartShippingView?.pathways?.find((item) => item.focusKey === activeFocusKey);
+            focusBadge.textContent = focus.badge;
+            focusBadge.className = `badge ${focus.tone}`;
+            focusConsole.innerHTML = `
+                <div class="focus-console-card">
+                    <div class="focus-console-top">
+                        <strong>${escapeHtml(focus.title)}</strong>
+                        <div class="badge ${focus.tone}">${focus.badge}</div>
+                    </div>
+                    <small><strong>为什么看这里：</strong> ${escapeHtml(focus.why)}</small>
+                    <small><strong>当前证据：</strong> ${focusedDomain?.evidence || focusedPathway?.note || '总览下同时观察平台、感知、协同、环境与治理。'}</small>
+                    <small><strong>运行含义：</strong> ${focusedDomain?.implication || '保持总览判断，优先收敛最硬约束。'}</small>
+                    <small><strong>下一条命令：</strong> ${escapeHtml(focus.nextCommand)}</small>
+                    <small><strong>当前操作问题：</strong> ${focus.question}</small>
+                </div>
+            `;
+        }
+
         async function refreshCockpit() {
             try {
-                const [health, dashboard, mission] = await Promise.all([
+                const [health, dashboard, mission, svesselData] = await Promise.all([
                     fetchJson('/health'),
                     fetchJson('/api/v1/dashboard'),
-                    fetchJson('/api/v1/ai-native/cps/mission-brief')
+                    fetchJson('/api/v1/ai-native/cps/mission-brief'),
+                    Promise.allSettled([
+                        fetchJson('/api/v1/ai-native/autonomy/status'),
+                        fetchJson('/api/v1/ai-native/ship-shore/status'),
+                        fetchJson('/api/v1/ai-native/phm/status'),
+                        fetchJson('/api/v1/ai-native/route/status'),
+                        fetchJson('/api/v1/ai-native/cybersecurity/status'),
+                    ])
                 ]);
+
+                const autonomyData = svesselData[0].status === 'fulfilled' ? (svesselData[0].value.result || {}) : {};
+                const linkData = svesselData[1].status === 'fulfilled' ? (svesselData[1].value.result || {}) : {};
+                const phmData = svesselData[2].status === 'fulfilled' ? (svesselData[2].value.result || {}) : {};
+                const routeData = svesselData[3].status === 'fulfilled' ? (svesselData[3].value.result || {}) : {};
+                const cyberData = svesselData[4].status === 'fulfilled' ? (svesselData[4].value.result || {}) : {};
+                const svessel = normalizeSvesselData(autonomyData, linkData, phmData, routeData, cyberData);
 
                 const decision = dashboard.decision || {};
                 const navigation = dashboard.navigation || {};
@@ -942,6 +2691,14 @@
                 const worldmonitor = dashboard.worldmonitor || {};
                 const actionPlan = decision.action_plan || mission.action_plan || [];
                 const taskGraph = mission.task_graph || decision.task_graph || {};
+                const smartShippingView = buildSmartShippingViewModel({ health, dashboard, mission, svessel });
+                updateSyncStrip(health, decision.risk_level || navigation.report?.overall_status);
+                const actionPlanWithFocus = actionPlan.map((item) => ({
+                    ...item,
+                    focusKey: mapActionFocusKey(item),
+                }));
+                latestSmartShippingView = smartShippingView;
+                latestActionPlanWithFocus = actionPlanWithFocus;
 
                 document.getElementById('metric-health').textContent = health.status === 'healthy' ? 'ONLINE' : 'DEGRADED';
                 document.getElementById('metric-backend').textContent = `Cycles ${health.ai_native?.runs ?? '--'} / Sensors ${health.sensors ?? '--'}`;
@@ -949,26 +2706,53 @@
                 document.getElementById('metric-autonomy').textContent = `Mode ${mission.autonomy_mode || decision.autonomy_mode || '--'}`;
                 document.getElementById('metric-risk').textContent = (decision.risk_level || navigation.report?.overall_status || '--').toUpperCase();
                 document.getElementById('metric-scene').textContent = `Scene ${scene.scene_type || 'open_sea'}`;
+
+                // SVESSEL metrics
+                document.getElementById('metric-mass').textContent = svessel.massLevel;
+                document.getElementById('metric-lr-al').textContent = `LR ${svessel.lrLevel}`;
+                document.getElementById('metric-link').textContent = svessel.linkType;
+                document.getElementById('metric-latency').textContent = `Lat ${svessel.linkLatency} ms`;
+                document.getElementById('metric-phm').textContent = svessel.monitoredComponents;
+                document.getElementById('metric-rul').textContent = `Alerts ${svessel.degradingCount}`;
+                document.getElementById('metric-cyber').textContent = svessel.threatLevel;
+                document.getElementById('metric-threat').textContent = `Sessions ${svessel.activeSessions}`;
+
+                setMetricTone('metric-link', svessel.linkHealth === 'ok' ? 'ok' : 'warn');
+                setMetricTone('metric-phm', svessel.degradingCount > 0 ? 'warn' : 'ok');
+                setMetricTone('metric-cyber', svessel.threatLevelRaw === 'high' || svessel.threatLevelRaw === 'critical' ? 'danger' : (svessel.threatLevelRaw === 'medium' ? 'warn' : 'ok'));
+                setMetricAlert('metric-link', svessel.linkHealth !== 'ok');
+                setMetricAlert('metric-phm', svessel.degradingCount > 0);
+                setMetricAlert('metric-cyber', svessel.threatLevelRaw === 'high' || svessel.threatLevelRaw === 'critical');
+
                 document.getElementById('metric-rcs').textContent = `${formatValue(rcs.foil_angle_deg, '°')} / ${formatValue(rcs.trim_tab_angle_deg, '°')}`;
                 document.getElementById('metric-comfort').textContent = `MSDV ${formatValue(rcs.comfort_target_msdv)}`;
                 document.getElementById('metric-shm').textContent = `FDI ${formatValue(shm.fatigue_damage_index)}`;
                 document.getElementById('metric-life').textContent = `Life ${formatValue(shm.life_remaining_pct, '%')}`;
-                document.getElementById('metric-memory').textContent = formatValue(memory.memory_profile?.recent_events_count || 0);
-                document.getElementById('metric-ais').textContent = `AIS ${dashboard.navigation?.report?.collision_risks?.length ?? 0} / Cloud ${lakehouseHealth.cloud_sync_available ? 'UP' : 'DOWN'}`;
                 document.getElementById('decision-badge').textContent = (mission.autonomy_mode || decision.autonomy_mode || 'advisory').toUpperCase();
                 document.getElementById('twin-sync-badge').textContent = health.ai_native?.last_cycle?.timestamp ? 'SYNC LIVE' : 'SYNC WAIT';
+                renderMissionRail(smartShippingView.missionCards, smartShippingView.highestSeverity);
+                renderDomainGrid(smartShippingView.domains);
+                renderPathwayList(smartShippingView.pathways, smartShippingView.highestSeverity);
+                renderConstraints(smartShippingView.constraints, smartShippingView.highestSeverity);
+                renderDoctrine(smartShippingView.doctrines, smartShippingView.highestSeverity);
+                applyFocusState();
 
-                actionPlanList.innerHTML = actionPlan.length
-                    ? actionPlan.slice(0, 5).map((item) => `
-                        <div class="list-item">
-                            <div>
-                                <strong>${item.title || 'Untitled action'}</strong>
-                                <span>${item.recommended_action || item.rationale || 'No details'}</span>
-                            </div>
-                            <div class="badge">${(item.priority || 'low').toUpperCase()}</div>
-                        </div>
-                    `).join('')
-                    : '<div class="list-item"><div><strong>当前无高优先动作</strong><span>继续维持监控与值班</span></div><div class="badge">OK</div></div>';
+                // SVESSEL panel
+                const svesselBadge = document.getElementById('svessel-badge');
+                const svesselList = document.getElementById('svessel-list');
+                svesselBadge.textContent = `MASS-${svessel.massLevel}`;
+                svesselList.innerHTML = [
+                    { label: `自主等级 MASS-${svessel.massLevel}`, note: `LR ${svessel.lrLevel} / 控制权: ${svessel.authority}`, badge: svessel.massLevel },
+                    { label: '船岸通信', note: `${svessel.linkType} / Quality ${svessel.linkQuality}`, badge: svessel.linkHealth === 'ok' ? 'OK' : 'WARN' },
+                    { label: 'PHM 设备健康', note: `监控 ${svessel.monitoredComponents} 台 / 退化 ${svessel.degradingCount}`, badge: svessel.degradingCount > 0 ? 'WARN' : 'OK' },
+                    { label: '航线优化', note: `模式: ${svessel.routeMode}`, badge: svessel.routeMode === '--' ? 'OFF' : 'ON' },
+                    { label: '网络安全', note: `审计 ${svessel.auditEntries} / 会话 ${svessel.activeSessions}`, badge: svessel.threatLevel },
+                ].map((item) => `
+                    <div class="list-item">
+                        <div><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.note)}</small></div>
+                        <div class="badge">${item.badge}</div>
+                    </div>
+                `).join('');
 
                 opsList.innerHTML = [
                     { label: 'WorldMonitor 模式', value: worldmonitor.mode || '--', note: worldmonitor.data_source || 'unknown' },
@@ -980,8 +2764,8 @@
                 ].map((item) => `
                     <div class="list-item">
                         <div>
-                            <strong>${item.label}</strong>
-                            <small>${item.note}</small>
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <small>${escapeHtml(item.note)}</small>
                         </div>
                         <div class="badge">${item.value}</div>
                     </div>
@@ -991,7 +2775,7 @@
             } catch (error) {
                 document.getElementById('metric-health').textContent = 'ERROR';
                 document.getElementById('metric-backend').textContent = error.message;
-                actionPlanList.innerHTML = `<div class="list-item"><div><strong>数据同步失败</strong><span>${error.message}</span></div><div class="badge">ERR</div></div>`;
+                actionPlanList.innerHTML = `<div class="list-item"><div><strong>数据同步失败</strong><span>${escapeHtml(error.message)}</span></div><div class="badge">ERR</div></div>`;
             }
         }
 
@@ -1022,6 +2806,7 @@
                 if (!command) {
                     return;
                 }
+                setActiveCommandChip(command);
                 commandInput.value = command;
                 executeCommand(command);
             });
@@ -1037,14 +2822,42 @@
             event.preventDefault();
             const command = commandInput.value.trim();
             if (!command) return;
+            setActiveCommandChip(command);
             executeCommand(command);
         });
 
         ensureCockpitMap();
+        renderCommandDeck();
+        updateClock();
         refreshAnalyticsStatus();
         refreshCockpit();
+        setInterval(updateClock, 1000);
         setInterval(refreshCockpit, 15000);
         setInterval(refreshAnalyticsStatus, 30000);
+        // -- Agent Team Status --
+        async function loadAgentTeamStatus() {
+            const b = document.getElementById('agent-team-badge');
+            const c = document.getElementById('agent-team-cards');
+            try {
+                const r = await fetch('/api/v1/agent-teams/overview');
+                if (!r.ok) throw new Error(r.status);
+                const o = await r.json();
+                const bt = o.build_team || {};
+                const et = o.execution_team || {};
+                const s = o.scheduler || {};
+                b.textContent = s.running ? 'ACTIVE' : 'OFFLINE';
+                b.style.background = s.running ? 'rgba(72,187,120,.15)' : 'rgba(252,129,129,.15)';
+                b.style.color = s.running ? '#48bb78' : '#fc8181';
+                const n = (bt.agent_count||0)+(et.agent_count||0);
+                const mk = (l,v,cl) => '<div style="flex:1;min-width:80px;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:'+cl+'">'+v+'</div><div style="font-size:10px;color:#718096">'+l+'</div></div>';
+                c.innerHTML = mk('Agent 在线',n,'#4fc3f7') + mk('调度 Tick',s.tick_count||0,'#48bb78') + mk('报告数',s.reports_generated||0,'#f6ad55');
+            } catch(e) {
+                if (b) { b.textContent='OFFLINE'; b.style.color='#fc8181'; }
+                if (c) { c.innerHTML='<div style="color:#718096;font-size:12px">Agent 服务离线</div>'; }
+            }
+        }
+        loadAgentTeamStatus();
+        setInterval(loadAgentTeamStatus, 30000);
     </script>
 </body>
 </html>

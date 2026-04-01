@@ -1,3 +1,8 @@
+
+function _escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
 /**
  * Bridge Chat - 舰桥自然语言交互中心
  * 
@@ -91,6 +96,8 @@ export class BridgeChat extends EventEmitter {
     
     // 智能体引用
     this.agents = new Map(); // { 'navigator': NavigatorAgent, ... }
+    this._agentSkillCache = null;
+    this._agentSkillCacheTime = 0;
     
     this._initializeUI();
     this._initializeVoice();
@@ -383,17 +390,33 @@ export class BridgeChat extends EventEmitter {
     try {
       // 1. 先识别是否为菜单操作并执行（与 GUI 一致），再走 LLM；若已执行菜单则让 LLM 只做简短确认
       const menuResult = this._executeMenuActionIfMatch(message);
+
+      // Try Agent-Config skill-based routing
+      if (menuResult.executed === false) {
+        const agentResult = await this._callAgentConfig(message);
+        if (agentResult) {
+          const aN = agentResult.agent ? agentResult.agent.name : 'Agent';
+          const aB = '<span style="display:inline-block;background:rgba(79,195,247,0.3);padding:2px 8px;border-radius:10px;font-size:11px;margin-right:6px;">' + aN + '</span>';
+          const tB = (agentResult.tool_invocations || []).map(function(t) { return '<span style="display:inline-block;background:rgba(255,193,7,0.2);padding:2px 6px;border-radius:8px;font-size:10px;margin-right:4px;">' + t.tool + '</span>'; }).join('');
+          const rt = agentResult.response.replace(/\n/g, '<br>');
+          const fm = aB + (tB ? '<br>' + tB + '<br>' : '') + '<br>' + rt;
+          this._removeMessage(thinkingId);
+          this._addMessage('assistant', fm);
+          this.conversationHistory.push({ role: 'assistant', content: agentResult.response, timestamp: new Date().toISOString() });
+          this.emit('message:sent', { message, response: { source: 'agent-config', data: agentResult } });
+          return;
+        }
+      }
+
       const response = await this._callLLM(message, menuResult.executed ? menuResult.label : null);
       let displayContent = response.content;
       if (menuResult.executed) {
         displayContent = response.content + '\n\n已执行菜单操作：' + menuResult.label;
       }
       
-      // 移除"思考中"消息，添加回复
       this._removeMessage(thinkingId);
       this._addMessage('assistant', displayContent);
       
-      // 如果需要调用智能体
       if (response.agentCalls) {
         for (const call of response.agentCalls) {
           await this._invokeAgent(call.agentName, call.task);
@@ -769,29 +792,74 @@ export class BridgeChat extends EventEmitter {
   /**
    * 路由到智能体
    * 根据用户问题的关键词，决定需要调用哪些 Agent
+   * 支持从 agent-team-config 动态获取 Agent 列表
    * @private
    */
   _routeToAgents(message) {
     const calls = [];
-    
-    // 简单的关键词匹配（实际应该用 LLM 做更智能的路由）
-    if (message.includes('航行') || message.includes('避碰') || message.includes('航向') || message.includes('碰撞')) {
-      calls.push({ agentName: 'navigator', task: message });
+    const skillMap = this._agentSkillCache || this._defaultSkillMap();
+    for (const [agentName, keywords] of Object.entries(skillMap)) {
+      if (keywords.some(kw => message.includes(kw))) {
+        calls.push({ agentName, task: message });
+      }
     }
-    
-    if (message.includes('主机') || message.includes('设备') || message.includes('能效') || message.includes('维护')) {
-      calls.push({ agentName: 'engineer', task: message });
-    }
-    
-    if (message.includes('库存') || message.includes('伙食') || message.includes('舱室') || message.includes('环境')) {
-      calls.push({ agentName: 'steward', task: message });
-    }
-    
-    if (message.includes('安全') || message.includes('监控') || message.includes('警报') || message.includes('应急')) {
-      calls.push({ agentName: 'safety', task: message });
-    }
-    
+    // 异步刷新缓存（不阻塞当前路由）
+    this._refreshAgentSkillCache();
     return calls;
+  }
+
+  _defaultSkillMap() {
+    return {
+      navigator: ['航行','避碰','航向','碰撞'],
+      engineer: ['主机','设备','能效','维护'],
+      steward: ['库存','伙食','舱室','环境'],
+      safety: ['安全','监控','警报','应急']
+    };
+  }
+
+  async _refreshAgentSkillCache() {
+    const now = Date.now();
+    if (this._agentSkillCache && now - this._agentSkillCacheTime < 60000) return;
+    try {
+      const r = await fetch('/api/v1/agent-config/teams');
+      if (!r.ok) return;
+      const teams = await r.json();
+      if (!teams.length) return;
+      const tid = teams[0].id || teams[0].name;
+      const ar = await fetch('/api/v1/agent-config/teams/' + tid + '/agents');
+      if (!ar.ok) return;
+      const agents = await ar.json();
+      const map = {};
+      for (const a of agents) {
+        const kws = (a.skills || []).flatMap(s => s.keywords || []);
+        if (kws.length) map[a.name || a.id] = kws;
+      }
+      if (Object.keys(map).length) {
+        this._agentSkillCache = map;
+        this._agentSkillCacheTime = now;
+      }
+    } catch(_) { /* use fallback */ }
+  }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: message, ship_context: this.shipContext })
+      });
+      if (res.status !== 200) return null;
+      const data = await res.json();
+      if (data.handled !== true) return null;
+      if (data.tool_invocations && data.tool_invocations.length > 0) {
+        for (const inv of data.tool_invocations) { this._execTool(inv); }
+      }
+      return data;
+    } catch (e) { console.warn('Agent-Config bridge failed:', e.message); return null; }
+  }
+
+  _execTool(invocation) {
+    const { tool, params } = invocation;
+    if (tool === 'dt_camera_move' && params.view_preset && typeof window.poseidonSwitchView === 'function') {
+      window.poseidonSwitchView(params.view_preset);
+    } else {
+      console.log('Tool:', tool, params);
+    }
   }
   
   /**
@@ -896,8 +964,8 @@ export class BridgeChat extends EventEmitter {
     `;
     
     messageDiv.innerHTML = `
-      <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">${label}</div>
-      <div>${content}</div>
+      <div style="font-size: 11px; opacity: 0.7; margin-bottom: 4px;">${_escapeHtml(label)}</div>
+      <div>${_escapeHtml(content)}</div>
     `;
     
     this.messagesContainer.appendChild(messageDiv);

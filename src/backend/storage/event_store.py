@@ -241,6 +241,7 @@ class SQLiteStore(EventStore):
     
     def save_event(self, event: Dict[str, Any]) -> bool:
         """保存单个事件"""
+        conn = None
         try:
             conn = self._connect()
             cursor = conn.cursor()
@@ -257,36 +258,43 @@ class SQLiteStore(EventStore):
             """, (timestamp, event_type, source, payload, confidence))
             
             conn.commit()
-            conn.close()
             return True
         except Exception as e:
             self.logger.error(f"Save failed: {e}")
             return False
+        finally:
+            if conn is not None:
+                conn.close()
     
     def save_events(self, events: List[Dict[str, Any]]) -> bool:
         """批量保存事件"""
+        conn = None
         try:
             conn = self._connect()
             cursor = conn.cursor()
             
+            rows = []
             for event in events:
                 event_type = event.get("event_type", "unknown")
                 source = event.get("source", "")
                 payload = json.dumps(event.get("payload", event), ensure_ascii=False)
                 confidence = event.get("confidence", 1.0)
                 timestamp = event.get("timestamp", datetime.now().isoformat())
-                
-                cursor.execute("""
-                    INSERT INTO events (timestamp, event_type, source, payload, confidence)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (timestamp, event_type, source, payload, confidence))
+                rows.append((timestamp, event_type, source, payload, confidence))
+            
+            cursor.executemany("""
+                INSERT INTO events (timestamp, event_type, source, payload, confidence)
+                VALUES (?, ?, ?, ?, ?)
+            """, rows)
             
             conn.commit()
-            conn.close()
             return True
         except Exception as e:
             self.logger.error(f"Save failed: {e}")
             return False
+        finally:
+            if conn is not None:
+                conn.close()
     
     def load_events(self, event_type: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
         """加载事件"""

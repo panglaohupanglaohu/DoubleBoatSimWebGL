@@ -56,7 +56,54 @@ API_ENDPOINTS = {
     "/api/v1/ai-native/status/full-pipeline": {
         "method": "GET",
         "description": "获取完整AI Native管道状态"
-    }
+    },
+    # ── SVESSEL 新增端点 ──
+    "/api/v1/ai-native/ship-shore/status": {
+        "method": "GET",
+        "description": "获取船岸通信链路状态"
+    },
+    "/api/v1/ai-native/autonomy/status": {
+        "method": "GET",
+        "description": "获取自主等级状态"
+    },
+    "/api/v1/ai-native/autonomy/transition": {
+        "method": "POST",
+        "description": "请求自主等级切换",
+        "params": ["target_mass_level", "reason"]
+    },
+    "/api/v1/ai-native/phm/status": {
+        "method": "GET",
+        "description": "获取预测性健康管理状态"
+    },
+    "/api/v1/ai-native/phm/maintenance-plan": {
+        "method": "GET",
+        "description": "获取维护计划"
+    },
+    "/api/v1/ai-native/route/status": {
+        "method": "GET",
+        "description": "获取航线优化状态"
+    },
+    "/api/v1/ai-native/voyage/status": {
+        "method": "GET",
+        "description": "获取航次计划状态"
+    },
+    "/api/v1/ai-native/voyage/daily-report": {
+        "method": "GET",
+        "description": "生成航次日报"
+    },
+    "/api/v1/ai-native/cybersecurity/status": {
+        "method": "GET",
+        "description": "获取网络安全状态"
+    },
+    "/api/v1/ai-native/cybersecurity/audit-log": {
+        "method": "GET",
+        "description": "获取网络安全审计日志",
+        "params": ["limit"]
+    },
+    "/api/v1/ai-native/cybersecurity/threat-summary": {
+        "method": "GET",
+        "description": "获取威胁态势摘要"
+    },
 }
 
 def get_api_endpoints():
@@ -189,7 +236,7 @@ def register_ai_native_endpoints(app):
             raise HTTPException(status_code=500, detail="Invalid channel type")
         
         try:
-            package = channel.build_decision_package()
+            package = getattr(channel, "latest_package", None) or {}
             return {
                 "channel": "decision_orchestrator",
                 "endpoint": "package",
@@ -251,7 +298,7 @@ def register_ai_native_endpoints(app):
                 "decision": {
                     "available": decision_ch is not None,
                     "status": decision_ch.get_status() if decision_ch else None,
-                    "decision_package": decision_ch.build_decision_package() if decision_ch else None
+                    "decision_package": getattr(decision_ch, "latest_package", {}) if decision_ch else None
                 }
             },
             "pipeline_health": "degraded"  # default
@@ -270,3 +317,148 @@ def register_ai_native_endpoints(app):
             status["pipeline_health"] = "partial"
         
         return status
+
+    # ── SVESSEL 新增 API 端点 ──────────────────────────────────
+
+    @app.get("/api/v1/ai-native/ship-shore/status")
+    async def get_ship_shore_status():
+        """获取船岸通信链路状态."""
+        registry = get_default_registry()
+        ch = registry.get("ship_shore_link")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Ship-shore link channel not found")
+        return {"channel": "ship_shore_link", "result": ch.get_status()}
+
+    @app.get("/api/v1/ai-native/autonomy/status")
+    async def get_autonomy_status():
+        """获取自主等级状态."""
+        registry = get_default_registry()
+        ch = registry.get("autonomy_manager")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Autonomy manager channel not found")
+        return {"channel": "autonomy_manager", "result": ch.get_status()}
+
+    @app.post("/api/v1/ai-native/autonomy/transition")
+    async def request_autonomy_transition(target_mass_level: str, reason: str = "operator_request"):
+        """请求自主等级切换."""
+        registry = get_default_registry()
+        ch = registry.get("autonomy_manager")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Autonomy manager channel not found")
+
+        # Accept MASS/LR tokens and normalize to LR AL integer for channel API.
+        level_token = str(target_mass_level).strip().upper()
+        level_map = {
+            "AL0": 0,
+            "AL1": 1,
+            "AL2": 2,
+            "AL3": 3,
+            "AL4": 4,
+            "AL5": 5,
+            "AL6": 6,
+            "M": 1,
+            "R": 2,
+            "RU": 4,
+            "A": 6,
+        }
+        if level_token not in level_map:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Invalid target_mass_level. "
+                    "Use one of: M,R,RU,A or AL0..AL6"
+                ),
+            )
+
+        result = ch.request_transition(level_map[level_token], reason)
+        return {"channel": "autonomy_manager", "result": result}
+
+    @app.get("/api/v1/ai-native/phm/status")
+    async def get_phm_status():
+        """获取预测性健康管理状态."""
+        registry = get_default_registry()
+        ch = registry.get("predictive_health")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Predictive health channel not found")
+        return {"channel": "predictive_health", "result": ch.get_status()}
+
+    @app.get("/api/v1/ai-native/phm/maintenance-plan")
+    async def get_maintenance_plan():
+        """获取维护计划."""
+        registry = get_default_registry()
+        ch = registry.get("predictive_health")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Predictive health channel not found")
+        plan = ch.generate_maintenance_plan()
+        # Convert dataclass recommendations to plain dicts for JSON response.
+        serialized_plan = [
+            {
+                "component_id": rec.component_id,
+                "component_type": rec.component_type,
+                "priority": rec.priority.value,
+                "action": rec.action,
+                "reason": rec.reason,
+                "estimated_hours": rec.estimated_hours,
+                "spare_parts": rec.spare_parts,
+                "deadline": rec.deadline,
+            }
+            for rec in plan
+        ]
+        return {"channel": "predictive_health", "result": serialized_plan}
+
+    @app.get("/api/v1/ai-native/route/status")
+    async def get_route_status():
+        """获取航线优化状态."""
+        registry = get_default_registry()
+        ch = registry.get("route_optimizer")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Route optimizer channel not found")
+        return {"channel": "route_optimizer", "result": ch.get_status()}
+
+    @app.get("/api/v1/ai-native/voyage/status")
+    async def get_voyage_status():
+        """获取航次计划状态."""
+        registry = get_default_registry()
+        ch = registry.get("voyage_planner")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Voyage planner channel not found")
+        return {"channel": "voyage_planner", "result": ch.get_status()}
+
+    @app.get("/api/v1/ai-native/voyage/daily-report")
+    async def get_voyage_daily_report():
+        """生成航次日报."""
+        registry = get_default_registry()
+        ch = registry.get("voyage_planner")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Voyage planner channel not found")
+        report = ch.generate_daily_report()
+        return {"channel": "voyage_planner", "result": report}
+
+    @app.get("/api/v1/ai-native/cybersecurity/status")
+    async def get_cybersecurity_status():
+        """获取网络安全状态."""
+        registry = get_default_registry()
+        ch = registry.get("cyber_security")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Cyber security channel not found")
+        return {"channel": "cyber_security", "result": ch.get_status()}
+
+    @app.get("/api/v1/ai-native/cybersecurity/audit-log")
+    async def get_cybersecurity_audit_log(limit: int = 50):
+        """获取网络安全审计日志."""
+        registry = get_default_registry()
+        ch = registry.get("cyber_security")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Cyber security channel not found")
+        logs = ch.get_audit_log(limit)
+        return {"channel": "cyber_security", "result": {"entries": logs, "count": len(logs)}}
+
+    @app.get("/api/v1/ai-native/cybersecurity/threat-summary")
+    async def get_threat_summary():
+        """获取威胁态势摘要."""
+        registry = get_default_registry()
+        ch = registry.get("cyber_security")
+        if not ch:
+            raise HTTPException(status_code=404, detail="Cyber security channel not found")
+        summary = ch.get_threat_summary()
+        return {"channel": "cyber_security", "result": summary}

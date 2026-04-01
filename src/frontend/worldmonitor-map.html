@@ -516,14 +516,14 @@
                         <div class="ais-target ${target.risk_level === 'high' ? 'high-risk' : ''}" 
                              onclick="focusOnTarget(${target.latitude}, ${target.longitude})">
                             <div class="ais-target-header">
-                                <span class="ais-target-type">${target.vessel_type || 'Unknown'}</span>
-                                <span class="ais-target-mmsi">MMSI: ${target.mmsi}</span>
+                                <span class="ais-target-type">${escapeHtml(target.vessel_type || 'Unknown')}</span>
+                                <span class="ais-target-mmsi">MMSI: ${escapeHtml(target.mmsi)}</span>
                             </div>
                             <div class="ais-target-info">
                                 <span>位置：${target.latitude?.toFixed(4) || '--'}, ${target.longitude?.toFixed(4) || '--'}</span>
                                 <span>航向：${target.course?.toFixed(0) || '--'}°</span>
                                 <span>航速：${target.speed?.toFixed(1) || '--'} kn</span>
-                                <span>风险：${target.risk_level || 'low'}</span>
+                                <span>风险：${escapeHtml(target.risk_level || 'low')}</span>
                             </div>
                         </div>
                     `).join('');

@@ -1,0 +1,6 @@
+代码开发任务清单：
+1. 实现 cloud_sync.py 中的飞书文档上传功能
+2. 替换 src/backend/ 中所有print()语句为适当的日志记录
+3. 实现 VibeGenerator.js 中的所有待办事项(TODO标记)
+4. 完善异常处理，确保所有Exception都被适当处理
+5. 编写相关的单元测试

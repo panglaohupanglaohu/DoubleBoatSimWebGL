@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能体团队管理 - Poseidon-X</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(9, 22, 39, 0.86);
+      --panel-strong: rgba(9, 22, 39, 0.96);
+      --line: rgba(125, 207, 255, 0.18);
+      --cyan: #7ddcff;
+      --cyan-strong: #35c8ff;
+      --lime: #98f5a7;
+      --amber: #ffcf70;
+      --red: #ff7d7d;
+      --text: #eef7ff;
+      --muted: #94a9bc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(53, 200, 255, 0.14), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(152, 245, 167, 0.08), transparent 24%),
+        linear-gradient(180deg, #06101d 0%, #091727 56%, #07111f 100%);
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* Nav strip */
+    .nav-strip {
+      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .nav-strip a {
+      color: var(--cyan); text-decoration: none;
+      padding: 8px 14px; border-radius: 999px;
+      background: rgba(125, 207, 255, 0.08);
+      border: 1px solid var(--line); font-size: 13px;
+      transition: background 0.2s;
+    }
+    .nav-strip a:hover { background: rgba(125, 207, 255, 0.18); }
+
+    h1 { font-size: 28px; color: var(--cyan); margin-bottom: 6px; }
+    .subtitle { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+
+    /* Scheduler bar */
+    .sched-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px 18px; margin-bottom: 16px;
+    }
+    .sched-bar .status-text { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--muted); }
+    .sched-bar .status-text b { color: var(--lime); }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--line); transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--cyan-strong), #1a8fd4); color: #fff; border-color: transparent; }
+    .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--cyan); }
+    .btn-ghost:hover { background: rgba(125, 207, 255, 0.1); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-danger { background: rgba(255, 125, 125, 0.15); color: var(--red); border-color: rgba(255, 125, 125, 0.3); }
+    .btn-danger:hover { background: rgba(255, 125, 125, 0.25); }
+
+    /* Grid */
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    @media (max-width: 800px) { .team-grid { grid-template-columns: 1fr; } }
+
+    /* Cards */
+    .card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 12px; padding: 18px; position: relative;
+      backdrop-filter: blur(12px);
+    }
+    .card h2 { font-size: 17px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .card h2 .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+      font-weight: 500; font-family: 'IBM Plex Mono', monospace;
+    }
+    .badge-ok { background: rgba(152, 245, 167, 0.18); color: var(--lime); }
+    .badge-warn { background: rgba(255, 207, 112, 0.18); color: var(--amber); }
+    .badge-err { background: rgba(255, 125, 125, 0.18); color: var(--red); }
+
+    /* Metrics row */
+    .metrics {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted);
+    }
+    .metrics b { color: var(--text); }
+
+    /* Agent table */
+    .agent-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .agent-table th {
+      text-align: left; padding: 6px 8px; font-size: 11px; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--line); font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .agent-table td { padding: 7px 8px; border-bottom: 1px solid rgba(125, 207, 255, 0.06); }
+    .agent-table tr:hover td { background: rgba(125, 207, 255, 0.04); }
+
+    /* State dots */
+    .state { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+    .state::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+    }
+    .state-idle::before { background: #78909c; }
+    .state-working::before { background: var(--cyan-strong); box-shadow: 0 0 6px var(--cyan-strong); }
+    .state-reporting::before { background: var(--lime); }
+    .state-blocked::before { background: var(--amber); }
+    .state-error::before { background: var(--red); }
+
+    /* Config section */
+    .config-section { margin-top: 20px; }
+    .config-section h2 { font-size: 18px; color: var(--cyan); margin-bottom: 14px; }
+
+    /* Teams list */
+    .team-list { display: flex; flex-direction: column; gap: 10px; }
+    .team-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(0, 0, 0, 0.2); border: 1px solid var(--line);
+      border-radius: 8px; padding: 14px 18px;
+    }
+    .team-item-info h3 { font-size: 15px; margin-bottom: 4px; }
+    .team-item-info p { font-size: 12px; color: var(--muted); }
+    .team-item-actions { display: flex; gap: 8px; }
+
+    /* Agent details panel */
+    .agent-details {
+      background: rgba(0, 0, 0, 0.25); border: 1px solid var(--line);
+      border-radius: 10px; padding: 18px; margin-top: 12px;
+    }
+    .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(125, 207, 255, 0.06); }
+    .detail-row .label { color: var(--muted); font-size: 13px; }
+    .detail-row .value { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+    .tab {
+      padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--muted);
+      border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none;
+      font-family: inherit; font-weight: 500;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Feedback / Issues */
+    .issue-item {
+      padding: 10px 14px; background: rgba(0, 0, 0, 0.15);
+      border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0;
+      margin-bottom: 8px; font-size: 13px;
+    }
+    .issue-item .issue-title { font-weight: 600; margin-bottom: 3px; }
+    .issue-item .issue-meta { font-size: 11px; color: var(--muted); }
+
+    /* Pulse animation for live indicator */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--lime);
+      display: inline-block; animation: pulse 1.5s infinite;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+      background: var(--panel-strong); border: 1px solid var(--line);
+      border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 900;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      justify-content: center; align-items: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--panel-strong); border: 1px solid var(--line);
+      border-radius: 14px; padding: 28px 32px; width: 460px; max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .modal h3 { font-size: 18px; color: var(--cyan); margin-bottom: 18px; }
+    .modal label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; margin-top: 12px; }
+    .modal input, .modal select, .modal textarea {
+      width: 100%; padding: 9px 12px; background: rgba(0,0,0,0.35);
+      border: 1px solid var(--line); border-radius: 6px; color: var(--text);
+      font-size: 13px; font-family: inherit;
+    }
+    .modal textarea { resize: vertical; min-height: 60px; }
+    .modal select { appearance: auto; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <div class="nav-strip">
+      <a href="/captain-cockpit.html">🚢 船长中控台</a>
+      <a href="/digital-twin.html">🌊 数字孪生</a>
+      <a href="/worldmonitor-map.html">🗺 WorldMonitor</a>
+      <a href="/poseidon-config.html">⚙️ LLM 配置</a>
+    </div>
+
+    <h1>🤖 智能体团队管理</h1>
+    <p class="subtitle">构建团队 &amp; 执行团队 · 双 Agent Set 实时监控与配置</p>
+
+    <!-- Scheduler Bar -->
+    <div class="sched-bar">
+      <div class="status-text">
+        <span class="live-dot"></span>&nbsp;
+        调度器: <b id="sched-state">加载中</b> &nbsp;|&nbsp;
+        Tick: <b id="sched-tick">-</b> &nbsp;|&nbsp;
+        报告: <b id="sched-reports">-</b> &nbsp;|&nbsp;
+        运行时间: <b id="sched-uptime">-</b>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" id="btn-tick">▶ Tick</button>
+        <button class="btn btn-ghost btn-sm" id="btn-report">📊 生成报告</button>
+      </div>
+    </div>
+
+    <!-- Team Overview Grid -->
+    <div class="team-grid">
+      <!-- Build Team -->
+      <div class="card" id="card-build">
+        <h2>🏗️ 构建团队 <span class="badge badge-ok" id="build-health">-</span></h2>
+        <div class="metrics" id="build-metrics">加载中...</div>
+        <table class="agent-table">
+          <thead>
+            <tr><th>Agent</th><th>状态</th><th>完成</th><th>产出</th><th>分数</th></tr>
+          </thead>
+          <tbody id="build-agents"></tbody>
+        </table>
+      </div>
+
+      <!-- Execution Team -->
+      <div class="card" id="card-exec">
+        <h2>⚡ 执行团队 <span class="badge badge-ok" id="exec-health">-</span></h2>
+        <div class="metrics" id="exec-metrics">加载中...</div>
+        <table class="agent-table">
+          <thead>
+            <tr><th>Agent</th><th>状态</th><th>完成</th><th>产出</th><th>分数</th></tr>
+          </thead>
+          <tbody id="exec-agents"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tabs Section -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-tab="tab-config">团队配置</button>
+        <button class="tab" data-tab="tab-issues">问题看板</button>
+        <button class="tab" data-tab="tab-feedback">反馈队列</button>
+        <button class="tab" data-tab="tab-reports">历史报告</button>
+      </div>
+
+      <!-- Tab: Config -->
+      <div class="tab-content active" id="tab-config">
+        <div class="team-list" id="config-teams">加载中...</div>
+      </div>
+
+      <!-- Tab: Issues -->
+      <div class="tab-content" id="tab-issues">
+        <div id="issues-list">加载中...</div>
+      </div>
+
+      <!-- Tab: Feedback -->
+      <div class="tab-content" id="tab-feedback">
+        <div style="margin-bottom:14px; display:flex; gap:8px;">
+          <input type="text" id="fb-title" placeholder="反馈标题" style="flex:1;padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px;">
+          <input type="text" id="fb-detail" placeholder="详细描述" style="flex:2;padding:8px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:13px;">
+          <button class="btn btn-primary btn-sm" id="btn-submit-fb">提交</button>
+        </div>
+        <div id="feedback-list">加载中...</div>
+      </div>
+
+      <!-- Tab: Reports -->
+      <div class="tab-content" id="tab-reports">
+        <div id="reports-list">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Team Modal -->
+  <div class="modal-overlay" id="modal-create-team">
+    <div class="modal">
+      <h3>➕ 创建新团队</h3>
+      <label>团队名称 *</label>
+      <input type="text" id="ct-name" placeholder="例：导航决策团队" maxlength="128">
+      <label>描述</label>
+      <textarea id="ct-desc" placeholder="团队职责描述"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-create-team')">取消</button>
+        <button class="btn btn-primary" id="btn-do-create-team">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Agent Modal -->
+  <div class="modal-overlay" id="modal-create-agent">
+    <div class="modal">
+      <h3>🤖 创建新智能体</h3>
+      <input type="hidden" id="ca-team-id">
+      <label>名称 *</label>
+      <input type="text" id="ca-name" placeholder="例：Navigator-01" maxlength="128">
+      <label>角色</label>
+      <input type="text" id="ca-role" placeholder="例：航行决策、机舱监控">
+      <label>描述</label>
+      <textarea id="ca-desc" placeholder="智能体功能描述"></textarea>
+      <label>模板类型</label>
+      <select id="ca-template">
+        <option value="custom">自定义 (Custom)</option>
+        <option value="researcher">研究员 (Researcher)</option>
+        <option value="developer">开发者 (Developer)</option>
+        <option value="analyst">分析师 (Analyst)</option>
+        <option value="navigator">导航员 (Navigator)</option>
+        <option value="engineer">工程师 (Engineer)</option>
+        <option value="coordinator">协调员 (Coordinator)</option>
+      </select>
+      <label>系统提示词</label>
+      <textarea id="ca-prompt" placeholder="系统级指令 (可选)"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-create-agent')">取消</button>
+        <button class="btn btn-primary" id="btn-do-create-agent">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_TEAMS = '/api/v1/agent-teams';
+    const API_CONFIG = '/api/v1/agent-config';
+    let pollTimer = null;
+
+    // ── Toast ────────────────────────────────────────────────
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // ── Modal helpers ────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // ── API helpers ──────────────────────────────────────────
+    async function api(path, opts) {
+      try {
+        const res = await fetch(path, opts);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    // ── Scheduler ────────────────────────────────────────────
+    function updateScheduler(data) {
+      if (!data || !data.scheduler) return;
+      const s = data.scheduler;
+      document.getElementById('sched-state').textContent = s.running ? '运行中' : '已停止';
+      document.getElementById('sched-tick').textContent = s.tick_count ?? '-';
+      document.getElementById('sched-reports').textContent = s.reports_generated ?? '-';
+      const up = s.uptime_seconds;
+      if (up != null) {
+        const h = Math.floor(up / 3600), m = Math.floor((up % 3600) / 60);
+        document.getElementById('sched-uptime').textContent = `${h}h ${m}m`;
+      }
+    }
+
+    // ── Build Team ───────────────────────────────────────────
+    function updateBuildTeam(data) {
+      if (!data || !data.build_team) return;
+      const bt = data.build_team;
+      const healthEl = document.getElementById('build-health');
+      healthEl.textContent = bt.health || 'ok';
+      healthEl.className = 'badge ' + badgeClass(bt.health);
+
+      const m = bt.metrics || {};
+      document.getElementById('build-metrics').innerHTML =
+        `代码: <b>${m.total_code_lines ?? 0}</b> 行 · 测试: <b>${m.total_test_cases ?? 0}</b> 例 · ` +
+        `部署: <b>${m.total_deployments ?? 0}</b> 次 (${((m.deployment_success_rate ?? 0) * 100).toFixed(0)}%) · ` +
+        `问题: <b>${m.issues_backlog ?? 0}</b>`;
+    }
+
+    function updateBuildAgents(kpis) {
+      const tbody = document.getElementById('build-agents');
+      if (!kpis) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">暂无数据</td></tr>'; return; }
+      tbody.innerHTML = Object.entries(kpis).map(([id, k]) => `
+        <tr>
+          <td>${k.name || id}</td>
+          <td><span class="state state-${k.state || 'idle'}">${stateLabel(k.state)}</span></td>
+          <td style="text-align:center">${k.tasks_completed ?? 0}</td>
+          <td style="text-align:center">${k.deliverables ?? 0}</td>
+          <td style="text-align:center;color:${scoreColor(k.score)}">${k.score ?? '-'}</td>
+        </tr>`).join('');
+    }
+
+    // ── Execution Team ───────────────────────────────────────
+    function updateExecTeam(data) {
+      if (!data || !data.execution_team) return;
+      const et = data.execution_team;
+      const healthEl = document.getElementById('exec-health');
+      healthEl.textContent = et.health || 'ok';
+      healthEl.className = 'badge ' + badgeClass(et.health);
+
+      const m = et.metrics || {};
+      document.getElementById('exec-metrics').innerHTML =
+        `感知: <b>${m.total_perception_events ?? 0}</b> 事件 · 决策: <b>${m.total_decisions ?? 0}</b> 次 · ` +
+        `纠偏: <b>${m.total_nav_corrections ?? 0}</b> · 节能: <b>${m.energy_savings_pct ?? 0}%</b> · ` +
+        `异常: <b>${m.total_anomalies ?? 0}</b>`;
+    }
+
+    function updateExecAgents(data) {
+      const tbody = document.getElementById('exec-agents');
+      if (!data || !data.execution_team || !data.execution_team.agents) {
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">暂无数据</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.execution_team.agents.map(a => `
+        <tr>
+          <td>${a.name || a.id}</td>
+          <td><span class="state state-${a.state || 'idle'}">${stateLabel(a.state)}</span></td>
+          <td style="text-align:center">${a.tasks_completed ?? 0}</td>
+          <td style="text-align:center">${a.deliverables ?? 0}</td>
+          <td style="text-align:center;color:${scoreColor(a.score)}">${a.score ?? '-'}</td>
+        </tr>`).join('');
+    }
+
+    // ── Config Tab ───────────────────────────────────────────
+    async function loadConfigTeams() {
+      const data = await api(`${API_CONFIG}/teams`);
+      const container = document.getElementById('config-teams');
+      if (!data || !Array.isArray(data)) {
+        // Fallback: show overview data
+        const ov = await api(`${API_CONFIG}/overview`);
+        container.innerHTML = `
+          <div class="header-row">
+            <h3 style="font-size:15px;">团队列表</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-team')">＋ 创建团队</button>
+          </div>`;
+        if (ov) {
+          container.innerHTML += `
+            <div class="team-item">
+              <div class="team-item-info">
+                <h3>系统概览</h3>
+                <p>团队: ${ov.total_teams ?? '-'} · Agent: ${ov.total_agents ?? '-'} · 模型: ${ov.total_models ?? '-'}</p>
+              </div>
+            </div>`;
+        } else {
+          container.innerHTML += '<p style="color:var(--muted)">团队配置 API 不可用</p>';
+        }
+        return;
+      }
+      container.innerHTML = `
+        <div class="header-row">
+          <h3 style="font-size:15px;">团队列表 (${data.length})</h3>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-team')">＋ 创建团队</button>
+        </div>` + data.map(team => {
+        const tid = team.team_id || team.id;
+        const tname = team.name || tid;
+        return `
+        <div class="team-item">
+          <div class="team-item-info">
+            <h3>${tname}</h3>
+            <p>${team.description || ''} · Agent 数量: ${team.agent_count ?? 0}</p>
+          </div>
+          <div class="team-item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="viewTeam('${tid}')">查看</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTeam('${tid}','${tname.replace(/'/g, "\\'")}')">删除</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function viewTeam(teamId) {
+      const data = await api(`${API_CONFIG}/teams/${teamId}`);
+      if (!data) { toast('获取团队详情失败'); return; }
+      const container = document.getElementById('config-teams');
+      // agents can be dict {id: profile} or array
+      const agentsRaw = data.agents || {};
+      const agentArr = Array.isArray(agentsRaw)
+        ? agentsRaw
+        : Object.entries(agentsRaw).map(([k, v]) => ({ ...v, agent_id: v.agent_id || k }));
+      const agentsList = agentArr.length > 0 ? agentArr.map(a => {
+        const aid = a.agent_id || a.id;
+        const aname = a.name || aid;
+        return `
+        <div class="detail-row">
+          <span class="label">${aname} <span style="color:var(--muted);font-size:11px;">(${a.role || a.template_type || '-'})</span></span>
+          <span class="value" style="display:flex;gap:6px;align-items:center;">
+            <span class="state state-${a.state || 'idle'}">${stateLabel(a.state)}</span>
+            <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px;" onclick="deleteAgent('${teamId}','${aid}','${aname.replace(/'/g, "\\'")}')">删除</button>
+          </span>
+        </div>`;
+      }).join('') : '<p style="color:var(--muted)">暂无 Agent，点击上方按钮创建</p>';
+      container.innerHTML = `
+        <div class="header-row">
+          <button class="btn btn-ghost btn-sm" onclick="loadConfigTeams()">← 返回列表</button>
+          <button class="btn btn-primary btn-sm" onclick="openCreateAgent('${teamId}')">＋ 创建智能体</button>
+        </div>
+        <div class="agent-details">
+          <h3 style="font-size:16px;margin-bottom:12px;">${data.name || teamId}</h3>
+          <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">${data.description || ''} · ID: ${teamId} · Agent 数量: ${agentArr.length}</p>
+          ${agentsList}
+        </div>`;
+    }
+
+    // ── Create / Delete Team ─────────────────────────────────
+    async function createTeam() {
+      const name = document.getElementById('ct-name').value.trim();
+      const description = document.getElementById('ct-desc').value.trim();
+      if (!name) { toast('请输入团队名称'); return; }
+      const res = await api(`${API_CONFIG}/teams`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description }),
+      });
+      if (res) {
+        toast(`团队 "${name}" 创建成功`);
+        closeModal('modal-create-team');
+        document.getElementById('ct-name').value = '';
+        document.getElementById('ct-desc').value = '';
+        loadConfigTeams();
+      } else {
+        toast('创建失败');
+      }
+    }
+
+    async function deleteTeam(teamId, teamName) {
+      if (!confirm(`确定删除团队 "${teamName}"？此操作不可撤销。`)) return;
+      const res = await fetch(`${API_CONFIG}/teams/${teamId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast(`团队 "${teamName}" 已删除`);
+        loadConfigTeams();
+      } else {
+        toast('删除失败');
+      }
+    }
+
+    // ── Create / Delete Agent ────────────────────────────────
+    function openCreateAgent(teamId) {
+      document.getElementById('ca-team-id').value = teamId;
+      document.getElementById('ca-name').value = '';
+      document.getElementById('ca-role').value = '';
+      document.getElementById('ca-desc').value = '';
+      document.getElementById('ca-template').value = 'custom';
+      document.getElementById('ca-prompt').value = '';
+      openModal('modal-create-agent');
+    }
+
+    async function createAgent() {
+      const teamId = document.getElementById('ca-team-id').value;
+      const name = document.getElementById('ca-name').value.trim();
+      const role = document.getElementById('ca-role').value.trim();
+      const description = document.getElementById('ca-desc').value.trim();
+      const template_type = document.getElementById('ca-template').value;
+      const system_prompt = document.getElementById('ca-prompt').value.trim();
+      if (!name) { toast('请输入智能体名称'); return; }
+      const res = await api(`${API_CONFIG}/teams/${teamId}/agents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, role, description, template_type, system_prompt }),
+      });
+      if (res) {
+        toast(`智能体 "${name}" 创建成功`);
+        closeModal('modal-create-agent');
+        viewTeam(teamId);
+      } else {
+        toast('创建失败');
+      }
+    }
+
+    async function deleteAgent(teamId, agentId, agentName) {
+      if (!confirm(`确定删除智能体 "${agentName}"？此操作不可撤销。`)) return;
+      const res = await fetch(`${API_CONFIG}/teams/${teamId}/agents/${agentId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast(`智能体 "${agentName}" 已删除`);
+        viewTeam(teamId);
+      } else {
+        toast('删除失败');
+      }
+    }
+
+    // ── Issues Tab ───────────────────────────────────────────
+    async function loadIssues() {
+      const data = await api(`${API_TEAMS}/build/issues`);
+      const container = document.getElementById('issues-list');
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted)">暂无问题</p>';
+        return;
+      }
+      container.innerHTML = data.slice(0, 20).map(issue => `
+        <div class="issue-item">
+          <div class="issue-title">${issue.title || issue.id || '未知问题'}</div>
+          <div class="issue-meta">${issue.severity || '-'} · ${issue.created_at || ''}</div>
+        </div>`).join('');
+    }
+
+    // ── Feedback Tab ─────────────────────────────────────────
+    async function loadFeedback() {
+      const data = await api(`${API_TEAMS}/execution/feedback`);
+      const container = document.getElementById('feedback-list');
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted)">暂无反馈</p>';
+        return;
+      }
+      container.innerHTML = data.slice(0, 20).map(fb => `
+        <div class="issue-item" style="border-color:var(--cyan);">
+          <div class="issue-title">${fb.title || fb.category || '反馈'}</div>
+          <div class="issue-meta">${fb.severity || '-'} · ${fb.detail || ''}</div>
+        </div>`).join('');
+    }
+
+    async function submitFeedback() {
+      const title = document.getElementById('fb-title').value.trim();
+      const detail = document.getElementById('fb-detail').value.trim();
+      if (!title) { toast('请输入反馈标题'); return; }
+      const res = await api(`${API_TEAMS}/execution/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, detail, category: 'optimization', severity: 'medium' }),
+      });
+      if (res) {
+        toast('反馈已提交');
+        document.getElementById('fb-title').value = '';
+        document.getElementById('fb-detail').value = '';
+        loadFeedback();
+      } else {
+        toast('提交失败');
+      }
+    }
+
+    // ── Reports Tab ──────────────────────────────────────────
+    async function loadReports() {
+      const data = await api(`${API_TEAMS}/build/reports`);
+      const container = document.getElementById('reports-list');
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted)">暂无报告</p>';
+        return;
+      }
+      container.innerHTML = data.slice(0, 10).map(r => `
+        <div class="issue-item" style="border-color:var(--lime);">
+          <div class="issue-title">报告 #${r.tick || '-'}</div>
+          <div class="issue-meta">时间: ${r.timestamp || ''} · 运行: ${r.uptime_seconds ? Math.round(r.uptime_seconds / 60) + ' min' : '-'}</div>
+        </div>`).join('');
+    }
+
+    // ── Helpers ──────────────────────────────────────────────
+    function badgeClass(health) {
+      if (health === 'ok' || health === 'healthy') return 'badge-ok';
+      if (health === 'warn' || health === 'warning') return 'badge-warn';
+      return 'badge-err';
+    }
+    function stateLabel(s) {
+      const map = { idle: '空闲', working: '工作中', reporting: '汇报', blocked: '阻塞', error: '异常' };
+      return map[s] || s || '未知';
+    }
+    function scoreColor(score) {
+      if (score == null) return 'var(--muted)';
+      if (score >= 80) return 'var(--lime)';
+      if (score >= 50) return 'var(--amber)';
+      return 'var(--red)';
+    }
+
+    // ── Main Poll Loop ───────────────────────────────────────
+    async function poll() {
+      const [overview, buildKPIs] = await Promise.all([
+        api(`${API_TEAMS}/overview`),
+        api(`${API_TEAMS}/build/kpis`),
+      ]);
+      if (overview) {
+        updateScheduler(overview);
+        updateBuildTeam(overview);
+        updateExecTeam(overview);
+        updateExecAgents(overview);
+      }
+      if (buildKPIs) {
+        updateBuildAgents(buildKPIs);
+      }
+    }
+
+    // ── Init ─────────────────────────────────────────────────
+    function init() {
+      // Tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.add('active');
+          // Lazy-load tab data
+          if (tab.dataset.tab === 'tab-config') loadConfigTeams();
+          if (tab.dataset.tab === 'tab-issues') loadIssues();
+          if (tab.dataset.tab === 'tab-feedback') loadFeedback();
+          if (tab.dataset.tab === 'tab-reports') loadReports();
+        });
+      });
+
+      // Scheduler buttons
+      document.getElementById('btn-tick').addEventListener('click', async () => {
+        await api(`${API_TEAMS}/scheduler/tick`, { method: 'POST' });
+        toast('Tick 已触发');
+        poll();
+      });
+      document.getElementById('btn-report').addEventListener('click', async () => {
+        await api(`${API_TEAMS}/scheduler/report`, { method: 'POST' });
+        toast('报告已生成');
+        poll();
+      });
+
+      // Feedback submit
+      document.getElementById('btn-submit-fb').addEventListener('click', submitFeedback);
+
+      // Create Team / Agent modal buttons
+      document.getElementById('btn-do-create-team').addEventListener('click', createTeam);
+      document.getElementById('btn-do-create-agent').addEventListener('click', createAgent);
+
+      // Close modals on overlay click
+      document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) overlay.classList.remove('open');
+        });
+      });
+
+      // Initial load
+      poll();
+      loadConfigTeams();
+
+      // Auto refresh every 5s
+      pollTimer = setInterval(poll, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

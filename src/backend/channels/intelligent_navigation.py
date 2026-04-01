@@ -18,6 +18,9 @@ from typing import Optional, List, Dict, Any
 from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 from .maritime_scene_model import MaritimeSceneModel
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 COLREGS_GUIDANCE = {
@@ -166,7 +169,8 @@ class IntelligentNavigationChannel(MarineChannel):
             self._initialized = False
             self._set_health(ChannelStatus.OFF, "Shutdown")
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Nav calc skip: {e}")
             return False
     
     def update_own_ship(self, latitude: float, longitude: float, 
@@ -180,11 +184,44 @@ class IntelligentNavigationChannel(MarineChannel):
         }
     
     def add_ais_target(self, target: AISTarget):
-        """添加 AIS 目标."""
+        """添加 AIS 目标（基于MMSI去重）."""
+        # 基于MMSI去重：如果已存在相同MMSI，更新而非追加
+        for i, existing in enumerate(self.ais_targets):
+            if existing.mmsi == target.mmsi:
+                self.ais_targets[i] = target
+                return
         self.ais_targets.append(target)
         # 限制目标数量
         if len(self.ais_targets) > 100:
             self.ais_targets = self.ais_targets[-100:]
+
+    def remove_stale_targets(self, timeout_s: float = 300) -> int:
+        """清理超时目标，返回清除数量。"""
+        now = datetime.now()
+        before = len(self.ais_targets)
+        self.ais_targets = [
+            t for t in self.ais_targets
+            if (now - t.timestamp).total_seconds() <= timeout_s
+        ]
+        return before - len(self.ais_targets)
+
+    def get_closest_targets(self, n: int = 5) -> List[Dict[str, Any]]:
+        """返回CPA最小的n个目标（有CPA数据按CPA排序，否则按距离排序）。"""
+        results = []
+        for target in self.ais_targets:
+            risk = self.calculate_cpa_tcpa(target)
+            results.append({
+                "mmsi": target.mmsi,
+                "cpa": risk.cpa,
+                "tcpa": risk.tcpa,
+                "range": risk.range,
+                "bearing": risk.bearing,
+                "risk_level": risk.risk_level,
+                "vessel_type": target.vessel_type,
+            })
+        # 按CPA排序（CPA数据始终可用）
+        results.sort(key=lambda r: r["cpa"])
+        return results[:n]
     
     def calculate_cpa_tcpa(self, target: AISTarget) -> CollisionRisk:
         """
