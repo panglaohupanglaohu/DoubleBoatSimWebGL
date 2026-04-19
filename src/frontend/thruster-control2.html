@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PX-TCS — PoseidonX Thruster Control System</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+/* ═══════════════════════════════════════
+   PX-TCS Industrial Variables
+   ═══════════════════════════════════════ */
+:root {
+  --kb-blue: #003399;
+  --kb-cyan: #00E5FF;
+  --kb-amber: #FFB100;
+  --kb-red: #FF2D2D;
+  --kb-green: #00E676;
+  --kb-bg: #0A0F1E;
+  --kb-panel: #111827;
+  --kb-card: #1A2035;
+  --kb-border: #1E293B;
+  --kb-border-hi: #2D3A52;
+  --kb-text: #E2E8F0;
+  --kb-dim: #64748B;
+  --kb-muted: #475569;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Fira Code', 'Consolas', monospace;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --radius: 6px;
+  --glow-cyan: 0 0 12px rgba(0,229,255,.25);
+  --glow-red: 0 0 16px rgba(255,45,45,.4);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--kb-bg);
+  color: var(--kb-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+.ob-content { padding: 0 !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; background: var(--kb-bg) !important; }
+.ob-topbar { display: none !important; }
+a { color: var(--kb-cyan); text-decoration: none; }
+
+/* ═══ Top Header Bar ═══ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px;
+  background: linear-gradient(180deg, #0D1424 0%, var(--kb-bg) 100%);
+  border-bottom: 1px solid var(--kb-border);
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-brand { display: flex; align-items: center; gap: 12px; }
+.topbar-brand .logo { font-weight: 800; font-size: 14px; letter-spacing: 1px; color: var(--kb-cyan); }
+.topbar-brand .system { font-size: 10px; color: var(--kb-dim); text-transform: uppercase; letter-spacing: 2px; }
+.topbar-status { display: flex; align-items: center; gap: 20px; }
+.mode-badge { padding: 4px 14px; border-radius: 3px; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; border: 1px solid var(--kb-border-hi); background: var(--kb-card); }
+.mode-badge.active { border-color: var(--kb-cyan); color: var(--kb-cyan); box-shadow: var(--glow-cyan); }
+.estop-btn {
+  width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--kb-red);
+  background: radial-gradient(circle, #8B0000 0%, #3D0000 100%);
+  color: #FF6B6B; font-size: 10px; font-weight: 900; cursor: pointer;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.5), 0 0 0 3px rgba(255,45,45,.15);
+  transition: all .15s; font-family: var(--font-mono); letter-spacing: 1px;
+  display: flex; align-items: center; justify-content: center;
+}
+.estop-btn:hover { box-shadow: var(--glow-red), inset 0 2px 4px rgba(0,0,0,.5); transform: scale(1.05); }
+.estop-btn:active { transform: scale(0.95); }
+.back-link { font-size: 10px; color: var(--kb-dim); border: 1px solid var(--kb-border); padding: 3px 10px; border-radius: var(--radius); }
+
+/* ═══ Layout ═══ */
+.shell {
+  display: grid;
+  grid-template-columns: 280px 1fr 260px;
+  grid-template-rows: auto 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 49px);
+}
+.ob-app .shell { height: auto; }
+.left-col { grid-column: 1; border-right: 1px solid var(--kb-border); overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.center-col { grid-column: 2; display: flex; flex-direction: column; overflow: hidden; }
+.right-col { grid-column: 3; border-left: 1px solid var(--kb-border); overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ═══ Cards ═══ */
+.card {
+  background: var(--kb-card);
+  border: 1px solid var(--kb-border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.card-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--kb-dim); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.card-title::before { content: ''; width: 3px; height: 12px; background: var(--kb-cyan); border-radius: 1px; }
+
+/* ═══ Stat Boxes ═══ */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.stat-box { background: rgba(15,23,42,.6); border: 1px solid var(--kb-border); border-radius: 4px; padding: 8px 10px; }
+.stat-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: var(--kb-dim); }
+.stat-value { font-size: 18px; font-weight: 700; color: var(--kb-text); line-height: 1.2; }
+.stat-unit { font-size: 9px; color: var(--kb-muted); margin-left: 2px; }
+.stat-value.cyan { color: var(--kb-cyan); }
+.stat-value.amber { color: var(--kb-amber); }
+.stat-value.green { color: var(--kb-green); }
+
+/* ═══ Efficiency Canvas ═══ */
+.eff-canvas-wrap { position: relative; width: 100%; height: 120px; }
+#effCanvas { width: 100%; height: 100%; display: block; }
+
+/* ═══ Power Load Bar ═══ */
+.load-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.load-bar-outer { width: 32px; height: 160px; background: var(--kb-panel); border: 1px solid var(--kb-border); border-radius: 4px; position: relative; overflow: hidden; }
+.load-bar-fill { position: absolute; bottom: 0; left: 0; right: 0; transition: height .6s ease, background .3s; border-radius: 0 0 3px 3px; }
+.load-bar-label { font-size: 8px; color: var(--kb-dim); text-transform: uppercase; letter-spacing: 1px; }
+.load-bar-value { font-size: 14px; font-weight: 700; }
+.load-bar-fill.normal { background: linear-gradient(0deg, #006644 0%, var(--kb-green) 100%); }
+.load-bar-fill.warning { background: linear-gradient(0deg, #8B5E00 0%, var(--kb-amber) 100%); }
+.load-bar-fill.overload { background: var(--kb-red); animation: flash-bar .5s infinite; }
+@keyframes flash-bar { 50% { opacity: .4; } }
+
+/* ═══ Mode Switcher ═══ */
+.mode-group { display: flex; flex-direction: column; gap: 4px; }
+.mode-btn {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border: 1px solid var(--kb-border); border-radius: 4px; cursor: pointer;
+  background: var(--kb-panel); color: var(--kb-dim); font-size: 11px;
+  font-family: var(--font-mono); transition: all .2s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 1px 2px rgba(0,0,0,.3);
+}
+.mode-btn:hover { border-color: var(--kb-border-hi); color: var(--kb-text); }
+.mode-btn.active { border-color: var(--kb-cyan); color: var(--kb-cyan); background: rgba(0,229,255,.05); box-shadow: var(--glow-cyan), inset 0 1px 0 rgba(0,229,255,.1); }
+.mode-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--kb-muted); transition: all .3s; }
+.mode-btn.active .mode-dot { background: var(--kb-cyan); box-shadow: 0 0 8px var(--kb-cyan); }
+
+/* ═══ Pitch Mode ═══ */
+.pitch-tabs { display: flex; gap: 4px; }
+.pitch-tab {
+  flex: 1; padding: 6px 8px; text-align: center; font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .5px; border: 1px solid var(--kb-border);
+  border-radius: 4px; cursor: pointer; background: var(--kb-panel); color: var(--kb-dim);
+  font-family: var(--font-mono); transition: all .2s;
+}
+.pitch-tab.active { border-color: var(--kb-amber); color: var(--kb-amber); background: rgba(255,177,0,.06); }
+
+/* ═══ Controller Health ═══ */
+.ctrl-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 11px; }
+.ctrl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ctrl-dot.active { background: var(--kb-green); animation: heartbeat 2s infinite; }
+.ctrl-dot.standby { background: var(--kb-amber); animation: heartbeat 3s infinite; }
+.ctrl-dot.offline { background: var(--kb-red); }
+@keyframes heartbeat { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(.85); } }
+.ctrl-label { color: var(--kb-text); }
+.ctrl-status { margin-left: auto; color: var(--kb-dim); font-size: 10px; }
+
+/* ═══ Power Split Bar ═══ */
+.split-bar { height: 20px; border-radius: 4px; display: flex; overflow: hidden; border: 1px solid var(--kb-border); }
+.split-fore { background: var(--kb-cyan); transition: width .6s; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #000; }
+.split-aft { background: var(--kb-blue); flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; }
+
+/* ═══ Center — Thruster SVG ═══ */
+.thruster-viz { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 380px; }
+.thruster-svg { width: 100%; max-width: 680px; height: auto; }
+.thruster-svg .hull { fill: none; stroke: var(--kb-border-hi); stroke-width: 1.5; }
+.thruster-svg .thruster-body { fill: rgba(0,51,153,.2); stroke: var(--kb-cyan); stroke-width: 1; cursor: pointer; transition: all .3s; }
+.thruster-svg .thruster-body:hover { fill: rgba(0,229,255,.12); stroke-width: 2; filter: drop-shadow(0 0 8px rgba(0,229,255,.3)); }
+.thruster-svg .prop-blade { fill: none; stroke: var(--kb-cyan); stroke-width: 1.5; opacity: .7; transition: transform .6s ease; }
+.thruster-svg .rotor { fill: var(--kb-cyan); opacity: .4; }
+.thruster-svg .energy-flow { stroke: var(--kb-cyan); stroke-width: 1; fill: none; stroke-dasharray: 8 4; opacity: .5; }
+.thruster-svg .energy-flow.active { animation: flow-dash 1s linear infinite; opacity: .8; }
+@keyframes flow-dash { to { stroke-dashoffset: -12; } }
+.thruster-svg text { font-family: var(--font-mono); fill: var(--kb-dim); font-size: 10px; }
+.thruster-svg text.value { fill: var(--kb-text); font-size: 11px; font-weight: 700; }
+.thruster-svg text.label { fill: var(--kb-dim); font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* ═══ Azimuth Indicator ═══ */
+.azimuth-card { display: flex; flex-direction: column; align-items: center; }
+.azimuth-ring {
+  width: 180px; height: 180px; position: relative; border-radius: 50%;
+  border: 2px solid var(--kb-border-hi);
+  background: radial-gradient(circle, rgba(10,15,30,.8) 0%, var(--kb-panel) 100%);
+}
+.azimuth-ring svg { width: 100%; height: 100%; }
+.azimuth-ring .tick { stroke: var(--kb-muted); stroke-width: 1; }
+.azimuth-ring .tick-major { stroke: var(--kb-dim); stroke-width: 1.5; }
+.azimuth-ring .needle-set { stroke: var(--kb-amber); stroke-width: 2; stroke-dasharray: 4 2; }
+.azimuth-ring .needle-actual { stroke: var(--kb-cyan); stroke-width: 2.5; }
+.azimuth-ring .center-dot { fill: var(--kb-cyan); }
+.azimuth-ring text { font-family: var(--font-mono); font-size: 9px; fill: var(--kb-dim); }
+.azimuth-readout { display: flex; gap: 16px; margin-top: 8px; font-size: 11px; }
+.azimuth-readout span { display: flex; align-items: center; gap: 4px; }
+.azimuth-readout .dot-set { width: 8px; height: 3px; background: var(--kb-amber); }
+.azimuth-readout .dot-act { width: 8px; height: 3px; background: var(--kb-cyan); }
+
+/* ═══ Bottom Panel (K-TCS Controls) ═══ */
+.bottom-panel {
+  background: var(--kb-panel);
+  border-top: 1px solid var(--kb-border);
+  padding: 10px 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.thruster-mini {
+  background: var(--kb-card); border: 1px solid var(--kb-border); border-radius: var(--radius);
+  padding: 10px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: all .2s;
+}
+.thruster-mini:hover { border-color: var(--kb-cyan); }
+.thr-mini-header { display: flex; justify-content: space-between; align-items: center; }
+.thr-mini-name { font-size: 10px; font-weight: 600; }
+.thr-mini-status { font-size: 8px; padding: 2px 6px; border-radius: 2px; text-transform: uppercase; font-weight: 700; letter-spacing: .5px; }
+.thr-mini-status.running { background: rgba(0,230,118,.12); color: var(--kb-green); border: 1px solid rgba(0,230,118,.3); }
+.thr-mini-status.standby { background: rgba(255,177,0,.1); color: var(--kb-amber); border: 1px solid rgba(255,177,0,.3); }
+.thr-mini-status.emergency_stop { background: rgba(255,45,45,.12); color: var(--kb-red); border: 1px solid rgba(255,45,45,.3); }
+.thr-mini-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--kb-dim); }
+.thr-mini-row .val { color: var(--kb-text); font-weight: 600; }
+.thr-mini-gauge { height: 4px; border-radius: 2px; background: var(--kb-border); overflow: hidden; }
+.thr-mini-gauge-fill { height: 100%; border-radius: 2px; transition: width .5s, background .3s; }
+
+/* ═══ Log Stream ═══ */
+.log-stream {
+  background: rgba(10,15,30,.85); border: 1px solid var(--kb-border); border-radius: var(--radius);
+  padding: 8px; max-height: 130px; overflow-y: auto; font-size: 10px; line-height: 1.7;
+}
+.log-stream::-webkit-scrollbar { width: 2px; }
+.log-stream::-webkit-scrollbar-thumb { background: var(--kb-border-hi); }
+.log-entry { color: var(--kb-dim); }
+.log-entry .ts { color: var(--kb-muted); }
+.log-entry .src { color: var(--kb-cyan); }
+.log-entry.warn { color: var(--kb-amber); }
+.log-entry.err { color: var(--kb-red); }
+
+/* ═══ Tooltip ═══ */
+.thr-tooltip {
+  position: fixed; z-index: 200; background: var(--kb-card); border: 1px solid var(--kb-cyan);
+  border-radius: 4px; padding: 10px 14px; font-size: 11px; pointer-events: none;
+  box-shadow: var(--glow-cyan); max-width: 240px; display: none;
+}
+.thr-tooltip .tt-title { font-weight: 700; color: var(--kb-cyan); margin-bottom: 4px; }
+.thr-tooltip .tt-row { display: flex; justify-content: space-between; gap: 12px; color: var(--kb-dim); }
+.thr-tooltip .tt-val { color: var(--kb-text); font-weight: 600; }
+
+/* ═══ Emergency Overlay ═══ */
+.estop-overlay {
+  position: fixed; inset: 0; z-index: 999; background: rgba(10,0,0,.92);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+}
+.estop-overlay.active { display: flex; }
+.estop-overlay .warn-text { font-size: 48px; font-weight: 900; color: var(--kb-red); letter-spacing: 6px; animation: flash-text 1s infinite; }
+.estop-overlay .sub-text { font-size: 14px; color: var(--kb-amber); margin-top: 20px; }
+.estop-overlay .reset-btn {
+  margin-top: 40px; padding: 12px 40px; background: var(--kb-card); border: 2px solid var(--kb-amber);
+  color: var(--kb-amber); font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+  border-radius: var(--radius); cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+}
+@keyframes flash-text { 50% { opacity: .3; } }
+
+/* ═══ Battery ═══ */
+.batt-bar { width: 100%; height: 14px; border-radius: 3px; border: 1px solid var(--kb-border); overflow: hidden; position: relative; }
+.batt-fill { height: 100%; border-radius: 2px; transition: width .5s; }
+.batt-fill.high { background: var(--kb-green); }
+.batt-fill.mid { background: var(--kb-amber); }
+.batt-fill.low { background: var(--kb-red); }
+
+/* ═══ Scrollbar ═══ */
+.left-col::-webkit-scrollbar, .right-col::-webkit-scrollbar { width: 3px; }
+.left-col::-webkit-scrollbar-thumb, .right-col::-webkit-scrollbar-thumb { background: var(--kb-border-hi); border-radius: 3px; }
+
+/* ═══ Chat Panel ═══ */
+.chat-card { display: flex; flex-direction: column; min-height: 180px; }
+.chat-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.chat-title-row .card-title { margin: 0; }
+.chat-model-tag { font-size: 9px; color: var(--kb-cyan); background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.25); border-radius: 3px; padding: 2px 7px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); }
+.chat-model-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--kb-muted); transition: background .3s, box-shadow .3s; }
+.chat-model-dot.active { background: #F59E0B; box-shadow: 0 0 8px rgba(245,158,11,.6); }
+.chat-model-dot.inactive { background: var(--kb-muted); }
+.chat-agent-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.chat-agent-select {
+  flex: 1; background: var(--kb-panel); border: 1px solid var(--kb-border); border-radius: 4px;
+  padding: 4px 22px 4px 8px; color: var(--kb-text); font-size: 10px; font-family: var(--font-mono);
+  outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748B'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 6px center;
+}
+.chat-agent-select:focus { border-color: var(--kb-cyan); }
+.chat-model-tag { font-size: 8px; color: var(--kb-dim); background: var(--kb-panel); border: 1px solid var(--kb-border); border-radius: 3px; padding: 1px 5px; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+.chat-model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--kb-muted); }
+.chat-model-dot.active { background: #F59E0B; box-shadow: 0 0 6px rgba(245,158,11,.5); }
+.chat-model-dot.inactive { background: var(--kb-muted); }
+.chat-messages { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; flex: 1; padding-right: 2px; }
+.chat-messages::-webkit-scrollbar { width: 2px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--kb-border-hi); }
+.chat-msg { padding: 6px 10px; border-radius: 4px; font-size: 11px; line-height: 1.5; border-left: 3px solid var(--kb-cyan); background: rgba(0,229,255,.04); }
+.chat-msg.user { border-left-color: #818CF8; background: rgba(129,140,248,.06); }
+.chat-msg.warn { border-left-color: var(--kb-amber); background: rgba(255,177,0,.06); }
+.chat-msg.danger { border-left-color: var(--kb-red); background: rgba(255,45,45,.06); }
+.chat-msg .chat-time { font-size: 8px; color: var(--kb-muted); margin-top: 2px; }
+.chat-input-row { display: flex; gap: 4px; margin-top: 6px; }
+.chat-input-row input {
+  flex: 1; background: var(--kb-panel); border: 1px solid var(--kb-border); border-radius: 4px;
+  padding: 6px 10px; color: var(--kb-text); font-size: 11px; font-family: var(--font-mono); outline: none;
+}
+.chat-input-row input:focus { border-color: var(--kb-cyan); }
+.chat-input-row button {
+  padding: 6px 12px; background: var(--kb-cyan); color: #0A0F1E; border: none; border-radius: 4px;
+  font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--font-mono);
+}
+.chat-input-row button:active { transform: scale(.95); }
+
+/* ═══ Engine Manager ═══ */
+.eng-item { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border: 1px solid var(--kb-border); border-radius: 4px; font-size: 10px; }
+.eng-item .eng-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--kb-text); font-weight: 600; }
+.eng-item .eng-type { font-size: 8px; color: var(--kb-muted); text-transform: uppercase; }
+.eng-btn { padding: 2px 8px; border: 1px solid var(--kb-border); border-radius: 3px; font-size: 9px; font-weight: 600; cursor: pointer; font-family: var(--font-mono); background: var(--kb-panel); color: var(--kb-dim); transition: all .15s; }
+.eng-btn:hover { border-color: var(--kb-cyan); color: var(--kb-cyan); }
+.eng-btn.start { border-color: var(--kb-green); color: var(--kb-green); }
+.eng-btn.stop { border-color: var(--kb-amber); color: var(--kb-amber); }
+.eng-btn.del { border-color: var(--kb-red); color: var(--kb-red); }
+.eng-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.eng-status-dot.running { background: var(--kb-green); }
+.eng-status-dot.standby { background: var(--kb-muted); }
+.eng-status-dot.emergency_stop { background: var(--kb-red); }
+</style>
+</head>
+<body>
+
+<!-- ═══ Top Bar ═══ -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <span class="logo">PX-TCS</span>
+    <span class="system">PoseidonX Thruster Control</span>
+    <a href="/thruster-control.html" class="back-link">← Classic</a>
+  </div>
+  <div class="topbar-status">
+    <div class="mode-badge" id="modeBadge">INDIVIDUAL</div>
+    <span style="font-size:10px;color:var(--kb-dim)" id="clockUtc">00:00:00 UTC</span>
+    <button class="estop-btn" id="estopBtn" title="EMERGENCY STOP">E<br>STOP</button>
+  </div>
+</div>
+
+<!-- ═══ Main Grid ═══ -->
+<div class="shell">
+  <!-- LEFT: Efficiency + Stats + Modes -->
+  <div class="left-col">
+    <!-- Efficiency Chart -->
+    <div class="card">
+      <div class="card-title">Efficiency & RPM</div>
+      <div class="eff-canvas-wrap"><canvas id="effCanvas"></canvas></div>
+    </div>
+    <!-- Key Stats -->
+    <div class="card">
+      <div class="card-title">System Metrics</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-label">Total Power</div><div class="stat-value cyan" id="statPower">0</div><div class="stat-unit">kW</div></div>
+        <div class="stat-box"><div class="stat-label">Torque</div><div class="stat-value" id="statTorque">0</div><div class="stat-unit">Nm</div></div>
+        <div class="stat-box"><div class="stat-label">Efficiency</div><div class="stat-value green" id="statEff">—</div><div class="stat-unit">%</div></div>
+        <div class="stat-box"><div class="stat-label">Space Saved</div><div class="stat-value amber" id="statSpace">30</div><div class="stat-unit">%</div></div>
+      </div>
+    </div>
+    <!-- Control Mode -->
+    <div class="card">
+      <div class="card-title">Control Mode</div>
+      <div class="mode-group">
+        <div class="mode-btn active" data-mode="individual"><span class="mode-dot"></span>Individual Control</div>
+        <div class="mode-btn" data-mode="auto_crossing"><span class="mode-dot"></span>Auto Crossing</div>
+        <div class="mode-btn" data-mode="dp_mode"><span class="mode-dot"></span>DP Mode</div>
+      </div>
+    </div>
+    <!-- Pitch Mode -->
+    <div class="card">
+      <div class="card-title">Pitch Mode</div>
+      <div class="pitch-tabs">
+        <div class="pitch-tab active" data-pitch="fixed">Fixed</div>
+        <div class="pitch-tab" data-pitch="controllable">CPP</div>
+        <div class="pitch-tab" data-pitch="feathering">Feather</div>
+      </div>
+    </div>
+    <!-- Power Split -->
+    <div class="card">
+      <div class="card-title">Power Split (Auto Crossing)</div>
+      <div class="split-bar">
+        <div class="split-fore" id="splitFore" style="width:0%">Fore 0%</div>
+        <div class="split-aft" id="splitAft">Aft 100%</div>
+      </div>
+    </div>
+
+    <!-- AI Assistant Chat (moved to left) -->
+    <div class="card chat-card" style="flex:1">
+      <div class="chat-title-row">
+        <div class="card-title">AI ASSISTANT</div>
+        <span class="chat-model-tag" id="chatModelTag"><span class="chat-model-dot" id="chatModelDot"></span><span id="chatModelName">—</span></span>
+      </div>
+      <div class="chat-agent-row">
+        <select id="chatAgentSelect" class="chat-agent-select" title="选择智能体">
+          <option value="ship_navigator">Navigator (OOW)</option>
+        </select>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="控制推进器、查询状态..." autocomplete="off">
+        <button id="chatSend">↵</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: Thruster Visualization + Azimuth -->
+  <div class="center-col">
+    <div class="thruster-viz">
+      <svg class="thruster-svg" viewBox="0 0 680 420" id="thrusterSvg">
+        <!-- Hull outline -->
+        <path class="hull" d="M 160,60 L 520,60 Q 580,60 600,120 L 620,300 Q 610,380 540,390 L 140,390 Q 70,380 60,300 L 80,120 Q 100,60 160,60 Z"/>
+        <!-- Waterline -->
+        <line x1="40" y1="210" x2="640" y2="210" stroke="var(--kb-blue)" stroke-width="0.5" stroke-dasharray="6 3" opacity=".4"/>
+        <text x="644" y="214" class="label" fill="var(--kb-blue)" opacity=".5">WL</text>
+
+        <!-- Energy flow lines -->
+        <path class="energy-flow active" d="M 340,190 L 340,100 L 250,80" id="flowBow"/>
+        <path class="energy-flow active" d="M 340,240 L 340,340 L 400,370" id="flowStern"/>
+        <path class="energy-flow active" d="M 310,230 L 180,340" id="flowPort"/>
+        <path class="energy-flow active" d="M 370,230 L 500,340" id="flowStbd"/>
+
+        <!-- Central power source -->
+        <rect x="300" y="180" width="80" height="60" rx="6" fill="rgba(0,51,153,.3)" stroke="var(--kb-cyan)" stroke-width="1"/>
+        <circle cx="340" cy="210" r="16" class="rotor" id="centralRotor"/>
+        <text x="340" y="206" text-anchor="middle" class="label">PM DRIVE</text>
+        <text x="340" y="218" text-anchor="middle" class="value" id="centralPower">0 kW</text>
+
+        <!-- Bow Tunnel Thruster -->
+        <g id="thrG_bow_tunnel" data-thruster="bow_tunnel" class="thruster-group">
+          <rect x="210" y="55" width="80" height="35" rx="4" class="thruster-body"/>
+          <line x1="220" y1="72" x2="250" y2="60" class="prop-blade" id="blade_bow_1"/>
+          <line x1="220" y1="72" x2="250" y2="84" class="prop-blade" id="blade_bow_2"/>
+          <circle cx="220" cy="72" r="4" class="rotor"/>
+          <text x="260" y="68" class="label">BOW THR</text>
+          <text x="260" y="80" class="value" id="txt_bow_rpm">0 RPM</text>
+        </g>
+
+        <!-- Stern Azimuth -->
+        <g id="thrG_stern_azimuth" data-thruster="stern_azimuth" class="thruster-group">
+          <rect x="360" y="345" width="80" height="35" rx="4" class="thruster-body"/>
+          <line x1="370" y1="362" x2="400" y2="350" class="prop-blade" id="blade_stern_1"/>
+          <line x1="370" y1="362" x2="400" y2="374" class="prop-blade" id="blade_stern_2"/>
+          <circle cx="370" cy="362" r="4" class="rotor"/>
+          <text x="405" y="358" class="label">STERN AZI</text>
+          <text x="405" y="370" class="value" id="txt_stern_rpm">0 RPM</text>
+        </g>
+
+        <!-- Port Main -->
+        <g id="thrG_port_main" data-thruster="port_main" class="thruster-group">
+          <rect x="120" y="320" width="80" height="35" rx="4" class="thruster-body"/>
+          <line x1="135" y1="337" x2="155" y2="325" class="prop-blade" id="blade_port_1"/>
+          <line x1="135" y1="337" x2="155" y2="349" class="prop-blade" id="blade_port_2"/>
+          <circle cx="135" cy="337" r="4" class="rotor"/>
+          <text x="162" y="333" class="label">PORT MAIN</text>
+          <text x="162" y="345" class="value" id="txt_port_rpm">0 RPM</text>
+        </g>
+
+        <!-- Stbd Main -->
+        <g id="thrG_stbd_main" data-thruster="stbd_main" class="thruster-group">
+          <rect x="480" y="320" width="80" height="35" rx="4" class="thruster-body"/>
+          <line x1="495" y1="337" x2="515" y2="325" class="prop-blade" id="blade_stbd_1"/>
+          <line x1="495" y1="337" x2="515" y2="349" class="prop-blade" id="blade_stbd_2"/>
+          <circle cx="495" cy="337" r="4" class="rotor"/>
+          <text x="520" y="333" class="label">STBD MAIN</text>
+          <text x="520" y="345" class="value" id="txt_stbd_rpm">0 RPM</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Bottom Control Panel -->
+    <div class="bottom-panel" id="bottomPanel">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- RIGHT: Azimuth + Health + Battery + Log -->
+  <div class="right-col">
+    <!-- Azimuth Indicator -->
+    <div class="card azimuth-card">
+      <div class="card-title">Azimuth — Stern</div>
+      <div class="azimuth-ring">
+        <svg viewBox="0 0 180 180" id="azimuthSvg">
+          <!-- Ticks -->
+          <g id="azTicks"></g>
+          <!-- Needles -->
+          <line x1="90" y1="90" x2="90" y2="20" class="needle-set" id="azNeedleSet"/>
+          <line x1="90" y1="90" x2="90" y2="20" class="needle-actual" id="azNeedleAct"/>
+          <circle cx="90" cy="90" r="4" class="center-dot"/>
+          <!-- Thruster icon in center -->
+          <polygon points="90,75 82,100 98,100" fill="var(--kb-cyan)" opacity=".4" id="azThrIcon"/>
+        </svg>
+      </div>
+      <div class="azimuth-readout">
+        <span><span class="dot-set"></span>SET <b id="azSetVal">180°</b></span>
+        <span><span class="dot-act"></span>ACT <b id="azActVal">180°</b></span>
+      </div>
+    </div>
+
+    <!-- Controller Health -->
+    <div class="card">
+      <div class="card-title">System Health</div>
+      <div id="ctrlHealth">
+        <div class="ctrl-row"><span class="ctrl-dot active"></span><span class="ctrl-label">Controller A</span><span class="ctrl-status">ACTIVE</span></div>
+        <div class="ctrl-row"><span class="ctrl-dot standby"></span><span class="ctrl-label">Controller B</span><span class="ctrl-status">STANDBY</span></div>
+        <div class="ctrl-row"><span class="ctrl-dot standby"></span><span class="ctrl-label">Controller C</span><span class="ctrl-status">STANDBY</span></div>
+      </div>
+    </div>
+
+    <!-- Battery -->
+    <div class="card">
+      <div class="card-title">Battery State</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span class="stat-value green" id="battSoc" style="font-size:22px">87</span>
+        <span class="stat-unit">%</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--kb-dim)" id="battStatus">CHARGING</span>
+      </div>
+      <div class="batt-bar"><div class="batt-fill high" id="battFill" style="width:87%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--kb-dim)">
+        <span>V: <b id="battV" style="color:var(--kb-text)">690</b> V</span>
+        <span>I: <b id="battI" style="color:var(--kb-text)">42</b> A</span>
+      </div>
+    </div>
+
+    <!-- Engine Load — dynamic -->
+    <div class="card">
+      <div class="card-title">Engine Load</div>
+      <div style="display:flex;justify-content:space-around;flex-wrap:wrap;gap:4px" id="loadBarsContainer">
+        <!-- built dynamically by JS -->
+      </div>
+    </div>
+
+    <!-- Engine Manager -->
+    <div class="card">
+      <div class="card-title">Engine Manager</div>
+      <div id="engineList" style="display:flex;flex-direction:column;gap:4px"></div>
+      <div style="margin-top:8px;border-top:1px solid var(--kb-border);padding-top:8px">
+        <div style="font-size:9px;color:var(--kb-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Add Engine</div>
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <input type="text" id="newEngineId" placeholder="ID (e.g. aux_bow)" style="flex:1;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none">
+          <input type="text" id="newEngineName" placeholder="Name" style="flex:1;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none">
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <select id="newEngineType" style="flex:1;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none;cursor:pointer">
+            <option value="main">Main</option>
+            <option value="tunnel">Tunnel</option>
+            <option value="azimuth">Azimuth</option>
+            <option value="retractable">Retractable</option>
+          </select>
+          <input type="number" id="newEngineRpmMax" value="250" placeholder="RPM Max" style="width:60px;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none">
+          <input type="number" id="newEnginePwrMax" value="10000" placeholder="kW Max" style="width:70px;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none">
+        </div>
+        <button id="addEngineBtn" style="width:100%;padding:5px;background:var(--kb-cyan);color:#0A0F1E;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px">+ ADD ENGINE</button>
+      </div>
+    </div>
+
+    <!-- Log Stream -->
+    <div class="card">
+      <div class="card-title">System Log</div>
+      <div class="log-stream" id="logStream">
+        <div class="log-entry"><span class="ts">[--:--:--]</span> <span class="src">PX-TCS</span> System initialized</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="thr-tooltip" id="thrTooltip">
+  <div class="tt-title" id="ttTitle">—</div>
+  <div class="tt-row"><span>Motor Type</span><span class="tt-val" id="ttMotor">—</span></div>
+  <div class="tt-row"><span>Polar Class</span><span class="tt-val" id="ttPolar">—</span></div>
+  <div class="tt-row"><span>Power</span><span class="tt-val" id="ttPower">—</span></div>
+  <div class="tt-row"><span>Load</span><span class="tt-val" id="ttLoad">—</span></div>
+  <div class="tt-row"><span>Temperature</span><span class="tt-val" id="ttTemp">—</span></div>
+  <div class="tt-row"><span>Vibration</span><span class="tt-val" id="ttVib">—</span></div>
+  <div class="tt-row"><span>Hydraulic</span><span class="tt-val" id="ttHyd">—</span></div>
+</div>
+
+<!-- Emergency Overlay -->
+<div class="estop-overlay" id="estopOverlay">
+  <div class="warn-text">⚠ EMERGENCY STOP ⚠</div>
+  <div class="sub-text">All thrusters disengaged — Clutches released</div>
+  <button class="reset-btn" id="estopReset">RESET SYSTEM</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// PX-TCS MAIN LOGIC
+// ═══════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+// ── State ──
+let tcsData = null;
+let effHistory = { eff: [], rpm: [] };
+const MAX_HIST = 80;
+
+// ── Clock ──
+setInterval(() => {
+  $('clockUtc').textContent = new Date().toISOString().slice(11, 19) + ' UTC';
+}, 1000);
+
+// ── Azimuth Ticks ──
+(function drawAzTicks() {
+  const g = $('azTicks');
+  for (let i = 0; i < 360; i += 10) {
+    const major = i % 30 === 0;
+    const r1 = major ? 78 : 82, r2 = 88;
+    const rad = (i - 90) * Math.PI / 180;
+    const x1 = 90 + r1 * Math.cos(rad), y1 = 90 + r1 * Math.sin(rad);
+    const x2 = 90 + r2 * Math.cos(rad), y2 = 90 + r2 * Math.sin(rad);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('class', major ? 'tick-major' : 'tick');
+    g.appendChild(line);
+    if (major) {
+      const tx = 90 + 68 * Math.cos(rad), ty = 90 + 68 * Math.sin(rad);
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', tx); text.setAttribute('y', ty + 3);
+      text.setAttribute('text-anchor', 'middle');
+      text.textContent = String(i);
+      g.appendChild(text);
+    }
+  }
+})();
+
+// ── Efficiency Canvas ──
+const effCanvas = $('effCanvas');
+const effCtx = effCanvas.getContext('2d');
+function drawEffChart() {
+  const w = effCanvas.clientWidth, h = effCanvas.clientHeight;
+  effCanvas.width = w; effCanvas.height = h;
+  effCtx.clearRect(0, 0, w, h);
+  // Grid
+  effCtx.strokeStyle = 'rgba(30,41,59,.6)'; effCtx.lineWidth = 0.5;
+  for (let y = 0; y < h; y += 20) { effCtx.beginPath(); effCtx.moveTo(0, y); effCtx.lineTo(w, y); effCtx.stroke(); }
+  // Efficiency line
+  if (effHistory.eff.length > 1) {
+    const step = w / (MAX_HIST - 1);
+    effCtx.beginPath(); effCtx.strokeStyle = '#00E676'; effCtx.lineWidth = 1.5;
+    effHistory.eff.forEach((v, i) => {
+      const x = i * step, y = h - ((v - 70) / 30) * h;
+      i === 0 ? effCtx.moveTo(x, y) : effCtx.lineTo(x, y);
+    });
+    effCtx.stroke();
+    // RPM line (scaled)
+    effCtx.beginPath(); effCtx.strokeStyle = '#00E5FF'; effCtx.lineWidth = 1; effCtx.setLineDash([3, 2]);
+    effHistory.rpm.forEach((v, i) => {
+      const x = i * step, y = h - (v / 300) * h;
+      i === 0 ? effCtx.moveTo(x, y) : effCtx.lineTo(x, y);
+    });
+    effCtx.stroke(); effCtx.setLineDash([]);
+  }
+  // Labels
+  effCtx.fillStyle = '#00E676'; effCtx.font = '9px JetBrains Mono, monospace';
+  effCtx.fillText('Eff %', 4, 12);
+  effCtx.fillStyle = '#00E5FF'; effCtx.fillText('RPM', 4, 24);
+}
+
+// ── Log ──
+function addLog(msg, level = '') {
+  const ts = new Date().toISOString().slice(11, 19);
+  const log = $('logStream');
+  const div = document.createElement('div');
+  div.className = 'log-entry' + (level ? ' ' + level : '');
+  div.innerHTML = `<span class="ts">[${ts}]</span> <span class="src">PX-TCS</span> ${msg}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  while (log.children.length > 60) log.removeChild(log.firstChild);
+}
+
+// ── Tooltip ──
+const tooltip = $('thrTooltip');
+document.querySelectorAll('.thruster-group').forEach(g => {
+  g.addEventListener('mouseenter', e => {
+    const tid = g.dataset.thruster;
+    if (!tcsData) return;
+    const t = tcsData.thrusters[tid];
+    if (!t) return;
+    $('ttTitle').textContent = t.name;
+    $('ttMotor').textContent = t.motor_type === 'permanent_magnet' ? 'Permanent Magnet Motor' : t.motor_type;
+    $('ttPolar').textContent = t.polar_class;
+    $('ttPower').textContent = t.power_kw.toLocaleString() + ' / ' + t.power_max.toLocaleString() + ' kW';
+    $('ttLoad').textContent = t.load_pct + '%';
+    $('ttTemp').textContent = t.temp_motor.toFixed(1) + '°C (bearing: ' + t.temp_bearing.toFixed(1) + '°C)';
+    $('ttVib').textContent = t.vibration_mm_s + ' mm/s';
+    $('ttHyd').textContent = t.hydraulic_bar + ' bar';
+    tooltip.style.display = 'block';
+  });
+  g.addEventListener('mousemove', e => {
+    tooltip.style.left = (e.clientX + 16) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+  });
+  g.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+});
+
+// ── Mode Buttons ──
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    fetch('/api/v1/tcs/mode', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode })
+    }).then(r => r.json()).then(d => {
+      addLog('Mode → ' + mode.toUpperCase().replace('_', ' '));
+    });
+  });
+});
+
+// ── Pitch Tabs ──
+document.querySelectorAll('.pitch-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.pitch-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const pitch = tab.dataset.pitch;
+    fetch('/api/v1/tcs/pitch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pitch_mode: pitch })
+    }).then(r => r.json()).then(() => {
+      addLog('Pitch → ' + pitch.toUpperCase());
+    });
+  });
+});
+
+// ── Emergency Stop ──
+$('estopBtn').addEventListener('click', () => {
+  fetch('/api/v1/tcs/emergency', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stop: true })
+  }).then(r => r.json()).then(() => {
+    $('estopOverlay').classList.add('active');
+    addLog('⚠ EMERGENCY STOP ACTIVATED', 'err');
+  });
+});
+$('estopReset').addEventListener('click', () => {
+  fetch('/api/v1/tcs/emergency', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stop: false })
+  }).then(r => r.json()).then(() => {
+    $('estopOverlay').classList.remove('active');
+    addLog('System reset — thrusters returning to standby');
+  });
+});
+
+// ── Update UI ──
+function updateUI(data) {
+  tcsData = data;
+  // Mode badge
+  $('modeBadge').textContent = data.mode.toUpperCase().replace('_', ' ');
+  $('modeBadge').className = 'mode-badge active';
+
+  // Stats
+  let totalPower = 0, totalTorque = 0, avgRpm = 0, runCount = 0;
+  const txtMap = { port_main: 'txt_port_rpm', stbd_main: 'txt_stbd_rpm', bow_tunnel: 'txt_bow_rpm', stern_azimuth: 'txt_stern_rpm' };
+  const flowIds = { bow_tunnel: 'flowBow', stern_azimuth: 'flowStern', port_main: 'flowPort', stbd_main: 'flowStbd' };
+
+  Object.entries(data.thrusters).forEach(([tid, t]) => {
+    totalPower += t.power_kw; totalTorque += t.torque_nm;
+    if (t.status === 'running') { avgRpm += t.rpm; runCount++; }
+
+    // SVG text (only for the 4 originals)
+    const el = document.getElementById(txtMap[tid]);
+    if (el) el.textContent = t.rpm + ' RPM';
+
+    // Energy flow (only for the 4 originals)
+    const flow = document.getElementById(flowIds[tid]);
+    if (flow) flow.classList.toggle('active', t.status === 'running');
+  });
+
+  // Dynamic load bars
+  buildLoadBars(data);
+
+  // Engine list
+  buildEngineList(data);
+
+  $('statPower').textContent = totalPower.toLocaleString();
+  $('statTorque').textContent = totalTorque.toLocaleString();
+  $('statEff').textContent = data.efficiency_pct;
+  $('statSpace').textContent = data.space_saved_pct;
+  $('centralPower').textContent = totalPower.toLocaleString() + ' kW';
+
+  // Efficiency history
+  effHistory.eff.push(data.efficiency_pct);
+  effHistory.rpm.push(runCount > 0 ? Math.round(avgRpm / runCount) : 0);
+  if (effHistory.eff.length > MAX_HIST) { effHistory.eff.shift(); effHistory.rpm.shift(); }
+  drawEffChart();
+
+  // Azimuth (stern)
+  const sternAz = data.thrusters.stern_azimuth;
+  if (sternAz) {
+    const setA = sternAz.azimuth_set, actA = sternAz.azimuth_deg;
+    $('azNeedleSet').setAttribute('transform', `rotate(${setA}, 90, 90)`);
+    $('azNeedleAct').setAttribute('transform', `rotate(${actA}, 90, 90)`);
+    $('azThrIcon').setAttribute('transform', `rotate(${actA}, 90, 90)`);
+    $('azSetVal').textContent = Math.round(setA) + '°';
+    $('azActVal').textContent = Math.round(actA) + '°';
+  }
+
+  // Power split
+  const fPct = data.power_split.fore_pct;
+  $('splitFore').style.width = Math.max(fPct, 3) + '%';
+  $('splitFore').textContent = 'Fore ' + fPct + '%';
+  $('splitAft').textContent = 'Aft ' + data.power_split.aft_pct + '%';
+
+  // Battery
+  const b = data.battery;
+  $('battSoc').textContent = b.soc_pct;
+  $('battFill').style.width = b.soc_pct + '%';
+  $('battFill').className = 'batt-fill ' + (b.soc_pct > 50 ? 'high' : b.soc_pct > 20 ? 'mid' : 'low');
+  $('battV').textContent = b.voltage;
+  $('battI').textContent = b.current_a;
+  $('battStatus').textContent = b.status.toUpperCase();
+
+  // Controllers
+  Object.entries(data.controllers).forEach(([k, c]) => {
+    // Already static, could update dynamically if needed
+  });
+
+  // Pitch — blades rotate to feathering position
+  const feathering = data.pitch_mode === 'feathering';
+  document.querySelectorAll('.prop-blade').forEach(blade => {
+    blade.style.transform = feathering ? 'rotate(90deg)' : '';
+    blade.style.transformOrigin = 'center';
+    blade.style.transformBox = 'fill-box';
+  });
+
+  // Central rotor animation
+  const rotor = $('centralRotor');
+  if (totalPower > 0) {
+    rotor.style.animation = 'spin 2s linear infinite';
+  } else {
+    rotor.style.animation = 'none';
+  }
+
+  // Bottom panel
+  buildBottomPanel(data);
+}
+
+// ── Bottom Thruster Cards ──
+function buildBottomPanel(data) {
+  const panel = $('bottomPanel');
+  panel.innerHTML = Object.values(data.thrusters).map(t => {
+    const load = t.load_pct;
+    const barColor = load > 90 ? 'var(--kb-red)' : load > 85 ? 'var(--kb-amber)' : 'var(--kb-green)';
+    return `<div class="thruster-mini" data-tid="${t.id}">
+      <div class="thr-mini-header">
+        <span class="thr-mini-name">${t.name.replace('Propulsion','Prop').replace('Thruster','Thr')}</span>
+        <span class="thr-mini-status ${t.status}">${t.status.replace('_',' ')}</span>
+      </div>
+      <div class="thr-mini-row"><span>RPM</span><span class="val">${t.rpm} / ${t.rpm_max}</span></div>
+      <div class="thr-mini-row"><span>Power</span><span class="val">${t.power_kw.toLocaleString()} kW</span></div>
+      <div class="thr-mini-gauge"><div class="thr-mini-gauge-fill" style="width:${load}%;background:${barColor}"></div></div>
+      <div class="thr-mini-row"><span>Clutch</span><span class="val">${t.clutch}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── SVG Rotor Spin ──
+const style = document.createElement('style');
+style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+style.textContent += ' #centralRotor { transform-origin: center; transform-box: fill-box; }';
+document.head.appendChild(style);
+
+// ── Dynamic Load Bars ──
+function buildLoadBars(data) {
+  const container = $('loadBarsContainer');
+  const thrusters = Object.values(data.thrusters);
+  // Only rebuild if count changed
+  if (container.children.length !== thrusters.length) {
+    // Scale bar height for many engines
+    const barH = thrusters.length > 6 ? 100 : 160;
+    container.innerHTML = thrusters.map(t => {
+      const shortName = t.id.replace('_main','').replace('_tunnel','').replace('_azimuth','').replace('_','-').toUpperCase().slice(0,5);
+      return `<div class="load-bar-wrap" id="lb_${t.id}">
+        <div class="load-bar-label">${shortName}</div>
+        <div class="load-bar-outer" style="height:${barH}px"><div class="load-bar-fill normal" style="height:0%"></div></div>
+        <div class="load-bar-value">0%</div>
+      </div>`;
+    }).join('');
+  }
+  // Update values
+  thrusters.forEach(t => {
+    const lb = document.getElementById('lb_' + t.id);
+    if (!lb) return;
+    const fill = lb.querySelector('.load-bar-fill');
+    const val = lb.querySelector('.load-bar-value');
+    fill.style.height = t.load_pct + '%';
+    fill.className = 'load-bar-fill ' + (t.load_pct > 90 ? 'overload' : t.load_pct > 85 ? 'warning' : 'normal');
+    val.textContent = t.load_pct + '%';
+  });
+}
+
+// ── Engine Manager List ──
+function buildEngineList(data) {
+  const list = $('engineList');
+  list.innerHTML = Object.values(data.thrusters).map(t => {
+    const isRunning = t.status === 'running';
+    return `<div class="eng-item">
+      <span class="eng-status-dot ${t.status}"></span>
+      <span class="eng-name" title="${t.name}">${t.name}</span>
+      <span class="eng-type">${t.type}</span>
+      ${isRunning
+        ? `<button class="eng-btn stop" onclick="thrusterAction('stop','${t.id}')">STOP</button>`
+        : `<button class="eng-btn start" onclick="thrusterAction('start','${t.id}')">START</button>`}
+      <button class="eng-btn del" onclick="thrusterAction('remove','${t.id}')" title="Remove">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Thruster API Action ──
+function thrusterAction(action, tid, extra) {
+  const body = { action, thruster_id: tid, ...(extra || {}) };
+  fetch('/api/v1/tcs/thruster', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      addLog(action.toUpperCase() + ' → ' + tid);
+      fetchTCS(); // refresh UI immediately
+    }
+  }).catch(() => addLog('Thruster action failed: ' + action, 'err'));
+}
+
+// ── Add Engine ──
+$('addEngineBtn').addEventListener('click', () => {
+  const id = $('newEngineId').value.trim().replace(/\s+/g, '_').toLowerCase();
+  const name = $('newEngineName').value.trim();
+  const type = $('newEngineType').value;
+  const rpmMax = parseInt($('newEngineRpmMax').value) || 250;
+  const pwrMax = parseInt($('newEnginePwrMax').value) || 10000;
+  if (!id) { addLog('Engine ID required', 'warn'); return; }
+  thrusterAction('add', id, { name: name || id, type, rpm_max: rpmMax, power_max: pwrMax });
+  $('newEngineId').value = '';
+  $('newEngineName').value = '';
+});
+
+// ── Poll Data ──
+async function fetchTCS() {
+  try {
+    const r = await fetch('/api/v1/tcs/status');
+    if (!r.ok) return;
+    const data = await r.json();
+    updateUI(data);
+  } catch (e) {
+    addLog('Connection error: ' + e.message, 'err');
+  }
+}
+
+// Initial load + poll
+fetchTCS();
+setInterval(fetchTCS, 1500);
+
+// Initial logs
+addLog('Permanent Magnet Drive system online');
+addLog('Controller A: ACTIVE — heartbeat OK');
+addLog('Controller B: STANDBY — redundancy ready');
+
+// ═══════════════════════════════════════
+// CHAT — AI Assistant (mirrors Navigation V3)
+// ═══════════════════════════════════════
+let chatSessionId = localStorage.getItem('tcs_chatSessionId') || 'tcs_' + Date.now().toString(36);
+localStorage.setItem('tcs_chatSessionId', chatSessionId);
+let selectedChatAgentId = localStorage.getItem('tcs_chatAgentId') || 'ship_navigator';
+
+// Load agents into selector
+async function loadChatAgents() {
+  const sel = $('chatAgentSelect');
+  try {
+    const teams = ['execution_system', 'build_system'];
+    let opts = '';
+    for (const tid of teams) {
+      try {
+        const r = await fetch('/api/v1/agent-config/teams/' + tid + '/agents');
+        if (!r.ok) continue;
+        const agents = await r.json();
+        agents.forEach(a => {
+          const aid = a.agent_id || a.id;
+          const selected = aid === selectedChatAgentId ? ' selected' : '';
+          opts += `<option value="${aid}"${selected}>${a.name} (${a.role})</option>`;
+        });
+      } catch (_) {}
+    }
+    if (opts) sel.innerHTML = opts;
+    // Fetch model status for initial agent
+    fetchAgentModelStatus(selectedChatAgentId);
+  } catch (_) {}
+}
+loadChatAgents();
+
+// Fetch and display model name + active status for selected agent
+async function fetchAgentModelStatus(agentId) {
+  const dot = $('chatModelDot');
+  const name = $('chatModelName');
+  try {
+    const r = await fetch('/api/v1/agent-config/agents/' + agentId + '/model-status');
+    if (!r.ok) { name.textContent = 'unknown'; dot.className = 'chat-model-dot inactive'; return; }
+    const d = await r.json();
+    name.textContent = d.model_name || d.model_id || '—';
+    dot.className = 'chat-model-dot ' + (d.active ? 'active' : 'inactive');
+    dot.title = d.active ? 'LLM Active — 大模型可用' : 'LLM Inactive — 未配置 API Key';
+  } catch (_) {
+    name.textContent = '—';
+    dot.className = 'chat-model-dot inactive';
+  }
+}
+
+$('chatAgentSelect').addEventListener('change', function() {
+  selectedChatAgentId = this.value;
+  localStorage.setItem('tcs_chatAgentId', selectedChatAgentId);
+  const opt = this.options[this.selectedIndex];
+  fetchAgentModelStatus(selectedChatAgentId);
+  addLog('Agent → ' + opt.textContent);
+});
+
+function addChatMessage(text, cls, save=true) {
+  const ts = new Date().toISOString().slice(11, 19);
+  const msgs = $('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg' + (cls ? ' ' + cls : '');
+  div.innerHTML = text + '<div class="chat-time">' + ts + '</div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  while (msgs.children.length > 40) msgs.removeChild(msgs.firstChild);
+  if(save) _saveChatHistory();
+}
+function _saveChatHistory(){
+  const msgs=$('chatMessages');
+  const items=[];
+  for(const d of msgs.children){
+    items.push({html:d.innerHTML,cls:d.className.replace('chat-msg','').trim()});
+  }
+  try{localStorage.setItem('tcs_chatHistory',JSON.stringify(items.slice(-30)))}catch(e){}
+}
+function _restoreChatHistory(){
+  try{
+    const raw=localStorage.getItem('tcs_chatHistory');
+    if(!raw)return;
+    const items=JSON.parse(raw);
+    const msgs=$('chatMessages');
+    items.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='chat-msg'+(m.cls?' '+m.cls:'');
+      div.innerHTML=m.html;
+      msgs.appendChild(div);
+    });
+    msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){}
+}
+_restoreChatHistory();
+
+function sendChat() {
+  const input = $('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addChatMessage(msg, 'user');
+
+  fetch('/api/v1/bridge-chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg, session_id: chatSessionId, agent_id: selectedChatAgentId })
+  }).then(r => r.json()).then(d => {
+    addChatMessage(d.reply || '无应答', d.urgency === 'critical' ? 'danger' : '');
+    if (d.source === 'agent_llm') {
+      $('chatModelName').textContent = d.model || 'LLM';
+      $('chatModelDot').className = 'chat-model-dot active';
+    }
+    // Check if response contains TCS commands
+    const reply = (d.reply || '').toLowerCase();
+    if (reply.includes('emergency') || reply.includes('紧急停机')) {
+      addLog('AI 触发: 紧急停机建议', 'warn');
+    }
+    // Show task ID if backend created one
+    if (d.task_id) {
+      addChatMessage('✅ 任务已提交至 Build Team (ID: ' + d.task_id + ')', '');
+      addLog('跨团队任务已创建');
+    }
+  }).catch(() => {
+    addChatMessage('通信错误', 'danger');
+  });
+}
+
+$('chatSend').addEventListener('click', sendChat);
+$('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+</script>
+<script src="/js/nav-sidebar.js" data-active="thruster"></script>
+</body>
+</html>

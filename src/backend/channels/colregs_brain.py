@@ -565,6 +565,36 @@ class COLREGsAutonomousBrainChannel(MarineChannel):
             "dangerous_encounters": sum(1 for a in self._assessments if a.risk_level > 0.3),
         }
 
+    # ── Rule 17: Stand-on vessel action (COLREGs audit compliance) ──
+    def evaluate_rule_17_stand_on(self, encounter) -> Dict[str, Any]:
+        """Rule 17 stand-on vessel: maintain course/speed, take action if give-way
+        vessel fails to act. Returns recommended action for stand-on vessel."""
+        if not encounter:
+            return {"action": "maintain", "rule": "rule_17_stand_on"}
+        risk = encounter.risk_level if hasattr(encounter, 'risk_level') else 0.0
+        if risk > 0.7:
+            return {"action": "emergency_avoid", "rule": "rule_17_stand_on",
+                    "detail": "Give-way vessel not acting, stand-on takes emergency action"}
+        if risk > 0.4:
+            return {"action": "sound_signal", "rule": "rule_17_stand_on",
+                    "detail": "Alert give-way vessel with 5+ short blasts"}
+        return {"action": "maintain", "rule": "rule_17_stand_on",
+                "detail": "Maintain course and speed per Rule 17"}
+
+    # ── Rule 13: Overtaking vessel gives way ──
+    def evaluate_rule_13_overtaking(self, own_course_deg: float = 0.0,
+                                    target_course_deg: float = 0.0,
+                                    relative_bearing_deg: float = 0.0) -> Dict[str, Any]:
+        """Rule 13 overtaking: a vessel approaching from abaft the beam (>112.5°)
+        is overtaking and must keep clear."""
+        is_overtaking = 112.5 <= abs(relative_bearing_deg) <= 247.5
+        return {
+            "is_overtaking": is_overtaking,
+            "rule": "rule_13_overtaking",
+            "obligation": "keep_clear" if is_overtaking else "stand_on",
+            "relative_bearing": relative_bearing_deg,
+        }
+
     def shutdown(self) -> bool:
         self._initialized = False
         self._set_health(ChannelStatus.OFF, "Shutdown")

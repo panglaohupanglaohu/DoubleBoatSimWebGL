@@ -152,6 +152,9 @@ class BuildTeamManagerChannel(MarineChannel):
         self.total_deployments = 0
         self.total_deployment_ok = 0
 
+        # 演进任务 (从 SystemEvolutionChannel 接收)
+        self._evolution_tasks: List[Dict[str, Any]] = []
+
     # ── Agent 初始化 ──────────────────────────────────────────
 
     def _init_agents(self):
@@ -523,10 +526,42 @@ class BuildTeamManagerChannel(MarineChannel):
                     self.total_deployment_ok / max(self.total_deployments, 1)
                 ),
                 "issues_backlog": len(self.issue_backlog),
+                "evolution_tasks_received": len(self._evolution_tasks),
             },
             "hourly_reports_count": len(self.hourly_reports),
             "latest_report": self.hourly_reports[-1].to_dict() if self.hourly_reports else None,
         }
+
+    # ── 演进反馈接口 (供 SystemEvolutionChannel 调用) ────────
+
+    def accept_evolution_feedback(
+        self, item_id: str, title: str, severity: str = "medium",
+        target_channel: str = "", detail: str = "",
+    ) -> Dict[str, Any]:
+        """接收来自自我演进引擎的修改任务。"""
+        task = {
+            "item_id": item_id,
+            "title": title,
+            "severity": severity,
+            "target_channel": target_channel,
+            "detail": detail,
+            "received_at": datetime.now().isoformat(),
+            "status": "pending",
+        }
+        self._evolution_tasks.append(task)
+
+        # 根据严重程度分配给对应 Agent
+        agent_id = "build_developer" if severity in ("critical", "high") else "build_architect"
+        agent = self.agents.get(agent_id)
+        if agent:
+            agent.task_queue.append(f"evolution_fix:{item_id}:{title}")
+
+        logger.info("🔧 Build team received evolution task: %s [%s]", title, severity)
+        return {"status": "accepted", "item_id": item_id, "assigned_to": agent_id}
+
+    def get_evolution_tasks(self) -> List[Dict[str, Any]]:
+        """查询所有收到的演进任务。"""
+        return list(self._evolution_tasks)
 
 
 __all__ = [

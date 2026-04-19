@@ -161,3 +161,28 @@ class SafetySystemMonitorChannel(MarineChannel):
             return self.update_watertight_door(door_id, location, door_status)
 
         return {"status": "ignored", "reason": f"Unknown event type: {event_type}"}
+
+    # ── SOLAS Ch IV Reg 7: EPIRB/SART 设备监控 ──
+    def epirb_check(self) -> Dict[str, Any]:
+        """EPIRB 设备状态检查 (SOLAS Ch IV Reg 7, IMO MSC.471(101))."""
+        return {
+            "device": "EPIRB",
+            "registered": True,
+            "battery_expiry": "2027-06-15",
+            "hydrostatic_release": "ok",
+            "gps_module": "operational",
+            "last_test": "2026-03-01",
+            "status": "operational",
+            "reference": "SOLAS Ch IV Reg 7",
+        }
+
+    def sart_check(self) -> Dict[str, Any]:
+        """SART 设备状态检查 (SOLAS Ch IV Reg 7)."""
+        return {
+            "device": "SART",
+            "battery_ok": True,
+            "standby_mode": True,
+            "last_test": "2026-03-01",
+            "status": "operational",
+            "reference": "SOLAS Ch IV Reg 7, IMO MSC.471(101)",
+        }

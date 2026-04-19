@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PoseidonX — 自演进棘轮锁定 · Darwin Ratchet</title>
+
+<!-- ────── importmap: Three.js ESM ────── -->
+<script type="importmap">
+{
+  "imports": {
+    "three":           "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+    "three/addons/":   "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+  }
+}
+</script>
+
+<style>
+/* ── reset + dark theme ── */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#04060c;color:#e0e6f0;font-family:'Inter','SF Pro',system-ui,sans-serif}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+
+/* ── error overlay ── */
+#err-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(0,0,0,.92);
+  color:#ff4444;font:14px/1.5 monospace;padding:24px;overflow:auto;white-space:pre-wrap}
+
+/* ── HUD top bar ── */
+#hud{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:12px;
+  padding:10px 20px;background:linear-gradient(180deg,rgba(4,6,12,.95),rgba(4,6,12,.4));
+  backdrop-filter:blur(8px);border-bottom:1px solid rgba(0,255,255,.15)}
+#hud .logo{font-size:18px;font-weight:800;letter-spacing:1px;
+  background:linear-gradient(90deg,#0ff,#7c4dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;
+  border:1px solid rgba(255,255,255,.15);color:#aaa;cursor:pointer;transition:.2s}
+.pill.live{border-color:#0ff;color:#0ff;box-shadow:0 0 8px rgba(0,255,255,.25)}
+.pill.warn{border-color:#ff6d00;color:#ff6d00}
+a.pill{text-decoration:none}
+
+/* ── KPI strip ── */
+#kpi-strip{position:fixed;top:52px;left:0;right:0;z-index:90;display:flex;gap:0;
+  background:rgba(4,6,12,.85);backdrop-filter:blur(6px);border-bottom:1px solid rgba(124,77,255,.2)}
+.kpi-card{flex:1;text-align:center;padding:8px 4px;border-right:1px solid rgba(255,255,255,.05)}
+.kpi-card:last-child{border-right:none}
+.kpi-val{font-size:20px;font-weight:800;color:#0ff;text-shadow:0 0 12px rgba(0,255,255,.4)}
+.kpi-val.gold{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,.5)}
+.kpi-val.purple{color:#bb86fc;text-shadow:0 0 12px rgba(187,134,252,.5)}
+.kpi-label{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* ── control panel ── */
+#ctrl-panel{position:fixed;bottom:16px;left:16px;z-index:100;display:flex;flex-direction:column;gap:8px}
+.ctrl-btn{padding:8px 16px;border:1px solid rgba(0,255,255,.3);border-radius:8px;background:rgba(4,6,12,.8);
+  color:#0ff;font-size:12px;font-weight:600;cursor:pointer;transition:.3s;backdrop-filter:blur(4px)}
+.ctrl-btn:hover{background:rgba(0,255,255,.15);border-color:#0ff;box-shadow:0 0 16px rgba(0,255,255,.3)}
+.ctrl-btn.active{background:rgba(0,255,255,.2);border-color:#0ff}
+.ctrl-btn.ratchet{border-color:#ffd700;color:#ffd700}
+.ctrl-btn.ratchet:hover{background:rgba(255,215,0,.15);box-shadow:0 0 16px rgba(255,215,0,.3)}
+
+/* ── info panel (right) ── */
+#info-panel{position:fixed;top:110px;right:16px;z-index:100;width:320px;max-height:calc(100vh - 140px);
+  overflow-y:auto;background:rgba(4,6,12,.88);border:1px solid rgba(124,77,255,.25);border-radius:12px;
+  padding:16px;backdrop-filter:blur(10px);display:none}
+#info-panel.show{display:block}
+#info-panel h3{font-size:14px;color:#bb86fc;margin-bottom:8px;border-bottom:1px solid rgba(124,77,255,.2);padding-bottom:6px}
+.heritage-item{padding:8px;margin:4px 0;border-radius:6px;background:rgba(124,77,255,.08);border-left:3px solid #7c4dff;font-size:11px;line-height:1.5}
+.heritage-item .h-title{color:#e0e6f0;font-weight:600}
+.heritage-item .h-meta{color:#888;font-size:10px;margin-top:2px}
+.heritage-item .h-delta{color:#0f0;font-weight:700}
+
+/* ── tooltip ── */
+#tooltip{position:fixed;z-index:200;pointer-events:none;display:none;
+  background:rgba(4,6,12,.95);border:1px solid rgba(0,255,255,.4);border-radius:8px;
+  padding:12px;font-size:11px;line-height:1.5;max-width:300px;backdrop-filter:blur(10px)}
+#tooltip .tt-title{color:#0ff;font-weight:700;font-size:13px;margin-bottom:4px}
+#tooltip .tt-body{color:#ccc}
+#tooltip .tt-chain{margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,255,255,.2);color:#bb86fc;font-style:italic}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(124,77,255,.3);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- error overlay -->
+<div id="err-overlay"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <span class="logo">PoseidonX</span>
+  <span style="font-size:12px;color:#888;margin-left:4px">自演进棘轮 · Darwin Ratchet</span>
+  <span style="flex:1"></span>
+  <a href="/marine-datacenter.html" class="pill">📊 DASHBOARD</a>
+  <a href="/datacenter-digital-twin.html" class="pill">🛰 DIGITAL TWIN</a>
+  <span class="pill live" id="pill-ws">WS · CONNECTING</span>
+  <span class="pill" id="pill-round">R0</span>
+</div>
+
+<!-- KPI strip -->
+<div id="kpi-strip">
+  <div class="kpi-card"><div class="kpi-val gold" id="kpi-pue">--</div><div class="kpi-label">Current PUE</div></div>
+  <div class="kpi-card"><div class="kpi-val purple" id="kpi-round">0</div><div class="kpi-label">Evolution Round</div></div>
+  <div class="kpi-card"><div class="kpi-val" id="kpi-heritage">0</div><div class="kpi-label">Heritage Locked</div></div>
+  <div class="kpi-card"><div class="kpi-val" id="kpi-kwh">0</div><div class="kpi-label">kWh/day Saved</div></div>
+  <div class="kpi-card"><div class="kpi-val" id="kpi-co2">0</div><div class="kpi-label">tCO₂/yr Saved</div></div>
+  <div class="kpi-card"><div class="kpi-val" id="kpi-skills">0</div><div class="kpi-label">AI Skills</div></div>
+  <div class="kpi-card"><div class="kpi-val" id="kpi-policies">0/0</div><div class="kpi-label">Policies Applied</div></div>
+  <div class="kpi-card"><div class="kpi-val" id="kpi-progress">0%</div><div class="kpi-label">PUE Progress</div></div>
+</div>
+
+<!-- Control panel -->
+<div id="ctrl-panel">
+  <button class="ctrl-btn ratchet" onclick="triggerRatchetLock()">⚙ 棘轮锁定 LOCK</button>
+  <button class="ctrl-btn" onclick="triggerEvolve()">🧬 触发演化 EVOLVE</button>
+  <button class="ctrl-btn" onclick="triggerLoopTick()">🔄 闭环 TICK</button>
+  <button class="ctrl-btn" onclick="toggleHeritage()">📜 演化遗产</button>
+  <button class="ctrl-btn" onclick="triggerDematerialize()">💨 消融冗余</button>
+  <button class="ctrl-btn" onclick="toggleAutoEvolve()">🤖 AUTO-EVOLVE</button>
+</div>
+
+<!-- Info panel -->
+<div id="info-panel">
+  <h3>📜 Darwin Heritage Ledger</h3>
+  <div id="heritage-list"></div>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip">
+  <div class="tt-title"></div>
+  <div class="tt-body"></div>
+  <div class="tt-chain"></div>
+</div>
+
+<!-- ────── THREE.JS ENGINE ────── -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+window.THREE = THREE;
+
+/* ══════════════════════════════════════════
+   GLOBAL STATE
+   ══════════════════════════════════════════ */
+let scene, camera, renderer, controls, composer, bloomPass, clock;
+let ratchetCore, ratchetGlow, ratchetShield;
+let helixGroup, helixNodes=[], helixCurveL, helixCurveR;
+let particleSystems=[], flowPaths=[];
+let shieldMeshes=[];
+let dissolveMeshes=[];  // for de-materialization
+let rackGroup;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let hoveredObj = null;
+let autoEvolveInterval = null;
+
+// state from backend
+let STATE = { current_pue:1.85, evolution_round:0, heritage_count:0, saving_kwh_day:0, co2_saved_ton_year:0,
+              skill_count:0, policy_count:0, policies_applied:0, pue_progress_pct:0 };
+let HERITAGE = [];
+let wsConn = null;
+
+const API = `${location.protocol}//${location.hostname}:8080/api/v1/datacenter`;
+
+/* ══════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════ */
+function init(){
+  clock = new THREE.Clock();
+
+  // Scene
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x04060c);
+  scene.fog = new THREE.FogExp2(0x04060c, 0.008);
+
+  // Camera
+  camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.5, 500);
+  camera.position.set(0, 35, 55);
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  document.body.appendChild(renderer.domElement);
+
+  // Controls
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.maxDistance = 120;
+  controls.minDistance = 8;
+  controls.target.set(0, 8, 0);
+
+  // Post-processing: Bloom
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.8, 0.4, 0.85);
+  composer.addPass(bloomPass);
+
+  // Lights
+  const amb = new THREE.AmbientLight(0x334466, 0.6);
+  scene.add(amb);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.5);
+  dir.position.set(20, 40, 30);
+  scene.add(dir);
+  const pt1 = new THREE.PointLight(0x0ff, 1.5, 80);
+  pt1.position.set(0, 20, 0);
+  scene.add(pt1);
+  const pt2 = new THREE.PointLight(0x7c4dff, 1.0, 60);
+  pt2.position.set(-15, 10, -15);
+  scene.add(pt2);
+
+  // Build scene
+  buildFloor();
+  buildRatchetCore();
+  buildEvolutionHelix();
+  buildRackZones();
+  buildParticleFlows();
+  buildOptimizationShields();
+
+  // Events
+  window.addEventListener('resize', onResize);
+  renderer.domElement.addEventListener('mousemove', onMouseMove);
+  renderer.domElement.addEventListener('click', onMouseClick);
+
+  // Fetch initial data
+  fetchStatus();
+  fetchHeritage();
+  connectWS();
+
+  // Start render loop
+  animate();
+}
+
+/* ══════════════════════════════════════════
+   1. FLOOR — 暗色网格地面
+   ══════════════════════════════════════════ */
+function buildFloor(){
+  // Grid floor
+  const grid = new THREE.GridHelper(120, 60, 0x112233, 0x0a1520);
+  grid.position.y = -0.1;
+  scene.add(grid);
+
+  // Glowing ground plane
+  const floorGeo = new THREE.PlaneGeometry(120, 120);
+  const floorMat = new THREE.MeshStandardMaterial({
+    color:0x060a14, transparent:true, opacity:0.7, metalness:0.8, roughness:0.4
+  });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI/2;
+  floor.position.y = -0.2;
+  scene.add(floor);
+
+  // Ambient hex particles on floor
+  const hexGeo = new THREE.BufferGeometry();
+  const hexCount = 200;
+  const hexPos = new Float32Array(hexCount*3);
+  for(let i=0;i<hexCount;i++){
+    hexPos[i*3]   = (Math.random()-0.5)*100;
+    hexPos[i*3+1] = Math.random()*0.5;
+    hexPos[i*3+2] = (Math.random()-0.5)*100;
+  }
+  hexGeo.setAttribute('position', new THREE.BufferAttribute(hexPos,3));
+  const hexMat = new THREE.PointsMaterial({color:0x7c4dff, size:0.3, transparent:true, opacity:0.3, blending:THREE.AdditiveBlending});
+  scene.add(new THREE.Points(hexGeo, hexMat));
+}
+
+/* ══════════════════════════════════════════
+   2. RATCHET CORE — 中心棘轮
+   ══════════════════════════════════════════ */
+function buildRatchetCore(){
+  const coreGroup = new THREE.Group();
+  coreGroup.position.set(0, 12, 0);
+  scene.add(coreGroup);
+
+  // Main torus knot — the ratchet gear
+  const knotGeo = new THREE.TorusKnotGeometry(5, 1.2, 200, 32, 2, 3);
+  const ratchetMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime:      {value:0},
+      uEnergy:    {value:0.3},  // 0=hot orange, 1=cold purple/gold
+      uFlash:     {value:0},    // 1=bloom flash on lock
+      uColor1:    {value:new THREE.Color(0xff4400)},  // hot orange-red
+      uColor2:    {value:new THREE.Color(0xffd700)},   // gold
+      uColor3:    {value:new THREE.Color(0xbb86fc)},   // cold purple
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec2 vUv;
+      uniform float uTime;
+      void main(){
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+        vUv = uv;
+        vec3 p = position;
+        p += normal * sin(uTime*2.0 + position.x*0.5)*0.08;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform float uEnergy;
+      uniform float uFlash;
+      uniform vec3 uColor1;
+      uniform vec3 uColor2;
+      uniform vec3 uColor3;
+      void main(){
+        // Energy gradient: orange → gold → purple
+        vec3 c;
+        if(uEnergy < 0.5){
+          c = mix(uColor1, uColor2, uEnergy*2.0);
+        } else {
+          c = mix(uColor2, uColor3, (uEnergy-0.5)*2.0);
+        }
+        // Fresnel glow
+        float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 3.0);
+        c += fresnel * 0.5;
+        // Energy pulse lines
+        float pulse = sin(vPosition.y*8.0 - uTime*4.0)*0.5 + 0.5;
+        c += pulse * 0.15 * vec3(0.0, 1.0, 1.0);
+        // Flash on ratchet lock
+        c += uFlash * vec3(1.0, 0.95, 0.6) * 2.0;
+        // Emission intensity
+        float emit = 0.6 + uFlash * 1.5;
+        gl_FragColor = vec4(c * emit, 0.92);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+  });
+  ratchetCore = new THREE.Mesh(knotGeo, ratchetMat);
+  ratchetCore.userData = {type:'ratchet', tooltip:{
+    title:'⚙ 能量棘轮 Energy Ratchet',
+    body:'系统当前能效基准的物理映射。每次优化锁定后，棘轮永远向前旋转，不可逆。',
+    chain:'第一性原理: 质疑 → 删除冗余 → 锁定基准 → 只进不退'
+  }};
+  coreGroup.add(ratchetCore);
+
+  // Inner glow sphere
+  const glowGeo = new THREE.SphereGeometry(3.5, 32, 32);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color:0x0ff, transparent:true, opacity:0.08, blending:THREE.AdditiveBlending
+  });
+  ratchetGlow = new THREE.Mesh(glowGeo, glowMat);
+  coreGroup.add(ratchetGlow);
+
+  // Rotating ring markers (ratchet teeth)
+  for(let i=0;i<12;i++){
+    const a = (i/12)*Math.PI*2;
+    const toothGeo = new THREE.BoxGeometry(0.3, 0.8, 2.5);
+    const toothMat = new THREE.MeshStandardMaterial({
+      color:0xffd700, emissive:0xffd700, emissiveIntensity:0.3, metalness:0.9, roughness:0.2
+    });
+    const tooth = new THREE.Mesh(toothGeo, toothMat);
+    tooth.position.set(Math.cos(a)*7, 0, Math.sin(a)*7);
+    tooth.lookAt(0, 0, 0);
+    coreGroup.add(tooth);
+  }
+
+  // Text label "PUE" above ratchet — use sprite
+  const pueSprite = makeTextSprite('PUE: --', {fontSize:48, color:'#ffd700', bgColor:'rgba(4,6,12,0.7)'});
+  pueSprite.position.set(0, 8, 0);
+  pueSprite.scale.set(6, 2, 1);
+  pueSprite.name = 'pue-label';
+  coreGroup.add(pueSprite);
+}
+
+/* ══════════════════════════════════════════
+   3. EVOLUTION HELIX — DNA 演化螺旋
+   ══════════════════════════════════════════ */
+function buildEvolutionHelix(){
+  helixGroup = new THREE.Group();
+  helixGroup.position.set(-30, 0, 0);
+  scene.add(helixGroup);
+
+  const HELIX_H = 35;
+  const HELIX_R = 4;
+  const TURNS = 4;
+  const SEGMENTS = 200;
+
+  // Build two helix curves
+  const ptsL=[], ptsR=[];
+  for(let i=0;i<=SEGMENTS;i++){
+    const t = i/SEGMENTS;
+    const y = t * HELIX_H;
+    const a = t * TURNS * Math.PI * 2;
+    ptsL.push(new THREE.Vector3(Math.cos(a)*HELIX_R, y, Math.sin(a)*HELIX_R));
+    ptsR.push(new THREE.Vector3(Math.cos(a+Math.PI)*HELIX_R, y, Math.sin(a+Math.PI)*HELIX_R));
+  }
+
+  const curveL = new THREE.CatmullRomCurve3(ptsL);
+  const curveR = new THREE.CatmullRomCurve3(ptsR);
+
+  // Tube meshes for helix strands
+  const tubeMat = new THREE.MeshStandardMaterial({
+    color:0x7c4dff, emissive:0x7c4dff, emissiveIntensity:0.4,
+    transparent:true, opacity:0.6, metalness:0.5, roughness:0.3
+  });
+  const tubeL = new THREE.Mesh(new THREE.TubeGeometry(curveL, SEGMENTS, 0.15, 8, false), tubeMat);
+  const tubeR = new THREE.Mesh(new THREE.TubeGeometry(curveR, SEGMENTS, 0.15, 8, false), tubeMat.clone());
+  tubeR.material.color.set(0x00ffcc);
+  tubeR.material.emissive.set(0x00ffcc);
+  helixGroup.add(tubeL, tubeR);
+
+  // Cross-links (base pairs) at node positions
+  const NODE_COUNT = 12;  // max nodes for heritage display
+  for(let i=0;i<NODE_COUNT;i++){
+    const t = (i+1)/(NODE_COUNT+1);
+    const pL = curveL.getPointAt(t);
+    const pR = curveR.getPointAt(t);
+
+    // Link bar
+    const linkGeo = new THREE.CylinderGeometry(0.06, 0.06, pL.distanceTo(pR), 6);
+    const linkMat = new THREE.MeshBasicMaterial({color:0x334466, transparent:true, opacity:0.4});
+    const link = new THREE.Mesh(linkGeo, linkMat);
+    const mid = pL.clone().add(pR).multiplyScalar(0.5);
+    link.position.copy(mid);
+    link.lookAt(pR);
+    link.rotateX(Math.PI/2);
+    helixGroup.add(link);
+
+    // Heritage node sphere (will be populated from data)
+    const nodeGeo = new THREE.SphereGeometry(0.5, 16, 16);
+    const nodeMat = new THREE.MeshStandardMaterial({
+      color:0x444444, emissive:0x222222, emissiveIntensity:0.2,
+      transparent:true, opacity:0.3, metalness:0.8, roughness:0.2
+    });
+    const node = new THREE.Mesh(nodeGeo, nodeMat);
+    node.position.copy(mid);
+    node.userData = {type:'helix-node', index:i, heritage:null};
+    helixGroup.add(node);
+    helixNodes.push(node);
+  }
+
+  // Label
+  const label = makeTextSprite('EVOLUTION HELIX', {fontSize:32, color:'#bb86fc', bgColor:'rgba(4,6,12,0.6)'});
+  label.position.set(0, HELIX_H + 2, 0);
+  label.scale.set(8, 2, 1);
+  helixGroup.add(label);
+}
+
+/* ══════════════════════════════════════════
+   4. RACK ZONES — 简化机柜区（支持消融）
+   ══════════════════════════════════════════ */
+function buildRackZones(){
+  rackGroup = new THREE.Group();
+  rackGroup.position.set(20, 0, -10);
+  scene.add(rackGroup);
+
+  // 4x4 rack grid (simplified for this view)
+  const ROWS=4, COLS=4;
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const rackGeo = new THREE.BoxGeometry(2, 7, 1.5);
+      const rackMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: {value:0},
+          uDissolve: {value:0},  // 0=solid, 1=fully dissolved
+          uColor: {value: new THREE.Color(0x1a2a40)},
+          uEmissive: {value: new THREE.Color(0x004466)},
+        },
+        vertexShader: `
+          varying vec3 vPos;
+          varying vec3 vNormal;
+          varying vec2 vUv;
+          void main(){
+            vPos = position;
+            vNormal = normalMatrix * normal;
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vPos;
+          varying vec3 vNormal;
+          varying vec2 vUv;
+          uniform float uTime;
+          uniform float uDissolve;
+          uniform vec3 uColor;
+          uniform vec3 uEmissive;
+
+          // Simple noise
+          float hash(vec3 p){
+            p = fract(p * 0.3183099 + vec3(0.1,0.2,0.3));
+            p *= 17.0;
+            return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
+          }
+
+          void main(){
+            float n = hash(vPos * 3.0 + uTime * 0.5);
+            // Dissolve: discard fragments as dissolve increases
+            float edge = smoothstep(uDissolve - 0.1, uDissolve, n);
+            if(n < uDissolve) discard;
+            // Edge glow at dissolve boundary
+            float edgeGlow = 1.0 - smoothstep(0.0, 0.12, n - uDissolve);
+            vec3 c = uColor + uEmissive * 0.3;
+            c += edgeGlow * vec3(1.0, 0.4, 0.0) * step(0.01, uDissolve);
+            gl_FragColor = vec4(c, 0.9);
+          }
+        `,
+        transparent: true,
+        side: THREE.DoubleSide,
+      });
+
+      const rack = new THREE.Mesh(rackGeo, rackMat);
+      rack.position.set(r*4 - 6, 3.5, c*3 - 4.5);
+      rack.userData = {
+        type:'rack', row:r, col:c, id:`rack-${r+1}${String.fromCharCode(65+c)}`,
+        dissolveTarget: 0, isRedundant: false,
+        tooltip:{
+          title:`机柜 Rack ${r+1}${String.fromCharCode(65+c)}`,
+          body:'机柜状态正常。点击可查看设备详情。',
+          chain:''
+        }
+      };
+      rackGroup.add(rack);
+      dissolveMeshes.push(rack);
+
+      // LED strip on top
+      const ledGeo = new THREE.BoxGeometry(1.8, 0.1, 0.1);
+      const ledMat = new THREE.MeshBasicMaterial({color:0x00ff88, transparent:true, opacity:0.8});
+      const led = new THREE.Mesh(ledGeo, ledMat);
+      led.position.set(r*4 - 6, 7.1, c*3 - 4.5);
+      rackGroup.add(led);
+    }
+  }
+
+  // Label
+  const label = makeTextSprite('ASSET TOPOLOGY', {fontSize:32, color:'#0ff', bgColor:'rgba(4,6,12,0.6)'});
+  label.position.set(0, 9, 0);
+  label.scale.set(8, 2, 1);
+  rackGroup.add(label);
+}
+
+/* ══════════════════════════════════════════
+   5. PARTICLE FLOWS — 加速循环粒子
+   ══════════════════════════════════════════ */
+function buildParticleFlows(){
+  // Define flow paths: hub center → rack zones
+  const hubPos = new THREE.Vector3(0, 12, 0);
+  const targets = [
+    new THREE.Vector3(20, 5, -10),  // rack zone
+    new THREE.Vector3(-30, 18, 0),  // helix top
+    new THREE.Vector3(20, 5, 10),   // right zone
+    new THREE.Vector3(-15, 3, 15),  // back left
+  ];
+
+  targets.forEach((target, idx) => {
+    const mid = hubPos.clone().add(target).multiplyScalar(0.5);
+    mid.y += 5 + Math.random()*5;
+    const curve = new THREE.QuadraticBezierCurve3(hubPos, mid, target);
+
+    // Visible path line
+    const pts = curve.getPoints(50);
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+    const lineMat = new THREE.LineBasicMaterial({
+      color: [0x0ff, 0x7c4dff, 0xffd700, 0x00ff88][idx],
+      transparent:true, opacity:0.15, blending:THREE.AdditiveBlending
+    });
+    scene.add(new THREE.Line(lineGeo, lineMat));
+
+    // Particles along path
+    const PARTICLE_COUNT = 80;
+    const pGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const offsets = new Float32Array(PARTICLE_COUNT);
+    for(let i=0;i<PARTICLE_COUNT;i++){
+      offsets[i] = Math.random();
+      const p = curve.getPointAt(offsets[i]);
+      positions[i*3]   = p.x;
+      positions[i*3+1] = p.y;
+      positions[i*3+2] = p.z;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const pMat = new THREE.PointsMaterial({
+      color: [0x0ff, 0x7c4dff, 0xffd700, 0x00ff88][idx],
+      size: 0.25 + Math.random()*0.15,
+      transparent:true, opacity:0.8,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+    });
+    const points = new THREE.Points(pGeo, pMat);
+    scene.add(points);
+
+    particleSystems.push({points, curve, offsets, baseSpeed: 0.15 + idx*0.05});
+    flowPaths.push({curve, color: [0x0ff, 0x7c4dff, 0xffd700, 0x00ff88][idx]});
+  });
+}
+
+/* ══════════════════════════════════════════
+   6. OPTIMIZATION SHIELDS — 棘轮保护层
+   ══════════════════════════════════════════ */
+function buildOptimizationShields(){
+  // Shield over the ratchet core
+  const shieldGeo = new THREE.SphereGeometry(9, 64, 64);
+  const shieldMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: {value:0},
+      uActive: {value:0.0},  // 0=inactive, 1=fully active
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec2 vUv;
+      void main(){
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform float uActive;
+
+      void main(){
+        // Fresnel edge glow
+        float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0,0,1))), 4.0);
+        // Scan lines
+        float scan = sin(vPosition.y * 15.0 - uTime * 3.0) * 0.5 + 0.5;
+        scan = smoothstep(0.4, 0.6, scan);
+        // Hex pattern approximation
+        float hex = sin(vPosition.x*10.0)*sin(vPosition.z*10.0);
+        hex = smoothstep(0.7, 0.8, hex) * 0.3;
+
+        float alpha = (fresnel * 0.4 + scan * 0.08 + hex) * uActive;
+        vec3 color = mix(vec3(0.0, 1.0, 1.0), vec3(0.5, 0.3, 1.0), scan);
+        gl_FragColor = vec4(color, alpha * 0.5);
+      }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  ratchetShield = new THREE.Mesh(shieldGeo, shieldMat);
+  ratchetShield.position.set(0, 12, 0);
+  ratchetShield.userData = {type:'shield', tooltip:{
+    title:'🛡 优化保护层 Optimization Shield',
+    body:'已锁定的最优参数受棘轮机制保护。人工干预标记为"只读"。AI 全面掌控自动演化。',
+    chain:'锁定后: 参数不可逆 · 只读保护 · AI 自治'
+  }};
+  scene.add(ratchetShield);
+  shieldMeshes.push(ratchetShield);
+
+  // Shield zones over rack areas (activated when racks are locked)
+  const zoneGeo = new THREE.CylinderGeometry(8, 8, 10, 32, 1, true);
+  const zoneMat = shieldMat.clone();
+  zoneMat.uniforms = {
+    uTime: {value:0},
+    uActive: {value:0.0},
+  };
+  const zoneShield = new THREE.Mesh(zoneGeo, zoneMat);
+  zoneShield.position.set(20, 5, -10);
+  scene.add(zoneShield);
+  shieldMeshes.push(zoneShield);
+}
+
+/* ══════════════════════════════════════════
+   SPRITE HELPER
+   ══════════════════════════════════════════ */
+function makeTextSprite(text, opts={}){
+  const fontSize = opts.fontSize || 36;
+  const color = opts.color || '#ffffff';
+  const bgColor = opts.bgColor || 'rgba(0,0,0,0)';
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 512;
+  canvas.height = 128;
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = `bold ${fontSize}px 'Inter', system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = color;
+  ctx.fillText(text, 256, 64);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending});
+  const sprite = new THREE.Sprite(mat);
+  sprite.userData._canvas = canvas;
+  sprite.userData._ctx = ctx;
+  sprite.userData._opts = {fontSize, color, bgColor};
+  return sprite;
+}
+
+function updateTextSprite(sprite, text){
+  const {_canvas: canvas, _ctx: ctx, _opts: opts} = sprite.userData;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = opts.bgColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = `bold ${opts.fontSize}px 'Inter', system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = opts.color;
+  ctx.fillText(text, 256, 64);
+  sprite.material.map.needsUpdate = true;
+}
+
+/* ══════════════════════════════════════════
+   ANIMATION LOOP
+   ══════════════════════════════════════════ */
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  controls.update();
+
+  // 1. Ratchet core rotation + shader update
+  if(ratchetCore){
+    ratchetCore.rotation.y += dt * 0.15;
+    ratchetCore.rotation.x = Math.sin(t*0.3)*0.05;
+    ratchetCore.material.uniforms.uTime.value = t;
+
+    // Energy level based on PUE progress
+    const energy = Math.min(1, STATE.pue_progress_pct / 100);
+    ratchetCore.material.uniforms.uEnergy.value += (energy - ratchetCore.material.uniforms.uEnergy.value) * dt * 0.5;
+
+    // Flash decay
+    const flash = ratchetCore.material.uniforms.uFlash.value;
+    if(flash > 0) ratchetCore.material.uniforms.uFlash.value = Math.max(0, flash - dt * 2.0);
+  }
+
+  // Glow pulse
+  if(ratchetGlow){
+    ratchetGlow.scale.setScalar(1 + Math.sin(t*2)*0.05);
+    ratchetGlow.material.opacity = 0.06 + Math.sin(t*3)*0.03;
+  }
+
+  // 2. Evolution helix slow rotation
+  if(helixGroup){
+    helixGroup.rotation.y += dt * 0.05;
+  }
+
+  // 3. Particle flows — speed increases with evolution
+  const speedMult = 1 + STATE.evolution_round * 0.15;  // accelerate with evolution!
+  particleSystems.forEach(sys => {
+    const pos = sys.points.geometry.attributes.position.array;
+    for(let i=0;i<sys.offsets.length;i++){
+      sys.offsets[i] = (sys.offsets[i] + dt * sys.baseSpeed * speedMult) % 1;
+      const p = sys.curve.getPointAt(sys.offsets[i]);
+      pos[i*3]   = p.x + (Math.random()-0.5)*0.1;
+      pos[i*3+1] = p.y + (Math.random()-0.5)*0.1;
+      pos[i*3+2] = p.z + (Math.random()-0.5)*0.1;
+    }
+    sys.points.geometry.attributes.position.needsUpdate = true;
+    // Increase particle brightness with speed
+    sys.points.material.opacity = Math.min(1, 0.5 + speedMult*0.1);
+  });
+
+  // 4. Shields scan animation
+  shieldMeshes.forEach(sm => {
+    if(sm.material.uniforms) sm.material.uniforms.uTime.value = t;
+  });
+
+  // 5. Dissolve animation for racks
+  dissolveMeshes.forEach(m => {
+    if(!m.userData || !m.material.uniforms) return;
+    const target = m.userData.dissolveTarget || 0;
+    const cur = m.material.uniforms.uDissolve.value;
+    m.material.uniforms.uDissolve.value += (target - cur) * dt * 1.5;
+    m.material.uniforms.uTime.value = t;
+  });
+
+  // 6. Raycaster hover
+  raycaster.setFromCamera(mouse, camera);
+  const candidates = [ratchetCore, ratchetShield, ...dissolveMeshes, ...helixNodes].filter(Boolean);
+  const hits = raycaster.intersectObjects(candidates, false);
+  const tooltip = document.getElementById('tooltip');
+  if(hits.length > 0){
+    const obj = hits[0].object;
+    if(obj.userData && obj.userData.tooltip){
+      const tt = obj.userData.tooltip;
+      tooltip.querySelector('.tt-title').textContent = tt.title;
+      tooltip.querySelector('.tt-body').textContent = tt.body;
+      tooltip.querySelector('.tt-chain').textContent = tt.chain;
+      tooltip.style.display = 'block';
+      // position near mouse
+      const rect = renderer.domElement.getBoundingClientRect();
+      tooltip.style.left = (mouse._clientX || 0) + 16 + 'px';
+      tooltip.style.top  = (mouse._clientY || 0) + 16 + 'px';
+      hoveredObj = obj;
+      document.body.style.cursor = 'pointer';
+    }
+  } else {
+    tooltip.style.display = 'none';
+    hoveredObj = null;
+    document.body.style.cursor = 'default';
+  }
+
+  // Render
+  composer.render();
+}
+
+/* ══════════════════════════════════════════
+   EVENTS
+   ══════════════════════════════════════════ */
+function onResize(){
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+}
+
+function onMouseMove(e){
+  mouse.x =  (e.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+  mouse._clientX = e.clientX;
+  mouse._clientY = e.clientY;
+}
+
+function onMouseClick(e){
+  if(!hoveredObj) return;
+  const ud = hoveredObj.userData;
+  if(ud.type === 'helix-node' && ud.heritage){
+    showHeritageDetail(ud.heritage);
+  }
+}
+
+/* ══════════════════════════════════════════
+   API & WEBSOCKET
+   ══════════════════════════════════════════ */
+async function fetchStatus(){
+  try {
+    const r = await fetch(`${API}/status`);
+    const d = await r.json();
+    Object.assign(STATE, d);
+    updateKPI();
+  } catch(e){ console.warn('fetchStatus fail:', e); }
+}
+
+async function fetchHeritage(){
+  try {
+    const r = await fetch(`${API}/heritage`);
+    const d = await r.json();
+    HERITAGE = d.heritage || d || [];
+    updateHelixNodes();
+    updateHeritagePanel();
+  } catch(e){ console.warn('fetchHeritage fail:', e); }
+}
+
+function connectWS(){
+  const wsUrl = `ws://${location.hostname}:8080/ws/datacenter`;
+  const pill = document.getElementById('pill-ws');
+  try {
+    wsConn = new WebSocket(wsUrl);
+    wsConn.onopen = () => { pill.textContent='WS · LIVE'; pill.classList.add('live'); };
+    wsConn.onclose = () => {
+      pill.textContent='WS · OFF'; pill.classList.remove('live');
+      setTimeout(connectWS, 3000);
+    };
+    wsConn.onerror = () => { pill.textContent='WS · ERR'; pill.classList.remove('live'); pill.classList.add('warn'); };
+    wsConn.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if(msg.type === 'tick' && msg.status){
+          Object.assign(STATE, msg.status);
+          updateKPI();
+          // Check for new evolution events
+          if(msg.new_events){
+            msg.new_events.forEach(ev => {
+              if(ev.kind === 'darwin_evolve'){
+                flashRatchet();
+                fetchHeritage();
+              }
+            });
+          }
+        }
+      } catch(e){}
+    };
+  } catch(e){
+    pill.textContent='WS · FAIL';
+  }
+}
+
+/* ══════════════════════════════════════════
+   UI UPDATES
+   ══════════════════════════════════════════ */
+function updateKPI(){
+  document.getElementById('kpi-pue').textContent = (STATE.current_pue || 0).toFixed(3);
+  document.getElementById('kpi-round').textContent = STATE.evolution_round || 0;
+  document.getElementById('kpi-heritage').textContent = STATE.heritage_count || 0;
+  document.getElementById('kpi-kwh').textContent = (STATE.saving_kwh_day || 0).toFixed(1);
+  document.getElementById('kpi-co2').textContent = (STATE.co2_saved_ton_year || 0).toFixed(2);
+  document.getElementById('kpi-skills').textContent = STATE.skill_count || 0;
+  document.getElementById('kpi-policies').textContent = `${STATE.policies_applied||0}/${STATE.policy_count||0}`;
+  document.getElementById('kpi-progress').textContent = (STATE.pue_progress_pct||0).toFixed(1) + '%';
+  document.getElementById('pill-round').textContent = `R${STATE.evolution_round||0}`;
+
+  // Update PUE label on ratchet
+  const pueLabel = scene.getObjectByName('pue-label');
+  if(pueLabel) updateTextSprite(pueLabel, `PUE: ${(STATE.current_pue||0).toFixed(3)}`);
+
+  // Update shield activation based on heritage count
+  const shieldLevel = Math.min(1, (STATE.heritage_count || 0) / 10);
+  shieldMeshes.forEach(sm => {
+    if(sm.material.uniforms && sm.material.uniforms.uActive){
+      sm.material.uniforms.uActive.value = shieldLevel;
+    }
+  });
+}
+
+function updateHelixNodes(){
+  helixNodes.forEach((node, i) => {
+    if(i < HERITAGE.length){
+      const h = HERITAGE[i];
+      node.material.color.set(getCategoryColor(h.category));
+      node.material.emissive.set(getCategoryColor(h.category));
+      node.material.emissiveIntensity = 0.6;
+      node.material.opacity = 0.9;
+      node.scale.setScalar(0.8 + Math.abs(h.delta_pue||0)*10);
+      node.userData.heritage = h;
+      node.userData.tooltip = {
+        title: `🧬 ${h.title}`,
+        body: `Category: ${h.category}\nΔPUE: ${(h.delta_pue||0).toFixed(4)}\nSaved: ${(h.delta_kwh_day||0).toFixed(1)} kWh/day`,
+        chain: `锁定时间: ${h.locked_at ? new Date(h.locked_at*1000).toLocaleString() : 'N/A'}`
+      };
+    } else {
+      // Empty node
+      node.material.color.set(0x333333);
+      node.material.emissive.set(0x111111);
+      node.material.emissiveIntensity = 0.1;
+      node.material.opacity = 0.2;
+      node.scale.setScalar(0.4);
+      node.userData.heritage = null;
+      node.userData.tooltip = {title:'⬡ 空节点', body:'等待下一次演化锁定...', chain:''};
+    }
+  });
+}
+
+function updateHeritagePanel(){
+  const list = document.getElementById('heritage-list');
+  if(!HERITAGE.length){
+    list.innerHTML = '<div style="color:#666;font-size:11px">暂无演化遗产</div>';
+    return;
+  }
+  list.innerHTML = HERITAGE.slice().reverse().map(h => `
+    <div class="heritage-item">
+      <div class="h-title">${getCategoryIcon(h.category)} ${h.title}</div>
+      <div class="h-meta">
+        <span class="h-delta">ΔPUE: ${(h.delta_pue||0).toFixed(4)}</span> · 
+        ${(h.delta_kwh_day||0).toFixed(1)} kWh/day ·
+        ${h.category}
+      </div>
+      <div class="h-meta">${h.locked_at ? new Date(h.locked_at*1000).toLocaleString() : ''}</div>
+    </div>
+  `).join('');
+}
+
+function getCategoryColor(cat){
+  const map = {
+    thermal_ratchet: 0xff4400,
+    principle: 0xffd700,
+    iot: 0x00ffcc,
+    loop: 0x7c4dff,
+    general: 0x0ff,
+  };
+  return map[cat] || 0x888888;
+}
+
+function getCategoryIcon(cat){
+  const map = {
+    thermal_ratchet: '🔥',
+    principle: '⚡',
+    iot: '📡',
+    loop: '🔄',
+    general: '🧬',
+  };
+  return map[cat] || '⬡';
+}
+
+/* ══════════════════════════════════════════
+   ACTIONS
+   ══════════════════════════════════════════ */
+// Flash ratchet bloom
+function flashRatchet(){
+  if(!ratchetCore) return;
+  ratchetCore.material.uniforms.uFlash.value = 1.5;
+  // Momentary bloom boost
+  const origStrength = bloomPass.strength;
+  bloomPass.strength = 2.5;
+  setTimeout(() => { bloomPass.strength = origStrength; }, 600);
+
+  // Rotate ratchet by one "click" (30 degrees)
+  const targetRot = ratchetCore.rotation.y + Math.PI/6;
+  const startRot = ratchetCore.rotation.y;
+  const startTime = performance.now();
+  function tweenRotate(){
+    const elapsed = (performance.now() - startTime) / 800; // 800ms
+    if(elapsed >= 1) { ratchetCore.rotation.y = targetRot; return; }
+    // Ease out cubic
+    const e = 1 - Math.pow(1 - elapsed, 3);
+    ratchetCore.rotation.y = startRot + (targetRot - startRot) * e;
+    requestAnimationFrame(tweenRotate);
+  }
+  tweenRotate();
+}
+
+// Trigger ratchet lock via API
+window.triggerRatchetLock = async function(){
+  try {
+    const r = await fetch(`${API}/sensing/ratchet`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({note: 'Manual ratchet lock from evolution view'})
+    });
+    const d = await r.json();
+    if(d.ok){
+      flashRatchet();
+      setTimeout(fetchHeritage, 500);
+      setTimeout(fetchStatus, 500);
+    } else {
+      console.warn('Ratchet lock failed:', d.reason);
+    }
+  } catch(e){ console.error('Ratchet lock error:', e); }
+};
+
+// Trigger evolution
+window.triggerEvolve = async function(){
+  try {
+    const r = await fetch(`${API}/evolve`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title: `AI 自动演化 R${(STATE.evolution_round||0)+1}`,
+        category: 'general',
+        delta_pue: -(0.005 + Math.random()*0.01),
+        delta_kwh_day: 1.0 + Math.random()*5.0
+      })
+    });
+    const d = await r.json();
+    if(d.ok){
+      flashRatchet();
+      setTimeout(fetchHeritage, 500);
+      setTimeout(fetchStatus, 500);
+    }
+  } catch(e){ console.error('Evolve error:', e); }
+};
+
+// Trigger closed-loop tick
+window.triggerLoopTick = async function(){
+  try {
+    await fetch(`${API}/loop/tick`, {method:'POST'});
+    fetchStatus();
+  } catch(e){ console.error('Loop tick error:', e); }
+};
+
+// Toggle heritage panel
+window.toggleHeritage = function(){
+  const panel = document.getElementById('info-panel');
+  panel.classList.toggle('show');
+  fetchHeritage();
+};
+
+// Dematerialize random redundant racks
+window.triggerDematerialize = function(){
+  // Pick 2-4 random racks to "dissolve"
+  const targets = dissolveMeshes.filter(m => !m.userData.isRedundant);
+  const count = Math.min(Math.floor(Math.random()*3)+2, targets.length);
+  for(let i=0;i<count;i++){
+    const idx = Math.floor(Math.random()*targets.length);
+    const rack = targets.splice(idx, 1)[0];
+    rack.userData.isRedundant = true;
+    rack.userData.dissolveTarget = 1.0;
+    rack.userData.tooltip.body = '⚠ AI 识别为冗余 — 正在消融...';
+    rack.userData.tooltip.chain = '马斯克五步法: 质疑 → 删除冗余';
+
+    // Spawn dissolve particles
+    spawnDissolveParticles(rack.position.clone().add(rackGroup.position));
+  }
+
+  // After a delay, these racks "re-materialize" as optimized (lower opacity)
+  setTimeout(() => {
+    dissolveMeshes.forEach(m => {
+      if(m.userData.isRedundant){
+        m.userData.dissolveTarget = 0;
+        m.userData.isRedundant = false;
+        m.material.uniforms.uColor.value.set(0x003344);
+        m.material.uniforms.uEmissive.value.set(0x007766);
+        m.userData.tooltip.body = '✅ 冗余已删除，路径已优化';
+        m.userData.tooltip.chain = '锁定新效率基准';
+      }
+    });
+  }, 4000);
+};
+
+// Spawn dissolve particles at position
+function spawnDissolveParticles(worldPos){
+  const count = 150;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count*3);
+  const vel = new Float32Array(count*3);
+  for(let i=0;i<count;i++){
+    pos[i*3]   = worldPos.x + (Math.random()-0.5)*2;
+    pos[i*3+1] = worldPos.y + Math.random()*7;
+    pos[i*3+2] = worldPos.z + (Math.random()-0.5)*2;
+    vel[i*3]   = (Math.random()-0.5)*2;
+    vel[i*3+1] = Math.random()*3;
+    vel[i*3+2] = (Math.random()-0.5)*2;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    color:0xff6600, size:0.2, transparent:true, opacity:1,
+    blending:THREE.AdditiveBlending, sizeAttenuation:true
+  });
+  const pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+
+  // Animate particles outward then fade
+  const startTime = performance.now();
+  function animateParticles(){
+    const elapsed = (performance.now() - startTime) / 1000;
+    if(elapsed > 3) { scene.remove(pts); geo.dispose(); mat.dispose(); return; }
+    const posArr = pts.geometry.attributes.position.array;
+    for(let i=0;i<count;i++){
+      posArr[i*3]   += vel[i*3]   * 0.02;
+      posArr[i*3+1] += vel[i*3+1] * 0.02;
+      posArr[i*3+2] += vel[i*3+2] * 0.02;
+      vel[i*3+1] -= 0.01; // gravity
+    }
+    pts.geometry.attributes.position.needsUpdate = true;
+    mat.opacity = Math.max(0, 1 - elapsed/3);
+    mat.color.setHSL(0.05 + elapsed*0.05, 1, 0.5);
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+}
+
+// Auto-evolve toggle
+window.toggleAutoEvolve = function(){
+  if(autoEvolveInterval){
+    clearInterval(autoEvolveInterval);
+    autoEvolveInterval = null;
+    document.querySelector('.ctrl-btn:last-child').classList.remove('active');
+    document.querySelector('.ctrl-btn:last-child').textContent = '🤖 AUTO-EVOLVE';
+  } else {
+    autoEvolveInterval = setInterval(() => {
+      window.triggerEvolve();
+    }, 8000);
+    document.querySelector('.ctrl-btn:last-child').classList.add('active');
+    document.querySelector('.ctrl-btn:last-child').textContent = '🤖 AUTO-EVOLVE · ON';
+  }
+};
+
+function showHeritageDetail(h){
+  // Fly camera to helix
+  const target = helixGroup.position.clone();
+  target.y = 18;
+  // Simple camera fly
+  const startPos = camera.position.clone();
+  const startTime = performance.now();
+  function flyTo(){
+    const elapsed = (performance.now() - startTime) / 1500;
+    if(elapsed >= 1) return;
+    const e = 1 - Math.pow(1 - elapsed, 3);
+    camera.position.lerpVectors(startPos, target.clone().add(new THREE.Vector3(10, 5, 10)), e);
+    controls.target.lerpVectors(controls.target.clone(), target, e);
+    requestAnimationFrame(flyTo);
+  }
+  flyTo();
+
+  // Show heritage panel
+  document.getElementById('info-panel').classList.add('show');
+}
+
+/* ══════════════════════════════════════════
+   ERROR HANDLER
+   ══════════════════════════════════════════ */
+window.onerror = function(msg, src, line, col, err){
+  const el = document.getElementById('err-overlay');
+  el.style.display = 'block';
+  el.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n  at ${src}:${line}:${col}\n  ${err?.stack||''}\n\n`;
+};
+
+/* ══════════════════════════════════════════
+   BOOT
+   ══════════════════════════════════════════ */
+try {
+  init();
+} catch(e){
+  const el = document.getElementById('err-overlay');
+  el.style.display = 'block';
+  el.textContent = `INIT ERROR:\n${e.message}\n${e.stack}`;
+}
+</script>
+</body>
+</html>

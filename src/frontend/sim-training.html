@@ -1,92 +1,278 @@
-<!DOCTYPE html><html lang="zh-CN" data-obc-theme="dusk">
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="ob-title" content="仿真训练">
 <meta name="ob-subtitle" content="K-Sim Navigation — 训练仿真与评估">
 <title>仿真训练 — PoseidonX</title>
-
 <link rel="stylesheet" href="/css/openbridge-theme.css">
 <style>
-.sim-layout{display:grid;grid-template-columns:1fr 340px;gap:16px;padding:16px}
-.radar-canvas{width:100%;aspect-ratio:1;background:var(--ob-bg-section);border-radius:var(--ob-radius-lg)}
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
-.stat-big{text-align:center;padding:16px}
-.stat-big .val{font-size:36px;font-weight:700;color:var(--ob-accent)}
-.stat-big .lbl{font-size:12px;color:var(--ob-text-tertiary);margin-top:4px}
-.ctrl-btns{display:flex;gap:10px;margin-top:16px}
-.ctrl-btns button{flex:1;padding:12px;border:none;border-radius:var(--ob-radius-sm);font-size:14px;font-weight:600;cursor:pointer}
-.btn-start{background:var(--ob-running);color:#fff}
-.btn-pause{background:var(--ob-warning);color:#000}
-.btn-reset{background:var(--ob-bg-section);color:var(--ob-text-primary);border:1px solid var(--ob-border) !important}
-.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--ob-border)}
-.toggle-row:last-child{border-bottom:none}
-.toggle-switch{width:42px;height:22px;background:var(--ob-bg-section);border-radius:11px;position:relative;cursor:pointer;transition:.3s}
-.toggle-switch.on{background:var(--ob-alarm)}
-.toggle-switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s}
-.toggle-switch.on::after{left:22px}
-.form-group{margin-bottom:12px}
-.form-group label{display:block;font-size:12px;color:var(--ob-text-tertiary);margin-bottom:4px}
-.form-group select,.form-group input{width:100%;padding:8px;background:var(--ob-bg-section);color:var(--ob-text-primary);border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm)}
+:root{--sim-cyan:#22d3ee;--sim-ok:#4ade80;--sim-warn:#fbbf24;--sim-alarm:#f87171;--sim-purple:#a78bfa;--sim-glass:rgba(24,28,36,.72);--sim-border:rgba(255,255,255,.08);}
+*{box-sizing:border-box}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif)}
+/* ═══ Layout ═══ */
+.sim-layout{display:grid;grid-template-columns:1fr 360px;gap:14px;min-height:calc(100vh - 80px)}
+/* ═══ Left Column ═══ */
+.sim-left{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+/* ── Hero Stats ── */
+.sim-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hero-card{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.hero-card:nth-child(1)::before{background:var(--sim-cyan)}
+.hero-card:nth-child(2)::before{background:var(--sim-ok)}
+.hero-card:nth-child(3)::before{background:var(--sim-purple)}
+.hero-card:nth-child(4)::before{background:var(--sim-warn)}
+.hero-val{font-size:36px;font-weight:800;line-height:1}
+.hero-lbl{font-size:11px;color:var(--ob-text-tertiary);margin-top:4px}
+.hero-delta{font-size:10px;margin-top:2px;color:var(--sim-ok)}
+/* ── Scenario Config ── */
+.config-panel{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px}
+.config-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.config-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sim-cyan)}
+.config-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.form-group{margin-bottom:0}
+.form-group label{display:block;font-size:11px;color:var(--ob-text-tertiary);margin-bottom:4px;font-weight:600}
+.form-group select,.form-group input{width:100%;padding:8px 10px;background:rgba(0,0,0,.2);color:var(--ob-text-primary);border:1px solid var(--sim-border);border-radius:8px;font-size:12px;outline:none;transition:border-color .2s}
+.form-group select:focus,.form-group input:focus{border-color:rgba(34,211,238,.4)}
+/* ── Fault Injection ── */
+.fault-panel{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px}
+.fault-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.fault-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sim-alarm)}
+.fault-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fault-btn{background:rgba(0,0,0,.15);border:1px solid var(--sim-border);border-radius:10px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s;font-size:12px}
+.fault-btn:hover{border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.05)}
+.fault-btn.active{border-color:var(--sim-alarm);background:rgba(248,113,113,.1);box-shadow:0 0 12px rgba(248,113,113,.15)}
+.fault-btn .f-icon{font-size:22px;margin-bottom:6px}
+.fault-btn .f-name{font-size:11px;color:var(--ob-text-tertiary)}
+/* ── Log Table ── */
+.log-panel{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px;flex:1}
+.log-panel h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.log-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sim-purple)}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{text-align:left;padding:8px 10px;color:var(--ob-text-tertiary);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--sim-border)}
+.log-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-table tr:hover td{background:rgba(255,255,255,.03)}
+.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--sim-ok);border:1px solid rgba(74,222,128,.2)}
+.badge-warn{background:rgba(251,191,36,.12);color:var(--sim-warn);border:1px solid rgba(251,191,36,.2)}
+.badge-alarm{background:rgba(248,113,113,.12);color:var(--sim-alarm);border:1px solid rgba(248,113,113,.2)}
+.badge-neutral{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.15)}
+/* ═══ Right Column ═══ */
+.sim-right{display:flex;flex-direction:column;gap:14px}
+/* ── Radar Chart ── */
+.radar-panel{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px;flex:0 0 auto}
+.radar-panel h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.radar-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sim-cyan)}
+.radar-canvas{width:100%;aspect-ratio:1;display:block}
+/* ── Stats Panel ── */
+.stats-panel{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px}
+.stats-panel h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.stats-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sim-ok)}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.stat-row:last-child{border-bottom:none}
+.stat-row .lbl{color:var(--ob-text-tertiary)}
+.stat-row .val{font-weight:600}
+/* ── History Chart ── */
+.history-panel{background:var(--sim-glass);backdrop-filter:blur(14px);border:1px solid var(--sim-border);border-radius:14px;padding:18px;flex:1}
+.history-panel h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.history-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sim-warn)}
+.history-panel canvas{width:100%;height:100px;display:block}
+/* ── Controls ── */
+.ctrl-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ctrl-btn{padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.ctrl-btn:hover{transform:translateY(-1px)}
+.btn-start{background:linear-gradient(135deg,rgba(74,222,128,.2),rgba(74,222,128,.1));color:var(--sim-ok);border:1px solid rgba(74,222,128,.3)}
+.btn-pause{background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(251,191,36,.1));color:var(--sim-warn);border:1px solid rgba(251,191,36,.3)}
+.btn-reset{background:rgba(0,0,0,.15);color:var(--ob-text-primary);border:1px solid var(--sim-border)}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.pulse{animation:pulse 2s infinite}
 </style>
 </head>
 <body>
 <div class="sim-layout">
+<!-- ═══ LEFT ═══ -->
 <div class="sim-left">
-<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">场景配置</span></div><div class="ob-card-body">
-<div class="form-group"><label>天气</label><select><option>晴朗</option><option>多云</option><option>暴雨</option><option>台风</option></select></div>
-<div class="form-group"><label>海况 (蒲氏风级)</label><select><option>3 — 轻浪</option><option>5 — 大浪</option><option>7 — 狂浪</option><option>9 — 狂涛</option></select></div>
-<div class="form-group"><label>交通密度</label><select><option>低 (≤5船)</option><option>中 (6-15船)</option><option>高 (&gt;15船)</option></select></div>
-<div class="form-group"><label>能见度 (nm)</label><input type="number" value="5" min="0.1" max="20" step="0.1"></div>
-<div class="form-group"><label>模拟时间</label><input type="datetime-local" value="2026-04-01T08:00"></div>
-</div></div>
-<div class="ob-card" style="margin-top:16px"><div class="ob-card-header"><span class="ob-card-title">故障注入</span></div><div class="ob-card-body">
-<div class="toggle-row"><span>主机故障</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
-<div class="toggle-row"><span>舵机故障</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
-<div class="toggle-row"><span>GPS 失锁</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
-<div class="toggle-row"><span>雷达故障</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
-<div class="toggle-row"><span>通信中断</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
-<div class="toggle-row"><span>电力丧失</span><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
-</div></div>
-<div class="ob-card" style="margin-top:16px"><div class="ob-card-header"><span class="ob-card-title">训练日志</span></div><div class="ob-card-body">
-<table class="ob-table"><thead><tr><th>时间</th><th>事件</th><th>评价</th></tr></thead><tbody>
-<tr><td>08:05</td><td>避让右舷目标船</td><td><span class="ob-badge ob-badge-ok">优秀</span></td></tr>
-<tr><td>08:12</td><td>雷达标绘 ARPA</td><td><span class="ob-badge ob-badge-ok">合格</span></td></tr>
-<tr><td>08:20</td><td>VHF 联络确认</td><td><span class="ob-badge ob-badge-warning">延迟</span></td></tr>
-<tr><td>08:31</td><td>狭水道操纵</td><td><span class="ob-badge ob-badge-ok">合格</span></td></tr>
-<tr><td>08:45</td><td>应急舵切换</td><td><span class="ob-badge ob-badge-alarm">失败</span></td></tr>
-</tbody></table></div></div>
+    <!-- Hero Stats -->
+    <div class="sim-hero">
+        <div class="hero-card"><div class="hero-val" style="color:var(--sim-cyan)" id="hScore">85</div><div class="hero-lbl">综合评分</div><div class="hero-delta">↑3 vs 上次</div></div>
+        <div class="hero-card"><div class="hero-val" style="color:var(--sim-ok)" id="hSessions">24</div><div class="hero-lbl">训练次数</div><div class="hero-delta">本月 +8</div></div>
+        <div class="hero-card"><div class="hero-val" style="color:var(--sim-purple)" id="hHours">12.5<span style="font-size:14px">h</span></div><div class="hero-lbl">累计时长</div><div class="hero-delta">↑2.3h</div></div>
+        <div class="hero-card"><div class="hero-val" style="color:var(--sim-warn)" id="hRank">3</div><div class="hero-lbl">船员排名</div><div class="hero-delta">/ 18 人</div></div>
+    </div>
+    <!-- Scenario Configuration -->
+    <div class="config-panel">
+        <h5>🎯 场景配置</h5>
+        <div class="config-grid">
+            <div class="form-group"><label>训练场景</label><select id="cfgScenario"><option>COLREGs 避碰</option><option>TSS 分道通航</option><option>港口进出</option><option>应急操纵</option><option>锚泊作业</option></select></div>
+            <div class="form-group"><label>天气</label><select id="cfgWeather"><option>晴朗</option><option>多云</option><option>暴雨</option><option>台风</option></select></div>
+            <div class="form-group"><label>海况 (蒲氏风级)</label><select id="cfgSea"><option>3 — 轻浪</option><option>5 — 大浪</option><option>7 — 狂浪</option><option>9 — 狂涛</option></select></div>
+            <div class="form-group"><label>交通密度</label><select id="cfgTraffic"><option>低 (≤5船)</option><option>中 (6-15船)</option><option>高 (>15船)</option></select></div>
+            <div class="form-group"><label>能见度 (nm)</label><input type="number" id="cfgVis" value="5" min="0.1" max="20" step="0.1"></div>
+            <div class="form-group"><label>模拟时间</label><input type="datetime-local" id="cfgTime" value="2026-04-01T08:00"></div>
+        </div>
+    </div>
+    <!-- Fault Injection -->
+    <div class="fault-panel">
+        <h5>⚡ 故障注入</h5>
+        <div class="fault-grid">
+            <div class="fault-btn" data-fault="engine" onclick="toggleFault(this)"><div class="f-icon">⚙️</div><div>主机故障</div><div class="f-name">ME Failure</div></div>
+            <div class="fault-btn" data-fault="rudder" onclick="toggleFault(this)"><div class="f-icon">🔄</div><div>舵机故障</div><div class="f-name">Rudder Lock</div></div>
+            <div class="fault-btn" data-fault="gps" onclick="toggleFault(this)"><div class="f-icon">📡</div><div>GPS 失锁</div><div class="f-name">GNSS Loss</div></div>
+            <div class="fault-btn" data-fault="radar" onclick="toggleFault(this)"><div class="f-icon">📻</div><div>雷达故障</div><div class="f-name">Radar Fail</div></div>
+            <div class="fault-btn" data-fault="comms" onclick="toggleFault(this)"><div class="f-icon">📞</div><div>通信中断</div><div class="f-name">Comms Down</div></div>
+            <div class="fault-btn" data-fault="power" onclick="toggleFault(this)"><div class="f-icon">🔌</div><div>电力丧失</div><div class="f-name">Blackout</div></div>
+        </div>
+    </div>
+    <!-- Training Log -->
+    <div class="log-panel">
+        <h5>📋 训练日志 <span class="pulse" style="font-size:10px;color:var(--sim-cyan);margin-left:auto">● LIVE</span></h5>
+        <table class="log-table">
+            <thead><tr><th>时间</th><th>事件</th><th>COLREGs</th><th>评价</th></tr></thead>
+            <tbody id="logBody">
+                <tr><td>08:05</td><td>右舷让路避让</td><td>Rule 15</td><td><span class="badge badge-ok">优秀</span></td></tr>
+                <tr><td>08:12</td><td>ARPA 雷达标绘 — CPA 0.8nm</td><td>—</td><td><span class="badge badge-ok">合格</span></td></tr>
+                <tr><td>08:20</td><td>VHF Ch16 联络确认</td><td>Rule 34</td><td><span class="badge badge-warn">延迟</span></td></tr>
+                <tr><td>08:31</td><td>狭水道右舷通行</td><td>Rule 9</td><td><span class="badge badge-ok">合格</span></td></tr>
+                <tr><td>08:45</td><td>应急舵切换 — 30s 超时</td><td>—</td><td><span class="badge badge-alarm">失败</span></td></tr>
+                <tr><td>08:52</td><td>追越船避让 — 安全距离 1.2nm</td><td>Rule 13</td><td><span class="badge badge-ok">优秀</span></td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
+<!-- ═══ RIGHT ═══ -->
 <div class="sim-right">
-<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">能力评分</span></div>
-<div class="ob-card-body"><canvas id="radarChart" class="radar-canvas"></canvas></div></div>
-<div class="ob-card" style="margin-top:16px"><div class="ob-card-header"><span class="ob-card-title">成绩统计</span></div><div class="ob-card-body">
-<div class="stats-row"><div class="stat-big"><div class="val">85</div><div class="lbl">总分</div></div>
-<div class="stat-big"><div class="val">3</div><div class="lbl">排名</div></div>
-<div class="stat-big"><div class="val">12.5h</div><div class="lbl">累计时长</div></div></div>
-</div></div>
-<div class="ctrl-btns"><button class="btn-start">&#9654; 开始</button><button class="btn-pause">&#9198; 暂停</button><button class="btn-reset">&#8634; 重置</button></div>
-</div></div>
+    <!-- Radar Chart -->
+    <div class="radar-panel">
+        <h5>🎯 能力评估雷达图</h5>
+        <canvas id="radarChart" class="radar-canvas"></canvas>
+    </div>
+    <!-- Stats -->
+    <div class="stats-panel">
+        <h5>📊 成绩详情</h5>
+        <div class="stat-row"><span class="lbl">避碰判断</span><span class="val" style="color:var(--sim-ok)">92%</span></div>
+        <div class="stat-row"><span class="lbl">导航精度</span><span class="val" style="color:var(--sim-ok)">88%</span></div>
+        <div class="stat-row"><span class="lbl">通信规范</span><span class="val" style="color:var(--sim-warn)">74%</span></div>
+        <div class="stat-row"><span class="lbl">应急反应</span><span class="val" style="color:var(--sim-alarm)">65%</span></div>
+        <div class="stat-row"><span class="lbl">操纵技能</span><span class="val" style="color:var(--sim-ok)">85%</span></div>
+        <div class="stat-row"><span class="lbl">BRM 团队协作</span><span class="val" style="color:var(--sim-ok)">80%</span></div>
+        <div class="stat-row"><span class="lbl">平均反应时间</span><span class="val">4.2 秒</span></div>
+    </div>
+    <!-- Score History -->
+    <div class="history-panel">
+        <h5>📈 评分趋势</h5>
+        <canvas id="histChart" height="100"></canvas>
+    </div>
+    <!-- Controls -->
+    <div class="ctrl-row">
+        <button class="ctrl-btn btn-start" id="btnStart">▶ 开始</button>
+        <button class="ctrl-btn btn-pause" id="btnPause">⏸ 暂停</button>
+        <button class="ctrl-btn btn-reset" id="btnReset">↺ 重置</button>
+    </div>
+</div>
+</div>
+
 <script>
-(function(){
-  var c=document.getElementById('radarChart'),ctx=c.getContext('2d');
-  function draw(){
-    var W=c.width=c.offsetWidth,H=c.height=c.offsetHeight;
-    var cx=W/2,cy=H/2,r=Math.min(W,H)/2-30;
-    var labels=['避碰','导航','通信','应急','操纵'];
-    var scores=[0.9,0.8,0.7,0.6,0.85];
-    var n=5,step=Math.PI*2/n,start=-Math.PI/2;
+// ═══════════════════════════════════════════════
+//  PoseidonX Sim Training — Enhanced
+// ═══════════════════════════════════════════════
+
+// ── Radar Chart ──
+const radarScores={避碰:0.92,导航:0.88,通信:0.74,应急:0.65,操纵:0.85,BRM:0.80,观察:0.90,规则:0.82};
+function drawRadar(scores){
+    const cv=document.getElementById('radarChart'),ctx=cv.getContext('2d');
+    const W=cv.width=cv.offsetWidth,H=cv.height=cv.offsetHeight;
+    const cx=W/2,cy=H/2,r=Math.min(W,H)/2-35;
+    const labels=Object.keys(scores),vals=Object.values(scores);
+    const n=labels.length,step=Math.PI*2/n,start=-Math.PI/2;
     ctx.clearRect(0,0,W,H);
-    for(var g=1;g<=5;g++){ctx.beginPath();for(var i=0;i<=n;i++){var a=start+i*step;ctx.lineTo(cx+r*g/5*Math.cos(a),cy+r*g/5*Math.sin(a));}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.stroke();}
-    ctx.beginPath();scores.forEach(function(s,i){var a=start+i*step;if(i===0)ctx.moveTo(cx+r*s*Math.cos(a),cy+r*s*Math.sin(a));else ctx.lineTo(cx+r*s*Math.cos(a),cy+r*s*Math.sin(a));});
-    ctx.closePath();ctx.fillStyle='rgba(0,160,255,0.25)';ctx.fill();ctx.strokeStyle='#00a0ff';ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle='#ccc';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    labels.forEach(function(l,i){var a=start+i*step;ctx.fillText(l,cx+(r+20)*Math.cos(a),cy+(r+20)*Math.sin(a));});
-  }
-  draw();window.addEventListener('resize',draw);
-})();
+    // Background rings
+    for(let g=1;g<=5;g++){ctx.beginPath();for(let i=0;i<=n;i++){const a=start+i*step;const rr=r*g/5;ctx.lineTo(cx+rr*Math.cos(a),cy+rr*Math.sin(a));}ctx.closePath();ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;ctx.stroke();}
+    // Axis lines
+    for(let i=0;i<n;i++){const a=start+i*step;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.strokeStyle='rgba(255,255,255,.05)';ctx.stroke();}
+    // Data fill
+    ctx.beginPath();vals.forEach((s,i)=>{const a=start+i*step;const x=cx+r*s*Math.cos(a),y=cy+r*s*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.closePath();
+    const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,r);grad.addColorStop(0,'rgba(34,211,238,.2)');grad.addColorStop(1,'rgba(34,211,238,.05)');
+    ctx.fillStyle=grad;ctx.fill();ctx.strokeStyle='rgba(34,211,238,.7)';ctx.lineWidth=2;ctx.stroke();
+    // Points
+    vals.forEach((s,i)=>{const a=start+i*step;const x=cx+r*s*Math.cos(a),y=cy+r*s*Math.sin(a);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='rgba(34,211,238,.9)';ctx.fill();ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fillStyle='rgba(34,211,238,.15)';ctx.fill();});
+    // Labels
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='12px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    labels.forEach((l,i)=>{const a=start+i*step;const d=r+22;ctx.fillText(l+' '+Math.round(vals[i]*100),cx+d*Math.cos(a),cy+d*Math.sin(a));});
+}
+drawRadar(radarScores);
+window.addEventListener('resize',()=>drawRadar(radarScores));
+
+// ── Score History Chart ──
+function drawHistory(){
+    const cv=document.getElementById('histChart'),ctx=cv.getContext('2d');
+    const W=cv.width=cv.offsetWidth,H=cv.height=100;
+    const scores=[72,68,75,80,78,82,79,85,83,88,85,90,88,92,85];
+    const maxV=100,pad=4;
+    ctx.clearRect(0,0,W,H);
+    // Grid
+    for(let i=0;i<4;i++){const y=pad+(H-2*pad)*i/3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.stroke();}
+    // Area
+    const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'rgba(251,191,36,.12)');grad.addColorStop(1,'rgba(251,191,36,.01)');
+    ctx.beginPath();scores.forEach((v,i)=>{const x=i/(scores.length-1)*W,y=H-pad-(v/maxV)*(H-2*pad);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    // Line
+    ctx.beginPath();scores.forEach((v,i)=>{const x=i/(scores.length-1)*W,y=H-pad-(v/maxV)*(H-2*pad);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle='rgba(251,191,36,.8)';ctx.lineWidth=2;ctx.stroke();
+    // Last point
+    const lx=(scores.length-1)/(scores.length-1)*W,ly=H-pad-(scores[scores.length-1]/maxV)*(H-2*pad);
+    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='rgba(251,191,36,.9)';ctx.fill();
+    ctx.beginPath();ctx.arc(lx,ly,8,0,Math.PI*2);ctx.fillStyle='rgba(251,191,36,.2)';ctx.fill();
+}
+drawHistory();
+window.addEventListener('resize',drawHistory);
+
+// ── Fault Injection ──
+function toggleFault(el){
+    el.classList.toggle('active');
+    const sys=el.dataset.fault;
+    if(el.classList.contains('active')){
+        fetch('/api/v1/sim/inject-fault',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,fault_type:'degraded'})}).then(()=>fetchLog()).catch(()=>{});
+    }
+}
+
+// ── API Fetch ──
+function fetchScores(){
+    fetch('/api/v1/sim/scores').then(r=>r.json()).then(d=>{
+        if(d.scores){Object.assign(radarScores,d.scores);drawRadar(radarScores);}
+        if(d.overall)document.getElementById('hScore').textContent=Math.round((d.overall||0.85)*100);
+    }).catch(()=>{});
+}
+function fetchLog(){
+    fetch('/api/v1/sim/training-log').then(r=>r.json()).then(d=>{
+        const tbody=document.getElementById('logBody');if(!tbody||!d.log)return;
+        tbody.innerHTML='';
+        d.log.slice(-8).forEach(e=>{
+            const time=e.time?new Date(e.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'';
+            const grade=e.grade==='excellent'?'badge-ok':e.grade==='fail'?'badge-alarm':e.grade==='delayed'?'badge-warn':'badge-neutral';
+            const gradeText=e.grade==='excellent'?'优秀':e.grade==='fail'?'失败':e.grade==='delayed'?'延迟':'合格';
+            tbody.innerHTML+=`<tr><td>${time}</td><td>${e.event||''}</td><td>${e.rule||'—'}</td><td><span class="badge ${grade}">${gradeText}</span></td></tr>`;
+        });
+    }).catch(()=>{});
+}
+fetchScores();setInterval(fetchScores,10000);
+fetchLog();setInterval(fetchLog,8000);
+
+// ── Controls ──
+document.getElementById('btnStart').addEventListener('click',()=>{
+    fetch('/api/v1/sim/scenario',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scenario:document.getElementById('cfgScenario').value,difficulty:'medium'})}).then(()=>{fetchLog();fetchScores();});
+});
+document.getElementById('btnPause').addEventListener('click',()=>{
+    fetch('/api/v1/sim/pause',{method:'POST'}).catch(()=>{});
+});
+document.getElementById('btnReset').addEventListener('click',()=>{
+    fetch('/api/v1/sim/reset',{method:'POST'}).then(()=>{fetchLog();fetchScores();}).catch(()=>{});
+});
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws/sim');ws.onmessage=function(e){try{const d=JSON.parse(e.data);if(d.type==='sim_event')fetchLog();if(d.type==='sim_score')fetchScores();}catch(ex){}};ws.onclose=function(){setTimeout(cn,5000);};ws.onerror=function(){ws.close();};}catch(e){setTimeout(cn,5000);}}cn();})();
 </script>
 <script src="/js/nav-sidebar.js" data-active="sim"></script>
-<script>(function(){var P="ws://"+location.host+"/ws/sim";var ws,t;function C(){ws=new WebSocket(P);ws.onclose=function(){clearTimeout(t);t=setTimeout(C,3e3)};ws.onerror=function(){ws.close()}}C()})();</script>
 </body>
 </html>

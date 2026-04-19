@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="night">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="ob-title" content="导航与操纵"><title>导航与操纵 — PoseidonX K-Bridge</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e14;--bg2:#121820;--bg3:#1a2230;--panel:#141c28;--border:#1e2a3a;--text:#c8d4e0;--text2:#7a8fa6;--accent:#00aaff;--ok:#00cc66;--warn:#ffaa00;--alarm:#ff3344;--heading-tape:#182030;--tool-bg:#0e1420;--tool-hover:#1a2a3e;--tab-active:#00aaff22;--chip-bg:#0e1a28}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:13px}
+.shell{display:grid;grid-template-rows:38px 32px 34px 1fr 28px;height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.brand{font-weight:700;font-size:15px;color:var(--accent);letter-spacing:.5px}
+.ws-dot{width:8px;height:8px;border-radius:50%;background:var(--alarm);transition:background .3s}.ws-dot.on{background:var(--ok)}
+.overlay-chip{padding:2px 10px;border-radius:12px;font-size:11px;background:var(--chip-bg);border:1px solid var(--border);color:var(--text2)}
+.overlay-chip .v{color:var(--text);font-weight:600;margin-left:4px}
+.clock{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;color:var(--accent)}
+.menubar{display:flex;align-items:center;gap:0;padding:0 8px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tab{padding:6px 18px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;user-select:none;text-transform:uppercase;letter-spacing:.5px}
+.tab:hover{color:var(--text);background:var(--tool-hover)}.tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--tab-active)}
+.menu-gap{flex:1}
+.menu-btn{padding:6px 12px;cursor:pointer;font-size:11px;color:var(--text2);border:1px solid var(--border);border-radius:4px;background:transparent}
+.menu-btn:hover{background:var(--tool-hover);color:var(--text)}
+.heading-tape{background:var(--heading-tape);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+#headingCanvas{width:100%;height:100%}
+.workspace{display:grid;grid-template-columns:48px 1fr 320px;overflow:hidden}
+.toolbar{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;background:var(--tool-bg);border-right:1px solid var(--border);overflow-y:auto}
+.tool{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;color:var(--text2);font-size:11px;font-weight:700;transition:all .15s;border:1px solid transparent}
+.tool:hover{background:var(--tool-hover);color:var(--text)}.tool.active{background:var(--accent);color:#fff}
+.tool-sep{width:24px;border-top:1px solid var(--border);margin:4px 0}
+.view-area{position:relative;overflow:hidden}
+.view-pane{position:absolute;inset:0;display:none}.view-pane.active{display:flex;flex-direction:column}
+#ecdisMap{flex:1}
+#radarCanvas{width:100%;height:100%;background:#0a0e14}
+.conning-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;padding:24px;height:100%}
+.conning-card{background:var(--bg3);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.conning-label{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:1px}
+.conning-value{font-size:56px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+.conning-unit{font-size:14px;color:var(--text2);margin-top:-4px}
+.camera-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;height:100%}
+.camera-cell{background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:12px}
+.side-panel{display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto}
+.sec{border-bottom:1px solid var(--border)}.sec-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2)}
+.sec-badge{font-size:10px;padding:1px 7px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700}
+.sec-body{padding:0 12px 10px}
+.data-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
+.data-label{color:var(--text2)}.data-val{font-weight:600;font-variant-numeric:tabular-nums}
+.ais-tbl{width:100%;font-size:11px;border-collapse:collapse}.ais-tbl th{text-align:left;padding:3px 6px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)}
+.ais-tbl td{padding:3px 6px;border-bottom:1px solid var(--border)}.ais-tbl tr.danger td{color:var(--alarm)}.ais-tbl tr.warn td{color:var(--warn)}
+.ap-mode{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text2);margin:2px}
+.ap-mode.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.alarm-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px}
+.alarm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}.alarm-dot.critical{background:var(--alarm)}.alarm-dot.warning{background:var(--warn)}.alarm-dot.caution{background:var(--ok)}
+.chat-box{display:flex;flex-direction:column;height:220px}
+.chat-stream{flex:1;overflow-y:auto;padding:6px 0;display:flex;flex-direction:column;gap:6px}
+.bubble{max-width:90%;padding:6px 10px;border-radius:8px;font-size:12px;line-height:1.4;word-break:break-word}
+.bubble.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:2px}
+.bubble.ai{align-self:flex-start;background:var(--bg3);color:var(--text);border-bottom-left-radius:2px}
+.chat-sugs{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0}
+.sug{font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:transparent}
+.sug:hover{background:var(--tool-hover);color:var(--text)}
+.chat-input-row{display:flex;gap:4px;padding-top:6px}
+.chat-input-row input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text);font-size:12px;outline:none}
+.chat-input-row input:focus{border-color:var(--accent)}
+.chat-input-row button{padding:4px 10px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer}
+.chat-state{font-size:10px;color:var(--text2);padding:2px 0}
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--bg2);border-top:1px solid var(--border);font-size:11px}
+.statusbar .left{display:flex;gap:16px;color:var(--text2)}.statusbar .right{color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="brand">PoseidonX</span>
+      <span class="ws-dot" id="wsDot" title="WebSocket"></span>
+      <span style="font-size:11px;color:var(--text2)" id="wsLabel">断开</span>
+      <a href="/navigation.html" style="font-size:10px;color:var(--text2);text-decoration:none;padding:2px 8px;border:1px solid var(--border);border-radius:4px;margin-left:8px" title="Switch to Classic view">← Classic</a>
+    </div>
+    <div class="topbar-right">
+      <span class="overlay-chip">SOG <span class="v" id="overlaySog">—</span> kn</span>
+      <span class="overlay-chip">COG <span class="v" id="overlayCog">—</span>°</span>
+      <span class="overlay-chip">RISK <span class="v" id="overlayRisk">LOW</span></span>
+      <span class="clock" id="utcClock">00:00:00 UTC</span>
+    </div>
+  </div>
+  <div class="menubar">
+    <div class="tab active" data-view="ecdis">ECDIS</div>
+    <div class="tab" data-view="radar">RADAR</div>
+    <div class="tab" data-view="conning">CONNING</div>
+    <div class="tab" data-view="camera">CAMERA</div>
+    <div class="menu-gap"></div>
+    <div class="menu-btn" id="btnNorthUp">N-UP</div>
+    <div class="menu-btn" id="btnHeadUp">H-UP</div>
+    <div class="menu-btn" id="btnMOB" style="color:var(--alarm)">MOB</div>
+  </div>
+  <div class="heading-tape"><canvas id="headingCanvas"></canvas></div>
+  <div class="workspace">
+    <div class="toolbar">
+      <div class="tool active" title="Cursor">CR</div>
+      <div class="tool" title="Range">RG</div>
+      <div class="tool" title="EBL">EB</div>
+      <div class="tool" title="VRM">VR</div>
+      <div class="tool-sep"></div>
+      <div class="tool" title="Zoom In">＋</div>
+      <div class="tool" title="Zoom Out">－</div>
+      <div class="tool-sep"></div>
+      <div class="tool" title="Route">RT</div>
+      <div class="tool" title="Waypoint">WP</div>
+      <div class="tool" title="Measure">MS</div>
+    </div>
+    <div class="view-area">
+      <div class="view-pane active" id="paneEcdis"><div id="ecdisMap"></div></div>
+      <div class="view-pane" id="paneRadar"><canvas id="radarCanvas"></canvas></div>
+      <div class="view-pane" id="paneConning">
+        <div class="conning-grid">
+          <div class="conning-card"><span class="conning-label">Heading</span><span class="conning-value" id="conningHdg">—</span><span class="conning-unit">°</span></div>
+          <div class="conning-card"><span class="conning-label">Speed</span><span class="conning-value" id="conningSog">—</span><span class="conning-unit">kn</span></div>
+          <div class="conning-card"><span class="conning-label">Course</span><span class="conning-value" id="conningCog">—</span><span class="conning-unit">°</span></div>
+          <div class="conning-card"><span class="conning-label">ROT</span><span class="conning-value" id="conningRot">—</span><span class="conning-unit">°/min</span></div>
+        </div>
+      </div>
+      <div class="view-pane" id="paneCamera">
+        <div class="camera-grid">
+          <div class="camera-cell">CAM 1 — Bow</div>
+          <div class="camera-cell">CAM 2 — Stern</div>
+          <div class="camera-cell">CAM 3 — Port</div>
+          <div class="camera-cell">CAM 4 — Starboard</div>
+        </div>
+      </div>
+    </div>
+    <div class="side-panel">
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">Own Ship</span></div>
+        <div class="sec-body">
+          <div class="data-row"><span class="data-label">LAT</span><span class="data-val" id="ownLat">—</span></div>
+          <div class="data-row"><span class="data-label">LON</span><span class="data-val" id="ownLon">—</span></div>
+          <div class="data-row"><span class="data-label">HDG</span><span class="data-val" id="ownHdg">—°</span></div>
+          <div class="data-row"><span class="data-label">SOG</span><span class="data-val" id="ownSog">— kn</span></div>
+          <div class="data-row"><span class="data-label">COG</span><span class="data-val" id="ownCog">—°</span></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">AIS Targets</span><span class="sec-badge" id="aisCount">0</span></div>
+        <div class="sec-body">
+          <table class="ais-tbl"><thead><tr><th>Name</th><th>CPA</th><th>TCPA</th><th>SOG</th></tr></thead><tbody id="aisBody"></tbody></table>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">Autopilot</span><span style="font-size:11px;color:var(--ok);font-weight:600" id="autopilotLabel">STANDBY</span></div>
+        <div class="sec-body">
+          <div class="ap-mode active" data-mode="standby">STBY</div>
+          <div class="ap-mode" data-mode="heading">HDG</div>
+          <div class="ap-mode" data-mode="track">TRACK</div>
+          <div class="ap-mode" data-mode="wind">WIND</div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">Alarms</span><span class="sec-badge" id="alarmCount" style="background:var(--alarm)">0</span></div>
+        <div class="sec-body" id="alarmList">
+          <div style="font-size:11px;color:var(--text2)">No active alarms</div>
+        </div>
+      </div>
+      <div class="sec" style="flex:1;display:flex;flex-direction:column">
+        <div class="sec-head"><span class="sec-title">Bridge Chat AI</span><a href="/poseidon-config.html" style="font-size:10px;color:var(--text2);text-decoration:none;margin-right:6px" title="LLM 配置">⚙️</a><span class="chat-state" id="chatState">idle</span></div>
+        <div class="sec-body chat-box">
+          <div class="chat-stream" id="chatStream">
+            <div class="bubble ai">K-Bridge Navigation ready. Ask about weather, routing, COLREGs, or ship status.</div>
+          </div>
+          <div class="chat-sugs" id="chatSuggestions">
+            <span class="sug">Weather forecast</span>
+            <span class="sug">CPA analysis</span>
+            <span class="sug">Route ETA</span>
+          </div>
+          <div class="chat-input-row">
+            <input id="chatInput" type="text" placeholder="Ask Bridge AI..." autocomplete="off">
+            <button id="sendChatBtn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="statusbar">
+    <div class="left">
+      <span id="statusSummary">ECDIS — Normal Operation</span>
+      <span id="statusPosition">—</span>
+    </div>
+    <div class="right">K-Bridge MFD v2.0 — PoseidonX</div>
+  </div>
+</div>
+<script src="/js/nav-sidebar.js" data-active="navigation"></script>
+<script>
+(function(){"use strict";
+var G=function(id){return document.getElementById(id)};
+var els={utcClock:G("utcClock"),wsDot:G("wsDot"),wsLabel:G("wsLabel"),
+overlaySog:G("overlaySog"),overlayCog:G("overlayCog"),overlayRisk:G("overlayRisk"),
+ownLat:G("ownLat"),ownLon:G("ownLon"),ownHdg:G("ownHdg"),ownSog:G("ownSog"),ownCog:G("ownCog"),
+conningHdg:G("conningHdg"),conningSog:G("conningSog"),conningCog:G("conningCog"),conningRot:G("conningRot"),
+aisCount:G("aisCount"),aisBody:G("aisBody"),autopilotLabel:G("autopilotLabel"),
+alarmCount:G("alarmCount"),alarmList:G("alarmList"),
+chatState:G("chatState"),chatStream:G("chatStream"),chatSuggestions:G("chatSuggestions"),
+chatInput:G("chatInput"),sendChatBtn:G("sendChatBtn"),
+headingCanvas:G("headingCanvas"),radarCanvas:G("radarCanvas"),
+statusSummary:G("statusSummary"),statusPosition:G("statusPosition")};
+var ws=null,map=null,shipMarker=null;
+var shipState={lat:31.23,lon:121.49,hdg:45,sog:12.4,cog:45.2,rot:0.3};
+var chatSessionId="nav_"+Date.now();
+
+function tickClock(){var d=new Date();els.utcClock.textContent=d.toISOString().slice(11,19)+" UTC";requestAnimationFrame(tickClock);}
+tickClock();
+
+var tabs=document.querySelectorAll(".tab[data-view]");
+var panes={ecdis:document.getElementById("paneEcdis"),radar:document.getElementById("paneRadar"),conning:document.getElementById("paneConning"),camera:document.getElementById("paneCamera")};
+tabs.forEach(function(t){t.addEventListener("click",function(){
+  tabs.forEach(function(x){x.classList.remove("active")});
+  t.classList.add("active");
+  var v=t.dataset.view;
+  Object.keys(panes).forEach(function(k){panes[k].classList.toggle("active",k===v)});
+  if(v==="ecdis"&&map)map.resize();
+  if(v==="radar")startRadar();
+  els.statusSummary.textContent=v.toUpperCase()+" \u2014 Normal Operation";
+})});
+try{
+map=new maplibregl.Map({container:"ecdisMap",style:{version:8,sources:{osm:{type:"raster",tiles:["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256}},layers:[{id:"osm",type:"raster",source:"osm"}]},center:[shipState.lon,shipState.lat],zoom:11,attributionControl:false});
+map.addControl(new maplibregl.NavigationControl(),"bottom-right");
+var me=document.createElement("div");
+me.innerHTML="<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><polygon points=\"12,2 20,20 12,16 4,20\" fill=\"#00aaff\" stroke=\"#fff\" stroke-width=\"1\"/></svg>";
+shipMarker=new maplibregl.Marker({element:me}).setLngLat([shipState.lon,shipState.lat]).addTo(map);
+}catch(e){console.warn("Map init failed:",e)}
+
+var radarAnim=null;
+function startRadar(){
+if(radarAnim)return;var cv=els.radarCanvas,ctx=cv.getContext("2d"),sweep=0;
+function resizeR(){cv.width=cv.clientWidth;cv.height=cv.clientHeight}resizeR();
+window.addEventListener("resize",resizeR);
+function drawRadar(){
+var cx=cv.width/2,cy=cv.height/2,r=Math.min(cx,cy)-10;
+ctx.fillStyle="#0a0e14";ctx.fillRect(0,0,cv.width,cv.height);
+ctx.strokeStyle="#1a2a3a";ctx.lineWidth=0.5;
+for(var i=1;i<=4;i++){ctx.beginPath();ctx.arc(cx,cy,r*i/4,0,Math.PI*2);ctx.stroke()}
+ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();
+ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();
+ctx.save();ctx.translate(cx,cy);ctx.rotate(sweep);
+ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-r);
+ctx.strokeStyle="#00ff6644";ctx.lineWidth=2;ctx.stroke();
+var sg=ctx.createLinearGradient(0,0,0,-r);
+sg.addColorStop(0,"#00ff6622");sg.addColorStop(1,"#00ff6600");
+ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,-Math.PI/2-0.4,-Math.PI/2);ctx.closePath();
+ctx.fillStyle=sg;ctx.fill();ctx.restore();
+ctx.fillStyle="#00ff66";ctx.font="10px monospace";ctx.fillText("N",cx-3,cy-r-4);
+sweep+=0.02;if(sweep>Math.PI*2)sweep-=Math.PI*2;
+radarAnim=requestAnimationFrame(drawRadar)}drawRadar()}
+function drawHeadingTape(hdg){
+var cv=els.headingCanvas;if(!cv)return;
+var dpr=window.devicePixelRatio||1;cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;
+var ctx=cv.getContext("2d");ctx.scale(dpr,dpr);
+var w=cv.clientWidth,h=cv.clientHeight;
+ctx.fillStyle="#182030";ctx.fillRect(0,0,w,h);
+var ppd=6,center=w/2;ctx.strokeStyle="#2a3a4e";ctx.fillStyle="#7a8fa6";ctx.font="10px monospace";ctx.textAlign="center";
+for(var d=-60;d<=60;d++){var deg=((hdg+d)%360+360)%360;var x=center+d*ppd;
+if(x<0||x>w)continue;
+if(deg%10===0){ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(x,h-16);ctx.lineWidth=1;ctx.stroke();ctx.fillText(String(deg).padStart(3,"0"),x,12)}
+else if(deg%5===0){ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(x,h-10);ctx.lineWidth=0.5;ctx.stroke()}}
+ctx.fillStyle="#00aaff";ctx.beginPath();ctx.moveTo(center,h);ctx.lineTo(center-5,h-8);ctx.lineTo(center+5,h-8);ctx.closePath();ctx.fill();
+ctx.font="bold 12px monospace";ctx.fillText(hdg.toFixed(1)+"\u00b0",center,h-18)}
+drawHeadingTape(shipState.hdg);
+document.querySelectorAll(".ap-mode").forEach(function(b){b.addEventListener("click",function(){
+document.querySelectorAll(".ap-mode").forEach(function(x){x.classList.remove("active")});
+b.classList.add("active");els.autopilotLabel.textContent=b.dataset.mode.toUpperCase()})});
+
+document.querySelectorAll(".toolbar .tool").forEach(function(t){t.addEventListener("click",function(){
+document.querySelectorAll(".toolbar .tool").forEach(function(x){x.classList.remove("active")});t.classList.add("active")})});
+
+function updateShipUI(ship){
+if(!ship)return;
+if(ship.lat!=null)shipState.lat=ship.lat;if(ship.lon!=null)shipState.lon=ship.lon;
+if(ship.hdg!=null)shipState.hdg=ship.hdg;if(ship.sog!=null)shipState.sog=ship.sog;
+if(ship.cog!=null)shipState.cog=ship.cog;if(ship.rot!=null)shipState.rot=ship.rot;
+els.ownLat.textContent=shipState.lat.toFixed(4)+"\u00b0";
+els.ownLon.textContent=shipState.lon.toFixed(4)+"\u00b0";
+els.ownHdg.textContent=shipState.hdg.toFixed(1)+"\u00b0";
+els.ownSog.textContent=shipState.sog.toFixed(1)+" kn";
+els.ownCog.textContent=shipState.cog.toFixed(1)+"\u00b0";
+els.overlaySog.textContent=shipState.sog.toFixed(1);
+els.overlayCog.textContent=shipState.cog.toFixed(1);
+els.conningHdg.textContent=shipState.hdg.toFixed(1);
+els.conningSog.textContent=shipState.sog.toFixed(1);
+els.conningCog.textContent=shipState.cog.toFixed(1);
+els.conningRot.textContent=(shipState.rot>=0?"+":"")+shipState.rot.toFixed(1);
+drawHeadingTape(shipState.hdg);
+els.statusPosition.textContent=shipState.lat.toFixed(4)+"\u00b0N "+shipState.lon.toFixed(4)+"\u00b0E";
+if(shipMarker){shipMarker.setLngLat([shipState.lon,shipState.lat]);shipMarker.getElement().style.transform+=" rotate("+shipState.hdg+"deg)"}
+if(map)map.easeTo({center:[shipState.lon,shipState.lat],duration:800})}
+
+function updateAIS(targets){
+if(!Array.isArray(targets))return;
+els.aisCount.textContent=targets.length;
+els.aisBody.innerHTML=targets.slice(0,10).map(function(t){
+var cpa=t.cpa!=null?t.cpa.toFixed(1):"\u2014";
+var tcpa=t.tcpa!=null?t.tcpa.toFixed(0):"\u2014";
+var cls=t.cpa!=null&&t.cpa<0.5?"danger":(t.cpa!=null&&t.cpa<2?"warn":"");
+return "<tr class=\""+cls+"\"><td>"+(t.name||t.mmsi||"\u2014")+"</td><td>"+cpa+" nm</td><td>"+tcpa+" min</td><td>"+(t.sog!=null?t.sog.toFixed(1):"\u2014")+"</td></tr>"}).join("")}
+
+function updateAlarms(alarms){
+if(!Array.isArray(alarms)||alarms.length===0){els.alarmCount.textContent="0";els.alarmList.innerHTML="<div style=\"font-size:11px;color:var(--text2)\">No active alarms</div>";return}
+els.alarmCount.textContent=alarms.length;
+els.alarmList.innerHTML=alarms.map(function(a){
+var lv=a.level||"caution";
+return "<div class=\"alarm-item\"><span class=\"alarm-dot "+lv+"\"></span><span>"+(a.message||"Unknown alarm")+"</span><span style=\"margin-left:auto;color:var(--text2);font-size:10px\">"+(a.time||"")+"</span></div>"}).join("");
+var hasCritical=alarms.some(function(a){return a.level==="critical"});
+if(hasCritical)els.overlayRisk.textContent="HIGH";else els.overlayRisk.textContent="LOW"}
+function appendBubble(who,text){
+var d=document.createElement("div");d.className="bubble "+who;d.textContent=text;
+els.chatStream.appendChild(d);els.chatStream.scrollTop=els.chatStream.scrollHeight}
+
+function setSuggestions(arr){
+if(!Array.isArray(arr)||arr.length===0)return;
+els.chatSuggestions.innerHTML=arr.map(function(s){return "<span class=\"sug\">"+s+"</span>"}).join("");
+els.chatSuggestions.querySelectorAll(".sug").forEach(function(b){b.addEventListener("click",function(){
+els.chatInput.value=b.textContent;sendChat()})})}
+
+function sendChat(){
+var msg=els.chatInput.value.trim();if(!msg)return;
+els.chatInput.value="";appendBubble("user",msg);els.chatState.textContent="thinking...";
+if(ws&&ws.readyState===1){ws.send(JSON.stringify({action:"chat",message:msg,session_id:chatSessionId}))}
+else{fetch("/api/v1/bridge-chat/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:msg,session_id:chatSessionId})})
+.then(function(r){return r.json()}).then(function(d){
+appendBubble("ai",d.reply||"No response");if(d.suggestions)setSuggestions(d.suggestions);
+els.chatState.textContent="idle"}).catch(function(){appendBubble("ai","Error contacting Bridge AI");els.chatState.textContent="error"})}}
+
+els.sendChatBtn.addEventListener("click",sendChat);
+els.chatInput.addEventListener("keydown",function(e){if(e.key==="Enter")sendChat()});
+els.chatSuggestions.querySelectorAll(".sug").forEach(function(b){b.addEventListener("click",function(){
+els.chatInput.value=b.textContent;sendChat()})});
+function connectWS(){
+try{ws=new WebSocket("ws://"+location.host+"/ws/navigation");
+ws.onopen=function(){els.wsDot.classList.add("on");els.wsLabel.textContent="connected"};
+ws.onclose=function(){els.wsDot.classList.remove("on");els.wsLabel.textContent="disconnected";ws=null;setTimeout(connectWS,3000)};
+ws.onerror=function(){ws.close()};
+ws.onmessage=function(ev){
+try{var msg=JSON.parse(ev.data)}catch(e){return}
+if(msg.type==="init"){
+if(msg.ship)updateShipUI(msg.ship);
+if(msg.ais)updateAIS(msg.ais);
+if(msg.alarms)updateAlarms(msg.alarms)}
+else if(msg.type==="data_update"&&msg.data){
+var d=msg.data;
+if(d.sensors){var s=d.sensors;updateShipUI({lat:s.lat,lon:s.lon,hdg:d.hdg||s.hdg,sog:s.sog,cog:d.cog||s.cog,rot:s.rot})}
+if(d.ais_targets){var arr=[];for(var k in d.ais_targets){arr.push(d.ais_targets[k])}updateAIS(arr)}
+if(d.alarms)updateAlarms(d.alarms)}
+else if(msg.type==="chat_reply"){
+appendBubble("ai",msg.reply||"No response");
+if(msg.suggestions)setSuggestions(msg.suggestions);
+els.chatState.textContent=msg.urgency==="critical"?"URGENT":"idle"}
+}}catch(e){setTimeout(connectWS,5000)}}
+connectWS();
+window.addEventListener("resize",function(){drawHeadingTape(shipState.hdg);if(map)map.resize()});
+updateShipUI(shipState);
+})();
+</script>
+</body>
+</html>

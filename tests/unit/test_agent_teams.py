@@ -340,7 +340,7 @@ class TestBuildTeam:
         team = create_build_team()
         assert len(team.models) == 2
         model_ids = set(team.models.keys())
-        assert model_ids == {"copilot", "deepseek_r1"}
+        assert model_ids == {"copilot", "deepseek"}
         assert team.models["copilot"].is_default is True
 
     def test_build_team_serialization(self):

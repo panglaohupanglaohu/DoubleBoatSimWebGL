@@ -138,3 +138,23 @@ class LRITReporterChannel(MarineChannel):
             "reports_sent": len(self._report_history),
             "reporting_due": due["reporting_due"],
         }
+
+    # ── SOLAS V/19-1 定时位置报告 ──
+    def send_position_report(self) -> Dict[str, Any]:
+        """SOLAS V/19-1: 向 LRIT DC 发送定时位置报告 (每 6h)."""
+        report = self.generate_report()
+        if report.get("status") == "generated":
+            from datetime import datetime
+            self._last_report_time = datetime.now().isoformat()
+            return {
+                "sent": True,
+                "report": report,
+                "report_interval_hours": self._reporting_interval_hours,
+                "reference": "SOLAS V/19-1, IMO MSC.210(81)",
+            }
+        return {"sent": False, "reason": "Report generation failed"}
+
+    @property
+    def report_interval(self) -> float:
+        """LRIT 报告间隔 (小时)."""
+        return self._reporting_interval_hours

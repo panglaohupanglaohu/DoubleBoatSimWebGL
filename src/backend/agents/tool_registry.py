@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from .models import ToolCategory, ToolDefinition
+from .execution_registry import ToolPermissionContext
 
 
 def get_default_tools() -> List[ToolDefinition]:
@@ -137,10 +138,12 @@ def get_default_tools() -> List[ToolDefinition]:
     ]
 
 class ToolRegistry:
-    """Runtime registry for managing tools."""
+    """Runtime registry for managing tools with per-agent binding."""
 
     def __init__(self) -> None:
         self._tools: Dict[str, ToolDefinition] = {}
+        # Per-agent tool overrides: agent_id -> set of enabled tool_ids
+        self._agent_bindings: Dict[str, set] = {}
 
     def load_defaults(self) -> None:
         """Load all default tools into the registry."""
@@ -183,6 +186,156 @@ class ToolRegistry:
             return True
         return False
 
+    # ── Per-Agent Tool Binding (Clawith-style) ──────────────
+
+    def bind_tools_to_agent(self, agent_id: str, tool_ids: List[str]) -> None:
+        """Bind specific tools to an agent — accepts tool_id or tool name."""
+        self._agent_bindings[agent_id] = set(tool_ids)
+
+    def unbind_agent(self, agent_id: str) -> None:
+        """Remove agent-specific tool binding (falls back to all enabled)."""
+        self._agent_bindings.pop(agent_id, None)
+
+    def get_agent_tools(self, agent_id: str) -> List[ToolDefinition]:
+        """Return tools available to a specific agent."""
+        binding = self._agent_bindings.get(agent_id)
+        if binding is not None:
+            return [t for t in self._tools.values()
+                    if (t.tool_id in binding or t.name in binding) and t.enabled]
+        return self.list_enabled()
+
+    def get_agent_tool_ids(self, agent_id: str) -> List[str]:
+        """Return tool IDs available to a specific agent."""
+        return [t.tool_id for t in self.get_agent_tools(agent_id)]
+
+    def get_openai_tools_schema(self, agent_id: str = "") -> List[Dict[str, Any]]:
+        """Build OpenAI-format tool definitions for API calls."""
+        tools = self.get_agent_tools(agent_id) if agent_id else self.list_enabled()
+        result = []
+        for t in tools:
+            props = {}
+            required = []
+            for pname, pdef in (t.parameters or {}).items():
+                props[pname] = {
+                    "type": pdef.get("type", "string"),
+                    "description": pdef.get("description", ""),
+                }
+                if pdef.get("required", False):
+                    required.append(pname)
+            result.append({
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": props,
+                        "required": required,
+                    },
+                },
+            })
+        return result
+
+    # ── Search & Discovery ──────────────────────────────────
+
+    def search(self, query: str) -> List[ToolDefinition]:
+        """Search tools by name or description."""
+        q = query.lower()
+        return [
+            t for t in self._tools.values()
+            if q in t.name.lower() or q in t.description.lower()
+        ]
+
+    def get_by_name(self, name: str) -> Optional[ToolDefinition]:
+        """Find a tool by its name (not ID)."""
+        for t in self._tools.values():
+            if t.name == name:
+                return t
+        return None
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize registry to dict."""
         return {tid: t.to_dict() for tid, t in self._tools.items()}
+
+    # ── Permission-Filtered Listing (Clawith-style) ─────────
+
+    def list_with_permissions(
+        self,
+        permission_context: Optional[ToolPermissionContext] = None,
+        simple_mode: bool = False,
+    ) -> List[ToolDefinition]:
+        """List tools filtered by PermissionContext — mirrors claw-code get_tools."""
+        tools = self.list_enabled()
+
+        if simple_mode:
+            core_names = {"read_file", "write_file", "run_shell", "run_python", "web_search"}
+            tools = [t for t in tools if t.name in core_names]
+
+        if permission_context:
+            tools = [t for t in tools if not permission_context.blocks(t.name)]
+
+        return tools
+
+    # ── Bulk Operations (Clawith-style) ─────────────────────
+
+    def bulk_update_enabled(self, updates: List[Dict[str, Any]]) -> int:
+        """Bulk update tool enabled status. Returns count of updated tools."""
+        count = 0
+        for update in updates:
+            tool_id = update.get("tool_id", "")
+            enabled = update.get("enabled", True)
+            tool = self._tools.get(tool_id)
+            if tool is None:
+                # Try by name
+                tool = self.get_by_name(tool_id)
+            if tool is not None:
+                tool.enabled = enabled
+                count += 1
+        return count
+
+    # ── Tool Config Management (Clawith-style) ──────────────
+
+    def update_tool_config(
+        self,
+        tool_id: str,
+        config: Dict[str, Any],
+    ) -> Optional[ToolDefinition]:
+        """Update a tool's runtime config — mirrors Clawith tool config."""
+        tool = self._tools.get(tool_id) or self.get_by_name(tool_id)
+        if tool is None:
+            return None
+        tool.config = {**tool.config, **config}
+        return tool
+
+    def get_tool_config(self, tool_id: str) -> Dict[str, Any]:
+        """Get merged config for a tool."""
+        tool = self._tools.get(tool_id) or self.get_by_name(tool_id)
+        if tool is None:
+            return {}
+        return {**tool.config}
+
+    # ── MCP-style Tool Registration ─────────────────────────
+
+    def register_mcp_tool(
+        self,
+        name: str,
+        description: str = "",
+        parameters: Optional[Dict[str, Any]] = None,
+        mcp_server_url: str = "",
+        mcp_server_name: str = "",
+    ) -> ToolDefinition:
+        """Register an MCP tool at runtime — mirrors Clawith MCP tool creation."""
+        tool = ToolDefinition(
+            name=name,
+            description=description,
+            category=ToolCategory.MARITIME,  # default for maritime CPS
+            parameters=parameters or {},
+            source="mcp",
+            config={"mcp_server_url": mcp_server_url, "mcp_server_name": mcp_server_name},
+        )
+        self._tools[tool.tool_id] = tool
+        return tool
+
+    def unregister_tool(self, tool_id: str) -> bool:
+        """Remove a tool from the registry."""
+        return self._tools.pop(tool_id, None) is not None

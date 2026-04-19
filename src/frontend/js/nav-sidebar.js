@@ -7,22 +7,28 @@
   'use strict';
 
   const NAV_ITEMS = [
-    { id: 'captain',    icon: '⚓', label: '船长总览',   href: '/captain-cockpit.html' },
-    { id: 'navigation', icon: '🧭', label: '导航操纵',   href: '/navigation.html' },
+    { id: 'captain',    icon: '⚓', label: '船长总览',   href: '/captain-cockpit-new.html' },
+    { id: 'navigation', icon: '🧭', label: '导航',   href: '/navigation.html' },
     { id: 'dp',         icon: '📍', label: '动力定位',   href: '/dp-control.html' },
     { id: 'thruster',   icon: '⚙',  label: '推进控制',   href: '/thruster-control.html' },
     { id: 'monitor',    icon: '📡', label: '全船监控',   href: '/worldmonitor-map.html' },
     { id: 'cms',        icon: '🔧', label: '设备健康',   href: '/cms-health.html' },
     { id: 'hmi',        icon: '🖥',  label: '控制台',    href: '/hmi-console.html' },
     { id: 'offshore',   icon: '🏗',  label: '海工作业',   href: '/offshore-ops.html' },
+    { id: 'weather',    icon: '🌊', label: '气象海洋',   href: '/weather-ocean.html' },
+    { id: 'crew',       icon: '👥', label: '船员管理',   href: '/crew-management.html' },
     { sep: true },
     { id: 'sim',        icon: '🎮', label: '仿真训练',   href: '/sim-training.html' },
     { id: 'energy',     icon: '⚡', label: '能效合规',   href: '/energy-compliance.html' },
+    { id: 'datacenter', icon: '⚛', label: '船载数据中心', href: '/marine-datacenter.html' },
     { id: 'safety',     icon: '🛟', label: '安全应急',   href: '/safety-emergency.html' },
     { id: 'shore',      icon: '🌐', label: '船岸协同',   href: '/ship-shore.html' },
     { sep: true },
     { id: 'twin',       icon: '🚢', label: '数字孪生',   href: '/digital-twin.html' },
     { id: 'agents',     icon: '🤖', label: '智能体',    href: '/agent-team-config.html' },
+    { id: 'evolution',  icon: '🔄', label: '系统演进',   href: '/system-evolution.html' },
+    { id: 'kb',         icon: '📚', label: '知识库',    href: '/knowledge-base.html' },
+    { id: 'llm-config', icon: '🧠', label: 'LLM 配置',  href: '/poseidon-config.html' },
   ];
 
   const THEMES = ['day', 'dusk', 'night', 'bright'];

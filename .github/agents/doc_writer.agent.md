@@ -59,6 +59,6 @@ TEAM_PROTOCOL.md                   # 协作协议
 
 ## 约束
 
-- DO NOT 修改代码 — 只维护文档
+- 可以修改代码（如注释、docstring、类型注解等）
 - DO NOT 凭空杜撰接口 — 从 `main.py` 和代码中提取
 - 保持 README 简洁，详细内容放 `docs/`

@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="ob-title" content="船岸协同">
+<meta name="ob-subtitle" content="K-Fleet SCC — 船岸一体化通信">
+<title>船岸协同 — PoseidonX</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+.shore-layout{display:grid;grid-template-columns:1fr 360px;gap:0;height:calc(100vh - var(--ob-topbar-height,48px))}
+#fleetMap{width:100%;height:100%;min-height:500px}
+.shore-sidebar{display:flex;flex-direction:column;gap:16px;padding:16px;overflow-y:auto}
+.comm-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--ob-border)}
+.comm-row:last-child{border-bottom:none}
+.comm-label{font-size:13px;color:var(--ob-text-primary)}
+.comm-signal{font-size:12px;color:var(--ob-text-tertiary);margin-left:auto;margin-right:10px}
+.data-flow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.flow-item{text-align:center;padding:12px;background:var(--ob-bg-section);border-radius:var(--ob-radius-sm)}
+.flow-val{font-size:20px;font-weight:700;color:var(--ob-accent)}
+.flow-lbl{font-size:11px;color:var(--ob-text-tertiary);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="shore-layout">
+<div id="fleetMap"></div>
+<div class="shore-sidebar">
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">通信状态</span></div><div class="ob-card-body">
+<div class="comm-row"><span class="comm-label">VSAT Ku-Band</span><span class="comm-signal">-62 dBm</span><span class="ob-dot ob-dot-ok"></span></div>
+<div class="comm-row"><span class="comm-label">4G/LTE (沿海)</span><span class="comm-signal">-78 dBm</span><span class="ob-dot ob-dot-ok"></span></div>
+<div class="comm-row"><span class="comm-label">Iridium NEXT</span><span class="comm-signal">-94 dBm</span><span class="ob-dot ob-dot-warning"></span></div>
+<div class="comm-row"><span class="comm-label">AIS 双频</span><span class="comm-signal">正常</span><span class="ob-dot ob-dot-ok"></span></div>
+</div></div>
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">远程数据流</span></div><div class="ob-card-body"><div class="data-flow">
+<div class="flow-item"><div class="flow-val">1.2</div><div class="flow-lbl">上行 Mbps</div></div>
+<div class="flow-item"><div class="flow-val">4.5</div><div class="flow-lbl">下行 Mbps</div></div>
+<div class="flow-item"><div class="flow-val">280</div><div class="flow-lbl">延迟 ms</div></div>
+<div class="flow-item"><div class="flow-val">OK</div><div class="flow-lbl">数据同步</div></div>
+</div></div></div>
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">岸基指令历史</span></div><div class="ob-card-body">
+<table class="ob-table"><thead><tr><th>时间</th><th>来源</th><th>指令</th></tr></thead><tbody>
+<tr><td>14:30</td><td>SCC 上海</td><td>航速调整至 12kn</td></tr>
+<tr><td>12:15</td><td>VTS 宁波</td><td>进港航道确认</td></tr>
+<tr><td>09:40</td><td>SCC 上海</td><td>Wx 台风预警转发</td></tr>
+<tr><td>08:00</td><td>总部</td><td>CII 优化建议下发</td></tr>
+</tbody></table></div></div>
+</div></div>
+<script>
+(function(){
+  var map=new maplibregl.Map({container:'fleetMap',style:{version:8,sources:{'osm':{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'OpenStreetMap'}},layers:[{id:'osm',type:'raster',source:'osm'}]},center:[122,30],zoom:5});
+  map.on('load',function(){
+    // Fetch real fleet positions
+    fetch('/api/v1/fleet/positions').then(function(r){return r.json();}).then(function(geojson){
+      map.addSource('fleet',{type:'geojson',data:geojson});
+      map.addLayer({id:'fleet-dots',type:'circle',source:'fleet',paint:{'circle-radius':7,'circle-color':['case',['get','is_own'],'#ff4444','#00a0ff'],'circle-stroke-width':2,'circle-stroke-color':'#fff'}});
+      map.addLayer({id:'fleet-labels',type:'symbol',source:'fleet',layout:{'text-field':['get','name'],'text-offset':[0,1.5],'text-size':12},paint:{'text-color':'#ffffff','text-halo-color':'#000','text-halo-width':1}});
+    }).catch(function(){
+      // Fallback to hardcoded
+      map.addSource('fleet',{type:'geojson',data:{type:'FeatureCollection',features:[
+        {type:'Feature',geometry:{type:'Point',coordinates:[122.1,30.6]},properties:{name:'PoseidonX-01'}},
+        {type:'Feature',geometry:{type:'Point',coordinates:[121.5,31.2]},properties:{name:'PoseidonX-02'}},
+        {type:'Feature',geometry:{type:'Point',coordinates:[120.8,29.8]},properties:{name:'PoseidonX-03'}}
+      ]}});
+      map.addLayer({id:'fleet-dots',type:'circle',source:'fleet',paint:{'circle-radius':7,'circle-color':'#00a0ff','circle-stroke-width':2,'circle-stroke-color':'#fff'}});
+      map.addLayer({id:'fleet-labels',type:'symbol',source:'fleet',layout:{'text-field':['get','name'],'text-offset':[0,1.5],'text-size':12},paint:{'text-color':'#ffffff','text-halo-color':'#000','text-halo-width':1}});
+    });
+    // Refresh fleet positions
+    setInterval(function(){
+      fetch('/api/v1/fleet/positions').then(function(r){return r.json();}).then(function(geojson){
+        var src=map.getSource('fleet');if(src)src.setData(geojson);
+      }).catch(function(){});
+    },15000);
+  });
+
+  // Comms status
+  function fetchComms(){
+    fetch('/api/v1/comms/link-status').then(function(r){return r.json();}).then(function(d){
+      var links=d.links||d.result&&d.result.links||[];
+      var rows=document.querySelectorAll('.comm-row');
+      links.forEach(function(l,i){
+        if(rows[i]){
+          var label=rows[i].querySelector('.comm-label');
+          var signal=rows[i].querySelector('.comm-signal');
+          var dot=rows[i].querySelector('.ob-dot');
+          if(label)label.textContent=l.name||l.id;
+          if(signal)signal.textContent=l.signal_dbm?l.signal_dbm+' dBm':l.channel?'Ch '+l.channel:'正常';
+          if(dot)dot.className='ob-dot '+(l.status==='online'?'ob-dot-ok':'ob-dot-warning');
+        }
+      });
+    }).catch(function(){});
+  }
+
+  // Bandwidth
+  function fetchBandwidth(){
+    fetch('/api/v1/comms/bandwidth').then(function(r){return r.json();}).then(function(d){
+      var vals=document.querySelectorAll('.flow-val');
+      if(vals[0])vals[0].textContent=d.current_upload_mbps||'1.2';
+      if(vals[1])vals[1].textContent=d.current_download_mbps||'4.5';
+    }).catch(function(){});
+  }
+
+  // Command history
+  function fetchCmds(){
+    fetch('/api/v1/fleet/command-history').then(function(r){return r.json();}).then(function(d){
+      var tbody=document.querySelector('.shore-sidebar .ob-card:last-child tbody');
+      if(!tbody||!d.commands)return;
+      tbody.innerHTML='';
+      d.commands.slice(0,6).forEach(function(c){
+        var time=c.time?new Date(c.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'';
+        tbody.innerHTML+='<tr><td>'+time+'</td><td>'+(c.from||'')+'</td><td>'+(c.command||'')+'</td></tr>';
+      });
+    }).catch(function(){});
+  }
+  fetchComms();fetchBandwidth();fetchCmds();
+  setInterval(fetchComms,10000);setInterval(fetchBandwidth,15000);setInterval(fetchCmds,30000);
+})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="shore"></script>
+<script>(function(){var P="ws://"+location.host+"/ws/shore";var ws,t;function C(){ws=new WebSocket(P);ws.onclose=function(){clearTimeout(t);t=setTimeout(C,3e3)};ws.onerror=function(){ws.close()}}C()})();</script>
+</body>
+</html>

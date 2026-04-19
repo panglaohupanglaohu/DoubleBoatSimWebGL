@@ -107,18 +107,149 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
 
         /* 3D 容器 */
         #canvas-container {
             width: 100%;
             height: 100vh;
             position: relative;
+            transition: width 0.5s ease;
+        }
+        
+        /* 进入舱室时分屏 */
+        body.cabin-mode #canvas-container {
+            width: 60%;
+        }
+        body.cabin-mode #cabin-info-panel {
+            transform: translateX(0);
         }
 
         #three-canvas {
             width: 100%;
             height: 100%;
             display: block;
+        }
+        
+        /* 舱室信息面板 (右侧滑出) */
+        #cabin-info-panel {
+            position: fixed;
+            top: 50px;
+            right: 0;
+            width: 40%;
+            height: calc(100vh - 50px);
+            background: linear-gradient(135deg, rgba(8, 15, 30, 0.98) 0%, rgba(15, 25, 45, 0.96) 100%);
+            border-left: 2px solid rgba(56, 189, 248, 0.4);
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 500;
+            overflow-y: auto;
+            backdrop-filter: blur(12px);
+            box-shadow: -8px 0 32px rgba(0, 0, 0, 0.6);
+            padding: 20px 24px;
+            font-family: -apple-system, 'Segoe UI', sans-serif;
+            color: #e0f0ff;
+        }
+        
+        #cabin-info-panel h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #cabin-info-panel .cabin-subtitle {
+            font-size: 11px;
+            color: #64748b;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            font-family: monospace;
+        }
+        
+        .cabin-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+        
+        .cabin-section h4 {
+            font-size: 12px;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .cabin-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(100, 116, 139, 0.15);
+        }
+        
+        .cabin-row:last-child {
+            border-bottom: none;
+        }
+        
+        .cabin-label {
+            color: #94a3b8;
+        }
+        
+        .cabin-value {
+            color: #e2e8f0;
+            font-family: monospace;
+            font-weight: 600;
+        }
+        
+        .cabin-value.ok { color: #4ade80; }
+        .cabin-value.warn { color: #facc15; }
+        .cabin-value.alarm { color: #ef4444; }
+        
+        .cabin-bar {
+            height: 6px;
+            background: rgba(100, 116, 139, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        
+        .cabin-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #4ade80);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        #cabin-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            font-size: 18px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #cabin-close:hover {
+            background: rgba(239, 68, 68, 0.3);
         }
 
         /* 左侧数据面板 */
@@ -731,26 +862,112 @@
                 height: auto;
             }
         }
+
+        /* ── 适配 nav-sidebar 占位 ── */
+        .ob-app .status-bar {
+            display: none; /* ob-topbar 替代 */
+        }
+        .ob-app .ob-content {
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+        .ob-app .ob-content .data-panel {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+        }
+        .ob-app .ob-content .ais-panel {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+        }
+        .ob-app .ob-content .right-panel-stack {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+        .ob-app .ob-content .search-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .ob-app .ob-content #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        .ob-app .ob-content .loading {
+            position: absolute;
+        }
     </style>
 <meta name="ob-title" content="数字孪生">
 <meta name="ob-subtitle" content="Digital Twin — 3D 实时可视化">
 <link rel="stylesheet" href="/css/openbridge-theme.css">
 </head>
 <body>
+    <!-- 加载画面 -->
+    <div id="loading-screen" style="position:fixed;inset:0;z-index:9999;background:#07111f;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 1s;">
+        <div style="font-size:42px;">🚢</div>
+        <div style="font-family:'Courier New',monospace;font-size:18px;color:#38bdf8;letter-spacing:4px;font-weight:700;">PoseidonX</div>
+        <div style="font-size:11px;color:#64748b;">Deep-Sea Dual-Hull CPS Digital Twin</div>
+        <div style="width:200px;height:3px;background:rgba(56,189,248,0.15);border-radius:2px;overflow:hidden;margin-top:10px;">
+            <div id="load-bar" style="height:100%;background:linear-gradient(90deg,#38bdf8,#22c55e);width:0%;transition:width 0.3s;border-radius:2px;"></div>
+        </div>
+        <div id="load-status" style="font-size:10px;color:#475569;font-family:monospace;">初始化系统...</div>
+    </div>
+    <script>
+        // 模拟加载进度
+        let _loadPct = 0;
+        const _loadSteps = ['初始化渲染器...', '创建海洋着色器...', '构建船舶模型...', '加载导航数据...', '连接后端服务...', '启动数字孪生...'];
+        const _loadInterval = setInterval(() => {
+            _loadPct += 15 + Math.random() * 10;
+            if (_loadPct > 100) _loadPct = 100;
+            const bar = document.getElementById('load-bar');
+            const status = document.getElementById('load-status');
+            if (bar) bar.style.width = _loadPct + '%';
+            if (status) status.textContent = _loadSteps[Math.min(Math.floor(_loadPct / 18), _loadSteps.length - 1)];
+            if (_loadPct >= 100) {
+                clearInterval(_loadInterval);
+                setTimeout(() => {
+                    const screen = document.getElementById('loading-screen');
+                    if (screen) { screen.style.opacity = '0'; setTimeout(() => screen.remove(), 1000); }
+                }, 500);
+            }
+        }, 400);
+    </script>
+
     <!-- 顶部状态栏 -->
     <div class="status-bar">
-        <h1>🚢 DoubleBoatClawSystem - 数字孪生监控平台</h1>
+        <h1>🚢 PoseidonX — 数字孪生监控平台</h1>
         <div class="status-indicators">
             <div class="status-item">
                 <div class="status-dot" id="ws-status"></div>
                 <span id="ws-status-text">连接中...</span>
             </div>
+            <div class="status-item" style="font-family:'Courier New',monospace;font-size:13px;">
+                <span style="color:#4fc3f7;">HDG</span>
+                <span id="status-hdg" style="color:#fff;font-weight:700;">---°</span>
+            </div>
+            <div class="status-item" style="font-family:'Courier New',monospace;font-size:13px;">
+                <span style="color:#4fc3f7;">SPD</span>
+                <span id="status-spd" style="color:#fff;font-weight:700;">--.- kn</span>
+            </div>
+            <div class="status-item" style="font-family:'Courier New',monospace;font-size:13px;">
+                <span style="color:#4fc3f7;">POS</span>
+                <span id="status-pos" style="color:#fff;font-size:11px;">--.----N --.----E</span>
+            </div>
             <div class="status-item">
                 <span>🕐</span>
                 <span id="clock">--:--:--</span>
+                <span id="ship-bells" style="font-size:10px;color:#fbbf24;margin-left:4px;">🔔</span>
             </div>
-            <a href="/captain-cockpit.html">🎛️ 返回船长智能中控台</a>
-            <a href="/poseidon-config.html">⚙️ LLM 配置</a>
+            <a href="/captain-cockpit.html">🎛️ 船长中控台</a>
+            <a href="/poseidon-config.html">⚙️ 配置</a>
+            <div style="display:flex;gap:2px;align-items:center;font-size:11px;" title="信号旗: UW (Underway)">
+                <span style="background:#1a1aff;color:#fff;padding:1px 3px;border-radius:2px;font-weight:bold;font-size:9px;">U</span>
+                <span style="background:#cc0000;color:#fff;padding:1px 3px;border-radius:2px;font-weight:bold;font-size:9px;">W</span>
+            </div>
             <div class="status-item" id="llm-status" style="font-size: 12px; color: #888;">
                 🧠 LLM: 未配置
             </div>
@@ -773,6 +990,156 @@
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <div>正在加载数字孪生系统...</div>
+        </div>
+        
+        <!-- HUD 叠加层 — 驾驶台仪表 -->
+        <div id="hud-overlay" style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10;">
+            <!-- 罗盘 (右上角) -->
+            <svg id="hud-compass" viewBox="0 0 160 160" style="position:absolute;top:12px;right:12px;width:120px;height:120px;opacity:0.85;">
+                <defs>
+                    <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <circle cx="80" cy="80" r="72" fill="rgba(0,0,0,0.5)" stroke="#4a90e2" stroke-width="1.5"/>
+                <circle cx="80" cy="80" r="68" fill="none" stroke="rgba(74,144,226,0.3)" stroke-width="0.5"/>
+                <!-- 刻度 -->
+                <g id="compass-ticks" filter="url(#glow)">
+                    <!-- 主刻度每30°, JS动态旋转 -->
+                </g>
+                <!-- 方位标签 -->
+                <g id="compass-labels" font-family="monospace" font-size="11" fill="#4fc3f7" text-anchor="middle" dominant-baseline="central">
+                    <text x="80" y="18" font-size="14" fill="#ff6b6b" font-weight="bold">N</text>
+                    <text x="142" y="82" fill="#aaddff">E</text>
+                    <text x="80" y="148" fill="#aaddff">S</text>
+                    <text x="18" y="82" fill="#aaddff">W</text>
+                </g>
+                <!-- 船首指针 -->
+                <polygon points="80,22 76,38 84,38" fill="#ff6b6b" opacity="0.9"/>
+                <!-- 航向指针 (旋转) -->
+                <g id="compass-needle" transform="rotate(0,80,80)">
+                    <line x1="80" y1="80" x2="80" y2="28" stroke="#4fc3f7" stroke-width="1.5" opacity="0.6"/>
+                </g>
+                <!-- 中心航向读数 -->
+                <text id="compass-heading-text" x="80" y="83" font-family="'Courier New',monospace" font-size="16" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-weight="bold">000°</text>
+            </svg>
+            
+            <!-- 速度表 (左上角) -->
+            <div id="hud-speed" style="display:none;position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.55);border:1px solid rgba(74,144,226,0.5);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;">
+                <div style="font-size:9px;color:#4fc3f7;letter-spacing:2px;margin-bottom:2px;">SPEED</div>
+                <div style="display:flex;align-items:baseline;gap:4px;">
+                    <span id="hud-speed-value" style="font-size:22px;color:#ffffff;font-weight:bold;">0.0</span>
+                    <span style="font-size:10px;color:#aaa;">kn</span>
+                </div>
+                <div style="font-size:9px;color:#4fc3f7;letter-spacing:2px;margin-top:6px;">COG</div>
+                <div>
+                    <span id="hud-cog-value" style="font-size:16px;color:#ffffff;">000.0°</span>
+                </div>
+            </div>
+            
+            <!-- 深度/姿态 (左下角) -->
+            <div id="hud-attitude" style="display:none;position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,0.55);border:1px solid rgba(74,144,226,0.5);border-radius:8px;padding:8px 14px;font-family:'Courier New',monospace;">
+                <div style="font-size:9px;color:#4fc3f7;letter-spacing:2px;margin-bottom:2px;">ATTITUDE</div>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <canvas id="attitude-indicator" width="60" height="60" style="border-radius:50%;border:1px solid rgba(74,144,226,0.4);"></canvas>
+                    <div>
+                        <div style="display:flex;gap:16px;">
+                            <div>
+                                <div style="font-size:8px;color:#888;">ROLL</div>
+                                <span id="hud-roll-value" style="font-size:14px;color:#ffffff;">0.0°</span>
+                            </div>
+                            <div>
+                                <div style="font-size:8px;color:#888;">PITCH</div>
+                                <span id="hud-pitch-value" style="font-size:14px;color:#ffffff;">0.0°</span>
+                            </div>
+                            <div>
+                                <div style="font-size:8px;color:#888;">HEAVE</div>
+                                <span id="hud-heave-value" style="font-size:14px;color:#ffffff;">0.0m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 报警提示 (顶部中间) -->
+            <div id="hud-alarm-bar" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);display:none;background:rgba(180,20,20,0.8);border:1px solid #ff4444;border-radius:6px;padding:4px 18px;font-family:monospace;font-size:13px;color:#fff;animation:blink 1s infinite;">
+                ⚠ ALARM
+            </div>
+            
+            <!-- 航程进度条 (底部中间) -->
+            <div id="voyage-bar" style="position:absolute;bottom:12px;left:180px;right:180px;height:24px;background:rgba(0,10,20,0.7);border:1px solid rgba(56,189,248,0.3);border-radius:12px;overflow:hidden;font-family:monospace;font-size:9px;display:flex;align-items:center;padding:0 10px;">
+                <div id="voyage-progress-fill" style="position:absolute;left:0;top:0;bottom:0;width:0%;background:linear-gradient(90deg,rgba(56,189,248,0.3),rgba(34,197,94,0.3));border-radius:12px;transition:width 2s;"></div>
+                <span id="voyage-from" style="color:#94a3b8;z-index:1;">Shanghai</span>
+                <span style="flex:1;text-align:center;color:#38bdf8;z-index:1;" id="voyage-progress-text">0%</span>
+                <span id="voyage-to" style="color:#94a3b8;z-index:1;">Hakata</span>
+            </div>
+            
+            <!-- 雷达小地图 (右下角) -->
+            <div id="hud-radar" style="position:absolute;bottom:12px;right:12px;width:160px;height:160px;">
+                <canvas id="radar-canvas" width="160" height="160" style="width:160px;height:160px;border-radius:50%;border:1.5px solid rgba(0,255,136,0.4);background:rgba(0,10,5,0.65);"></canvas>
+                <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:8px;color:#00ff88;letter-spacing:2px;font-family:monospace;">RADAR</div>
+            </div>
+            
+            <!-- 摄像机预设 (右上角) -->
+            <div id="cam-presets" style="position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:4px;">
+                <button onclick="setCameraPreset('overview')" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">🔭 OVERVIEW</button>
+                <button onclick="setCameraPreset('bridge')" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">🏗 BRIDGE</button>
+                <button onclick="setCameraPreset('bow')" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">⛵ BOW</button>
+                <button onclick="setCameraPreset('stern')" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">🚢 STERN</button>
+                <button onclick="setCameraPreset('underwater')" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">🐠 UNDERWATER</button>
+                <button onclick="setCameraPreset('top')" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">📡 TOP-DOWN</button>
+                <hr style="border:none;border-top:1px solid rgba(56,189,248,0.2);margin:2px 0;">
+                <button onclick="toggleNightMode()" id="btn-night" style="background:rgba(0,20,40,0.7);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">🌙 NIGHT</button>
+            </div>
+            
+            <!-- 舱室快速进入 (右上角单按钮 + 下拉菜单, 不与其他面板冲突) -->
+            <div id="cabin-launcher" style="position:absolute;top:12px;right:145px;z-index:300;">
+                <button id="cabin-toggle-btn" onclick="toggleCabinMenu()" style="background:linear-gradient(135deg,rgba(15,30,55,0.95),rgba(25,40,70,0.95));border:1px solid rgba(56,189,248,0.5);color:#7dd3fc;font-size:12px;font-family:monospace;padding:7px 14px;border-radius:6px;cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 4px 12px rgba(0,0,0,0.4);display:flex;align-items:center;gap:6px;font-weight:600;">
+                    <span style="font-size:14px;">🏠</span> 进入舱室 <span style="font-size:10px;opacity:0.7;">▼</span>
+                </button>
+                <div id="cabin-menu" style="display:none;position:absolute;top:42px;right:0;background:rgba(8,15,30,0.97);border:1px solid rgba(56,189,248,0.4);border-radius:8px;padding:6px;min-width:180px;backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                    <button onclick="enterCabin('bridge'); toggleCabinMenu();" class="cabin-menu-item" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:#c4b5fd;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">🏗 <span>驾驶台 BRIDGE</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">⇧1</span></button>
+                    <button onclick="enterCabin('engine'); toggleCabinMenu();" class="cabin-menu-item" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:#fdba74;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">⚙ <span>主机舱 ENGINE</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">⇧2</span></button>
+                    <button onclick="enterCabin('ecr'); toggleCabinMenu();" class="cabin-menu-item" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:#7dd3fc;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">🖥 <span>集控室 ECR</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">⇧3</span></button>
+                    <button onclick="enterCabin('cargo'); toggleCabinMenu();" class="cabin-menu-item" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:#86efac;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">📦 <span>货舱 CARGO</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">⇧4</span></button>
+                    <button onclick="enterCabin('crew'); toggleCabinMenu();" class="cabin-menu-item" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:#fca5a5;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">🛏 <span>船员舱 CREW</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">⇧5</span></button>
+                    <button onclick="enterCabin('galley'); toggleCabinMenu();" class="cabin-menu-item" style="display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;color:#fde047;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">🍳 <span>厨房 GALLEY</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">⇧6</span></button>
+                    <hr style="border:none;border-top:1px solid rgba(56,189,248,0.2);margin:4px 6px;">
+                    <button onclick="exitCabin(); toggleCabinMenu();" id="btn-exit-cabin" style="display:none;align-items:center;gap:10px;width:100%;background:rgba(80,20,20,0.6);border:none;color:#fca5a5;font-size:12px;font-family:inherit;padding:8px 12px;border-radius:5px;cursor:pointer;text-align:left;">✕ <span>退出舱室 EXIT</span><span style="margin-left:auto;font-size:9px;opacity:0.6;">ESC</span></button>
+                </div>
+            </div>
+            
+            <!-- FPS 计数器 -->
+            <div id="fps-counter" style="position:absolute;top:12px;left:12px;font-family:monospace;font-size:10px;color:#38bdf8;background:rgba(0,10,20,0.6);padding:3px 8px;border-radius:4px;pointer-events:none;">
+                <span id="fps-value">60</span> FPS | <span id="draw-calls">0</span> draws
+            </div>
+            
+            <!-- 蒲福风级指示器 -->
+            <div id="beaufort-panel" style="display:none;position:absolute;bottom:55px;left:12px;background:rgba(0,10,25,0.85);border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:8px 12px;font-family:monospace;font-size:11px;color:#e0f0ff;backdrop-filter:blur(6px);flex-direction:column;gap:4px;min-width:180px;">
+                <div style="font-size:9px;color:#64748b;letter-spacing:1px;">BEAUFORT SCALE</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                    <span id="bft-number" style="font-size:28px;font-weight:700;color:#38bdf8;">5</span>
+                    <span id="bft-desc" style="font-size:11px;color:#94a3b8;">Fresh breeze</span>
+                </div>
+                <div style="display:flex;gap:2px;height:16px;" id="bft-bars"></div>
+                <div style="font-size:9px;color:#64748b;">Wind: <span id="bft-wind">19-24</span> kn | Wave: <span id="bft-wave">2-3</span> m</div>
+            </div>
+            
+            <!-- 快捷键帮助 Overlay -->
+            <div id="shortcuts-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,5,15,0.88);z-index:999;backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+                <div style="background:rgba(10,25,50,0.95);border:1px solid rgba(56,189,248,0.3);border-radius:16px;padding:24px 32px;max-width:360px;font-family:monospace;">
+                    <div style="font-size:14px;font-weight:700;color:#38bdf8;margin-bottom:16px;text-align:center;">⌨ PoseidonX Shortcuts</div>
+                    <table style="width:100%;font-size:12px;color:#c8d8e8;border-collapse:collapse;">
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">1-6</td><td>Camera presets</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">N</td><td>Night mode</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">H</td><td>Toggle HUD</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">R</td><td>Toggle radar</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">F</td><td>Toggle FPS</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">B</td><td>Beaufort scale</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">M</td><td>Ocean sound</td></tr>
+                        <tr><td style="padding:4px 8px;color:#f59e0b;font-weight:700;">?</td><td>This help</td></tr>
+                    </table>
+                    <div style="text-align:center;margin-top:14px;font-size:10px;color:#64748b;">Press ? or ESC to close</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -809,10 +1176,12 @@
             <div class="data-row">
                 <span class="data-label">转速</span>
                 <span class="data-value" id="eng-rpm">--- RPM</span>
+                <canvas id="spark-rpm" width="60" height="20" style="vertical-align:middle;margin-left:4px;opacity:0.7;"></canvas>
             </div>
             <div class="data-row">
                 <span class="data-label">负载</span>
                 <span class="data-value" id="eng-load">--- %</span>
+                <canvas id="spark-load" width="60" height="20" style="vertical-align:middle;margin-left:4px;opacity:0.7;"></canvas>
             </div>
             <div class="data-row">
                 <span class="data-label">冷却水温度</span>
@@ -825,6 +1194,7 @@
             <div class="data-row">
                 <span class="data-label">燃油消耗</span>
                 <span class="data-value" id="eng-fuel">--- kg/h</span>
+                <canvas id="spark-fuel" width="60" height="20" style="vertical-align:middle;margin-left:4px;opacity:0.7;"></canvas>
             </div>
         </div>
 
@@ -913,6 +1283,165 @@
                 <span class="data-label">寿命余度</span>
                 <span class="data-value" id="shm-life">--</span>
             </div>
+            <div style="margin-top:8px;">
+                <div style="font-size:9px;color:#888;margin-bottom:3px;">应力分布</div>
+                <canvas id="hull-stress-bar" width="280" height="20" style="width:100%;height:20px;border-radius:4px;background:rgba(0,0,0,0.3);"></canvas>
+            </div>
+        </div>
+
+        <!-- 压载水舱状态 -->
+        <div class="data-card" style="border-left:3px solid #06b6d4;">
+            <h3>💧 压载水舱</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+                <div class="ballast-tank" id="bt-fp" style="text-align:center;">
+                    <div style="font-size:9px;color:#64748b;">首尖舱</div>
+                    <div style="height:30px;background:rgba(0,0,0,0.3);border-radius:4px;position:relative;overflow:hidden;margin:3px 0;">
+                        <div class="bt-fill" style="position:absolute;bottom:0;left:0;right:0;height:65%;background:linear-gradient(to top,#0891b2,#22d3ee);border-radius:0 0 4px 4px;transition:height 1s;"></div>
+                    </div>
+                    <div style="font-size:11px;font-weight:700;color:#22d3ee;" id="bt-fp-val">65%</div>
+                </div>
+                <div class="ballast-tank" id="bt-ap" style="text-align:center;">
+                    <div style="font-size:9px;color:#64748b;">尾尖舱</div>
+                    <div style="height:30px;background:rgba(0,0,0,0.3);border-radius:4px;position:relative;overflow:hidden;margin:3px 0;">
+                        <div class="bt-fill" style="position:absolute;bottom:0;left:0;right:0;height:78%;background:linear-gradient(to top,#0891b2,#22d3ee);border-radius:0 0 4px 4px;transition:height 1s;"></div>
+                    </div>
+                    <div style="font-size:11px;font-weight:700;color:#22d3ee;" id="bt-ap-val">78%</div>
+                </div>
+                <div class="ballast-tank" id="bt-ps" style="text-align:center;">
+                    <div style="font-size:9px;color:#64748b;">左舷双层底</div>
+                    <div style="height:30px;background:rgba(0,0,0,0.3);border-radius:4px;position:relative;overflow:hidden;margin:3px 0;">
+                        <div class="bt-fill" style="position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(to top,#0891b2,#22d3ee);border-radius:0 0 4px 4px;transition:height 1s;"></div>
+                    </div>
+                    <div style="font-size:11px;font-weight:700;color:#22d3ee;" id="bt-ps-val">45%</div>
+                </div>
+                <div class="ballast-tank" id="bt-sb" style="text-align:center;">
+                    <div style="font-size:9px;color:#64748b;">右舷双层底</div>
+                    <div style="height:30px;background:rgba(0,0,0,0.3);border-radius:4px;position:relative;overflow:hidden;margin:3px 0;">
+                        <div class="bt-fill" style="position:absolute;bottom:0;left:0;right:0;height:52%;background:linear-gradient(to top,#0891b2,#22d3ee);border-radius:0 0 4px 4px;transition:height 1s;"></div>
+                    </div>
+                    <div style="font-size:11px;font-weight:700;color:#22d3ee;" id="bt-sb-val">52%</div>
+                </div>
+            </div>
+            <div style="font-size:10px;color:#64748b;margin-top:6px;">总量: <span id="bt-total" style="color:#22d3ee;font-weight:700;">~480 m³</span> / 800 m³</div>
+        </div>
+
+        <!-- 当值人员 / 船员状态 -->
+        <div class="data-card" style="border-left:3px solid #a78bfa;">
+            <h3>👥 当值人员</h3>
+            <div id="crew-watch-list" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></span>
+                    <span style="flex:1;color:#c8d8e8;">Capt. 王</span>
+                    <span style="font-size:9px;color:#a78bfa;background:rgba(167,139,250,0.12);padding:2px 6px;border-radius:10px;">OOW</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></span>
+                    <span style="flex:1;color:#c8d8e8;">2/O 李</span>
+                    <span style="font-size:9px;color:#38bdf8;background:rgba(56,189,248,0.12);padding:2px 6px;border-radius:10px;">NAV</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#4ade80;flex-shrink:0;"></span>
+                    <span style="flex:1;color:#c8d8e8;">C/E 张</span>
+                    <span style="font-size:9px;color:#f97316;background:rgba(249,115,22,0.12);padding:2px 6px;border-radius:10px;">ENG</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#facc15;flex-shrink:0;"></span>
+                    <span style="flex:1;color:#94a3b8;">AB 陈</span>
+                    <span style="font-size:9px;color:#64748b;background:rgba(100,116,139,0.12);padding:2px 6px;border-radius:10px;">HELM</span>
+                </div>
+            </div>
+            <div style="font-size:9px;color:#64748b;margin-top:6px;">
+                值班: <span id="crew-watch-name" style="color:#a78bfa;">0400-0800 Morning Watch</span> |
+                船员: <span style="color:#c8d8e8;">22 / 25</span>
+            </div>
+        </div>
+
+        <!-- 演进引擎合规评级 -->
+        <div class="data-card" id="evo-card" style="border-left:3px solid #4fc3f7;">
+            <h3>🏆 合规评级 <span id="evo-rating-badge" style="float:right;font-size:18px;font-weight:800;padding:0 8px;border-radius:6px;background:rgba(48,209,88,0.15);color:#30d158">A</span></h3>
+            <div class="data-row">
+                <span class="data-label">评分</span>
+                <span class="data-value" id="evo-score">100</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">趋势</span>
+                <span class="data-value" id="evo-trend">—</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">活跃区域</span>
+                <span class="data-value" id="evo-zones">0</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">需升级</span>
+                <span class="data-value" id="evo-escalated">0</span>
+            </div>
+        </div>
+
+        <!-- 推进系统 -->
+        <div class="data-card">
+            <h3>🔧 推进系统</h3>
+            <div style="display:flex;gap:8px;margin-bottom:6px;">
+                <canvas id="gauge-rpm" width="100" height="60" style="width:48%;height:60px;border-radius:6px;background:rgba(0,0,0,0.3);"></canvas>
+                <canvas id="gauge-speed" width="100" height="60" style="width:48%;height:60px;border-radius:6px;background:rgba(0,0,0,0.3);"></canvas>
+            </div>
+            <div class="data-row">
+                <span class="data-label">主机运行</span>
+                <span class="data-value" id="prop-engines">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">总功率</span>
+                <span class="data-value" id="prop-power">-- kW</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">推力</span>
+                <span class="data-value" id="prop-thrust">-- kN</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">效率</span>
+                <span class="data-value" id="prop-efficiency">-- %</span>
+            </div>
+        </div>
+
+        <!-- 安全系统 -->
+        <div class="data-card">
+            <h3>🛟 安全系统</h3>
+            <div class="data-row">
+                <span class="data-label">EPIRB</span>
+                <span class="data-value" id="saf-epirb">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">SART</span>
+                <span class="data-value" id="saf-sart">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">MOB 状态</span>
+                <span class="data-value" id="saf-mob">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">VDR 录制</span>
+                <span class="data-value" id="saf-vdr">--</span>
+            </div>
+        </div>
+
+        <!-- COLREGs / 避碰 -->
+        <div class="data-card">
+            <h3>⚓ COLREGs</h3>
+            <div class="data-row">
+                <span class="data-label">危险会遇</span>
+                <span class="data-value" id="col-encounters">0</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">自主等级</span>
+                <span class="data-value" id="col-autonomy">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">网络安全</span>
+                <span class="data-value" id="col-cyber">--</span>
+            </div>
+            <div class="data-row">
+                <span class="data-label">WPC 姿态</span>
+                <span class="data-value" id="col-wpc">--</span>
+            </div>
         </div>
 
         <!-- AI Native 认知摘要 -->
@@ -990,6 +1519,7 @@
                     <div><span style="color:#888;">流向:</span> <span id="wm-current" style="color:#fff;">--</span></div>
                     <div><span style="color:#888;">能见度:</span> <span id="wm-visibility" style="color:#fff;">--</span></div>
                     <div><span style="color:#888;">更新时间:</span> <span id="wm-weather-time" style="color:#fff;">--</span></div>
+                    <div style="grid-column:span 2;"><span style="color:#888;">天气事件:</span> <span id="wm-event" style="color:#4ade80;font-weight:600;">☀ 晴好</span></div>
                 </div>
             </div>
             
@@ -1017,6 +1547,8 @@
                 <div style="text-align:center; color:#a0a0a0; padding:10px;">加载中...</div>
             </div>
         </div>
+
+        <!-- AR-CAS Pro 避碰增强 (已移至右下角独立浮动面板 #ar-cas-floating, 见 body 末尾) -->
       </div>
       <!-- 中间 Bridge/WorldMonitor 面板 -->
       <div class="bridge-panel" style="min-width:340px;max-width:400px;flex:0 0 360px;margin-left:8px;background:rgba(10,20,40,0.98);border-radius:14px;padding:18px 16px 16px 16px;box-shadow:0 2px 12px rgba(0,0,0,0.12);display:flex;flex-direction:column;">
@@ -1411,10 +1943,59 @@
                                 </div>
                             `;
                         }).join('')
-                    : '<div style="color:#888; text-align:center; padding:10px;">暂无 AIS 目标</div>';
+                    : '';
+
+                // ══ 追加本地 3D 场景中的 AR-CAS 目标 (货船 + 冰山) ══
+                let localHtml = '';
+                try {
+                    const twin = window.DigitalTwin;
+                    const st = twin && twin.getState ? twin.getState() : null;
+                    // 货船/AR-CAS 目标
+                    if (st && Array.isArray(st.arCasTargets)) {
+                        st.arCasTargets.forEach((t, i) => {
+                            const d = t.data || {};
+                            const riskCls = d.risk === 'high' ? 'is-high-risk' : '';
+                            localHtml += `
+                                <div class="ais-target-card ${riskCls}" style="border-left:3px solid ${d.risk==='high'?'#f56565':d.risk==='medium'?'#f6ad55':'#48bb78'};">
+                                    <div class="ais-target-head">
+                                        <span class="ais-target-title">🚢 ${escapeHtml(d.name || ('Ship '+(i+1)))}</span>
+                                        <span class="ais-target-meta">MMSI ${escapeHtml(d.mmsi || '---')}</span>
+                                    </div>
+                                    <div class="ais-target-body">
+                                        类型：${escapeHtml(d.type || 'Vessel')} | 风险：${escapeHtml((d.risk||'low').toUpperCase())}<br>
+                                        航速：${d.speed ?? '--'} kn | 航向：${d.course ?? '--'}° | CPA: ${d.cpa ?? '--'} NM
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    // 冰山
+                    if (st && Array.isArray(st.icebergs) && st.boatMesh) {
+                        const bx = st.boatMesh.position.x, bz = st.boatMesh.position.z;
+                        st.icebergs.forEach((ib, i) => {
+                            const dx = ib.position.x - bx, dz = ib.position.z - bz;
+                            const dist = (Math.sqrt(dx*dx + dz*dz) * 0.02).toFixed(2);
+                            const bearing = ((Math.atan2(dx, -dz) * 180 / Math.PI + 360) % 360).toFixed(0);
+                            localHtml += `
+                                <div class="ais-target-card" style="border-left:3px solid #00bcd4;">
+                                    <div class="ais-target-head">
+                                        <span class="ais-target-title">🧊 Iceberg ${i+1}</span>
+                                        <span class="ais-target-meta">COLREGs Rule 6</span>
+                                    </div>
+                                    <div class="ais-target-body">
+                                        类型：漂浮冰山 (Ice Hazard)<br>
+                                        距离：${dist} NM | 相对方位：${bearing}°
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                } catch (e) { /* ignore */ }
+                
+                const finalHtml = (html || '') + localHtml || '<div style="color:#888; text-align:center; padding:10px;">暂无 AIS 目标</div>';
 
                 containers.forEach((container) => {
-                    container.innerHTML = html;
+                    container.innerHTML = finalHtml;
                 });
       }
 
@@ -1498,6 +2079,26 @@
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').textContent = now.toLocaleTimeString('zh-CN');
+            
+            // 航海更钟制 (Watch Bell System)
+            const min = now.getMinutes();
+            const halfHours = Math.floor(min / 30) + (now.getHours() % 4) * 2;
+            const bells = ((halfHours % 8) || 8);
+            const watchNames = ['中夜更(00-04)', '上午更(04-08)', '午前更(08-12)', '午后更(12-16)', '日暮更(16-18)', '前夜更(18-20)', '后夜更(20-00)'];
+            const hr = now.getHours();
+            let watchIdx = Math.floor(hr / 4);
+            if (hr >= 16 && hr < 18) watchIdx = 4;
+            else if (hr >= 18 && hr < 20) watchIdx = 5;
+            else if (hr >= 20) watchIdx = 6;
+            const bellEl = document.getElementById('ship-bells');
+            if (bellEl) bellEl.title = `${bells}响 — ${watchNames[Math.min(watchIdx, 6)]}`;
+            
+            // 更新当值面板
+            const watchNameEl = document.getElementById('crew-watch-name');
+            if (watchNameEl) {
+                const watchEnNames = ['0000-0400 Middle Watch', '0400-0800 Morning Watch', '0800-1200 Forenoon Watch', '1200-1600 Afternoon Watch', '1600-1800 Dog Watch 1', '1800-2000 Dog Watch 2', '2000-0000 First Watch'];
+                watchNameEl.textContent = watchEnNames[Math.min(watchIdx, 6)];
+            }
         }
         setInterval(updateClock, 1000);
         updateClock();
@@ -1510,6 +2111,28 @@
             
             searchTimeout = setTimeout(() => {
                 const query = e.target.value.trim();
+                
+                // 优先匹配舱室关键字 → 直接进入舱室
+                const CABIN_KEYWORDS = {
+                    bridge:  ['驾驶台', '驾驶室', '驾驶舱', 'bridge', '航海舱', '航海', 'wheelhouse'],
+                    engine:  ['机舱', '主机', 'engine', '动力舱', '动力', 'engine room'],
+                    ecr:     ['集控室', '控制中心', 'ecr', '机舱集控', '控制室'],
+                    cargo:   ['货舱', 'cargo', '集装箱', 'hold', '装货舱'],
+                    crew:    ['船员舱', '生活区', 'crew', '宿舍', '船员', '生活舱'],
+                    galley:  ['厨房', 'galley', '餐厅', '伙房', '做饭']
+                };
+                if (query.length > 0 && window.enterCabin) {
+                    const lowQ = query.toLowerCase();
+                    for (const [cabin, kws] of Object.entries(CABIN_KEYWORDS)) {
+                        if (kws.some(k => lowQ.includes(k.toLowerCase()))) {
+                            window.enterCabin(cabin);
+                            document.getElementById('search-results').innerHTML = 
+                                `<div style="padding:10px;color:#4ade80;text-align:center;">✓ 已进入 ${cabin.toUpperCase()} 舱室</div>`;
+                            return;
+                        }
+                    }
+                }
+                
                 if (query.length > 0 && window.DigitalTwin) {
                     const results = window.DigitalTwin.searchAndFocus(query);
                     displaySearchResults(results);
@@ -1577,6 +2200,135 @@
             }
         }
 
+        // ══ Sparkline 迷你折线图系统 ══
+        const _sparkHistory = { rpm: [], load: [], fuel: [] };
+        const SPARK_MAX = 30; // 保留最近30个数据点
+        
+        // ══ 应力分布热力条 ══
+        function drawHullStressBar() {
+            const canvas = document.getElementById('hull-stress-bar');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            const t = Date.now() / 1000;
+            const segments = 28;
+            const segW = w / segments;
+            for (let i = 0; i < segments; i++) {
+                const x = (i / segments - 0.5) * 2;
+                let stress = 0.3 + (1 - x * x) * 0.5 + Math.sin(t * 0.5 + i * 0.3) * 0.1;
+                stress = Math.max(0, Math.min(1, stress));
+                const r = stress < 0.5 ? Math.floor(stress * 2 * 255) : 255;
+                const g = stress < 0.5 ? 200 : Math.floor((1 - (stress - 0.5) * 2) * 200);
+                ctx.fillStyle = `rgba(${r},${g},50,0.7)`;
+                ctx.fillRect(i * segW, h * (1 - stress), segW - 1, h * stress);
+            }
+        }
+        setInterval(drawHullStressBar, 500);
+        
+        // ══ 压载水舱模拟更新 ══
+        const _ballastTanks = { fp: 65, ap: 78, ps: 45, sb: 52 };
+        function updateBallastTanks() {
+            const tanks = ['fp', 'ap', 'ps', 'sb'];
+            let total = 0;
+            tanks.forEach(tk => {
+                _ballastTanks[tk] += (Math.random() - 0.5) * 1.5;
+                _ballastTanks[tk] = Math.max(5, Math.min(95, _ballastTanks[tk]));
+                const pct = _ballastTanks[tk];
+                total += pct;
+                const valEl = document.getElementById('bt-' + tk + '-val');
+                if (valEl) valEl.textContent = Math.round(pct) + '%';
+                const container = document.getElementById('bt-' + tk);
+                if (container) {
+                    const fill = container.querySelector('.bt-fill');
+                    if (fill) fill.style.height = pct + '%';
+                }
+            });
+            const totalVol = Math.round(total / 100 * 200); // 每舱200m³
+            const totalEl = document.getElementById('bt-total');
+            if (totalEl) totalEl.textContent = '~' + totalVol + ' m³';
+        }
+        setInterval(updateBallastTanks, 5000);
+        
+        // ══ 推进系统仪表盘 ══
+        let _gaugeRPM = 0, _gaugeSpeed = 0;
+        function drawMiniGauge(canvasId, value, maxVal, label, unit, color) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            
+            const cx = w / 2, cy = h - 6, radius = Math.min(w / 2 - 4, h - 12);
+            const startAngle = Math.PI, endAngle = 2 * Math.PI;
+            const pct = Math.min(value / maxVal, 1);
+            
+            // 背景弧
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, startAngle, endAngle);
+            ctx.strokeStyle = 'rgba(100,180,255,0.1)';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // 值弧
+            if (pct > 0) {
+                const valAngle = startAngle + (endAngle - startAngle) * pct;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, startAngle, valAngle);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+            
+            // 值
+            ctx.font = 'bold 14px monospace';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.fillText(Math.round(value), cx, cy - 6);
+            ctx.font = '8px sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(unit, cx, cy + 4);
+            ctx.fillText(label, cx, 10);
+        }
+        
+        function updatePropGauges() {
+            drawMiniGauge('gauge-rpm', _gaugeRPM, 250, 'RPM', 'rev/min', '#38bdf8');
+            drawMiniGauge('gauge-speed', _gaugeSpeed, 20, 'SOG', 'knots', '#4ade80');
+        }
+        setInterval(updatePropGauges, 500);
+        
+        function drawSparkline(canvasId, data, color = '#38bdf8') {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || data.length < 2) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const range = max - min || 1;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.2;
+            data.forEach((v, i) => {
+                const x = (i / (data.length - 1)) * w;
+                const y = h - ((v - min) / range) * (h - 2) - 1;
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // 最后一个点高亮
+            const lastX = w;
+            const lastY = h - ((data[data.length - 1] - min) / range) * (h - 2) - 1;
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
         async function updateDashboard() {
             try {
                 const response = await fetch('/api/v1/dashboard');
@@ -1601,6 +2353,14 @@
                 document.getElementById('engine-health').textContent = `${engine.health_score ?? '--'}/100`;
                 document.getElementById('engine-trend').textContent = `RPM ${engine.trend?.rpm || '--'}`;
                 document.getElementById('engine-advice').textContent = (engine.maintenance_advice || ['--'])[0];
+                
+                // Sparkline 数据记录 & 绘制
+                if (latest.rpm != null) { _sparkHistory.rpm.push(latest.rpm); if (_sparkHistory.rpm.length > SPARK_MAX) _sparkHistory.rpm.shift(); }
+                if (latest.load != null) { _sparkHistory.load.push(latest.load); if (_sparkHistory.load.length > SPARK_MAX) _sparkHistory.load.shift(); }
+                if (latest.fuel_rate != null) { _sparkHistory.fuel.push(latest.fuel_rate); if (_sparkHistory.fuel.length > SPARK_MAX) _sparkHistory.fuel.shift(); }
+                drawSparkline('spark-rpm', _sparkHistory.rpm, '#38bdf8');
+                drawSparkline('spark-load', _sparkHistory.load, '#22c55e');
+                drawSparkline('spark-fuel', _sparkHistory.fuel, '#f59e0b');
 
                 const eff = data.efficiency || {};
                 const rcs = data.rcs || {};
@@ -1698,10 +2458,317 @@
                 else if (lakehouseHealth.cloud_sync_configured) aiCloudEl.classList.add('warning');
                 if (lakehouseHealth.analytics_ready) aiAnalyticsEl.classList.add('ok');
                 renderCaptainCockpit(data, captainSnapshot);
+
+                // ══ Phase 3: 演进引擎 + 扩展 Channel 渲染 ══
+                const evo = data.evolution || {};
+                const evoRating = evo.rating || {};
+                const evoEscalation = evo.escalation || {};
+                const evoTrend = evo.trend || {};
+                const evoBadge = document.getElementById('evo-rating-badge');
+                if (evoBadge) {
+                    const r = evoRating.rating || '—';
+                    evoBadge.textContent = r;
+                    const rColors = {A:'rgba(48,209,88,0.15)',B:'rgba(100,210,255,0.15)',C:'rgba(255,214,10,0.15)',D:'rgba(255,159,10,0.15)',E:'rgba(255,69,58,0.15)'};
+                    const rText = {A:'#30d158',B:'#64d2ff',C:'#ffd60a',D:'#ff9f0a',E:'#ff453a'};
+                    evoBadge.style.background = rColors[r] || 'rgba(100,180,255,0.1)';
+                    evoBadge.style.color = rText[r] || '#fff';
+                }
+                setTextContent('evo-score', evoRating.score != null ? Math.round(evoRating.score) : '—');
+                const trendDir = evoTrend.direction || '';
+                setTextContent('evo-trend', trendDir === 'improving' ? '▲ 改善' : trendDir === 'degrading' ? '▼ 下降' : '━ 稳定');
+                setTextContent('evo-zones', (evo.active_zones || []).length);
+                setTextContent('evo-escalated', evoEscalation.escalated_count || 0);
+
+                // 推进系统
+                const prop = data.propulsion || {};
+                setTextContent('prop-engines', prop.engines_running ?? '—');
+                setTextContent('prop-power', prop.total_power_kw != null ? `${Math.round(prop.total_power_kw)} kW` : '—');
+                setTextContent('prop-thrust', prop.total_thrust_kn != null ? `${prop.total_thrust_kn.toFixed(1)} kN` : '—');
+                setTextContent('prop-efficiency', prop.efficiency_percent != null ? `${prop.efficiency_percent.toFixed(1)}%` : '—');
+                
+                // 推进仪表联动
+                const engine = data.engine || {};
+                _gaugeRPM = engine.rpm || 0;
+                _gaugeSpeed = data.own_ship?.speed || data.navigation?.speed_kn || 0;
+
+                // 安全系统
+                const saf = data.safety || {};
+                const epirb = saf.epirb || {};
+                const sart = saf.sart || {};
+                setTextContent('saf-epirb', (epirb.status || '—').toUpperCase());
+                setTextContent('saf-sart', (sart.status || '—').toUpperCase());
+                const mobData = data.mob || {};
+                setTextContent('saf-mob', mobData.active ? '🔴 ACTIVE' : '✅ STANDBY');
+                const vdrData = data.vdr || {};
+                setTextContent('saf-vdr', vdrData.active ? '🔴 REC' : '⏸ IDLE');
+
+                // COLREGs + 扩展
+                const colData = data.colregs || {};
+                setTextContent('col-encounters', colData.dangerous_encounters ?? 0);
+                const autoData = data.autonomy || {};
+                setTextContent('col-autonomy', (autoData.current_level || autoData.mass_level || '—').toUpperCase());
+                const cyberData = data.cyber?.status || {};
+                setTextContent('col-cyber', (cyberData.threat_level || cyberData.health || '—').toUpperCase());
+                const wpcData = data.wpc || {};
+                setTextContent('col-wpc', wpcData.active ? `${wpcData.pitch_deg ?? '—'}° / ${wpcData.roll_deg ?? '—'}°` : 'OFF');
+
+                // ══ HUD 仪表更新 ══
+                updateHUD(own, data);
+                // ══ 雷达数据更新 ══
+                _lastRadarData = { ownShip: own, aisTargets: data.navigation?.report?.ais_targets || {} };
+                // ══ 状态栏快速数据 ══
+                setTextContent('status-hdg', `${Number(own.course ?? 0).toFixed(0).padStart(3, '0')}°`);
+                setTextContent('status-spd', `${Number(own.speed ?? 0).toFixed(1)} kn`);
+                if (own.latitude != null && own.longitude != null) {
+                    setTextContent('status-pos', `${Number(own.latitude).toFixed(4)}N ${Number(own.longitude).toFixed(4)}E`);
+                }
+                // ══ 状态栏快速数据 ══
+                setTextContent('status-hdg', `${Number(own.course ?? 0).toFixed(0).padStart(3, '0')}°`);
+                setTextContent('status-spd', `${Number(own.speed ?? 0).toFixed(1)} kn`);
+                if (own.latitude != null && own.longitude != null) {
+                    setTextContent('status-pos', `${Number(own.latitude).toFixed(4)}N ${Number(own.longitude).toFixed(4)}E`);
+                }
             } catch (error) {
                 console.error('Failed to update dashboard:', error);
             }
         }
+        
+        // ==================== HUD 驾驶台仪表更新 ====================
+        // ══ 人工地平仪 (Attitude Indicator) ══
+        function drawAttitudeIndicator(roll, pitch) {
+            const canvas = document.getElementById('attitude-indicator');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            const cx = w / 2, cy = h / 2, r = 28;
+            
+            ctx.clearRect(0, 0, w, h);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.clip();
+            
+            // 旋转画布 (roll)
+            ctx.translate(cx, cy);
+            ctx.rotate(-roll * Math.PI / 180);
+            
+            // pitch 偏移 (1° ≈ 1px)
+            const pitchOffset = pitch * 1.0;
+            
+            // 天空 (蓝色)
+            ctx.fillStyle = '#1a4a8c';
+            ctx.fillRect(-r - 5, -r - 5 + pitchOffset, (r + 5) * 2, r + 5);
+            
+            // 地面 (棕色)
+            ctx.fillStyle = '#8b6914';
+            ctx.fillRect(-r - 5, pitchOffset, (r + 5) * 2, r + 5);
+            
+            // 地平线
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-r, pitchOffset);
+            ctx.lineTo(r, pitchOffset);
+            ctx.stroke();
+            
+            // 俯仰刻度 (每5°)
+            ctx.lineWidth = 0.5;
+            ctx.font = '6px monospace';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            for (let deg = -15; deg <= 15; deg += 5) {
+                if (deg === 0) continue;
+                const y = pitchOffset - deg * 1.0;
+                const halfW = Math.abs(deg) < 10 ? 8 : 5;
+                ctx.beginPath();
+                ctx.moveTo(-halfW, y); ctx.lineTo(halfW, y);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+            
+            // 固定飞机符号 (中心)
+            ctx.strokeStyle = '#ff8800';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx - 12, cy); ctx.lineTo(cx - 5, cy);
+            ctx.moveTo(cx + 5, cy); ctx.lineTo(cx + 12, cy);
+            ctx.moveTo(cx, cy - 1); ctx.lineTo(cx, cy + 1);
+            ctx.stroke();
+            
+            // 外圈
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(74,144,226,0.6)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+        
+        function updateHUD(own, data) {
+            try {
+                const heading = Number(own.course ?? own.heading ?? 0);
+                const speed = Number(own.speed ?? 0);
+                const cog = Number(own.course ?? 0);
+                
+                // 更新罗盘
+                const needleEl = document.getElementById('compass-needle');
+                if (needleEl) needleEl.setAttribute('transform', `rotate(${heading},80,80)`);
+                const headingTextEl = document.getElementById('compass-heading-text');
+                if (headingTextEl) headingTextEl.textContent = `${Math.round(heading).toString().padStart(3, '0')}°`;
+                // 旋转方位标签
+                const labelsEl = document.getElementById('compass-labels');
+                if (labelsEl) labelsEl.setAttribute('transform', `rotate(${-heading},80,80)`);
+                
+                // 更新速度
+                const speedEl = document.getElementById('hud-speed-value');
+                if (speedEl) speedEl.textContent = speed.toFixed(1);
+                const cogEl = document.getElementById('hud-cog-value');
+                if (cogEl) cogEl.textContent = `${cog.toFixed(1)}°`;
+                
+                // 更新姿态 (来自 WPC channel 或估算)
+                const wpc = data.wpc || {};
+                const rollEl = document.getElementById('hud-roll-value');
+                const pitchEl = document.getElementById('hud-pitch-value');
+                const heaveEl = document.getElementById('hud-heave-value');
+                if (rollEl) rollEl.textContent = `${(wpc.roll_deg ?? 0).toFixed(1)}°`;
+                if (pitchEl) pitchEl.textContent = `${(wpc.pitch_deg ?? 0).toFixed(1)}°`;
+                if (heaveEl) heaveEl.textContent = `${(wpc.heave_m ?? 0).toFixed(1)}m`;
+                
+                // 人工地平仪 (Attitude Indicator)
+                drawAttitudeIndicator(wpc.roll_deg ?? 0, wpc.pitch_deg ?? 0);
+                
+                // 报警条
+                const alarmBar = document.getElementById('hud-alarm-bar');
+                if (alarmBar) {
+                    const alarms = data.alarms || [];
+                    const activeAlarms = alarms.filter(a => a.active || a.severity === 'critical');
+                    if (activeAlarms.length > 0) {
+                        alarmBar.style.display = 'block';
+                        alarmBar.textContent = `⚠ ${activeAlarms[0].message || 'ALARM'} (${activeAlarms.length})`;
+                    } else {
+                        alarmBar.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                // HUD 更新失败不影响主面板
+            }
+        }
+
+        // ==================== 雷达小地图 ====================
+        let _radarSweepAngle = 0;
+        function updateRadar(ownShip, aisTargets) {
+            const canvas = document.getElementById('radar-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            const cx = w / 2, cy = h / 2;
+            const radius = 72;
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            // 背景圆
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 15, 5, 0.7)';
+            ctx.fill();
+            
+            // 距离环
+            [0.33, 0.66, 1.0].forEach(r => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius * r, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 255, 100, 0.15)';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            });
+            
+            // 十字线
+            ctx.strokeStyle = 'rgba(0, 255, 100, 0.12)';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - radius); ctx.lineTo(cx, cy + radius);
+            ctx.moveTo(cx - radius, cy); ctx.lineTo(cx + radius, cy);
+            ctx.stroke();
+            
+            // 扫描线
+            _radarSweepAngle = (_radarSweepAngle + 0.03) % (Math.PI * 2);
+            const grad = ctx.createConicGradient(_radarSweepAngle, cx, cy);
+            grad.addColorStop(0, 'rgba(0, 255, 100, 0.25)');
+            grad.addColorStop(0.08, 'rgba(0, 255, 100, 0)');
+            grad.addColorStop(1, 'rgba(0, 255, 100, 0)');
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            // 自船 (中心三角形)
+            const hdg = ((ownShip.course || 0) * Math.PI) / 180;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(hdg);
+            ctx.beginPath();
+            ctx.moveTo(0, -5);
+            ctx.lineTo(-3, 4);
+            ctx.lineTo(3, 4);
+            ctx.closePath();
+            ctx.fillStyle = '#00ff88';
+            ctx.fill();
+            ctx.restore();
+            
+            // AIS 目标
+            const ownLat = Number(ownShip.latitude ?? ownShip.lat ?? 0);
+            const ownLon = Number(ownShip.longitude ?? ownShip.lon ?? 0);
+            
+            if (aisTargets && typeof aisTargets === 'object') {
+                const targets = Array.isArray(aisTargets) ? aisTargets : Object.values(aisTargets);
+                targets.forEach(t => {
+                    const tLat = Number(t.latitude ?? t.lat ?? 0);
+                    const tLon = Number(t.longitude ?? t.lon ?? 0);
+                    const dLat = (tLat - ownLat) * 60; // NM approx
+                    const dLon = (tLon - ownLon) * 60 * Math.cos(ownLat * Math.PI / 180);
+                    const scale = radius / 5; // 5 NM range
+                    const px = cx + dLon * scale;
+                    const py = cy - dLat * scale;
+                    
+                    // 在雷达范围内才画
+                    const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+                    if (dist > radius) return;
+                    
+                    // 风险着色
+                    const cpa = Number(t.cpa ?? 5);
+                    const color = cpa < 0.5 ? '#ff4444' : cpa < 1.5 ? '#ffaa00' : '#00ff88';
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    
+                    // 航向线
+                    if (t.course != null) {
+                        const tHdg = (Number(t.course) * Math.PI) / 180;
+                        ctx.beginPath();
+                        ctx.moveTo(px, py);
+                        ctx.lineTo(px + Math.sin(tHdg) * 8, py - Math.cos(tHdg) * 8);
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                });
+            }
+            
+            // 距离标注
+            ctx.fillStyle = 'rgba(0, 255, 100, 0.4)';
+            ctx.font = '7px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('5nm', cx, cy + radius + 9);
+        }
+        
+        // 定时更新雷达
+        let _lastRadarData = {};
+        setInterval(() => {
+            updateRadar(
+                _lastRadarData.ownShip || {},
+                _lastRadarData.aisTargets || {}
+            );
+        }, 100);  // 10fps 扫描
 
         // ==================== UI 辅助函数 ====================
         function updateUI(data) {
@@ -2065,6 +3132,308 @@
         setInterval(updateChannelStatus, 10000);
         setInterval(updateDashboard, 5000);
         setInterval(refreshReplayTimeline, 8000);
+        
+        // 天气数据拉取 → 同步到 3D 场景 WeatherEffects
+        async function pollWeather() {
+            try {
+                const resp = await fetch('/api/v1/weather');
+                const w = await resp.json();
+                if (window.DigitalTwin && window.DigitalTwin.getState) {
+                    const dtState = window.DigitalTwin.getState();
+                    if (dtState.weatherEffects) {
+                        dtState.weatherEffects.setWeather({
+                            wind: { speed: w.wind.speed_ms, direction: w.wind.direction_deg },
+                            wave: { height: w.wave.significant_height_m, period: w.wave.period_s },
+                            rain: { intensity: w.precipitation.intensity },
+                            precipitation: w.precipitation,
+                            visibility: w.visibility_km,
+                            temperature: w.temperature.air_c,
+                        });
+                    }
+                }
+                // 更新天气面板 (使用已有 DOM ID)
+                setTextContent('wm-wind', `${w.wind.speed_kn} kn (BF${w.wind.beaufort})`);
+                setTextContent('wm-wind-dir', `${w.wind.direction_deg}°`);
+                setTextContent('wm-wave', `${w.wave.significant_height_m}m / ${w.wave.period_s}s (SS${w.wave.sea_state})`);
+                setTextContent('wm-visibility', `${w.visibility_km} km`);
+                setTextContent('wm-weather-time', new Date(w.timestamp).toLocaleTimeString('zh-CN', {hour12:false}));
+                
+                // 天气事件指示
+                if (w.event) {
+                    const eventNames = { clear: '☀ 晴好', squall_building: '⛈ 风暴酝酿', squall: '🌊 暴风雨', fog: '🌫 浓雾', clearing: '🌤 天气转好' };
+                    const eventColors = { clear: '#4ade80', squall_building: '#fbbf24', squall: '#ef4444', fog: '#94a3b8', clearing: '#38bdf8' };
+                    setTextContent('wm-event', eventNames[w.event.type] || w.event.type);
+                    const evEl = document.getElementById('wm-event');
+                    if (evEl) evEl.style.color = eventColors[w.event.type] || '#e2e8f0';
+                }
+                
+                // 蒲福风级联动
+                updateBeaufort(w.wind.speed_kn || 0, w.wave.significant_height_m || 0);
+            } catch (e) { /* ignore */ }
+        }
+        pollWeather();
+        setInterval(pollWeather, 6000);
+        
+        // ══ FPS 计数器 ══
+        let _fpsFrames = 0, _fpsLast = performance.now();
+        function updateFPS() {
+            _fpsFrames++;
+            const now = performance.now();
+            if (now - _fpsLast >= 1000) {
+                const fps = Math.round(_fpsFrames * 1000 / (now - _fpsLast));
+                setTextContent('fps-value', fps);
+                if (window.DigitalTwin && window.DigitalTwin.getState) {
+                    const s = window.DigitalTwin.getState();
+                    if (s.renderer) setTextContent('draw-calls', s.renderer.info.render.calls);
+                }
+                _fpsFrames = 0;
+                _fpsLast = now;
+            }
+            requestAnimationFrame(updateFPS);
+        }
+        requestAnimationFrame(updateFPS);
+        
+        // ══ 夜间模式切换 ══
+        let _nightMode = false;
+        window.toggleNightMode = function() {
+            _nightMode = !_nightMode;
+            const btn = document.getElementById('btn-night');
+            if (btn) btn.textContent = _nightMode ? '☀ DAY' : '🌙 NIGHT';
+            
+            if (window.DigitalTwin && window.DigitalTwin.getState) {
+                const s = window.DigitalTwin.getState();
+                if (s.scene) {
+                    s.scene.fog.color.setHex(_nightMode ? 0x020408 : 0x0b1525);
+                }
+                if (s.renderer) {
+                    s.renderer.toneMappingExposure = _nightMode ? 0.3 : 0.9;
+                }
+                if (s._dirLight) {
+                    s._dirLight.intensity = _nightMode ? 0.15 : 1.2;
+                }
+                if (s._skyMesh) {
+                    s._skyMesh.material.uniforms.time.value = _nightMode ? 0.0 : 0.5;
+                }
+            }
+        };
+        
+        // ══ 快捷键帮助 Overlay ══
+        window.toggleShortcutsHelp = function() {
+            const el = document.getElementById('shortcuts-overlay');
+            if (!el) return;
+            el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        };
+        // ESC 关闭 overlay
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const el = document.getElementById('shortcuts-overlay');
+                if (el && el.style.display === 'flex') el.style.display = 'none';
+            }
+        });
+        // 点击背景关闭
+        const _sov = document.getElementById('shortcuts-overlay');
+        if (_sov) _sov.addEventListener('click', (e) => {
+            if (e.target === _sov) _sov.style.display = 'none';
+        });
+        
+        // ══ 蒲福风级指示器 ══
+        const BEAUFORT_TABLE = [
+            { force: 0, desc: 'Calm',             windMin: 0,  windMax: 1,  waveMin: 0,   waveMax: 0,   color: '#38bdf8' },
+            { force: 1, desc: 'Light air',         windMin: 1,  windMax: 3,  waveMin: 0,   waveMax: 0.1, color: '#38bdf8' },
+            { force: 2, desc: 'Light breeze',      windMin: 4,  windMax: 6,  waveMin: 0.1, waveMax: 0.3, color: '#38bdf8' },
+            { force: 3, desc: 'Gentle breeze',     windMin: 7,  windMax: 10, waveMin: 0.3, waveMax: 1.0, color: '#4ade80' },
+            { force: 4, desc: 'Moderate breeze',   windMin: 11, windMax: 16, waveMin: 1.0, waveMax: 1.5, color: '#4ade80' },
+            { force: 5, desc: 'Fresh breeze',      windMin: 17, windMax: 21, waveMin: 1.5, waveMax: 2.5, color: '#facc15' },
+            { force: 6, desc: 'Strong breeze',     windMin: 22, windMax: 27, waveMin: 2.5, waveMax: 4.0, color: '#facc15' },
+            { force: 7, desc: 'Near gale',         windMin: 28, windMax: 33, waveMin: 4.0, waveMax: 5.5, color: '#f97316' },
+            { force: 8, desc: 'Gale',              windMin: 34, windMax: 40, waveMin: 5.5, waveMax: 7.5, color: '#f97316' },
+            { force: 9, desc: 'Strong gale',       windMin: 41, windMax: 47, waveMin: 7.5, waveMax: 10,  color: '#ef4444' },
+            { force: 10, desc: 'Storm',            windMin: 48, windMax: 55, waveMin: 10,  waveMax: 12.5, color: '#ef4444' },
+            { force: 11, desc: 'Violent storm',    windMin: 56, windMax: 63, waveMin: 12.5, waveMax: 16, color: '#dc2626' },
+            { force: 12, desc: 'Hurricane',        windMin: 64, windMax: 99, waveMin: 16,  waveMax: 99,  color: '#dc2626' },
+        ];
+        
+        function updateBeaufort(windSpeedKn, waveHeightM) {
+            let bft = BEAUFORT_TABLE[0];
+            for (const b of BEAUFORT_TABLE) {
+                if (windSpeedKn >= b.windMin) bft = b;
+            }
+            const numEl = document.getElementById('bft-number');
+            const descEl = document.getElementById('bft-desc');
+            const windEl = document.getElementById('bft-wind');
+            const waveEl = document.getElementById('bft-wave');
+            const barsEl = document.getElementById('bft-bars');
+            if (numEl) { numEl.textContent = bft.force; numEl.style.color = bft.color; }
+            if (descEl) descEl.textContent = bft.desc;
+            if (windEl) windEl.textContent = `${bft.windMin}-${bft.windMax}`;
+            if (waveEl) waveEl.textContent = `${bft.waveMin}-${bft.waveMax}`;
+            // 绘制条形图
+            if (barsEl) {
+                barsEl.innerHTML = '';
+                for (let i = 0; i <= 12; i++) {
+                    const bar = document.createElement('div');
+                    bar.style.cssText = `flex:1;border-radius:2px;background:${i <= bft.force ? BEAUFORT_TABLE[i].color : 'rgba(100,180,255,0.1)'};transition:background 0.3s;`;
+                    barsEl.appendChild(bar);
+                }
+            }
+        }
+        
+        // ══ 海洋环境音效 (Web Audio) ══
+        let _audioCtx = null;
+        let _oceanGain = null;
+        let _oceanSources = [];
+        let _oceanPlaying = false;
+        
+        window.toggleOceanAmbience = function() {
+            if (!_audioCtx) {
+                _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                _oceanGain = _audioCtx.createGain();
+                _oceanGain.gain.value = 0.15;
+                _oceanGain.connect(_audioCtx.destination);
+                
+                // 低频海浪 (合成 brown noise + LFO)
+                const bufferSize = _audioCtx.sampleRate * 4;
+                const noiseBuffer = _audioCtx.createBuffer(1, bufferSize, _audioCtx.sampleRate);
+                const data = noiseBuffer.getChannelData(0);
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    lastOut = (lastOut + 0.02 * white) / 1.02;
+                    data[i] = lastOut * 3.5;
+                }
+                
+                const noiseSource = _audioCtx.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+                noiseSource.loop = true;
+                
+                // 低通滤波 (海浪声主要是低频)
+                const lpf = _audioCtx.createBiquadFilter();
+                lpf.type = 'lowpass';
+                lpf.frequency.value = 400;
+                lpf.Q.value = 0.7;
+                
+                // LFO 调制音量 (模拟潮涨潮落)
+                const lfo = _audioCtx.createOscillator();
+                const lfoGain = _audioCtx.createGain();
+                lfo.frequency.value = 0.12; // ~8s 周期
+                lfoGain.gain.value = 0.06;
+                lfo.connect(lfoGain);
+                lfoGain.connect(_oceanGain.gain);
+                lfo.start();
+                
+                noiseSource.connect(lpf);
+                lpf.connect(_oceanGain);
+                noiseSource.start();
+                
+                _oceanSources.push(noiseSource, lfo);
+                
+                // 风声 (高频 filtered noise)
+                const windBuffer = _audioCtx.createBuffer(1, bufferSize, _audioCtx.sampleRate);
+                const windData = windBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    windData[i] = (Math.random() * 2 - 1) * 0.5;
+                }
+                const windSource = _audioCtx.createBufferSource();
+                windSource.buffer = windBuffer;
+                windSource.loop = true;
+                const bpf = _audioCtx.createBiquadFilter();
+                bpf.type = 'bandpass';
+                bpf.frequency.value = 800;
+                bpf.Q.value = 0.5;
+                const windGain = _audioCtx.createGain();
+                windGain.gain.value = 0.04;
+                windSource.connect(bpf);
+                bpf.connect(windGain);
+                windGain.connect(_audioCtx.destination);
+                windSource.start();
+                _oceanSources.push(windSource);
+            }
+            
+            if (_oceanPlaying) {
+                _audioCtx.suspend();
+                _oceanPlaying = false;
+            } else {
+                _audioCtx.resume();
+                _oceanPlaying = true;
+            }
+        };
+        
+        // ══ 航程进度轮询 ══
+        async function pollVoyage() {
+            try {
+                const resp = await fetch('/api/v1/voyage');
+                const v = await resp.json();
+                if (v.progress_pct != null) {
+                    const pct = Math.min(100, Math.max(0, v.progress_pct));
+                    const fill = document.getElementById('voyage-progress-fill');
+                    const txt = document.getElementById('voyage-progress-text');
+                    if (fill) fill.style.width = pct + '%';
+                    if (txt) txt.textContent = `${pct.toFixed(0)}% — ${v.distance_remaining_nm?.toFixed(1) ?? '--'} nm left — ETA ${v.eta ?? '--'}`;
+                    setTextContent('voyage-from', v.departure?.name || 'DEP');
+                    setTextContent('voyage-to', v.destination?.name || 'ARR');
+                }
+            } catch (e) {}
+        }
+        pollVoyage();
+        setInterval(pollVoyage, 10000);
+        
+        // ══ 键盘快捷键 ══
+        document.addEventListener('keydown', (e) => {
+            // 只在非输入框时响应
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            switch (e.key) {
+                case '1': setCameraPreset('overview'); break;
+                case '2': setCameraPreset('bridge'); break;
+                case '3': setCameraPreset('bow'); break;
+                case '4': setCameraPreset('stern'); break;
+                case '5': setCameraPreset('underwater'); break;
+                case '6': setCameraPreset('top'); break;
+                case 'n': case 'N': toggleNightMode(); break;
+                case 'h': case 'H':
+                    // 切换 HUD 显隐
+                    const hud = document.getElementById('hud-overlay');
+                    if (hud) hud.style.display = hud.style.display === 'none' ? 'block' : 'none';
+                    break;
+                case 'r': case 'R':
+                    // 切换雷达显隐
+                    const radar = document.getElementById('hud-radar');
+                    if (radar) radar.style.display = radar.style.display === 'none' ? 'block' : 'none';
+                    break;
+                case 'f': case 'F':
+                    // 切换 FPS 显隐
+                    const fps = document.getElementById('fps-counter');
+                    if (fps) fps.style.display = fps.style.display === 'none' ? 'block' : 'none';
+                    break;
+                case '?':
+                    // 显示快捷键帮助 overlay
+                    toggleShortcutsHelp();
+                    break;
+                case 'b': case 'B':
+                    // 切换蒲福风级指示器
+                    const bft = document.getElementById('beaufort-panel');
+                    if (bft) bft.style.display = bft.style.display === 'none' ? 'flex' : 'none';
+                    break;
+                case 'm': case 'M':
+                    // 切换海洋音效
+                    toggleOceanAmbience();
+                    break;
+            }
+        });
+        
+        // AR-CAS Pro panel update
+        setInterval(() => {
+            if (window.DigitalTwin && window.DigitalTwin.getState) {
+                const dtState = window.DigitalTwin.getState();
+                if (dtState.arCasEnabled && typeof dtState.updateArCasPanel === 'function') {
+                    dtState.updateArCasPanel();
+                } else if (window.DigitalTwin._updateArCas) {
+                    window.DigitalTwin._updateArCas();
+                }
+            }
+            const timeEl = document.getElementById('ar-cas-update-time');
+            if (timeEl) timeEl.textContent = '更新: ' + new Date().toLocaleTimeString();
+        }, 3000);
         loadRouteInfo();
         setInterval(loadRouteInfo, 30000);
 
@@ -2072,7 +3441,505 @@
         document.getElementById('cockpit-replay-refresh').addEventListener('click', refreshReplayTimeline);
         document.getElementById('cockpit-replay-filter').addEventListener('change', refreshReplayTimeline);
     </script>
+    <!-- ════════════ AR-CAS Pro 浮动可拖拽面板 (默认折叠, 不挡视线) ════════════ -->
+    <div id="ar-cas-floating" style="position:fixed;bottom:80px;right:20px;width:340px;max-height:60vh;z-index:850;background:linear-gradient(135deg,rgba(15,20,35,0.96) 0%,rgba(25,15,30,0.95) 100%);border:1px solid rgba(244,67,54,0.4);border-left:4px solid #f44336;border-radius:12px;box-shadow:0 12px 40px rgba(244,67,54,0.25),0 4px 16px rgba(0,0,0,0.5);backdrop-filter:blur(16px);overflow:hidden;display:flex;flex-direction:column;font-family:-apple-system,'Segoe UI',sans-serif;">
+        <!-- 拖拽标题栏 -->
+        <div id="ar-cas-header" style="cursor:move;user-select:none;padding:12px 16px;background:linear-gradient(90deg,rgba(244,67,54,0.18),rgba(244,67,54,0.05));border-bottom:1px solid rgba(244,67,54,0.25);display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🎯</span>
+                <strong style="color:#fda4af;font-size:14px;letter-spacing:0.5px;">AR-CAS Pro</strong>
+                <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(244,67,54,0.25);color:#fecaca;font-weight:600;animation:pulse-red 2s infinite;">● LIVE</span>
+            </div>
+            <div style="display:flex;gap:4px;">
+                <button id="ar-cas-collapse-btn" title="折叠/展开" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#cbd5e1;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;line-height:1;">−</button>
+                <button id="ar-cas-close-btn" title="隐藏" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:14px;line-height:1;">×</button>
+            </div>
+        </div>
+        <!-- 内容 -->
+        <div id="ar-cas-body" style="padding:14px 16px;overflow-y:auto;flex:1;color:#e2e8f0;font-size:13px;">
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:10px;">碰撞避免增强现实 — COLREGs Rule 13/14/15/6</div>
+            
+            <!-- 本船状态 -->
+            <div id="ar-cas-ownship" style="margin-bottom:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:6px;font-size:12px;">
+                <div style="color:#4ade80;font-weight:600;margin-bottom:4px;">⚓ 本船 (OWN SHIP)</div>
+                <div id="ar-cas-ownship-info" style="color:#cbd5e1;line-height:1.6;">--</div>
+            </div>
+            
+            <!-- 风险汇总 -->
+            <div id="ar-cas-colregs" style="font-size:13px;margin-bottom:12px;padding:8px 10px;background:rgba(0,0,0,0.35);border-radius:6px;border:1px solid rgba(244,67,54,0.15);">
+                <span style="color:#4ade80">🟢 高风险: 0</span>
+                <span style="color:#fbbf24;margin-left:14px">🟡 中风险: 0</span>
+                <span style="color:#22d3ee;margin-left:14px">🧊 冰山: 0</span>
+            </div>
+            
+            <!-- 目标详情 -->
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;letter-spacing:1px;">▼ 监视目标</div>
+            <div id="ar-cas-targets" style="max-height:300px;overflow-y:auto;font-size:13px;">
+                <div style="color:#94a3b8;text-align:center;padding:18px;">初始化中...</div>
+            </div>
+            
+            <!-- COLREGs 建议 -->
+            <div id="ar-cas-advice" style="margin-top:10px;padding:10px;background:rgba(250,204,21,0.08);border:1px solid rgba(250,204,21,0.2);border-radius:6px;font-size:12px;color:#fde047;">
+                <div style="font-weight:600;margin-bottom:4px;">📜 COLREGs 建议</div>
+                <div id="ar-cas-advice-text" style="color:#fef3c7;line-height:1.5;">监测中...</div>
+            </div>
+            
+            <!-- 环境 -->
+            <div id="ar-cas-env" style="margin-top:8px;padding:8px 10px;background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:6px;font-size:11px;color:#94a3b8;">
+                <div style="color:#7dd3fc;font-weight:600;margin-bottom:4px;">🌊 环境</div>
+                <div id="ar-cas-env-info" style="line-height:1.6;">--</div>
+            </div>
+            
+            <div style="margin-top:10px;padding:8px 10px;background:rgba(79,195,247,0.06);border-radius:6px;font-size:11px;color:#94a3b8;">
+                <div>📡 数据源: AIS + COLREGs Brain + AR 叠加</div>
+                <div style="margin-top:4px">📍 冰山检测: Distributed Perception Hub</div>
+                <div style="margin-top:4px">🔄 <span id="ar-cas-update-time">--</span></div>
+            </div>
+        </div>
+        <!-- 调整大小手柄 -->
+        <div id="ar-cas-resize" style="position:absolute;right:0;bottom:0;width:14px;height:14px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,rgba(244,67,54,0.5) 50%);border-bottom-right-radius:12px;"></div>
+    </div>
+    <style>
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(244,67,54,0.5); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(244,67,54,0); }
+        }
+    </style>
+    <script>
+    // AR-CAS Pro 浮动面板拖拽与调整大小
+    (function() {
+        const panel = document.getElementById('ar-cas-floating');
+        const header = document.getElementById('ar-cas-header');
+        const body = document.getElementById('ar-cas-body');
+        const resize = document.getElementById('ar-cas-resize');
+        const collapseBtn = document.getElementById('ar-cas-collapse-btn');
+        const closeBtn = document.getElementById('ar-cas-close-btn');
+        if (!panel || !header) return;
+        
+        // 恢复存储位置
+        try {
+            const saved = JSON.parse(localStorage.getItem('arCasPanel') || 'null');
+            if (saved) {
+                if (saved.left) { panel.style.left = saved.left; panel.style.right = 'auto'; }
+                if (saved.top) { panel.style.top = saved.top; panel.style.bottom = 'auto'; }
+                if (saved.width) panel.style.width = saved.width;
+                if (saved.height) panel.style.height = saved.height;
+                if (saved.collapsed === false) {
+                    body.style.display = 'block';
+                    collapseBtn.textContent = '−';
+                } else {
+                    // 默认折叠
+                    body.style.display = 'none';
+                    collapseBtn.textContent = '+';
+                }
+            } else {
+                // 首次访问: 默认折叠
+                body.style.display = 'none';
+                collapseBtn.textContent = '+';
+            }
+        } catch (e) {
+            body.style.display = 'none';
+            collapseBtn.textContent = '+';
+        }
+        
+        // 拖拽
+        let dragging = false, dx = 0, dy = 0;
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            dragging = true;
+            const rect = panel.getBoundingClientRect();
+            dx = e.clientX - rect.left;
+            dy = e.clientY - rect.top;
+            panel.style.right = 'auto';
+            panel.style.transition = 'none';
+            document.body.style.userSelect = 'none';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const x = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, e.clientX - dx));
+            const y = Math.max(50, Math.min(window.innerHeight - 60, e.clientY - dy));
+            panel.style.left = x + 'px';
+            panel.style.top = y + 'px';
+        });
+        document.addEventListener('mouseup', () => {
+            if (!dragging) return;
+            dragging = false;
+            document.body.style.userSelect = '';
+            const s = JSON.parse(localStorage.getItem('arCasPanel') || '{}');
+            s.left = panel.style.left;
+            s.top = panel.style.top;
+            localStorage.setItem('arCasPanel', JSON.stringify(s));
+        });
+        
+        // 调整大小
+        let resizing = false, rW = 0, rH = 0, rX = 0, rY = 0;
+        resize.addEventListener('mousedown', (e) => {
+            resizing = true;
+            const rect = panel.getBoundingClientRect();
+            rW = rect.width; rH = rect.height; rX = e.clientX; rY = e.clientY;
+            e.stopPropagation();
+            document.body.style.userSelect = 'none';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!resizing) return;
+            const w = Math.max(280, Math.min(800, rW + (e.clientX - rX)));
+            const h = Math.max(160, Math.min(window.innerHeight - 100, rH + (e.clientY - rY)));
+            panel.style.width = w + 'px';
+            panel.style.height = h + 'px';
+            panel.style.maxHeight = 'none';
+        });
+        document.addEventListener('mouseup', () => {
+            if (!resizing) return;
+            resizing = false;
+            document.body.style.userSelect = '';
+            const s = JSON.parse(localStorage.getItem('arCasPanel') || '{}');
+            s.width = panel.style.width;
+            s.height = panel.style.height;
+            localStorage.setItem('arCasPanel', JSON.stringify(s));
+        });
+        
+        // 折叠
+        collapseBtn.addEventListener('click', () => {
+            const collapsed = body.style.display === 'none';
+            body.style.display = collapsed ? 'block' : 'none';
+            collapseBtn.textContent = collapsed ? '−' : '+';
+            const s = JSON.parse(localStorage.getItem('arCasPanel') || '{}');
+            s.collapsed = !collapsed;
+            localStorage.setItem('arCasPanel', JSON.stringify(s));
+        });
+        
+        // 隐藏
+        closeBtn.addEventListener('click', () => {
+            panel.style.display = 'none';
+        });
+        
+        // 全局开关
+        window.toggleArCasPanel = function(show) {
+            panel.style.display = show === false ? 'none' : 'flex';
+        };
+    })();
+    </script>
+
     <script src="./digital-twin/weather-controls.js" defer></script>
 <script src="/js/nav-sidebar.js" data-active="twin"></script>
+<script src="/js/darwin-ratchet.js"></script>
+
+    <!-- ════════════ 舱室信息面板 (右侧分屏) ════════════ -->
+    <div id="cabin-info-panel">
+        <button id="cabin-close" onclick="exitCabin()" title="退出舱室">×</button>
+        <h2><span id="cabin-icon">⚙</span> <span id="cabin-name">舱室信息</span></h2>
+        <div class="cabin-subtitle" id="cabin-code">CABIN INFORMATION SYSTEM</div>
+        <div id="cabin-content"></div>
+    </div>
+
+    <script>
+    // ════════════ 舱室进入/退出系统 ════════════
+    
+    // 舱室下拉菜单切换
+    window.toggleCabinMenu = function() {
+        const menu = document.getElementById('cabin-menu');
+        if (!menu) return;
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    };
+    // 点击外部关闭菜单
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('cabin-menu');
+        const launcher = document.getElementById('cabin-launcher');
+        if (menu && launcher && !launcher.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+    </script>
+    <style>
+        .cabin-menu-item:hover { background: rgba(56,189,248,0.15) !important; }
+        #cabin-toggle-btn:hover { background: linear-gradient(135deg,rgba(25,50,85,0.95),rgba(35,55,95,0.95)) !important; transform: translateY(-1px); transition: all 0.2s; }
+    </style>
+
+    <script>
+    // ════════════ 舱室定义与渲染 ════════════
+    const CABIN_DEFS = {
+        bridge: {
+            name: '驾驶台 / Bridge', icon: '🏗', code: 'NAV-001 / WHEELHOUSE',
+            preset: 'cabin-bridge',
+            sections: [
+                { title: '航行参数', icon: '🧭', fields: [
+                    ['航向 HDG', () => (window._lastHeading||0).toFixed(1)+'°', 'ok'],
+                    ['航速 SOG', () => (window._lastSpeed||0).toFixed(1)+' kn', 'ok'],
+                    ['舵角 RUDDER', () => ((window._lastRudder||0)).toFixed(1)+'°', 'ok'],
+                    ['ROT', () => ((window._lastRot||0)).toFixed(2)+'°/min', 'ok'],
+                ]},
+                { title: '导航设备', icon: '📡', fields: [
+                    ['ECDIS', () => 'ONLINE', 'ok'],
+                    ['雷达 X-band', () => '运行中 12rpm', 'ok'],
+                    ['雷达 S-band', () => '运行中 12rpm', 'ok'],
+                    ['GPS', () => 'FIX 12 sats', 'ok'],
+                    ['AIS', () => 'TX/RX', 'ok'],
+                ]},
+                { title: '通信', icon: '📞', fields: [
+                    ['VHF Ch16', () => 'STBY', 'ok'],
+                    ['MF/HF DSC', () => 'STBY', 'ok'],
+                    ['Inmarsat-C', () => 'LOGGED IN', 'ok'],
+                    ['卫星电话', () => 'READY', 'ok'],
+                ]},
+                { title: '当班信息', icon: '👨‍✈️', fields: [
+                    ['当班大副', () => '李明 / Chief Mate', null],
+                    ['当班水手', () => '张伟 / AB Seaman', null],
+                    ['交班时间', () => '04:00 UTC', null],
+                ]}
+            ]
+        },
+        engine: {
+            name: '主机舱 / Engine Room', icon: '⚙', code: 'PROP-001 / MAIN ENGINE',
+            preset: 'cabin-engine',
+            sections: [
+                { title: '主机状态', icon: '🔥', fields: [
+                    ['左主机 RPM', () => (window._lastEngineRpm||85).toFixed(0)+' rpm', 'ok'],
+                    ['右主机 RPM', () => (window._lastEngineRpm||85).toFixed(0)+' rpm', 'ok'],
+                    ['左主机功率', () => '8,420 kW (84%)', 'ok'],
+                    ['右主机功率', () => '8,380 kW (84%)', 'ok'],
+                ]},
+                { title: '温度监测', icon: '🌡', fields: [
+                    ['冷却水 IN', () => '38°C', 'ok'],
+                    ['冷却水 OUT', () => '76°C', 'ok'],
+                    ['滑油温度', () => '62°C', 'ok'],
+                    ['排气温度', () => '385°C', 'ok'],
+                ], bar: { label: '排气温度', value: () => 385/500, max: '500°C' }},
+                { title: '燃油系统', icon: '⛽', fields: [
+                    ['HFO 消耗', () => (window._lastFuelFlow||1.8).toFixed(2)+' t/h', 'ok'],
+                    ['HFO 储量', () => '342.5 t (68%)', 'ok'],
+                    ['MGO 储量', () => '85.2 t (85%)', 'ok'],
+                    ['日油柜', () => '12.4 t', 'ok'],
+                ]},
+                { title: '增压系统', icon: '💨', fields: [
+                    ['左涡轮 RPM', () => '18,200 rpm', 'ok'],
+                    ['右涡轮 RPM', () => '18,150 rpm', 'ok'],
+                    ['增压压力', () => '2.85 bar', 'ok'],
+                    ['扫气温度', () => '52°C', 'ok'],
+                ]},
+                { title: '报警状态', icon: '🚨', fields: [
+                    ['当前报警', () => '无', 'ok'],
+                    ['累计运行', () => '14,256 h', null],
+                    ['距离保养', () => '244 h', 'warn'],
+                ]}
+            ]
+        },
+        ecr: {
+            name: '机舱集控室 / ECR', icon: '🖥', code: 'CTRL-001 / ENGINE CONTROL ROOM',
+            preset: 'cabin-control',
+            sections: [
+                { title: 'IAS 综合监控', icon: '📊', fields: [
+                    ['监控点位', () => '2,856 / 2,856', 'ok'],
+                    ['IAS 状态', () => 'NORMAL', 'ok'],
+                    ['通讯链路', () => 'PRIMARY', 'ok'],
+                    ['数据记录', () => 'RECORDING', 'ok'],
+                ]},
+                { title: '电站状态', icon: '⚡', fields: [
+                    ['DG1 负载', () => '780 kW (62%)', 'ok'],
+                    ['DG2 负载', () => '750 kW (60%)', 'ok'],
+                    ['DG3', () => 'STANDBY', null],
+                    ['母线电压', () => '6,600 V', 'ok'],
+                    ['频率', () => '60.0 Hz', 'ok'],
+                ]},
+                { title: '辅机状态', icon: '🔧', fields: [
+                    ['锅炉', () => '运行 7.2 bar', 'ok'],
+                    ['造水机', () => '12 t/d', 'ok'],
+                    ['空压机', () => 'AUTO', 'ok'],
+                    ['冷却水泵 #1', () => 'RUN', 'ok'],
+                    ['冷却水泵 #2', () => 'STBY', null],
+                ]},
+                { title: '当班机匠', icon: '👷', fields: [
+                    ['值班轮机员', () => '王强 / 2nd Engineer', null],
+                    ['交班时间', () => '04:00 UTC', null],
+                    ['巡检状态', () => '已完成 3/3', 'ok'],
+                ]}
+            ]
+        },
+        cargo: {
+            name: '货舱 / Cargo Hold', icon: '📦', code: 'CARGO-001 / HOLD MONITORING',
+            preset: 'cabin-cargo',
+            sections: [
+                { title: '装载情况', icon: '📦', fields: [
+                    ['总集装箱', () => '4,260 TEU', 'ok'],
+                    ['冷藏箱', () => '328 RFR', 'ok'],
+                    ['危险品', () => '12 IMDG', 'warn'],
+                    ['空箱', () => '480 EMP', null],
+                ]},
+                { title: '舱室环境', icon: '🌡', fields: [
+                    ['舱内温度', () => '24.5°C', 'ok'],
+                    ['湿度', () => '62%', 'ok'],
+                    ['CO₂ 浓度', () => '420 ppm', 'ok'],
+                    ['烟雾报警', () => '正常', 'ok'],
+                ]},
+                { title: '消防系统', icon: '🧯', fields: [
+                    ['CO₂ 系统', () => '就绪', 'ok'],
+                    ['水雾系统', () => '就绪', 'ok'],
+                    ['探测器', () => '128/128 在线', 'ok'],
+                    ['手动报警', () => '正常', 'ok'],
+                ]},
+                { title: '配载稳性', icon: '⚖', fields: [
+                    ['总载重', () => '52,840 t', 'ok'],
+                    ['吃水 (前)', () => '11.85 m', 'ok'],
+                    ['吃水 (后)', () => '12.15 m', 'ok'],
+                    ['GM', () => '2.85 m', 'ok'],
+                ]}
+            ]
+        },
+        crew: {
+            name: '船员舱 / Crew Cabin', icon: '🛏', code: 'ACCOM-001 / CREW QUARTERS',
+            preset: 'cabin-crew',
+            sections: [
+                { title: '船员名册', icon: '👥', fields: [
+                    ['总人数', () => '24 人', 'ok'],
+                    ['船长', () => '陈建华', null],
+                    ['大副', () => '李明', null],
+                    ['轮机长', () => '赵刚', null],
+                    ['水手', () => '12 人', null],
+                ]},
+                { title: '舱室环境', icon: '🌡', fields: [
+                    ['舱室温度', () => '22°C', 'ok'],
+                    ['空调', () => 'AUTO', 'ok'],
+                    ['通风', () => 'NORMAL', 'ok'],
+                    ['淡水供应', () => 'OK', 'ok'],
+                ]},
+                { title: '工时管理 (MLC)', icon: '⏱', fields: [
+                    ['本月工时', () => '142 h', 'ok'],
+                    ['本月休息', () => '258 h', 'ok'],
+                    ['MLC 合规', () => '✓ COMPLIANT', 'ok'],
+                ]},
+                { title: '医疗', icon: '🏥', fields: [
+                    ['医疗官', () => '赵刚 (二副代)', null],
+                    ['药品库存', () => '充足', 'ok'],
+                    ['上次体检', () => '2026-02-15', null],
+                ]}
+            ]
+        },
+        galley: {
+            name: '厨房 / Galley', icon: '🍳', code: 'GALLEY-001 / CATERING',
+            preset: 'cabin-galley',
+            sections: [
+                { title: '设备状态', icon: '🔥', fields: [
+                    ['主灶台', () => '运行中', 'ok'],
+                    ['烤箱', () => 'STBY', null],
+                    ['冰箱 #1', () => '4°C', 'ok'],
+                    ['冰柜', () => '-18°C', 'ok'],
+                    ['抽油烟机', () => 'AUTO', 'ok'],
+                ]},
+                { title: '食品库存', icon: '🥬', fields: [
+                    ['新鲜蔬菜', () => '剩余 5 天', 'warn'],
+                    ['冷冻肉类', () => '剩余 22 天', 'ok'],
+                    ['主食', () => '剩余 35 天', 'ok'],
+                    ['饮用水', () => '剩余 18 天', 'ok'],
+                ]},
+                { title: '今日餐饮', icon: '🍽', fields: [
+                    ['早餐', () => '已完成', 'ok'],
+                    ['午餐', () => '准备中', 'warn'],
+                    ['晚餐', () => '待准备', null],
+                    ['夜班餐', () => '待准备', null],
+                ]},
+                { title: '人员', icon: '👨‍🍳', fields: [
+                    ['主厨', () => '林师傅', null],
+                    ['助手', () => '小王', null],
+                    ['卫生检查', () => 'PASS', 'ok'],
+                ]}
+            ]
+        }
+    };
+    
+    let _activeCabin = null;
+    let _cabinUpdateTimer = null;
+    
+    window.enterCabin = function(cabinId) {
+        const def = CABIN_DEFS[cabinId];
+        if (!def) return;
+        _activeCabin = cabinId;
+        
+        // 显示舱内 3D 内容
+        if (window.toggleCabinInteriors) window.toggleCabinInteriors(true);
+        
+        // 切换到舱室相机视角
+        if (window.setCameraPreset) window.setCameraPreset(def.preset);
+        
+        // 切换分屏
+        document.body.classList.add('cabin-mode');
+        
+        // 更新面板内容
+        document.getElementById('cabin-icon').textContent = def.icon;
+        document.getElementById('cabin-name').textContent = def.name;
+        document.getElementById('cabin-code').textContent = def.code;
+        const exitBtn = document.getElementById('btn-exit-cabin');
+        if (exitBtn) exitBtn.style.display = 'flex';
+        const togBtn = document.getElementById('cabin-toggle-btn');
+        if (togBtn) togBtn.innerHTML = '<span style="font-size:14px;">📍</span> ' + def.name.split(' /')[0] + ' <span style="font-size:10px;opacity:0.7;">▼</span>';
+        
+        renderCabinContent(def);
+        
+        // 启动定时刷新 (1Hz)
+        if (_cabinUpdateTimer) clearInterval(_cabinUpdateTimer);
+        _cabinUpdateTimer = setInterval(() => renderCabinContent(def), 1000);
+        
+        // 触发 resize 让 Three.js 重算视口
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 520);
+        
+        console.log('[Cabin] Entered:', cabinId);
+    };
+    
+    window.exitCabin = function() {
+        if (!_activeCabin) return;
+        _activeCabin = null;
+        
+        if (window.toggleCabinInteriors) window.toggleCabinInteriors(false);
+        if (window.setCameraPreset) window.setCameraPreset('overview');
+        
+        document.body.classList.remove('cabin-mode');
+        const exitBtn = document.getElementById('btn-exit-cabin');
+        if (exitBtn) exitBtn.style.display = 'none';
+        const togBtn = document.getElementById('cabin-toggle-btn');
+        if (togBtn) togBtn.innerHTML = '<span style="font-size:14px;">🏠</span> 进入舱室 <span style="font-size:10px;opacity:0.7;">▼</span>';
+        
+        if (_cabinUpdateTimer) {
+            clearInterval(_cabinUpdateTimer);
+            _cabinUpdateTimer = null;
+        }
+        
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 520);
+        
+        console.log('[Cabin] Exited');
+    };
+    
+    function renderCabinContent(def) {
+        const html = def.sections.map(sec => {
+            let rows = sec.fields.map(([label, getVal, cls]) => {
+                let v;
+                try { v = getVal(); } catch (e) { v = '—'; }
+                const valClass = cls ? `cabin-value ${cls}` : 'cabin-value';
+                return `<div class="cabin-row"><span class="cabin-label">${label}</span><span class="${valClass}">${v}</span></div>`;
+            }).join('');
+            
+            let barHtml = '';
+            if (sec.bar) {
+                let pct = 0;
+                try { pct = Math.min(100, Math.max(0, sec.bar.value() * 100)); } catch (e) {}
+                barHtml = `<div style="margin-top:6px;font-size:10px;color:#64748b;">${sec.bar.label} (max ${sec.bar.max})</div>
+                    <div class="cabin-bar"><div class="cabin-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>`;
+            }
+            
+            return `<div class="cabin-section">
+                <h4>${sec.icon} ${sec.title}</h4>
+                ${rows}
+                ${barHtml}
+            </div>`;
+        }).join('');
+        
+        document.getElementById('cabin-content').innerHTML = html;
+    }
+    
+    // 键盘快捷键: 数字键 1-6 进入舱室, ESC 退出
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const cabinKeys = { '!': 'bridge', '@': 'engine', '#': 'ecr', '$': 'cargo', '%': 'crew', '^': 'galley' };
+        if (cabinKeys[e.key]) { enterCabin(cabinKeys[e.key]); e.preventDefault(); }
+        if (e.key === 'Escape' && _activeCabin) { exitCabin(); e.preventDefault(); }
+    });
+    </script>
 </body>
 </html>

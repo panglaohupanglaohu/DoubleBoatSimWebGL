@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系统自我演进 - Poseidon-X</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/openbridge-theme.css">
+  <style>
+:root{--bg:#0a1628;--panel:rgba(12,25,48,0.92);--panel2:rgba(18,36,64,0.88);--line:rgba(125,207,255,0.14);--cyan:#7ddcff;--cyan-s:#35c8ff;--lime:#98f5a7;--amber:#ffcf70;--red:#ff7d7d;--pink:#ff4d8d;--text:#eef7ff;--muted:#94a9bc;--dim:#5a7891;--mono:'IBM Plex Mono',Consolas,monospace;--sans:'Space Grotesk','Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);min-height:100vh;color:var(--text);background:var(--bg)}
+a{color:var(--cyan);text-decoration:none}
+/* Layout */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-left h1{font-size:20px;font-weight:700;background:linear-gradient(90deg,var(--cyan),var(--lime));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-badge{font-size:11px;padding:3px 10px;border-radius:99px;font-family:var(--mono);background:rgba(125,207,255,0.12);color:var(--cyan);border:1px solid rgba(125,207,255,0.2)}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.main-scroll{flex:1;overflow-y:auto;padding:24px 28px}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(125,207,255,0.2);font-family:var(--sans);transition:.2s;background:transparent;color:var(--cyan)}
+.btn:hover{background:rgba(125,207,255,0.1);transform:translateY(-1px)}
+.btn-primary{background:linear-gradient(135deg,#35c8ff,#1a9fd8);color:#fff;border-color:transparent;box-shadow:0 2px 12px rgba(53,200,255,0.25)}
+.btn-primary:hover{filter:brightness(1.15)}
+.btn-pink{background:linear-gradient(135deg,#ff4d8d,#d63384);color:#fff;border-color:transparent;box-shadow:0 2px 12px rgba(255,77,141,0.25)}
+.btn-pink:hover{filter:brightness(1.15)}
+.btn-danger{background:rgba(255,125,125,0.12);color:var(--red);border-color:rgba(255,125,125,0.25)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-ghost{border:none;padding:6px 10px;font-size:12px}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+/* Cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.sc-cyan::before{background:linear-gradient(90deg,var(--cyan),transparent)}
+.stat-card.sc-lime::before{background:linear-gradient(90deg,var(--lime),transparent)}
+.stat-card.sc-amber::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.stat-card.sc-pink::before{background:linear-gradient(90deg,var(--pink),transparent)}
+.stat-card.sc-red::before{background:linear-gradient(90deg,var(--red),transparent)}
+.stat-card .label{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.stat-card .value{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--text)}
+.stat-card .sub{font-size:11px;color:var(--dim);margin-top:4px}
+/* Section */
+.section{margin-bottom:28px}
+.section-title{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.section-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);letter-spacing:.5px;font-weight:600}
+.tbl td{padding:12px;border-bottom:1px solid rgba(125,207,255,0.06);color:var(--text)}
+.tbl tr:hover td{background:rgba(125,207,255,0.04)}
+.tbl .mono{font-family:var(--mono);font-size:12px}
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.chip-domain{background:rgba(125,207,255,0.12);color:var(--cyan);border:1px solid rgba(125,207,255,0.2)}
+.chip-sev-critical{background:rgba(255,77,141,0.15);color:var(--pink);border:1px solid rgba(255,77,141,0.25)}
+.chip-sev-high{background:rgba(255,207,112,0.15);color:var(--amber);border:1px solid rgba(255,207,112,0.25)}
+.chip-sev-medium{background:rgba(125,207,255,0.1);color:var(--cyan);border:1px solid rgba(125,207,255,0.2)}
+.chip-sev-low{background:rgba(152,245,167,0.1);color:var(--lime);border:1px solid rgba(152,245,167,0.2)}
+/* Status badges */
+.st-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px}
+.st-badge::before{content:'';width:7px;height:7px;border-radius:50%}
+.st-discovered{color:var(--cyan)}.st-discovered::before{background:var(--cyan)}
+.st-dispatched{color:var(--amber)}.st-dispatched::before{background:var(--amber)}
+.st-in_progress{color:var(--cyan-s)}.st-in_progress::before{background:var(--cyan-s);box-shadow:0 0 8px var(--cyan-s)}
+.st-verify_pending{color:var(--pink)}.st-verify_pending::before{background:var(--pink);animation:pulse 2s infinite}
+.st-verified{color:var(--lime)}.st-verified::before{background:var(--lime)}
+.st-failed{color:var(--red)}.st-failed::before{background:var(--red)}
+.st-closed{color:var(--dim)}.st-closed::before{background:var(--dim)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Rule cards */
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.rule-card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;transition:.2s;position:relative}
+.rule-card:hover{border-color:rgba(125,207,255,0.3);transform:translateY(-1px)}
+.rule-card .rc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.rule-card .rc-id{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--cyan)}
+.rule-card .rc-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.rule-card .rc-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.rule-card .rc-meta{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.rule-card .rc-ref{font-size:11px;color:var(--dim);font-family:var(--mono)}
+.rule-card .rc-result{position:absolute;top:14px;right:14px;font-size:16px}
+/* Pipeline viz */
+.pipeline{display:flex;align-items:center;gap:0;padding:20px 0;margin-bottom:24px;overflow-x:auto}
+.pipe-step{display:flex;flex-direction:column;align-items:center;min-width:110px;position:relative}
+.pipe-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid var(--dim);background:var(--panel);transition:.3s;z-index:2}
+.pipe-dot.active{border-color:var(--cyan-s);background:rgba(53,200,255,0.15);box-shadow:0 0 16px rgba(53,200,255,0.3);animation:pipe-pulse 2s infinite}
+.pipe-dot.done{border-color:var(--lime);background:rgba(152,245,167,0.12);color:var(--lime)}
+.pipe-dot.error{border-color:var(--red);background:rgba(255,125,125,0.1);color:var(--red)}
+.pipe-label{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;white-space:nowrap}
+.pipe-count{font-size:10px;font-family:var(--mono);color:var(--cyan);margin-top:2px}
+.pipe-conn{width:40px;height:2px;background:var(--line);flex-shrink:0;margin-top:-18px}
+.pipe-conn.done{background:var(--lime)}
+.pipe-conn.active{background:var(--cyan-s);box-shadow:0 0 6px rgba(53,200,255,0.3)}
+@keyframes pipe-pulse{0%,100%{box-shadow:0 0 8px rgba(53,200,255,0.2)}50%{box-shadow:0 0 20px rgba(53,200,255,0.5)}}
+/* Timeline */
+.timeline{position:relative;padding-left:28px}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--line)}
+.tl-item{position:relative;margin-bottom:16px;padding-left:16px}
+.tl-item::before{content:'';position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;border:2px solid var(--dim);background:var(--bg);z-index:1}
+.tl-item.tl-pass::before{border-color:var(--lime);background:rgba(152,245,167,0.3)}
+.tl-item.tl-fail::before{border-color:var(--red);background:rgba(255,125,125,0.3)}
+.tl-item.tl-active::before{border-color:var(--cyan-s);background:rgba(53,200,255,0.3);box-shadow:0 0 8px rgba(53,200,255,0.4)}
+.tl-time{font-size:11px;color:var(--dim);font-family:var(--mono)}
+.tl-title{font-size:13px;font-weight:600;margin:2px 0}
+.tl-detail{font-size:12px;color:var(--muted)}
+/* Progress ring */
+.progress-ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.progress-ring svg{transform:rotate(-90deg)}
+.progress-ring .ring-text{position:absolute;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)}
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 22px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.3);color:var(--text);backdrop-filter:blur(8px)}
+.toast.show{opacity:1}
+/* Detail panel */
+.detail-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);justify-content:center;align-items:center}
+.detail-overlay.open{display:flex}
+.detail-panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:640px;max-width:94vw;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.4);padding:28px}
+.detail-panel h3{font-size:18px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(125,207,255,0.06);font-size:13px}
+.detail-row .lbl{color:var(--muted)}
+.detail-row .val{font-family:var(--mono);text-align:right;max-width:60%}
+.detail-actions{display:flex;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+/* Log console */
+.log-console{background:#0d1117;border:1px solid #30363d;border-radius:10px;max-height:300px;overflow-y:auto;padding:12px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;color:#c9d1d9;white-space:pre-wrap;word-break:break-all}
+.log-console .log-ok{color:#3fb950}.log-console .log-err{color:#f85149}.log-console .log-info{color:#58a6ff}.log-console .log-warn{color:#d29922}
+/* Empty state */
+.empty-state{text-align:center;padding:48px 20px;color:var(--dim)}
+.empty-state .icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px;margin-bottom:16px}
+/* Responsive */
+@media(max-width:768px){.card-grid{grid-template-columns:1fr 1fr}.rules-grid{grid-template-columns:1fr}.main-scroll{padding:16px}.pipeline{justify-content:flex-start}}
+@media(max-width:480px){.card-grid{grid-template-columns:1fr}.topbar{flex-direction:column;gap:10px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>🔄 系统自我演进</h1>
+      <span class="topbar-badge" id="engine-badge">初始化中...</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="refreshAll()">🔄 刷新</button>
+      <button class="btn btn-primary btn-sm" id="btn-audit" onclick="runAudit()">🔍 运行审查</button>
+      <button class="btn btn-pink btn-sm" id="btn-cycle" onclick="runFullCycle()">▶ 完整演进周期</button>
+      <a href="/agent-team-config.html" class="btn btn-ghost">🤖 团队管理</a>
+      <a href="/captain-cockpit.html" class="btn btn-ghost">🚢 中控台</a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-scroll">
+    <!-- Stats dashboard -->
+    <div class="card-grid" id="stats-grid"></div>
+
+    <!-- Pipeline visualization -->
+    <div class="section">
+      <div class="section-title">⛓️ 演进流水线</div>
+      <div class="card" style="padding:16px">
+        <div class="pipeline" id="pipeline-viz"></div>
+      </div>
+    </div>
+
+    <!-- Operation panel -->
+    <div class="section">
+      <div class="section-bar">
+        <div class="section-title" style="margin:0">⚡ 演进操作</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" id="btn-dispatch" onclick="runDispatch()" disabled>📤 派发待处理</button>
+          <button class="btn btn-sm" id="btn-verify" onclick="runVerify()" disabled>✅ 验证待验证</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="log-console" id="op-log">🔄 系统自我演进引擎就绪。点击「运行审查」或「完整演进周期」开始。</div>
+      </div>
+    </div>
+
+    <!-- Audit Rules -->
+    <div class="section">
+      <div class="section-bar">
+        <div class="section-title" style="margin:0">📋 审查规则</div>
+        <span id="rules-count" style="color:var(--dim);font-size:12px;font-family:var(--mono)"></span>
+      </div>
+      <div class="rules-grid" id="rules-grid"></div>
+    </div>
+
+    <!-- Evolution Items -->
+    <div class="section">
+      <div class="section-bar">
+        <div class="section-title" style="margin:0">📊 演进条目</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="item-filter" style="background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--text);padding:4px 10px;font-size:12px;font-family:var(--sans)" onchange="renderItems()">
+            <option value="">全部状态</option>
+            <option value="discovered">已发现</option>
+            <option value="dispatched">已派发</option>
+            <option value="in_progress">进行中</option>
+            <option value="verify_pending">待验证</option>
+            <option value="verified">已验证</option>
+            <option value="failed">失败</option>
+            <option value="closed">已关闭</option>
+          </select>
+          <span id="items-count" style="color:var(--dim);font-size:12px;font-family:var(--mono)"></span>
+        </div>
+      </div>
+      <div id="items-container"></div>
+    </div>
+
+    <!-- Audit Timeline -->
+    <div class="section">
+      <div class="section-title">🕐 审查历史</div>
+      <div class="card" style="padding:20px">
+        <div class="timeline" id="audit-timeline"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item detail overlay -->
+<div class="detail-overlay" id="detail-overlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-panel" id="detail-panel"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Config
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const API = '/api/v1/agent-teams/evolution';
+let _refreshTimer = null;
+let _allItems = [];
+let _allRules = [];
+let _auditHistory = [];
+let _lastAuditDetails = [];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Helpers
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function el(id) { return document.getElementById(id); }
+function esc(v) { return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function api(path, opts) {
+  try {
+    const r = await fetch(API + path, opts);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+function toast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+const STATUS_LABELS = {
+  discovered: '已发现', dispatched: '已派发', in_progress: '进行中',
+  verify_pending: '待验证', verified: '已验证', failed: '失败', closed: '已关闭'
+};
+const SEVERITY_LABELS = { critical: '严重', high: '高', medium: '中', low: '低' };
+
+function stLabel(s) { return STATUS_LABELS[s] || s; }
+function sevLabel(s) { return SEVERITY_LABELS[s] || s; }
+function sevChip(s) { return `<span class="chip chip-sev-${s}">${sevLabel(s)}</span>`; }
+function domainChip(d) { return `<span class="chip chip-domain">${esc(d)}</span>`; }
+function statusBadge(s) { return `<span class="st-badge st-${s}">${stLabel(s)}</span>`; }
+
+function appendLog(msg, cls) {
+  const log = el('op-log');
+  const ts = new Date().toLocaleTimeString('zh-CN');
+  log.innerHTML += `\n<span class="${cls || ''}">[${ts}] ${esc(msg)}</span>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Data Loading
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function loadStatus() {
+  const st = await api('/status');
+  if (!st) {
+    el('engine-badge').textContent = '❌ 连接失败';
+    el('engine-badge').style.color = 'var(--red)';
+    return null;
+  }
+  el('engine-badge').textContent = st.health === 'ok' ? '✅ 运行中' : '⚠️ ' + st.health;
+  el('engine-badge').style.color = st.health === 'ok' ? 'var(--lime)' : 'var(--amber)';
+  return st;
+}
+
+async function loadAll() {
+  const [st, summary, items, rules] = await Promise.all([
+    api('/status'), api('/summary'), api('/items'), api('/rules')
+  ]);
+  _allItems = items || [];
+  _allRules = rules || [];
+
+  renderStats(st, summary);
+  renderPipeline(st);
+  renderRules(rules, _lastAuditDetails);
+  renderItems();
+  renderTimeline();
+  updateButtons();
+
+  // Engine badge
+  if (st) {
+    el('engine-badge').textContent = st.health === 'ok' ? `✅ 运行中 · ${st.audit_rules_count} 规则 · ${st.evolution_items_count} 条目` : '⚠️ ' + st.health;
+    el('engine-badge').style.color = st.health === 'ok' ? 'var(--lime)' : 'var(--amber)';
+  }
+}
+
+function renderStats(st, summary) {
+  if (!st) return;
+  const s = st.stats || {};
+  const bs = st.items_by_status || {};
+  const sm = summary || {};
+
+  el('stats-grid').innerHTML = `
+    <div class="stat-card sc-cyan">
+      <div class="label">🔍 总审查次数</div>
+      <div class="value">${s.total_audits}</div>
+      <div class="sub">${st.audit_rules_count} 条审查规则</div>
+    </div>
+    <div class="stat-card sc-lime">
+      <div class="label">📋 演进条目</div>
+      <div class="value">${st.evolution_items_count}</div>
+      <div class="sub">${Object.entries(bs).map(([k,v]) => stLabel(k)+': '+v).join(' · ') || '无条目'}</div>
+    </div>
+    <div class="stat-card sc-amber">
+      <div class="label">🔄 已发现 → 已派发</div>
+      <div class="value">${s.total_discovered} → ${s.total_dispatched}</div>
+      <div class="sub">待处理: ${(bs.discovered||0) + (bs.dispatched||0)}</div>
+    </div>
+    <div class="stat-card sc-pink">
+      <div class="label">✅ 已验证 / ❌ 失败</div>
+      <div class="value">${s.total_verified} / ${s.total_failed}</div>
+      <div class="sub">已关闭: ${s.total_closed}</div>
+    </div>
+    <div class="stat-card sc-cyan">
+      <div class="label">📚 域分布</div>
+      <div class="value" style="font-size:13px">${Object.entries(sm.by_domain||{}).map(([k,v]) => k+' '+v).join(' · ') || '—'}</div>
+      <div class="sub">验证函数: ${sm.verify_tests_registered||0} 个注册</div>
+    </div>
+    <div class="stat-card sc-lime">
+      <div class="label">🎯 通过率</div>
+      <div class="value">${s.total_audits > 0 ? Math.round(((st.audit_rules_count - (bs.failed||0)) / st.audit_rules_count) * 100) : 0}%</div>
+      <div class="sub">规则合规率</div>
+    </div>
+  `;
+}
+
+function renderPipeline(st) {
+  if (!st) return;
+  const bs = st.items_by_status || {};
+  const total = st.evolution_items_count;
+  const steps = [
+    { icon: '🔍', label: '审查', count: st.stats?.total_audits || 0, key: 'audit' },
+    { icon: '💡', label: '发现', count: bs.discovered || 0, key: 'discovered' },
+    { icon: '📤', label: '派发', count: bs.dispatched || 0, key: 'dispatched' },
+    { icon: '🔨', label: '构建', count: bs.in_progress || 0, key: 'in_progress' },
+    { icon: '🧪', label: '验证', count: bs.verify_pending || 0, key: 'verify_pending' },
+    { icon: '✅', label: '通过', count: bs.verified || 0, key: 'verified' },
+    { icon: '📦', label: '关闭', count: bs.closed || 0, key: 'closed' }
+  ];
+
+  let html = '';
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    const hasItems = s.count > 0;
+    const dotCls = hasItems ? (s.key === 'verified' || s.key === 'closed' ? 'done' : 'active') : '';
+    html += `<div class="pipe-step">
+      <div class="pipe-dot ${dotCls}">${s.icon}</div>
+      <div class="pipe-label">${s.label}</div>
+      <div class="pipe-count">${s.count}</div>
+    </div>`;
+    if (i < steps.length - 1) {
+      const connCls = hasItems && steps[i+1].count > 0 ? 'active' : (s.key === 'closed' ? 'done' : '');
+      html += `<div class="pipe-conn ${connCls}"></div>`;
+    }
+  }
+  el('pipeline-viz').innerHTML = html;
+}
+
+function renderRules(rules, auditDetails) {
+  if (!rules || !rules.length) {
+    el('rules-grid').innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>无审查规则</p></div>';
+    el('rules-count').textContent = '';
+    return;
+  }
+  el('rules-count').textContent = `${rules.length} 条规则`;
+
+  // Map audit results by rule id
+  const resultMap = {};
+  (auditDetails || []).forEach(d => { resultMap[d.rule] = d; });
+
+  el('rules-grid').innerHTML = rules.map(r => {
+    const res = resultMap[r.id];
+    let resultIcon = '';
+    if (res) resultIcon = res.passed ? '✅' : (res.status === 'skip' ? '⏭️' : '❌');
+
+    return `<div class="rule-card">
+      <div class="rc-result">${resultIcon}</div>
+      <div class="rc-header">
+        <span class="rc-id">${esc(r.id)}</span>
+        ${sevChip(r.severity)}
+      </div>
+      <div class="rc-title">${esc(r.title)}</div>
+      <div class="rc-desc">${esc(r.description)}</div>
+      <div class="rc-meta">
+        ${domainChip(r.domain)}
+        <span style="font-size:11px;color:var(--dim)">→ ${esc(r.target_channel)}</span>
+      </div>
+      ${r.reference ? `<div class="rc-ref">${esc(r.reference)}</div>` : ''}
+      ${res && !res.passed ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(255,125,125,0.08);border-radius:6px;font-size:12px;color:var(--red)">${esc(res.detail || res.reason)}</div>` : ''}
+      ${res && res.passed ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(152,245,167,0.08);border-radius:6px;font-size:12px;color:var(--lime)">${esc(res.detail)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderItems() {
+  const filter = el('item-filter').value;
+  let items = _allItems;
+  if (filter) items = items.filter(i => i.status === filter);
+
+  el('items-count').textContent = `${items.length} / ${_allItems.length} 条目`;
+
+  if (!items.length) {
+    el('items-container').innerHTML = `<div class="card"><div class="empty-state">
+      <div class="icon">📦</div>
+      <p>${_allItems.length === 0 ? '暂无演进条目 — 点击「运行审查」开始发现问题' : '该状态下暂无条目'}</p>
+      ${_allItems.length === 0 ? '<button class="btn btn-primary" onclick="runAudit()">🔍 运行审查</button>' : ''}
+    </div></div>`;
+    return;
+  }
+
+  el('items-container').innerHTML = `<div class="card" style="padding:0;overflow:hidden"><table class="tbl">
+    <thead><tr><th>ID</th><th>标题</th><th>域</th><th>严重度</th><th>状态</th><th>目标 Channel</th><th>分配</th><th>验证</th><th>操作</th></tr></thead>
+    <tbody>${items.map(i => `<tr>
+      <td class="mono">${esc(i.id)}</td>
+      <td><b>${esc(i.title)}</b></td>
+      <td>${domainChip(i.audit_domain)}</td>
+      <td>${sevChip(i.severity)}</td>
+      <td>${statusBadge(i.status)}</td>
+      <td class="mono" style="font-size:12px">${esc(i.target_channel)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(i.assigned_agent || '—')}</td>
+      <td>${i.verify_result === 'passed' ? '<span style="color:var(--lime)">✅ 通过</span>' : i.verify_result === 'failed' ? '<span style="color:var(--red)">❌ 失败</span>' : '<span style="color:var(--dim)">—</span>'}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="showDetail('${esc(i.id)}')">详情</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderTimeline() {
+  const tl = el('audit-timeline');
+  if (!_auditHistory.length) {
+    tl.innerHTML = '<div style="color:var(--dim);font-size:13px;padding:8px">暂无审查记录。运行审查后将在此显示历史。</div>';
+    return;
+  }
+  tl.innerHTML = _auditHistory.map(h => {
+    const cls = h.failed > 0 ? 'tl-fail' : 'tl-pass';
+    return `<div class="tl-item ${cls}">
+      <div class="tl-time">${fmtTime(h.time)}</div>
+      <div class="tl-title">审查 #${h.run} — ${h.passed} 通过, ${h.failed} 未通过, ${h.skipped} 跳过</div>
+      <div class="tl-detail">${h.newItems > 0 ? `新建 ${h.newItems} 条演进项` : '全部规则通过 ✅'}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateButtons() {
+  const hasDiscovered = _allItems.some(i => i.status === 'discovered');
+  const hasVerifyPending = _allItems.some(i => i.status === 'verify_pending');
+  el('btn-dispatch').disabled = !hasDiscovered;
+  el('btn-verify').disabled = !hasVerifyPending;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Item Detail
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function showDetail(itemId) {
+  const item = _allItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  const p = el('detail-panel');
+  p.innerHTML = `
+    <h3>${statusBadge(item.status)} ${esc(item.title)}</h3>
+    <div class="detail-row"><span class="lbl">ID</span><span class="val">${esc(item.id)}</span></div>
+    <div class="detail-row"><span class="lbl">描述</span><span class="val">${esc(item.description)}</span></div>
+    <div class="detail-row"><span class="lbl">域</span><span class="val">${domainChip(item.audit_domain)}</span></div>
+    <div class="detail-row"><span class="lbl">严重度</span><span class="val">${sevChip(item.severity)}</span></div>
+    <div class="detail-row"><span class="lbl">目标 Channel</span><span class="val">${esc(item.target_channel)}</span></div>
+    <div class="detail-row"><span class="lbl">参考标准</span><span class="val">${esc(item.reference_standard || '—')}</span></div>
+    <div class="detail-row"><span class="lbl">当前行为</span><span class="val">${esc(item.current_behavior || '—')}</span></div>
+    <div class="detail-row"><span class="lbl">期望行为</span><span class="val">${esc(item.expected_behavior || '—')}</span></div>
+    <hr style="border-color:rgba(125,207,255,0.1);margin:14px 0">
+    <div class="detail-row"><span class="lbl">分配 Agent</span><span class="val">${esc(item.assigned_agent || '—')}</span></div>
+    <div class="detail-row"><span class="lbl">Build Task</span><span class="val">${esc(item.build_task_id || '—')}</span></div>
+    <div class="detail-row"><span class="lbl">代码变更</span><span class="val">${item.code_changes && item.code_changes.length ? item.code_changes.map(c => esc(c)).join(', ') : '—'}</span></div>
+    <div class="detail-row"><span class="lbl">验证测试</span><span class="val">${esc(item.verify_test_name || '—')}</span></div>
+    <div class="detail-row"><span class="lbl">验证结果</span><span class="val">${item.verify_result === 'passed' ? '<span style="color:var(--lime)">✅ 通过</span>' : item.verify_result === 'failed' ? '<span style="color:var(--red)">❌ 失败</span>' : '—'}</span></div>
+    ${item.verify_detail ? `<div class="detail-row"><span class="lbl">验证详情</span><span class="val">${esc(item.verify_detail)}</span></div>` : ''}
+    <div class="detail-row"><span class="lbl">重试次数</span><span class="val">${item.retry_count} / ${item.max_retries}</span></div>
+    <hr style="border-color:rgba(125,207,255,0.1);margin:14px 0">
+    <div class="detail-row"><span class="lbl">发现时间</span><span class="val">${fmtTime(item.discovered_at)}</span></div>
+    <div class="detail-row"><span class="lbl">派发时间</span><span class="val">${fmtTime(item.dispatched_at)}</span></div>
+    <div class="detail-row"><span class="lbl">完成时间</span><span class="val">${fmtTime(item.completed_at)}</span></div>
+    <div class="detail-row"><span class="lbl">关闭时间</span><span class="val">${fmtTime(item.closed_at)}</span></div>
+    <div class="detail-actions">
+      <button class="btn btn-sm" onclick="closeDetail()">关闭</button>
+    </div>
+  `;
+  el('detail-overlay').classList.add('open');
+}
+
+function closeDetail() {
+  el('detail-overlay').classList.remove('open');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Operations
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function runAudit() {
+  el('btn-audit').disabled = true;
+  appendLog('开始运行审查...', 'log-info');
+  toast('正在运行审查...');
+
+  const r = await api('/audit', { method: 'POST' });
+  el('btn-audit').disabled = false;
+
+  if (!r) {
+    appendLog('审查失败: 无法连接服务', 'log-err');
+    toast('审查失败');
+    return;
+  }
+
+  _lastAuditDetails = r.details || [];
+  _auditHistory.unshift({
+    run: r.audit_run, passed: r.passed, failed: r.failed, skipped: r.skipped,
+    newItems: (r.new_items_created || []).length, time: new Date().toISOString()
+  });
+
+  appendLog(`审查完成: 检查 ${r.rules_checked} 规则 → ${r.passed} 通过, ${r.failed} 未通过, ${r.skipped} 跳过`, r.failed > 0 ? 'log-warn' : 'log-ok');
+  if (r.new_items_created && r.new_items_created.length) {
+    appendLog(`新建 ${r.new_items_created.length} 条演进项: ${r.new_items_created.join(', ')}`, 'log-info');
+  }
+
+  // Log each rule result
+  (r.details || []).forEach(d => {
+    if (d.passed === true) appendLog(`  ✅ ${d.rule}: ${d.detail}`, 'log-ok');
+    else if (d.passed === false) appendLog(`  ❌ ${d.rule}: ${d.detail}`, 'log-err');
+    else appendLog(`  ⏭️ ${d.rule}: ${d.reason || 'skipped'}`, 'log-warn');
+  });
+
+  toast(`审查完成: ${r.passed} 通过, ${r.failed} 未通过`);
+  await loadAll();
+}
+
+async function runDispatch() {
+  el('btn-dispatch').disabled = true;
+  appendLog('派发所有待处理演进项...', 'log-info');
+
+  const r = await api('/dispatch', { method: 'POST' });
+  el('btn-dispatch').disabled = false;
+
+  if (!r) {
+    appendLog('派发失败', 'log-err');
+    toast('派发失败');
+    return;
+  }
+
+  appendLog(`已派发 ${r.count} 条演进项给 Build 团队`, r.count > 0 ? 'log-ok' : 'log-warn');
+  toast(`派发完成: ${r.count} 条`);
+  await loadAll();
+}
+
+async function runVerify() {
+  el('btn-verify').disabled = true;
+  appendLog('运行验证...', 'log-info');
+
+  const r = await api('/verify', { method: 'POST' });
+  el('btn-verify').disabled = false;
+
+  if (!r) {
+    appendLog('验证失败', 'log-err');
+    toast('验证失败');
+    return;
+  }
+
+  const passed = (r.verified || []).filter(v => v.passed).length;
+  const failed = (r.verified || []).filter(v => !v.passed).length;
+  appendLog(`验证完成: ${passed} 通过, ${failed} 未通过`, failed > 0 ? 'log-warn' : 'log-ok');
+
+  (r.verified || []).forEach(v => {
+    const tag = v.passed ? 'log-ok' : 'log-err';
+    appendLog(`  ${v.passed ? '✅' : '❌'} ${v.item_id}: ${v.detail} (重试 ${v.retry_count})`, tag);
+  });
+
+  toast(`验证完成: ${passed} 通过`);
+  await loadAll();
+}
+
+async function runFullCycle() {
+  el('btn-cycle').disabled = true;
+  appendLog('═══════════════════════════════════════', 'log-info');
+  appendLog('开始完整演进周期: 审查 → 派发 → 验证 → 关闭', 'log-info');
+  toast('正在运行完整演进周期...');
+
+  const r = await api('/cycle', { method: 'POST' });
+  el('btn-cycle').disabled = false;
+
+  if (!r) {
+    appendLog('演进周期失败', 'log-err');
+    toast('演进周期失败');
+    return;
+  }
+
+  // Audit
+  const audit = r.audit || {};
+  _lastAuditDetails = audit.details || [];
+  _auditHistory.unshift({
+    run: audit.audit_run, passed: audit.passed || 0, failed: audit.failed || 0,
+    skipped: audit.skipped || 0, newItems: (audit.new_items_created || []).length,
+    time: new Date().toISOString()
+  });
+  appendLog(`[审查] 检查 ${audit.rules_checked || 0} 规则 → ${audit.passed || 0} 通过, ${audit.failed || 0} 未通过`, audit.failed > 0 ? 'log-warn' : 'log-ok');
+
+  (audit.details || []).forEach(d => {
+    if (d.passed === true) appendLog(`  ✅ ${d.rule}: ${d.detail}`, 'log-ok');
+    else if (d.passed === false) appendLog(`  ❌ ${d.rule}: ${d.detail}`, 'log-err');
+    else appendLog(`  ⏭️ ${d.rule}: ${d.reason || 'skipped'}`, 'log-warn');
+  });
+
+  // Dispatch
+  const dispatch = r.dispatch || {};
+  appendLog(`[派发] 已派发 ${dispatch.count || 0} 条给 Build 团队`, 'log-info');
+
+  // Verify
+  const verify = r.verify || {};
+  const vPassed = (verify.verified || []).filter(v => v.passed).length;
+  const vFailed = (verify.verified || []).filter(v => !v.passed).length;
+  appendLog(`[验证] ${vPassed} 通过, ${vFailed} 未通过`, vFailed > 0 ? 'log-warn' : 'log-ok');
+
+  // Closed
+  const closed = r.closed || [];
+  appendLog(`[关闭] ${closed.length} 条演进项已关闭`, closed.length > 0 ? 'log-ok' : 'log-info');
+
+  // Summary
+  const summary = r.summary || {};
+  appendLog(`[汇总] 总计 ${summary.total_items || 0} 条, 域分布: ${Object.entries(summary.by_domain || {}).map(([k,v]) => k+':'+v).join(' ')}`, 'log-info');
+  appendLog('═══════════════════════════════════════', 'log-info');
+
+  toast(`演进周期完成: ${audit.rules_checked || 0} 规则, ${closed.length} 关闭`);
+  await loadAll();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Refresh
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function refreshAll() {
+  toast('刷新中...');
+  await loadAll();
+  toast('已刷新');
+}
+
+function startAutoRefresh() {
+  if (_refreshTimer) clearInterval(_refreshTimer);
+  _refreshTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') loadAll();
+  }, 15000);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Init
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(async function init() {
+  await loadAll();
+  startAutoRefresh();
+})();
+</script>
+</body>
+</html>

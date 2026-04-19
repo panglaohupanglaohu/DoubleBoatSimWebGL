@@ -914,25 +914,9 @@
             </div>
         </div>
             <div class="panel" id="agent-insight-panel">
-                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="age                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="a   <div id="agent-team-status" style="margin-bottom:12px">
-                        <div style="color:#718096;font-size:12px">加载中...</div>
-                    </div>
-                    <div id="agent-decision-summary" style="margin-bottom:12px;display:none">
-                        <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">决策摘要</div>
-                        <div id="agent-decision-content" style="font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5"></div>
-                    </div>
-                    <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">快捷命令</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px">
-                        <button onclick="sendAgentCommand('分析当前AIS态势')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">分析 AIS 态势</button>
-                        <button onclick="sendAgentCommand('评估当前碰撞风险')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">评估碰撞风险</button>
-                        <button onclick="sendAgentCommand('提供航线优化建议')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">航线建议</button>
-                    </div>
-                    <div id="agent-cmd-result" style="display:none;margin-top:10px;font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5;max-height:200px;overflow-y:auto"></div>
-                </div>
-            </div>
-
-            <div class="panel" id="agent-insight-panel">
-                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="age                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="a   <div id="agent-team-status" style="margin-bottom:12px">
+                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="agent-panel-arrow">▼</span></h3>
+                <div id="agent-insight-body">
+                <div id="agent-team-status" style="margin-bottom:12px">
                         <div style="color:#718096;font-size:12px">加载中...</div>
                     </div>
                     <div id="agent-decision-summary" style="margin-bottom:12px;display:none">

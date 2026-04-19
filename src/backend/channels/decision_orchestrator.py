@@ -247,6 +247,37 @@ class DecisionOrchestratorChannel(MarineChannel):
             if (_als.get('emergency_count', 0) or 0) > 0:
                 action_plan.append({'id': 'alarm-emergency', 'domain': 'alarm', 'priority': 'critical', 'title': 'Emergency alarm active', 'rationale': 'One or more emergency alarms active', 'rule': 'IMO A.1021(26)', 'recommended_action': 'emergency_alarm_active', 'execute_before': generated_at})
 
+        # Man Overboard (MOB) — SOLAS / IAMSAR
+        _mob = _reg.get('man_overboard')
+        if _mob and hasattr(_mob, 'get_mob_status'):
+            _ms2 = (_mob.get_mob_status() or {})
+            if _ms2.get('mob_active'):
+                _pos = _ms2.get('mob_position') or {}
+                _elapsed = _ms2.get('elapsed_minutes', 0) or 0
+                _surv = (_ms2.get('survival_estimate') or {}).get('estimated_hours', 0)
+                action_plan.append({
+                    'id': 'mob-active',
+                    'domain': 'safety',
+                    'priority': 'critical',
+                    'title': f'MOB active — person in water at ({_pos.get("lat")}, {_pos.get("lon")})',
+                    'rationale': f'MOB alert for {_elapsed:.0f} min, est. survival {_surv:.1f}h. Search pattern: {_ms2.get("search_pattern", "none")}',
+                    'rule': 'SOLAS Ch III / IAMSAR Vol III',
+                    'recommended_action': 'mob_search_and_rescue',
+                    'execute_before': generated_at,
+                })
+                # Escalation: if elapsed > 50% survival, recommend MAYDAY
+                if _surv > 0 and (_elapsed / 60.0) > (_surv * 0.5):
+                    action_plan.append({
+                        'id': 'mob-escalate',
+                        'domain': 'safety',
+                        'priority': 'critical',
+                        'title': 'MOB escalation — upgrade to MAYDAY',
+                        'rationale': f'Elapsed {_elapsed:.0f} min exceeds 50% of survival estimate ({_surv:.1f}h)',
+                        'rule': 'GMDSS Distress Protocol',
+                        'recommended_action': 'mob_escalate_mayday',
+                        'execute_before': generated_at,
+                    })
+
         if not action_plan:
             action_plan.append(
                 {

@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ECDIS V3 — PoseidonX Next-Gen S-100 Navigation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   PoseidonX Next-Gen ECDIS — S-100 Compliant Nav System
+   Deep Space Gray + Glassmorphism + Cyberpunk accents
+   ═══════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0F172A; --bg-glass:rgba(15,23,42,.72); --bg-card:rgba(30,41,59,.55);
+  --bg-card-hover:rgba(30,41,59,.78);
+  --border:rgba(71,85,105,.35); --border-glow:rgba(56,189,248,.25);
+  --text:#E2E8F0; --text-dim:#94A3B8; --text-muted:#64748B;
+  --accent:#38BDF8; --accent-dim:rgba(56,189,248,.15);
+  --cyber-orange:#F59E0B; --cyber-red:#EF4444; --cyber-green:#22C55E;
+  --radar-purple:rgba(168,85,247,.25); --radar-line:rgba(168,85,247,.6);
+  --glass-blur:20px; --radius:12px; --radius-sm:8px; --radius-xs:6px;
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+  --font-mono:'JetBrains Mono','Fira Code',monospace;
+  --shadow:0 4px 30px rgba(0,0,0,.4);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:13px;-webkit-font-smoothing:antialiased}
+
+.shell{display:grid;grid-template-rows:48px 1fr 64px;grid-template-columns:300px 1fr 320px;grid-template-areas:"header header header" "left center right" "bottom bottom bottom";height:100vh;gap:0;overflow:hidden}
+
+.header{grid-area:header;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--bg-glass);backdrop-filter:blur(var(--glass-blur));border-bottom:1px solid var(--border);z-index:100}
+.header-left{display:flex;align-items:center;gap:16px}
+.brand{font-family:var(--font-mono);font-weight:700;font-size:16px;letter-spacing:1px;background:linear-gradient(135deg,var(--accent),#818CF8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ws-indicator{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim)}
+.ws-dot{width:8px;height:8px;border-radius:50%;background:var(--cyber-red);transition:all .4s}.ws-dot.on{background:var(--cyber-green);box-shadow:0 0 8px var(--cyber-green)}
+.header-center{display:flex;align-items:center;gap:20px}
+.chip{padding:4px 14px;border-radius:20px;font-family:var(--font-mono);font-size:12px;font-weight:500;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.chip .label{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.chip .value{color:var(--text);font-weight:600}
+.chip.warn .value{color:var(--cyber-orange)}
+.chip.danger .value{color:var(--cyber-red)}
+.header-right{display:flex;align-items:center;gap:16px}
+.clock{font-family:var(--font-mono);font-weight:600;font-size:15px;color:var(--accent);letter-spacing:.5px}
+.s100-badge{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--accent);color:var(--accent);font-weight:600;letter-spacing:.5px}
+
+.left-panel{grid-area:left;display:flex;flex-direction:column;gap:0;background:var(--bg-glass);backdrop-filter:blur(var(--glass-blur));border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden}
+.left-panel::-webkit-scrollbar{width:3px}.left-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.panel-section{border-bottom:1px solid var(--border);padding:14px 16px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted)}
+.section-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;background:var(--accent);color:#0F172A}
+
+.ship-data-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ship-datum{background:var(--bg-card);border-radius:var(--radius-sm);padding:10px 12px;border:1px solid var(--border);transition:border-color .3s}
+.ship-datum.alert{border-color:var(--cyber-red);animation:pulse-border 1.5s infinite}
+.ship-datum .datum-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:2px}
+.ship-datum .datum-value{font-family:var(--font-mono);font-size:22px;font-weight:700;line-height:1.1;color:var(--text)}
+.ship-datum .datum-unit{font-size:10px;color:var(--text-dim);margin-left:2px}
+.ship-datum.full{grid-column:1/-1}
+@keyframes pulse-border{0%,100%{border-color:var(--cyber-red)}50%{border-color:rgba(239,68,68,.3)}}
+
+.ai-navigator{display:flex;flex-direction:column;gap:8px;flex:1}
+.ai-header{display:flex;align-items:center;gap:8px}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--cyber-green);animation:ai-pulse 2s infinite}
+@keyframes ai-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ai-title{font-size:12px;font-weight:600;color:var(--accent)}
+.ai-messages{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;padding-right:4px}
+.ai-messages::-webkit-scrollbar{width:2px}.ai-messages::-webkit-scrollbar-thumb{background:var(--border)}
+.ai-msg{padding:8px 12px;border-radius:var(--radius-xs);font-size:12px;line-height:1.5;border-left:3px solid var(--accent);background:var(--bg-card)}
+.ai-msg.warn{border-left-color:var(--cyber-orange);background:rgba(245,158,11,.08)}
+.ai-msg.danger{border-left-color:var(--cyber-red);background:rgba(239,68,68,.08)}
+.ai-msg .ai-time{font-size:9px;color:var(--text-muted);margin-top:4px}
+.ai-input-row{display:flex;gap:6px;margin-top:8px}
+.ai-input-row input{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;color:var(--text);font-size:12px;font-family:var(--font-sans);outline:none;transition:border-color .2s}
+.ai-input-row input:focus{border-color:var(--accent)}
+.ai-input-row button{padding:8px 16px;background:var(--accent);color:#0F172A;border:none;border-radius:var(--radius-xs);font-size:11px;font-weight:700;cursor:pointer;transition:transform .1s}
+.ai-input-row button:active{transform:scale(.95)}
+
+.agent-selector-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.agent-select{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xs);padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--font-mono);outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px}
+.agent-select:focus{border-color:var(--accent)}
+.agent-select option{background:var(--bg-panel);color:var(--text)}
+.agent-model-tag{font-size:9px;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:3px;padding:1px 6px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.agent-model-dot{width:6px;height:6px;border-radius:50%;background:#64748b;flex-shrink:0;transition:background .3s,box-shadow .3s}
+.agent-model-dot.active{background:#F59E0B;box-shadow:0 0 6px rgba(245,158,11,.6)}
+.agent-model-dot.inactive{background:#64748b}
+.page-status-bar{display:flex;flex-direction:column;gap:3px;padding:6px 10px;background:rgba(15,23,42,.6);border-radius:var(--radius-xs);border:1px solid var(--border);margin-bottom:6px;font-size:10px;color:var(--text-muted);font-family:var(--font-mono)}
+.status-item{display:flex;align-items:center;gap:6px}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-dot.ok{background:var(--cyber-green)}
+.status-dot.warn{background:var(--cyber-orange)}
+.status-dot.err{background:var(--cyber-red)}
+
+.colregs-advice-bar{display:flex;flex-direction:column;gap:3px;padding:6px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);margin-bottom:6px;font-size:11px;font-family:var(--font-mono);max-height:60px;overflow-y:auto;transition:border-color .3s}
+.colregs-advice-bar:empty{display:none}
+.colregs-advice-bar.has-danger{border-color:var(--cyber-red);background:rgba(239,68,68,.06)}
+.colregs-advice-bar.has-caution{border-color:var(--cyber-orange);background:rgba(245,158,11,.06)}
+.colregs-advice-item{display:flex;align-items:center;gap:6px;color:var(--text-dim);line-height:1.3}
+.colregs-advice-item.danger{color:var(--cyber-red)}
+.colregs-advice-item.caution{color:var(--cyber-orange)}
+
+.center-area{grid-area:center;position:relative;overflow:hidden;background:#0B1120}
+#mapContainer{position:absolute;inset:0;z-index:1}
+#mapContainer .maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{display:none}
+#chartCanvas{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;cursor:crosshair;pointer-events:none}
+.chart-overlay{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:10}
+.view-btn{padding:6px 14px;border-radius:var(--radius-xs);font-size:11px;font-weight:600;font-family:var(--font-mono);cursor:pointer;border:1px solid var(--border);background:var(--bg-glass);backdrop-filter:blur(10px);color:var(--text-dim);transition:all .2s;user-select:none}
+.view-btn:hover{background:var(--bg-card-hover);color:var(--text)}
+.view-btn.active{background:var(--accent);color:#0F172A;border-color:var(--accent)}
+.chart-info{position:absolute;bottom:12px;left:12px;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);z-index:10;display:flex;gap:16px}
+.chart-scale{position:absolute;bottom:12px;right:12px;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);z-index:10}
+.compass-rose{position:absolute;top:12px;right:12px;width:60px;height:60px;z-index:10}
+
+.right-panel{grid-area:right;display:flex;flex-direction:column;gap:0;background:var(--bg-glass);backdrop-filter:blur(var(--glass-blur));border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden}
+.right-panel::-webkit-scrollbar{width:3px}.right-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.layer-grid{display:flex;flex-direction:column;gap:4px}
+.layer-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-xs);cursor:pointer;transition:background .2s;user-select:none}
+.layer-item:hover{background:var(--bg-card-hover)}
+.layer-toggle{width:36px;height:20px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);position:relative;transition:all .3s;cursor:pointer;flex-shrink:0}
+.layer-toggle::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:var(--text-muted);top:1px;left:1px;transition:all .3s}
+.layer-toggle.on{background:var(--accent);border-color:var(--accent)}
+.layer-toggle.on::after{left:17px;background:#0F172A}
+.layer-label{flex:1}
+.layer-name{font-size:12px;font-weight:600;color:var(--text)}
+.layer-desc{font-size:10px;color:var(--text-muted)}
+.layer-icon{font-size:16px;flex-shrink:0}
+
+.risk-list{display:flex;flex-direction:column;gap:4px}
+.risk-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius-xs);background:var(--bg-card);border:1px solid var(--border);cursor:pointer;transition:all .2s}
+.risk-item:hover{background:var(--bg-card-hover)}
+.risk-item.danger{border-color:var(--cyber-red);animation:pulse-border 2s infinite}
+.risk-item.warning{border-color:var(--cyber-orange)}
+.risk-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.risk-dot.safe{background:var(--cyber-green)}.risk-dot.caution{background:var(--cyber-orange)}.risk-dot.danger{background:var(--cyber-red)}
+.risk-info{flex:1;min-width:0}
+.risk-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.risk-detail{font-size:10px;color:var(--text-muted);font-family:var(--font-mono)}
+.risk-cpa{font-family:var(--font-mono);font-size:13px;font-weight:700;text-align:right;min-width:50px}
+
+.ap-modes{display:flex;gap:4px}
+.ap-btn{flex:1;padding:8px;text-align:center;border-radius:var(--radius-xs);font-size:11px;font-weight:700;font-family:var(--font-mono);cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all .2s}
+.ap-btn:hover{background:var(--bg-card-hover);color:var(--text)}
+.ap-btn.active{background:var(--accent);color:#0F172A;border-color:var(--accent)}
+
+.alarm-item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:11px}
+.alarm-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.alarm-dot.critical{background:var(--cyber-red);animation:pulse-border 1s infinite}
+.alarm-dot.warning{background:var(--cyber-orange)}
+.alarm-dot.caution{background:var(--cyber-green)}
+.alarm-text{flex:1;color:var(--text-dim)}
+.alarm-time{font-family:var(--font-mono);font-size:9px;color:var(--text-muted)}
+
+.bottom-bar{grid-area:bottom;display:flex;align-items:center;gap:0;background:var(--bg-glass);backdrop-filter:blur(var(--glass-blur));border-top:1px solid var(--border);z-index:100}
+.timeline-section{flex:1;display:flex;align-items:center;gap:16px;padding:0 20px;height:100%}
+.timeline-label{font-size:11px;color:var(--text-muted);font-weight:600;white-space:nowrap}
+.timeline-slider{flex:1;position:relative;height:32px;display:flex;align-items:center}
+.timeline-track{width:100%;height:4px;background:var(--bg-card);border-radius:2px;position:relative;cursor:pointer}
+.timeline-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--radar-line));border-radius:2px;width:0%;transition:width .1s}
+.timeline-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #0F172A;position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:5;box-shadow:0 0 10px rgba(56,189,248,.4)}
+.timeline-marks{display:flex;justify-content:space-between;position:absolute;width:100%;top:14px}
+.timeline-mark{font-size:9px;color:var(--text-muted);font-family:var(--font-mono)}
+.predict-value{font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--accent);min-width:60px;text-align:center}
+.comms-section{display:flex;align-items:center;gap:12px;padding:0 20px;height:100%;border-left:1px solid var(--border)}
+.comms-btn{padding:6px 14px;border-radius:var(--radius-xs);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all .2s;font-family:var(--font-mono)}
+.comms-btn:hover{background:var(--bg-card-hover);color:var(--text)}
+.comms-btn.active{border-color:var(--cyber-green);color:var(--cyber-green)}
+.status-text{font-size:11px;color:var(--text-muted);font-family:var(--font-mono)}
+
+@media(max-width:1200px){.shell{grid-template-columns:240px 1fr 260px}}
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr;grid-template-rows:48px 1fr 200px 200px 64px;grid-template-areas:"header" "center" "left" "right" "bottom"}
+  .left-panel,.right-panel{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .panel-section{min-width:280px}
+}
+@media(pointer:coarse){
+  .view-btn,.comms-btn,.ap-btn{min-height:44px;min-width:44px}
+  .layer-item{min-height:48px}
+  .risk-item{min-height:48px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="header">
+    <div class="header-left">
+      <span class="brand">POSEIDON X</span>
+      <a href="/navigation-v2.html" style="font-size:10px;color:var(--text-dim);text-decoration:none;padding:3px 10px;border:1px solid var(--border);border-radius:6px;margin-left:4px;font-family:var(--font-mono)">← V2</a>
+      <a href="/navigation.html" style="font-size:10px;color:var(--text-dim);text-decoration:none;padding:3px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font-mono)">Classic</a>
+      <div class="ws-indicator"><span class="ws-dot" id="wsDot"></span><span id="wsLabel">OFFLINE</span></div>
+    </div>
+    <div class="header-center">
+      <div class="chip"><span class="label">SOG</span><span class="value" id="chipSog">—</span><span class="label">kn</span></div>
+      <div class="chip"><span class="label">COG</span><span class="value" id="chipCog">—</span><span class="label">°</span></div>
+      <div class="chip"><span class="label">HDG</span><span class="value" id="chipHdg">—</span><span class="label">°</span></div>
+      <div class="chip" id="chipDepth"><span class="label">Depth</span><span class="value" id="chipDepthVal">—</span><span class="label">m</span></div>
+      <div class="chip" id="chipRisk"><span class="label">Risk</span><span class="value" id="chipRiskVal">LOW</span></div>
+    </div>
+    <div class="header-right">
+      <span class="s100-badge">S-100 Ed.5.2</span>
+      <span class="clock" id="utcClock">00:00:00 UTC</span>
+    </div>
+  </header>
+
+  <aside class="left-panel">
+    <div class="panel-section">
+      <div class="section-header"><span class="section-title">Own Ship</span></div>
+      <div class="ship-data-grid">
+        <div class="ship-datum"><div class="datum-label">SOG</div><div><span class="datum-value" id="ownSog">—</span><span class="datum-unit">kn</span></div></div>
+        <div class="ship-datum"><div class="datum-label">COG</div><div><span class="datum-value" id="ownCog">—</span><span class="datum-unit">°</span></div></div>
+        <div class="ship-datum"><div class="datum-label">Heading</div><div><span class="datum-value" id="ownHdg">—</span><span class="datum-unit">°</span></div></div>
+        <div class="ship-datum" id="depthDatum"><div class="datum-label">Depth</div><div><span class="datum-value" id="ownDepth">—</span><span class="datum-unit">m</span></div></div>
+        <div class="ship-datum"><div class="datum-label">LAT</div><div><span class="datum-value" id="ownLat" style="font-size:14px">—</span></div></div>
+        <div class="ship-datum"><div class="datum-label">LON</div><div><span class="datum-value" id="ownLon" style="font-size:14px">—</span></div></div>
+        <div class="ship-datum full"><div class="datum-label">ROT</div><div><span class="datum-value" id="ownRot" style="font-size:16px">—</span><span class="datum-unit">°/min</span></div></div>
+      </div>
+    </div>
+    <div class="panel-section" style="flex:1;display:flex;flex-direction:column">
+      <div class="section-header">
+        <span class="section-title" id="chatAgentName">AI Chat</span>
+        <div class="ai-header"><span class="ai-dot"></span><span class="ai-title" id="aiStatus">ACTIVE</span></div>
+      </div>
+      <div class="page-status-bar" id="pageStatusBar">
+        <div class="status-item"><span class="status-dot" id="wsStatusDot"></span><span id="wsStatusText">WebSocket: 连接中...</span></div>
+        <div class="status-item"><span class="status-dot" id="sysStatusDot"></span><span id="sysStatusText">系统: 初始化...</span></div>
+      </div>
+      <div class="colregs-advice-bar" id="colregsAdviceBar"></div>
+      <div class="agent-selector-row">
+        <select id="agentSelect" class="agent-select" title="选择对话智能体">
+          <option value="ship_navigator">Navigator (OOW)</option>
+        </select>
+        <span class="agent-model-tag" id="agentModelTag"><span class="agent-model-dot" id="agentModelDot"></span><span id="agentModelName">—</span></span>
+      </div>
+      <div class="ai-navigator">
+        <div class="ai-messages" id="aiMessages">
+        </div>
+        <div class="ai-input-row">
+          <input type="text" id="aiInput" placeholder="询问航线、天气、避碰..." autocomplete="off">
+          <button id="aiSend">↵</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="center-area">
+    <div id="mapContainer"></div>
+    <canvas id="chartCanvas"></canvas>
+    <div class="chart-overlay">
+      <div class="view-btn active" data-mode="chart">CHART</div>
+      <div class="view-btn" data-mode="radar">RADAR</div>
+      <div class="view-btn" data-mode="hybrid">HYBRID</div>
+    </div>
+    <svg class="compass-rose" id="compassRose" viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(148,163,184,.3)" stroke-width="1"/>
+      <line x1="30" y1="4" x2="30" y2="12" stroke="var(--cyber-red)" stroke-width="2"/>
+      <text x="30" y="10" fill="var(--cyber-red)" font-size="8" font-weight="700" text-anchor="middle" font-family="var(--font-mono)">N</text>
+      <line x1="30" y1="48" x2="30" y2="56" stroke="rgba(148,163,184,.4)" stroke-width="1"/>
+      <line x1="4" y1="30" x2="12" y2="30" stroke="rgba(148,163,184,.4)" stroke-width="1"/>
+      <line x1="48" y1="30" x2="56" y2="30" stroke="rgba(148,163,184,.4)" stroke-width="1"/>
+      <polygon id="compassNeedle" points="30,8 33,28 30,32 27,28" fill="var(--accent)" opacity=".8"/>
+    </svg>
+    <div class="chart-info">
+      <span id="chartPos">—</span>
+      <span id="chartRange">Range: 12 nm</span>
+      <span id="chartMode">N-UP</span>
+    </div>
+    <div class="chart-scale" id="chartScale">S-101 ENC | 1:50000</div>
+  </main>
+
+  <aside class="right-panel">
+    <div class="panel-section">
+      <div class="section-header"><span class="section-title">S-100 Layers</span></div>
+      <div class="layer-grid" id="layerGrid">
+        <div class="layer-item" data-layer="s101"><span class="layer-icon">🗺️</span><div class="layer-label"><div class="layer-name">S-101 ENC</div><div class="layer-desc">Electronic Navigational Chart</div></div><div class="layer-toggle on" data-layer="s101"></div></div>
+        <div class="layer-item" data-layer="s102"><span class="layer-icon">🌊</span><div class="layer-label"><div class="layer-name">S-102 Bathymetry</div><div class="layer-desc">High-Resolution Depth</div></div><div class="layer-toggle" data-layer="s102"></div></div>
+        <div class="layer-item" data-layer="s104"><span class="layer-icon">📊</span><div class="layer-label"><div class="layer-name">S-104 Water Level</div><div class="layer-desc">Tidal Predictions</div></div><div class="layer-toggle" data-layer="s104"></div></div>
+        <div class="layer-item" data-layer="s111"><span class="layer-icon">➡️</span><div class="layer-label"><div class="layer-name">S-111 Currents</div><div class="layer-desc">Surface Current Vectors</div></div><div class="layer-toggle" data-layer="s111"></div></div>
+        <div class="layer-item" data-layer="s124"><span class="layer-icon">⚠️</span><div class="layer-label"><div class="layer-name">S-124 Warnings</div><div class="layer-desc">Navigational Warnings</div></div><div class="layer-toggle" data-layer="s124"></div></div>
+        <div class="layer-item" data-layer="ais"><span class="layer-icon">🚢</span><div class="layer-label"><div class="layer-name">AIS Targets</div><div class="layer-desc">Automatic Identification</div></div><div class="layer-toggle on" data-layer="ais"></div></div>
+        <div class="layer-item" data-layer="radar"><span class="layer-icon">📡</span><div class="layer-label"><div class="layer-name">Radar Overlay</div><div class="layer-desc">Echo Integration</div></div><div class="layer-toggle on" data-layer="radar"></div></div>
+        <div class="layer-item" data-layer="weather"><span class="layer-icon">🌤️</span><div class="layer-label"><div class="layer-name">Weather</div><div class="layer-desc">Wind & Visibility</div></div><div class="layer-toggle" data-layer="weather"></div></div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="section-header"><span class="section-title">Collision Risk (CPA/TCPA)</span><span class="section-badge" id="riskCount">0</span></div>
+      <div class="risk-list" id="riskList"><div style="font-size:11px;color:var(--text-muted);padding:8px 0">No targets in range</div></div>
+    </div>
+    <div class="panel-section">
+      <div class="section-header"><span class="section-title">Autopilot</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--cyber-green);font-weight:600" id="apLabel">STANDBY</span></div>
+      <div class="ap-modes">
+        <div class="ap-btn active" data-mode="stby">STBY</div>
+        <div class="ap-btn" data-mode="hdg">HDG</div>
+        <div class="ap-btn" data-mode="track">TRK</div>
+        <div class="ap-btn" data-mode="wind">WIND</div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="section-header"><span class="section-title">Alarms</span><span class="section-badge" id="alarmBadge" style="background:var(--cyber-red)">0</span></div>
+      <div id="alarmList"><div style="font-size:11px;color:var(--text-muted)">No active alarms</div></div>
+    </div>
+  </aside>
+
+  <footer class="bottom-bar">
+    <div class="timeline-section">
+      <span class="timeline-label">PREDICTION</span>
+      <div class="timeline-slider">
+        <div class="timeline-track" id="timelineTrack">
+          <div class="timeline-fill" id="timelineFill"></div>
+          <div class="timeline-thumb" id="timelineThumb" style="left:0%"></div>
+        </div>
+        <div class="timeline-marks"><span class="timeline-mark">NOW</span><span class="timeline-mark">15m</span><span class="timeline-mark">30m</span><span class="timeline-mark">60m</span><span class="timeline-mark">90m</span></div>
+      </div>
+      <span class="predict-value" id="predictValue">NOW</span>
+    </div>
+    <div class="comms-section">
+      <button class="comms-btn" id="btnVHF">VHF 16</button>
+      <button class="comms-btn" id="btnAISMsg">AIS MSG</button>
+      <button class="comms-btn" id="btnMOB" style="color:var(--cyber-red);border-color:var(--cyber-red)">MOB</button>
+      <span class="status-text" id="statusText">ECDIS — Normal Operation</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   PoseidonX Next-Gen ECDIS — JavaScript Engine
+   CPA/TCPA, S-100 Layers, Radar Sweep, AI Navigator
+   ═══════════════════════════════════════════════════════ */
+(function(){'use strict';
+
+const $ = id => document.getElementById(id);
+const DEG = Math.PI / 180;
+
+const state = {
+  ship: { lat: 30.85, lon: 122.35, hdg: 135, sog: 12.4, cog: 135.2, rot: 0.3, depth: 42.5 },
+  targets: [],
+  alarms: [],
+  layers: { s101: true, s102: false, s104: false, s111: false, s124: false, ais: true, radar: true, weather: false },
+  viewMode: 'chart',
+  chartRange: 12,
+  predictMin: 0,
+  radarSweep: 0,
+  chartOrientation: 'north-up',
+};
+
+const el = {
+  canvas: $('chartCanvas'), wsDot: $('wsDot'), wsLabel: $('wsLabel'),
+  chipSog: $('chipSog'), chipCog: $('chipCog'), chipHdg: $('chipHdg'),
+  chipDepthVal: $('chipDepthVal'), chipRiskVal: $('chipRiskVal'), chipDepth: $('chipDepth'), chipRisk: $('chipRisk'),
+  utcClock: $('utcClock'), compassNeedle: $('compassNeedle'),
+  ownSog: $('ownSog'), ownCog: $('ownCog'), ownHdg: $('ownHdg'),
+  ownDepth: $('ownDepth'), ownLat: $('ownLat'), ownLon: $('ownLon'), ownRot: $('ownRot'),
+  aiMessages: $('aiMessages'), aiInput: $('aiInput'), aiSend: $('aiSend'), aiStatus: $('aiStatus'),
+  chatAgentName: $('chatAgentName'), agentSelect: $('agentSelect'), agentModelTag: $('agentModelTag'),
+  wsStatusDot: $('wsStatusDot'), wsStatusText: $('wsStatusText'),
+  sysStatusDot: $('sysStatusDot'), sysStatusText: $('sysStatusText'),
+  colregsAdviceBar: $('colregsAdviceBar'),
+  riskList: $('riskList'), riskCount: $('riskCount'),
+  alarmList: $('alarmList'), alarmBadge: $('alarmBadge'),
+  apLabel: $('apLabel'), depthDatum: $('depthDatum'),
+  timelineTrack: $('timelineTrack'), timelineFill: $('timelineFill'),
+  timelineThumb: $('timelineThumb'), predictValue: $('predictValue'),
+  chartPos: $('chartPos'), chartRange: $('chartRange'), chartMode: $('chartMode'),
+  chartScale: $('chartScale'), statusText: $('statusText'),
+};
+const ctx = el.canvas.getContext('2d');
+let ws = null, chatSessionId = localStorage.getItem('nav_chatSessionId') || 'nav_' + Date.now();
+localStorage.setItem('nav_chatSessionId', chatSessionId);
+let map = null, shipMarker = null;
+let selectedAgentId = localStorage.getItem('nav_selectedAgentId') || 'ship_navigator';
+let agentMap = {}; // agent_id -> {name, role, model_id}
+
+// ═══ Agent Selector ═══
+function setPageStatus(dotEl, textEl, status, text) {
+  dotEl.className = 'status-dot ' + (status === 'ok' ? 'ok' : status === 'warn' ? 'warn' : 'err');
+  textEl.textContent = text;
+}
+
+async function loadAgents() {
+  try {
+    const teams = ['execution_system', 'build_system'];
+    for (const tid of teams) {
+      const r = await fetch('/api/v1/agent-config/teams/' + tid + '/agents');
+      if (!r.ok) continue;
+      const agents = await r.json();
+      agents.forEach(a => { agentMap[a.agent_id] = a; });
+    }
+    // Populate select
+    const sel = el.agentSelect;
+    sel.innerHTML = '';
+    const sorted = Object.values(agentMap).sort((a, b) => a.name.localeCompare(b.name));
+    sorted.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.agent_id;
+      opt.textContent = a.name + ' (' + a.role + ')';
+      sel.appendChild(opt);
+    });
+    // Default to Navigator
+    if (agentMap[selectedAgentId]) sel.value = selectedAgentId;
+    else if (sorted.length) { selectedAgentId = sorted[0].agent_id; sel.value = selectedAgentId; }
+    updateAgentUI();
+    setPageStatus(el.sysStatusDot, el.sysStatusText, 'ok', '系统就绪 · ' + Object.keys(agentMap).length + ' 智能体可用');
+  } catch (e) {
+    setPageStatus(el.sysStatusDot, el.sysStatusText, 'warn', '智能体加载失败');
+  }
+}
+
+function updateAgentUI() {
+  const agent = agentMap[selectedAgentId];
+  const dotEl = document.getElementById('agentModelDot');
+  const nameEl = document.getElementById('agentModelName');
+  if (agent) {
+    el.chatAgentName.textContent = agent.name;
+    nameEl.textContent = agent.model_id || 'default';
+  } else {
+    el.chatAgentName.textContent = 'AI Chat';
+    nameEl.textContent = '—';
+  }
+  if (dotEl) { dotEl.className = 'agent-model-dot inactive'; }
+  fetchAgentModelStatus(selectedAgentId);
+}
+
+async function fetchAgentModelStatus(agentId) {
+  const dotEl = document.getElementById('agentModelDot');
+  const nameEl = document.getElementById('agentModelName');
+  try {
+    const r = await fetch('/api/v1/agent-config/agents/' + agentId + '/model-status');
+    if (!r.ok) return;
+    const d = await r.json();
+    if (nameEl) nameEl.textContent = d.model_name || d.model_id || '—';
+    if (dotEl) {
+      dotEl.className = 'agent-model-dot ' + (d.active ? 'active' : 'inactive');
+      dotEl.title = d.active ? 'Active — ' + (d.provider || '') : 'Inactive';
+    }
+  } catch (e) { /* silent */ }
+}
+
+el.agentSelect.addEventListener('change', () => {
+  selectedAgentId = el.agentSelect.value;
+  localStorage.setItem('nav_selectedAgentId', selectedAgentId);
+  updateAgentUI();
+  chatSessionId = 'nav_' + selectedAgentId + '_' + Date.now();
+  localStorage.setItem('nav_chatSessionId', chatSessionId);
+  el.aiMessages.innerHTML = '';
+  localStorage.removeItem('nav_chatHistory');
+  lastAIAdvice = '';
+});
+
+loadAgents();
+
+// ═══ MapLibre GL Base Map ═══
+try {
+  map = new maplibregl.Map({
+    container: 'mapContainer',
+    style: {
+      version: 8,
+      sources: {
+        'osm-seamark': {
+          type: 'raster',
+          tiles: ['https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          maxzoom: 18,
+        },
+        'osm': {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+        }
+      },
+      layers: [
+        { id: 'osm-base', type: 'raster', source: 'osm' },
+        { id: 'seamark', type: 'raster', source: 'osm-seamark' },
+      ]
+    },
+    center: [state.ship.lon, state.ship.lat],
+    zoom: 11,
+    attributionControl: false,
+  });
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+  // Own ship marker
+  const shipEl = document.createElement('div');
+  shipEl.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24"><polygon points="12,2 20,20 12,16 4,20" fill="#38BDF8" stroke="#fff" stroke-width="1"/></svg>';
+  shipEl.style.cursor = 'default';
+  shipMarker = new maplibregl.Marker({ element: shipEl }).setLngLat([state.ship.lon, state.ship.lat]).addTo(map);
+
+  // Sync map zoom → state.chartRange
+  map.on('zoomend', () => {
+    const z = map.getZoom();
+    // Approximate: zoom 8 ~ 50nm, zoom 15 ~ 1nm
+    state.chartRange = Math.max(1, Math.min(50, Math.round(50 / Math.pow(2, z - 8))));
+    el.chartRange.textContent = 'Range: ' + state.chartRange + ' nm';
+  });
+} catch (e) { console.warn('MapLibre init failed:', e); }
+
+function syncMapToShip() {
+  if (!map) return;
+  try {
+    map.easeTo({ center: [state.ship.lon, state.ship.lat], duration: 800 });
+    if (shipMarker) {
+      shipMarker.setLngLat([state.ship.lon, state.ship.lat]);
+      shipMarker.getElement().style.transform += ' rotate(' + state.ship.hdg + 'deg)';
+    }
+  } catch (e) {}
+}
+
+// Clock
+function tickClock() {
+  el.utcClock.textContent = new Date().toISOString().slice(11, 19) + ' UTC';
+  requestAnimationFrame(tickClock);
+}
+tickClock();
+
+// Canvas resize
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const r = el.canvas.parentElement.getBoundingClientRect();
+  el.canvas.width = r.width * dpr;
+  el.canvas.height = r.height * dpr;
+  el.canvas.style.width = r.width + 'px';
+  el.canvas.style.height = r.height + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resizeCanvas();
+window.addEventListener('resize', () => { resizeCanvas(); if (map) map.resize(); });
+
+// Coordinate conversion — sync with map projection if available
+function latLonToCanvas(lat, lon) {
+  if (map) {
+    const pt = map.project([lon, lat]);
+    return { x: pt.x, y: pt.y };
+  }
+  // Fallback when map not available
+  const cw = el.canvas.clientWidth, ch = el.canvas.clientHeight;
+  const cx = cw / 2, cy = ch / 2;
+  const scale = Math.min(cw, ch) / (state.chartRange * 2);
+  const dLon = (lon - state.ship.lon) * Math.cos(state.ship.lat * DEG) * 60;
+  const dLat = (lat - state.ship.lat) * 60;
+  return { x: cx + dLon * scale, y: cy - dLat * scale };
+}
+
+// ═══ CPA / TCPA ═══
+function calcCPA(own, target) {
+  const ownVx = (own.sog / 60) * Math.sin(own.cog * DEG);
+  const ownVy = (own.sog / 60) * Math.cos(own.cog * DEG);
+  const tgtVx = (target.sog / 60) * Math.sin(target.cog * DEG);
+  const tgtVy = (target.sog / 60) * Math.cos(target.cog * DEG);
+  const dLon = (target.lon - own.lon) * Math.cos(own.lat * DEG) * 60;
+  const dLat = (target.lat - own.lat) * 60;
+  const dvx = tgtVx - ownVx, dvy = tgtVy - ownVy;
+  const dpx = dLon, dpy = dLat;
+  const dvSq = dvx * dvx + dvy * dvy;
+  if (dvSq < 1e-10) {
+    const rng = Math.sqrt(dpx * dpx + dpy * dpy);
+    return { cpa: rng, tcpa: Infinity, range: rng, bearing: Math.atan2(dpx, dpy) / DEG };
+  }
+  const tcpa = -(dpx * dvx + dpy * dvy) / dvSq;
+  const cpx = dpx + dvx * tcpa, cpy = dpy + dvy * tcpa;
+  const cpa = Math.sqrt(cpx * cpx + cpy * cpy);
+  const range = Math.sqrt(dpx * dpx + dpy * dpy);
+  const bearing = ((Math.atan2(dpx, dpy) / DEG) + 360) % 360;
+  return { cpa, tcpa: Math.max(0, tcpa), range, bearing };
+}
+
+function classifyRisk(cpa, tcpa) {
+  if (tcpa < 10 && cpa < 0.5) return 'danger';
+  if (tcpa < 20 && cpa < 1.0) return 'caution';
+  return 'safe';
+}
+
+function generateAvoidAdvice(target, risk) {
+  if (risk.cpa >= 1.0) return null;
+  const relBearing = ((risk.bearing - state.ship.hdg) + 360) % 360;
+  if (relBearing > 350 || relBearing < 10)
+    return 'Rule 14 对遇: 建议向右转向 15° 以增加 CPA 至 ' + (risk.cpa + 0.8).toFixed(1) + ' nm';
+  if (relBearing >= 10 && relBearing < 112.5)
+    return 'Rule 15 右舷交叉: 作为让路船，建议向右转向 ' + Math.round(10 + (1 - risk.cpa) * 15) + '° 或减速';
+  if (relBearing >= 247.5 && relBearing <= 350)
+    return 'Rule 17 左舷交叉: 保持航向航速，目标船应避让';
+  if (relBearing >= 112.5 && relBearing < 247.5)
+    return 'Rule 13 追越态势: 保持安全横向距离';
+  return '建议向右转向 10° 增加 CPA 至 ' + (risk.cpa + 0.5).toFixed(1) + ' nm';
+}
+
+// ═══ Risk List UI ═══
+function updateRiskList() {
+  const risks = state.targets.map(t => {
+    const r = calcCPA(state.ship, t);
+    return { ...t, ...r, riskLevel: classifyRisk(r.cpa, r.tcpa) };
+  }).sort((a, b) => {
+    const order = { danger: 0, caution: 1, safe: 2 };
+    return (order[a.riskLevel] - order[b.riskLevel]) || (a.cpa - b.cpa);
+  });
+  el.riskCount.textContent = risks.length;
+  if (!risks.length) {
+    el.riskList.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:8px 0">No targets in range</div>';
+    return;
+  }
+  el.riskList.innerHTML = risks.map(r => {
+    const tcpaStr = r.tcpa === Infinity ? '—' : r.tcpa.toFixed(0) + 'm';
+    const cls = r.riskLevel === 'danger' ? 'danger' : (r.riskLevel === 'caution' ? 'warning' : '');
+    const color = r.riskLevel === 'danger' ? '--cyber-red' : r.riskLevel === 'caution' ? '--cyber-orange' : '--cyber-green';
+    return '<div class="risk-item ' + cls + '" data-mmsi="' + r.mmsi + '">' +
+      '<span class="risk-dot ' + r.riskLevel + '"></span>' +
+      '<div class="risk-info"><div class="risk-name">' + (r.name || 'MMSI ' + r.mmsi) + '</div>' +
+      '<div class="risk-detail">BRG ' + r.bearing.toFixed(0) + '° | RNG ' + r.range.toFixed(1) + ' nm | TCPA ' + tcpaStr + '</div></div>' +
+      '<div class="risk-cpa" style="color:var(' + color + ')">' + r.cpa.toFixed(2) + '</div></div>';
+  }).join('');
+
+  // COLREGs advice for danger targets — show in advisory bar, not chat
+  const adviceItems = risks.filter(r => r.riskLevel !== 'safe').map(t => {
+    const advice = generateAvoidAdvice(t, t);
+    return advice ? { text: advice, level: t.riskLevel } : null;
+  }).filter(Boolean);
+  if (adviceItems.length) {
+    el.colregsAdviceBar.innerHTML = adviceItems.map(a =>
+      '<div class="colregs-advice-item ' + a.level + '">' +
+      (a.level === 'danger' ? '⚠️ ' : '⚡ ') + a.text + '</div>'
+    ).join('');
+    el.colregsAdviceBar.className = 'colregs-advice-bar has-' + (adviceItems.some(a => a.level === 'danger') ? 'danger' : 'caution');
+  } else {
+    el.colregsAdviceBar.innerHTML = '';
+    el.colregsAdviceBar.className = 'colregs-advice-bar';
+  }
+
+  // Header risk chip
+  const maxRisk = risks[0] ? risks[0].riskLevel : 'safe';
+  el.chipRiskVal.textContent = maxRisk.toUpperCase();
+  el.chipRisk.className = 'chip' + (maxRisk === 'danger' ? ' danger' : maxRisk === 'caution' ? ' warn' : '');
+}
+
+// ═══ AI Messages ═══
+let lastAIAdvice = '';
+function addAIMessage(text, level, save=true) {
+  if (text === lastAIAdvice) return;
+  lastAIAdvice = text;
+  const time = new Date().toISOString().slice(11, 19);
+  const div = document.createElement('div');
+  div.className = 'ai-msg' + (level ? ' ' + level : '');
+  div.innerHTML = text + '<div class="ai-time">' + time + '</div>';
+  el.aiMessages.appendChild(div);
+  el.aiMessages.scrollTop = el.aiMessages.scrollHeight;
+  while (el.aiMessages.children.length > 50) el.aiMessages.removeChild(el.aiMessages.firstChild);
+  if(save) _saveNavChatHistory();
+}
+function _saveNavChatHistory(){
+  const items=[];
+  for(const d of el.aiMessages.children){
+    items.push({html:d.innerHTML,cls:d.className.replace('ai-msg','').trim()});
+  }
+  try{localStorage.setItem('nav_chatHistory',JSON.stringify(items.slice(-30)))}catch(e){}
+}
+function _restoreNavChatHistory(){
+  try{
+    const raw=localStorage.getItem('nav_chatHistory');
+    if(!raw)return;
+    const items=JSON.parse(raw);
+    items.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='ai-msg'+(m.cls?' '+m.cls:'');
+      div.innerHTML=m.html;
+      el.aiMessages.appendChild(div);
+    });
+    el.aiMessages.scrollTop=el.aiMessages.scrollHeight;
+  }catch(e){}
+}
+_restoreNavChatHistory();
+
+// ═══ CHART DRAWING ═══
+function drawChart() {
+  const w = el.canvas.clientWidth, h = el.canvas.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+  // Transparent canvas — real map is beneath
+  const cx = w / 2, cy = h / 2;
+  const scale = Math.min(w, h) / (state.chartRange * 2);
+
+  // Only draw overlays that aren't provided by the base map
+  if (state.layers.s102 && !map) drawBathymetry(w, h, cx, cy, scale);
+  if (state.layers.s101 && !map) drawChartGrid(w, h, cx, cy, scale);
+  if (state.layers.s111) drawCurrents(w, h, cx, cy, scale);
+  if (state.layers.s104) drawWaterLevel(w, h);
+  if (state.layers.s124) drawNavWarnings(cx, cy, scale);
+  if (state.layers.weather) drawWeather(w, h);
+  if (state.layers.radar && (state.viewMode === 'radar' || state.viewMode === 'hybrid'))
+    drawRadarSweep(cx, cy, Math.min(cx, cy) - 10);
+  if (!map) drawRangeRings(cx, cy, scale);
+  if (state.layers.ais) drawTargets(cx, cy, scale);
+  if (!map) drawOwnShip(cx, cy);
+  if (state.predictMin > 0) drawPredictions(cx, cy, scale);
+
+  state.radarSweep += 0.015;
+  if (state.radarSweep > Math.PI * 2) state.radarSweep -= Math.PI * 2;
+  requestAnimationFrame(drawChart);
+}
+
+function drawChartGrid(w, h, cx, cy, scale) {
+  ctx.strokeStyle = 'rgba(71,85,105,.2)';
+  ctx.lineWidth = 0.5;
+  const step = state.chartRange > 20 ? 0.1 : 0.05;
+  const latMin = state.ship.lat - state.chartRange / 60;
+  const latMax = state.ship.lat + state.chartRange / 60;
+  const lonMin = state.ship.lon - state.chartRange / (60 * Math.cos(state.ship.lat * DEG));
+  const lonMax = state.ship.lon + state.chartRange / (60 * Math.cos(state.ship.lat * DEG));
+  for (let lat = Math.floor(latMin / step) * step; lat <= latMax; lat += step) {
+    const p1 = latLonToCanvas(lat, lonMin), p2 = latLonToCanvas(lat, lonMax);
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    ctx.fillStyle = 'rgba(148,163,184,.3)'; ctx.font = '9px "JetBrains Mono"';
+    ctx.fillText(lat.toFixed(2) + '°', 4, p1.y - 2);
+  }
+  for (let lon = Math.floor(lonMin / step) * step; lon <= lonMax; lon += step) {
+    const p1 = latLonToCanvas(latMin, lon), p2 = latLonToCanvas(latMax, lon);
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    ctx.fillStyle = 'rgba(148,163,184,.3)'; ctx.font = '9px "JetBrains Mono"';
+    ctx.fillText(lon.toFixed(2) + '°', p2.x + 2, h - 4);
+  }
+  drawSimulatedCoast(cx, cy, scale);
+}
+
+function drawSimulatedCoast() {
+  const coastPoints = [
+    {lat:31.35,lon:121.50},{lat:31.32,lon:121.52},{lat:31.28,lon:121.55},{lat:31.24,lon:121.56},
+    {lat:31.20,lon:121.55},{lat:31.17,lon:121.52},{lat:31.15,lon:121.48},{lat:31.14,lon:121.44},
+    {lat:31.15,lon:121.40},{lat:31.18,lon:121.38},{lat:31.22,lon:121.37},{lat:31.26,lon:121.36},
+    {lat:31.30,lon:121.37},{lat:31.33,lon:121.40},{lat:31.35,lon:121.44},{lat:31.36,lon:121.48},
+  ];
+  ctx.beginPath();
+  coastPoints.forEach((p, i) => { const {x, y} = latLonToCanvas(p.lat, p.lon); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(30,41,59,.6)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(148,163,184,.4)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  [{lat:31.24,lon:121.50,d:'5m'},{lat:31.22,lon:121.48,d:'10m'},{lat:31.20,lon:121.46,d:'20m'}].forEach(dp => {
+    const {x, y} = latLonToCanvas(dp.lat, dp.lon);
+    ctx.fillStyle = 'rgba(56,189,248,.4)'; ctx.font = '9px "JetBrains Mono"'; ctx.fillText(dp.d, x, y);
+  });
+}
+
+function drawBathymetry(w, h, cx, cy, scale) {
+  const gridSize = 20;
+  for (let gx = 0; gx < w; gx += gridSize) {
+    for (let gy = 0; gy < h; gy += gridSize) {
+      const dx = (gx - cx) / scale / 60, dy = (cy - gy) / scale / 60;
+      const depth = 15 + Math.sin(dx * 50) * 8 + Math.cos(dy * 40) * 6 + Math.sin((dx + dy) * 30) * 4;
+      const intensity = Math.max(0, Math.min(1, depth / 50));
+      ctx.fillStyle = 'rgba(' + Math.round(30 - intensity * 20) + ',' + Math.round(50 + intensity * 40) + ',' + Math.round(100 + intensity * 80) + ',0.3)';
+      ctx.fillRect(gx, gy, gridSize, gridSize);
+    }
+  }
+  ctx.strokeStyle = 'rgba(56,189,248,.15)'; ctx.lineWidth = 0.5;
+  for (let i = 0; i < 5; i++) {
+    const r = (i + 1) * scale * 0.05;
+    ctx.beginPath(); ctx.ellipse(cx + i * 15, cy + i * 10, r * 3, r * 2, 0.3, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+function drawCurrents(w, h) {
+  const time = Date.now() / 2000, gridStep = 60;
+  ctx.strokeStyle = 'rgba(34,197,94,.5)'; ctx.fillStyle = 'rgba(34,197,94,.5)'; ctx.lineWidth = 1.5;
+  for (let gx = gridStep; gx < w; gx += gridStep) {
+    for (let gy = gridStep; gy < h; gy += gridStep) {
+      const flowAngle = Math.sin(gx * 0.01 + time) * 0.5 + Math.cos(gy * 0.008) * 0.3 + 2.5;
+      const speed = 0.3 + Math.sin(gx * 0.005 + gy * 0.005 + time * 0.5) * 0.2;
+      const len = 12 + speed * 20;
+      const ox = gx + Math.sin(time + gx) * 3, oy = gy + Math.cos(time + gy) * 3;
+      ctx.save(); ctx.translate(ox, oy); ctx.rotate(flowAngle);
+      ctx.beginPath(); ctx.moveTo(-len / 2, 0); ctx.lineTo(len / 2, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(len / 2, 0); ctx.lineTo(len / 2 - 5, -3); ctx.lineTo(len / 2 - 5, 3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+function drawWaterLevel(w, h) {
+  const tide = 1.2 + Math.sin(Date.now() / 10000) * 0.8;
+  ctx.font = 'bold 11px "JetBrains Mono"'; ctx.fillStyle = 'rgba(56,189,248,.6)';
+  ctx.fillText('TIDE: ' + (tide > 0 ? '+' : '') + tide.toFixed(2) + 'm | HAT: +2.1m | LAT: -0.3m', 10, 30);
+}
+
+function drawNavWarnings(cx, cy, scale) {
+  [{lat:31.26,lon:121.51,text:'⚠ RESTRICTED AREA'},{lat:31.19,lon:121.43,text:'⚠ WORKS IN PROGRESS'}].forEach(w => {
+    const {x, y} = latLonToCanvas(w.lat, w.lon);
+    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(245,158,11,.1)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(245,158,11,.5)'; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '9px "JetBrains Mono"'; ctx.fillStyle = 'rgba(245,158,11,.8)';
+    ctx.fillText(w.text, x - 40, y - 24);
+  });
+}
+
+function drawWeather(w, h) {
+  ctx.font = '10px "JetBrains Mono"'; ctx.fillStyle = 'rgba(148,163,184,.5)';
+  ctx.fillText('WIND: 15kn NW  |  VIS: 8nm  |  SEA: SS3  |  SWELL: 1.2m', 10, h - 10);
+}
+
+function drawRangeRings(cx, cy, scale) {
+  ctx.strokeStyle = 'rgba(71,85,105,.2)'; ctx.lineWidth = 0.5;
+  ctx.font = '9px "JetBrains Mono"'; ctx.fillStyle = 'rgba(148,163,184,.3)';
+  [1, 2, 4, 6, 8, 10, 12].forEach(nm => {
+    if (nm > state.chartRange) return;
+    const r = nm * scale;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillText(nm + 'nm', cx + r + 4, cy);
+  });
+}
+
+function drawRadarSweep(cx, cy, r) {
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(state.radarSweep);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -r);
+  ctx.strokeStyle = 'rgba(168,85,247,.6)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r, -Math.PI / 2 - 0.5, -Math.PI / 2); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, -r);
+  grad.addColorStop(0, 'rgba(168,85,247,.15)'); grad.addColorStop(1, 'rgba(168,85,247,0)');
+  ctx.fillStyle = grad; ctx.fill(); ctx.restore();
+  if (state.layers.ais) {
+    state.targets.forEach(t => {
+      const {x, y} = latLonToCanvas(t.lat, t.lon);
+      ctx.beginPath(); ctx.arc(x, y, 8 + Math.random() * 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(168,85,247,' + (0.15 + Math.random() * 0.15) + ')'; ctx.fill();
+    });
+  }
+}
+
+function drawTargets(cx, cy, scale) {
+  state.targets.forEach(t => {
+    const {x, y} = latLonToCanvas(t.lat, t.lon);
+    const risk = calcCPA(state.ship, t);
+    const riskLevel = classifyRisk(risk.cpa, risk.tcpa);
+    if (riskLevel === 'danger') {
+      const fx = x + (t.sog / 60) * Math.sin(t.cog * DEG) * scale * 10;
+      const fy = y - (t.sog / 60) * Math.cos(t.cog * DEG) * scale * 10;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(fx, fy);
+      ctx.strokeStyle = 'rgba(239,68,68,.6)'; ctx.lineWidth = 1;
+      ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    const color = riskLevel === 'danger' ? '#EF4444' : riskLevel === 'caution' ? '#F59E0B' : '#38BDF8';
+    ctx.save(); ctx.translate(x, y); ctx.rotate(t.cog * DEG);
+    ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(-6, 6); ctx.lineTo(6, 6); ctx.closePath();
+    ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.restore();
+    const vecLen = t.sog * scale * 0.05;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    ctx.lineTo(x + vecLen * Math.sin(t.cog * DEG), y - vecLen * Math.cos(t.cog * DEG));
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+    ctx.font = '9px "JetBrains Mono"'; ctx.fillStyle = color;
+    ctx.fillText(t.name || t.mmsi, x + 12, y - 4);
+    ctx.fillStyle = 'rgba(148,163,184,.6)'; ctx.fillText(t.sog.toFixed(1) + 'kn', x + 12, y + 8);
+  });
+}
+
+function drawOwnShip(cx, cy) {
+  ctx.save(); ctx.translate(cx, cy);
+  if (state.chartOrientation !== 'head-up') ctx.rotate(state.ship.hdg * DEG);
+  ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(-8, 8); ctx.lineTo(-3, 5);
+  ctx.lineTo(0, 12); ctx.lineTo(3, 5); ctx.lineTo(8, 8); ctx.closePath();
+  ctx.fillStyle = '#38BDF8'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(0, -60);
+  ctx.strokeStyle = 'rgba(56,189,248,.4)'; ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+}
+
+function drawPredictions(cx, cy, scale) {
+  const minutes = state.predictMin;
+  const foX = cx + (state.ship.sog / 60) * Math.sin(state.ship.cog * DEG) * scale * minutes;
+  const foY = cy - (state.ship.sog / 60) * Math.cos(state.ship.cog * DEG) * scale * minutes;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(foX, foY);
+  ctx.strokeStyle = 'rgba(56,189,248,.3)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 3]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(foX, foY, 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(56,189,248,.5)'; ctx.fill();
+  state.targets.forEach(t => {
+    const {x, y} = latLonToCanvas(t.lat, t.lon);
+    const fx = x + (t.sog / 60) * Math.sin(t.cog * DEG) * scale * minutes;
+    const fy = y - (t.sog / 60) * Math.cos(t.cog * DEG) * scale * minutes;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(fx, fy);
+    ctx.strokeStyle = 'rgba(245,158,11,.3)'; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(fx, fy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(245,158,11,.5)'; ctx.fill();
+  });
+}
+
+// ═══ UI Updates ═══
+function updateShipUI() {
+  const s = state.ship;
+  el.ownSog.textContent = s.sog.toFixed(1);
+  el.ownCog.textContent = s.cog.toFixed(1);
+  el.ownHdg.textContent = s.hdg.toFixed(1);
+  el.ownDepth.textContent = s.depth.toFixed(1);
+  el.ownLat.textContent = s.lat.toFixed(4) + '°N';
+  el.ownLon.textContent = s.lon.toFixed(4) + '°E';
+  el.ownRot.textContent = (s.rot >= 0 ? '+' : '') + s.rot.toFixed(1);
+  el.chipSog.textContent = s.sog.toFixed(1);
+  el.chipCog.textContent = s.cog.toFixed(1);
+  el.chipHdg.textContent = s.hdg.toFixed(1);
+  el.chipDepthVal.textContent = s.depth.toFixed(1);
+  el.chartPos.textContent = s.lat.toFixed(4) + '°N ' + s.lon.toFixed(4) + '°E';
+  if (s.depth < 6) { el.chipDepth.className = 'chip danger'; el.depthDatum.classList.add('alert'); }
+  else { el.chipDepth.className = 'chip'; el.depthDatum.classList.remove('alert'); }
+  el.compassNeedle.setAttribute('transform', 'rotate(' + (-s.hdg) + ' 30 30)');
+  syncMapToShip();
+}
+
+function updateAlarms(alarms) {
+  if (!Array.isArray(alarms) || !alarms.length) {
+    el.alarmBadge.textContent = '0';
+    el.alarmList.innerHTML = '<div style="font-size:11px;color:var(--text-muted)">No active alarms</div>';
+    return;
+  }
+  el.alarmBadge.textContent = alarms.length;
+  el.alarmList.innerHTML = alarms.map(a =>
+    '<div class="alarm-item"><span class="alarm-dot ' + (a.level || 'caution') + '"></span><span class="alarm-text">' + a.message + '</span><span class="alarm-time">' + (a.time || '') + '</span></div>'
+  ).join('');
+}
+
+// ═══ Layer Toggles ═══
+document.querySelectorAll('.layer-toggle').forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    const layer = toggle.dataset.layer;
+    toggle.classList.toggle('on');
+    state.layers[layer] = toggle.classList.contains('on');
+    if (layer === 's102' && state.layers.s102) el.chartScale.textContent = 'S-102 Bathymetry | High-Res Depth';
+    else if (layer === 's111' && state.layers.s111) el.chartScale.textContent = 'S-111 Surface Currents | Vector Field';
+    else if (!state.layers.s102 && !state.layers.s111) el.chartScale.textContent = 'S-101 ENC | 1:50000';
+  });
+});
+
+// ═══ View Mode ═══
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.viewMode = btn.dataset.mode;
+    el.statusText.textContent = btn.dataset.mode.toUpperCase() + ' — Normal Operation';
+  });
+});
+
+// Chart Orientation
+el.chartMode.addEventListener('click', () => {
+  state.chartOrientation = state.chartOrientation === 'north-up' ? 'head-up' : 'north-up';
+  el.chartMode.textContent = state.chartOrientation === 'north-up' ? 'N-UP' : 'H-UP';
+});
+
+// Zoom
+// Zoom — map handles zoom/drag directly; fallback for no-map mode
+if (!map) {
+  el.canvas.style.pointerEvents = 'auto';
+  el.canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    state.chartRange = Math.max(1, Math.min(50, state.chartRange + (e.deltaY > 0 ? 1 : -1)));
+    el.chartRange.textContent = 'Range: ' + state.chartRange + ' nm';
+  }, { passive: false });
+}
+
+// Autopilot
+document.querySelectorAll('.ap-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ap-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    el.apLabel.textContent = btn.dataset.mode.toUpperCase();
+  });
+});
+
+// Prediction Slider
+let dragging = false;
+function updatePrediction(pct) {
+  pct = Math.max(0, Math.min(100, pct));
+  state.predictMin = (pct / 100) * 90;
+  el.timelineFill.style.width = pct + '%';
+  el.timelineThumb.style.left = pct + '%';
+  el.predictValue.textContent = state.predictMin < 1 ? 'NOW' : state.predictMin.toFixed(0) + ' min';
+}
+el.timelineTrack.addEventListener('mousedown', e => {
+  dragging = true;
+  const rect = el.timelineTrack.getBoundingClientRect();
+  updatePrediction(((e.clientX - rect.left) / rect.width) * 100);
+});
+el.timelineThumb.addEventListener('mousedown', e => { dragging = true; e.stopPropagation(); });
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const rect = el.timelineTrack.getBoundingClientRect();
+  updatePrediction(((e.clientX - rect.left) / rect.width) * 100);
+});
+document.addEventListener('mouseup', () => { dragging = false; });
+el.timelineTrack.addEventListener('touchstart', e => {
+  dragging = true;
+  const rect = el.timelineTrack.getBoundingClientRect();
+  updatePrediction(((e.touches[0].clientX - rect.left) / rect.width) * 100);
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  const rect = el.timelineTrack.getBoundingClientRect();
+  updatePrediction(((e.touches[0].clientX - rect.left) / rect.width) * 100);
+}, { passive: true });
+document.addEventListener('touchend', () => { dragging = false; });
+
+// AI Chat
+function sendAIChat() {
+  const msg = el.aiInput.value.trim(); if (!msg) return;
+  el.aiInput.value = '';
+  addAIMessage(msg, '');
+  const lastMsg = el.aiMessages.lastElementChild;
+  if (lastMsg) { lastMsg.style.borderLeftColor = '#818CF8'; lastMsg.style.background = 'rgba(129,140,248,.08)'; }
+  el.aiStatus.textContent = '🧠 THINKING...';
+  el.aiStatus.style.color = '#818CF8';
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({ action: 'chat', message: msg, session_id: chatSessionId, agent_id: selectedAgentId }));
+  } else {
+    fetch('/api/v1/bridge-chat/send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, session_id: chatSessionId, agent_id: selectedAgentId })
+    }).then(r => r.json()).then(d => {
+      addAIMessage(d.reply || '无应答', d.urgency === 'critical' ? 'danger' : '');
+      const dotEl = document.getElementById('agentModelDot');
+      const nameEl = document.getElementById('agentModelName');
+      if (d.source === 'agent_llm') {
+        el.aiStatus.textContent = 'LLM'; el.aiStatus.style.color = '#34D399';
+        if (d.model) { if (nameEl) nameEl.textContent = d.model; }
+        if (dotEl) dotEl.className = 'agent-model-dot active';
+        // Cross-team task routing
+        const buildKw = ['PM智能体', 'PM', 'build', '开发任务', '开发团队', '构建团队', 'Developer', '提交任务', '分配任务', '传达', '转发'];
+        if (buildKw.some(kw => (d.reply || '').includes(kw))) {
+          const tm = (d.reply || '').match(/\*\*(.+?)\*\*/);
+          const tt = tm ? tm[1].slice(0, 128) : msg.slice(0, 128);
+          fetch('/api/v1/agent-config/cross-team/tasks', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target_team_id: 'build_system', target_agent_id: 'build_pm',
+              source_team_id: 'execution_system', source_agent_id: selectedAgentId,
+              title: tt, description: d.reply || '', priority: 2, original_message: msg })
+          }).then(r => r.json()).then(t => {
+            addAIMessage('✅ 任务已提交至 Build Team (ID: ' + t.task_id + ')', '');
+          }).catch(() => {});
+        }
+      } else {
+        el.aiStatus.textContent = 'TEMPLATE'; el.aiStatus.style.color = '#F59E0B';
+      }
+    }).catch(() => { addAIMessage('通信错误', 'danger'); el.aiStatus.textContent = 'ERROR'; el.aiStatus.style.color = '#EF4444'; });
+  }
+}
+el.aiSend.addEventListener('click', sendAIChat);
+el.aiInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendAIChat(); });
+
+// MOB
+$('btnMOB').addEventListener('click', () => {
+  addAIMessage('🚨 MOB 警报！位置: ' + state.ship.lat.toFixed(4) + '°N ' + state.ship.lon.toFixed(4) + '°E', 'danger');
+  el.statusText.textContent = '🚨 MAN OVERBOARD — EMERGENCY';
+});
+
+// ═══ WebSocket ═══
+function connectWS() {
+  try {
+    ws = new WebSocket('ws://' + location.host + '/ws/navigation');
+    ws.onopen = () => { el.wsDot.classList.add('on'); el.wsLabel.textContent = 'ONLINE'; setPageStatus(el.wsStatusDot, el.wsStatusText, 'ok', 'WebSocket: 实时数据链路已建立'); };
+    ws.onclose = () => { el.wsDot.classList.remove('on'); el.wsLabel.textContent = 'OFFLINE'; setPageStatus(el.wsStatusDot, el.wsStatusText, 'err', 'WebSocket: 已断开，重连中...'); ws = null; setTimeout(connectWS, 3000); };
+    ws.onerror = () => ws.close();
+    ws.onmessage = ev => {
+      try { var msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.type === 'init') {
+        if (msg.ship) Object.assign(state.ship, msg.ship);
+        if (msg.ais) {
+          state.targets = msg.ais.map((t, i) => ({
+            mmsi: t.mmsi || String(100000000 + i), lat: t.lat, lon: t.lon,
+            cog: t.cog || t.course || 0, sog: t.sog || t.speed || 0,
+            name: t.name || 'TGT-' + (i + 1),
+          }));
+        }
+        if (msg.alarms) updateAlarms(msg.alarms);
+        updateShipUI(); updateRiskList();
+      } else if (msg.type === 'data_update' && msg.data) {
+        const d = msg.data;
+        if (d.sensors) {
+          if (d.sensors.lat != null) state.ship.lat = d.sensors.lat;
+          if (d.sensors.lon != null) state.ship.lon = d.sensors.lon;
+          if (d.sensors.sog != null) state.ship.sog = d.sensors.sog;
+          if (d.hdg != null) state.ship.hdg = d.hdg;
+          if (d.cog != null) state.ship.cog = d.cog;
+          if (d.sensors.rot != null) state.ship.rot = d.sensors.rot;
+        }
+        if (d.ais_targets) {
+          state.targets = Object.entries(d.ais_targets).map(([k, t]) => ({
+            mmsi: k, lat: t.latitude || t.lat, lon: t.longitude || t.lon,
+            cog: t.course || t.cog || 0, sog: t.speed || t.sog || 0,
+            name: t.name || 'TGT-' + k.slice(-3),
+          }));
+        }
+        if (d.alarms) updateAlarms(d.alarms);
+        updateShipUI(); updateRiskList();
+      } else if (msg.type === 'chat_reply') {
+        const src = msg.source === 'agent_llm' ? '🧠' : '📋';
+        const replyText = (msg.reply || '无应答');
+        addAIMessage(replyText, msg.urgency === 'critical' ? 'danger' : '');
+        if (msg.source === 'agent_llm') {
+          el.aiStatus.textContent = msg.urgency === 'critical' ? 'ALERT' : 'DeepSeek';
+          el.aiStatus.style.color = '#34D399';
+        } else {
+          el.aiStatus.textContent = msg.urgency === 'critical' ? 'ALERT' : 'ACTIVE';
+          el.aiStatus.style.color = '#F59E0B';
+        }
+      }
+    };
+  } catch { setTimeout(connectWS, 5000); }
+}
+connectWS();
+
+// S-100 Data fetch
+async function fetchS100Data() {
+  try {
+    const res = await fetch('/api/v1/s100/layers');
+    if (res.ok) { const data = await res.json(); if (data.water_level) state.ship.depth = data.water_level.depth || state.ship.depth; }
+  } catch {}
+}
+setInterval(fetchS100Data, 10000);
+
+// Fetch own-ship position from backend
+async function fetchOwnShip() {
+  try {
+    const res = await fetch('/api/v1/navigation/own-ship');
+    if (res.ok) {
+      const d = await res.json();
+      if (d.lat != null) state.ship.lat = d.lat;
+      if (d.lon != null) state.ship.lon = d.lon;
+      if (d.hdg != null) state.ship.hdg = d.hdg;
+      if (d.sog != null) state.ship.sog = d.sog;
+      if (d.cog != null) state.ship.cog = d.cog;
+      if (d.rot != null) state.ship.rot = d.rot;
+      if (d.depth != null) state.ship.depth = d.depth;
+      updateShipUI();
+    }
+  } catch {}
+}
+setInterval(fetchOwnShip, 3000);
+
+// Fetch collision risk from backend
+async function fetchCollisionRisk() {
+  try {
+    const res = await fetch('/api/v1/navigation/collision-risk');
+    if (res.ok) {
+      const d = await res.json();
+      if (d.targets) {
+        state.targets = d.targets.map(t => ({
+          mmsi: t.mmsi, lat: t.lat, lon: t.lon,
+          cog: t.cog || 0, sog: t.sog || 0,
+          name: t.name || 'TGT-' + (t.mmsi || '').slice(-3),
+          cpa: t.cpa_nm, tcpa: t.tcpa_min, risk: t.risk_level,
+        }));
+        updateRiskList();
+      }
+    }
+  } catch {}
+}
+setInterval(fetchCollisionRisk, 5000);
+
+// Fetch COLREGs advice
+async function fetchColregsAdvice() {
+  try {
+    const res = await fetch('/api/v1/colregs/advice');
+    if (res.ok) {
+      const d = await res.json();
+      if (d.encounters && d.encounters.length > 0) {
+        d.encounters.forEach(enc => {
+          addAIMessage('COLREGs: ' + (enc.rule || '') + ' — ' + (enc.advice || enc.action || ''), enc.risk === 'high' ? 'danger' : 'warn');
+        });
+      }
+    }
+  } catch {}
+}
+setInterval(fetchColregsAdvice, 30000);
+
+// Autopilot mode
+document.querySelectorAll('[data-ap-mode]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const mode = this.dataset.apMode;
+    fetch('/api/v1/autopilot/mode', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({mode: mode, heading: state.ship.hdg})
+    }).then(r => r.json()).then(d => {
+      if (d.ok) addAIMessage('Autopilot 模式切换: ' + mode, '');
+    }).catch(() => {});
+  });
+});
+
+// Init
+updateShipUI();
+drawChart();
+setInterval(() => {
+  updateRiskList();
+  if (state.targets.length > 0 && Math.random() < 0.1) {
+    const tgt = state.targets[Math.floor(Math.random() * state.targets.length)];
+    const risk = calcCPA(state.ship, tgt);
+    if (risk.cpa < 2) addAIMessage('监测: ' + tgt.name + ' BRG ' + risk.bearing.toFixed(0) + '° RNG ' + risk.range.toFixed(1) + 'nm CPA ' + risk.cpa.toFixed(2) + 'nm', risk.cpa < 0.5 ? 'danger' : 'warn');
+  }
+}, 5000);
+
+})();
+</script>
+</body>
+</html>

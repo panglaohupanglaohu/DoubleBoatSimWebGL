@@ -230,6 +230,7 @@ class SkillDefinition:
     source: str = "builtin"
     slug: str = ""
     required_tools: List[str] = field(default_factory=list)
+    instructions: str = ""
 
     def __post_init__(self) -> None:
         if not self.skill_id:
@@ -250,6 +251,7 @@ class SkillDefinition:
             "source": self.source,
             "slug": self.slug,
             "required_tools": self.required_tools,
+            "has_instructions": bool(self.instructions),
         }
 
 

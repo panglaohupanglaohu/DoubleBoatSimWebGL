@@ -71,6 +71,12 @@ class MyChannel(MarineChannel):
         self._active = False
 ```
 
+## 交付物持久化
+
+完成代码修改后：
+1. 将变更记录写入工作区: `POST /api/v1/agent-config/teams/{team_id}/agents/{agent_id}/workspace` (文件名如 `change_log_YYYYMMDD.md`)
+2. 将交付物写入知识库: `POST /api/v1/agent-config/knowledge-base/documents` (category=deliverable, 包含变更摘要)
+
 ## 关键编码原则
 
 1. **向后兼容** — 新参数必须有默认值

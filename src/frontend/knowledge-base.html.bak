@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ob-title" content="知识库">
+    <meta name="ob-subtitle" content="Agent Knowledge Base — RAG Query">
+    <title>知识库 — PoseidonX</title>
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <style>
+        :root{--kb-bg:#1a1a2e;--kb-card:rgba(22,33,62,.95);--kb-border:rgba(255,255,255,.08);--kb-accent:#4fc3f7;--kb-pink:#f06292;--kb-text:#e2e8f0;--kb-dim:#718096;--kb-radius:10px;}
+        body{margin:0;padding:var(--ob-topbar-height,48px) 24px 24px 80px;background:var(--ob-bg-global,var(--kb-bg));color:var(--ob-text-primary,var(--kb-text));font-family:var(--ob-font,-apple-system,sans-serif);}
+        .kb-layout{max-width:1200px;margin:0 auto;}
+        .kb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+        .kb-header h2{margin:0;font-size:22px;font-weight:700;}
+        .kb-stats{display:flex;gap:16px;}
+        .kb-stat{background:var(--ob-bg-card,var(--kb-card));border:1px solid var(--ob-border,var(--kb-border));border-radius:var(--kb-radius);padding:12px 20px;text-align:center;}
+        .kb-stat .num{font-size:24px;font-weight:700;color:var(--kb-accent);}
+        .kb-stat .lbl{font-size:11px;color:var(--kb-dim);text-transform:uppercase;margin-top:2px;}
+        .search-box{display:flex;gap:10px;margin-bottom:20px;}
+        .search-box input{flex:1;background:var(--ob-bg-section,rgba(0,0,0,.15));border:1px solid var(--ob-border,var(--kb-border));border-radius:var(--kb-radius);padding:12px 16px;color:var(--kb-text);font-size:14px;outline:none;}
+        .search-box input:focus{border-color:var(--kb-accent);}
+        .search-box button{background:var(--kb-accent);color:#000;border:none;border-radius:var(--kb-radius);padding:0 24px;font-size:14px;font-weight:600;cursor:pointer;}
+        .search-box button:hover{opacity:.85;}
+        .filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+        .filters select,.filters input{background:var(--ob-bg-section,rgba(0,0,0,.15));border:1px solid var(--ob-border,var(--kb-border));border-radius:6px;padding:6px 12px;color:var(--kb-text);font-size:12px;outline:none;}
+        .results-count{font-size:12px;color:var(--kb-dim);margin-bottom:12px;}
+        .doc-card{background:var(--ob-bg-card,var(--kb-card));border:1px solid var(--ob-border,var(--kb-border));border-radius:var(--kb-radius);padding:16px;margin-bottom:12px;cursor:pointer;transition:border-color .2s;}
+        .doc-card:hover{border-color:var(--kb-accent);}
+        .doc-card .doc-title{font-size:15px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+        .doc-card .doc-meta{font-size:11px;color:var(--kb-dim);display:flex;gap:12px;margin-bottom:8px;}
+        .doc-card .doc-preview{font-size:13px;color:var(--kb-dim);line-height:1.6;}
+        .doc-card .doc-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+        .tag{background:rgba(79,195,247,.1);border:1px solid rgba(79,195,247,.2);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--kb-accent);}
+        .score-badge{background:rgba(240,98,146,.1);border:1px solid rgba(240,98,146,.2);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--kb-pink);}
+        .doc-detail{display:none;background:var(--ob-bg-card,var(--kb-card));border:1px solid var(--kb-accent);border-radius:var(--kb-radius);padding:20px;margin-bottom:20px;}
+        .doc-detail.open{display:block;}
+        .doc-detail pre{background:rgba(0,0,0,.2);border-radius:6px;padding:14px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:500px;overflow-y:auto;}
+        .doc-detail .toolbar{display:flex;gap:8px;margin-top:12px;}
+        .btn{padding:6px 16px;border-radius:6px;border:1px solid var(--ob-border,var(--kb-border));background:var(--ob-bg-section,rgba(0,0,0,.15));color:var(--kb-text);font-size:12px;cursor:pointer;}
+        .btn:hover{background:rgba(255,255,255,.05);}
+        .btn-pink{background:var(--kb-pink);color:#fff;border-color:var(--kb-pink);}
+        .btn-danger{background:rgba(245,101,101,.15);color:#f56565;border-color:rgba(245,101,101,.3);}
+        .add-form{background:var(--ob-bg-card,var(--kb-card));border:1px solid var(--ob-border,var(--kb-border));border-radius:var(--kb-radius);padding:20px;margin-bottom:20px;display:none;}
+        .add-form.open{display:block;}
+        .add-form label{font-size:12px;color:var(--kb-dim);display:block;margin-bottom:4px;margin-top:12px;}
+        .add-form input,.add-form textarea,.add-form select{width:100%;box-sizing:border-box;background:var(--ob-bg-section,rgba(0,0,0,.15));border:1px solid var(--ob-border,var(--kb-border));border-radius:6px;padding:8px 12px;color:var(--kb-text);font-size:13px;outline:none;font-family:inherit;}
+        .add-form textarea{min-height:160px;resize:vertical;font-family:monospace;}
+        .empty-state{text-align:center;padding:60px 20px;color:var(--kb-dim);}
+        .empty-state .big{font-size:48px;margin-bottom:16px;}
+    </style>
+</head>
+<body>
+    <div class="kb-layout">
+        <div class="kb-header">
+            <h2>📚 Agent 知识库</h2>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <div class="kb-stats" id="kb-stats"></div>
+                <button class="btn btn-pink" onclick="toggleAddForm()">＋ 添加文档</button>
+            </div>
+        </div>
+
+        <!-- Add Document Form -->
+        <div class="add-form" id="add-form">
+            <h3 style="margin:0 0 8px">添加文档到知识库</h3>
+            <label>标题 *</label>
+            <input id="add-title" placeholder="文档标题">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                <div><label>分类</label>
+                <select id="add-category">
+                    <option value="deliverable">交付物</option>
+                    <option value="workspace">工作区</option>
+                    <option value="knowledge">知识</option>
+                    <option value="archived">归档</option>
+                </select></div>
+                <div><label>来源 Agent</label>
+                <input id="add-agent" placeholder="agent_id"></div>
+                <div><label>标签 (逗号分隔)</label>
+                <input id="add-tags" placeholder="部署,前端,IEC60945"></div>
+            </div>
+            <label>内容 *</label>
+            <textarea id="add-content" placeholder="文档内容 (Markdown / 纯文本)"></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn btn-pink" onclick="submitDoc()">提交</button>
+                <button class="btn" onclick="toggleAddForm()">取消</button>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box">
+            <input id="search-input" placeholder="搜索知识库... (支持中英文关键词)" onkeydown="if(event.key==='Enter')doSearch()">
+            <button onclick="doSearch()">🔍 搜索</button>
+        </div>
+        <div class="filters">
+            <select id="filter-category" onchange="loadDocs()">
+                <option value="">全部分类</option>
+                <option value="deliverable">交付物</option>
+                <option value="workspace">工作区</option>
+                <option value="knowledge">知识</option>
+                <option value="archived">归档</option>
+            </select>
+            <select id="filter-agent" onchange="loadDocs()">
+                <option value="">全部 Agent</option>
+            </select>
+        </div>
+        <div class="results-count" id="results-count"></div>
+
+        <!-- Document Detail -->
+        <div class="doc-detail" id="doc-detail"></div>
+
+        <!-- Document List -->
+        <div id="doc-list"></div>
+    </div>
+
+    <script>
+    const A='/api/v1/agent-config';
+
+    function escapeHtml(t){return t?t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+
+    function showToast(msg){
+        var d=document.createElement('div');
+        d.textContent=msg;
+        d.style.cssText='position:fixed;top:20px;right:20px;background:#48bb78;color:#fff;padding:10px 20px;border-radius:8px;z-index:9999;font-size:13px;animation:fadeIn .3s';
+        document.body.appendChild(d);
+        setTimeout(()=>d.remove(),2500);
+    }
+
+    async function loadStats(){
+        try{
+            var s=await(await fetch(A+'/knowledge-base/stats')).json();
+            document.getElementById('kb-stats').innerHTML=
+                `<div class="kb-stat"><div class="num">${s.total_documents||0}</div><div class="lbl">文档数</div></div>`+
+                `<div class="kb-stat"><div class="num">${formatSize(s.total_size||0)}</div><div class="lbl">总大小</div></div>`;
+        }catch(e){}
+    }
+
+    function formatSize(n){
+        if(n<1024)return n+' B';
+        if(n<1048576)return (n/1024).toFixed(1)+' KB';
+        return (n/1048576).toFixed(1)+' MB';
+    }
+
+    async function loadDocs(){
+        var cat=document.getElementById('filter-category').value;
+        var agent=document.getElementById('filter-agent').value;
+        var params=new URLSearchParams();
+        if(cat)params.set('category',cat);
+        if(agent)params.set('agent_id',agent);
+        try{
+            var r=await(await fetch(A+'/knowledge-base/documents?'+params)).json();
+            renderDocList(r.documents||[],false);
+            document.getElementById('results-count').textContent=(r.documents||[]).length+' 篇文档';
+        }catch(e){
+            document.getElementById('doc-list').innerHTML='<div class="empty-state"><div class="big">📭</div><p>无法连接后端服务</p></div>';
+        }
+    }
+
+    async function doSearch(){
+        var q=document.getElementById('search-input').value.trim();
+        if(!q){loadDocs();return}
+        var cat=document.getElementById('filter-category').value;
+        var agent=document.getElementById('filter-agent').value;
+        try{
+            var r=await(await fetch(A+'/knowledge-base/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,max_results:20,category:cat,agent_id:agent})})).json();
+            renderDocList(r.results||[],true);
+            document.getElementById('results-count').textContent=`搜索 "${escapeHtml(q)}" — ${(r.results||[]).length} 条结果`;
+        }catch(e){
+            document.getElementById('doc-list').innerHTML='<div class="empty-state"><div class="big">🔍</div><p>搜索失败</p></div>';
+        }
+    }
+
+    function renderDocList(docs,isSearch){
+        if(!docs.length){
+            document.getElementById('doc-list').innerHTML='<div class="empty-state"><div class="big">📭</div><p>暂无文档 — 点击上方按钮添加，或从 Agent 工作区导入</p></div>';
+            return;
+        }
+        var categoryIcons={deliverable:'📋',workspace:'📁',knowledge:'📖',archived:'🗄️'};
+        document.getElementById('doc-list').innerHTML=docs.map(d=>{
+            var icon=categoryIcons[d.category]||'📄';
+            var score=isSearch&&d.score?`<span class="score-badge">⚡ ${d.score}</span>`:'';
+            var tags=(d.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('');
+            return `<div class="doc-card" onclick="viewDoc('${d.doc_id}')">
+                <div class="doc-title">${icon} ${escapeHtml(d.title)} ${score}</div>
+                <div class="doc-meta">
+                    <span>📅 ${(d.created_at||'').slice(0,10)}</span>
+                    ${d.source_agent?'<span>🤖 '+escapeHtml(d.source_agent)+'</span>':''}
+                    <span>📂 ${d.category}</span>
+                    <span>📏 ${formatSize(d.size||0)}</span>
+                </div>
+                <div class="doc-preview">${escapeHtml(d.preview||'')}</div>
+                ${tags?'<div class="doc-tags">'+tags+'</div>':''}
+            </div>`;
+        }).join('');
+    }
+
+    async function viewDoc(docId){
+        try{
+            var d=await(await fetch(A+'/knowledge-base/documents/'+docId)).json();
+            var categoryIcons={deliverable:'📋',workspace:'📁',knowledge:'📖',archived:'🗄️'};
+            var icon=categoryIcons[d.category]||'📄';
+            var tags=(d.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('');
+            var detail=document.getElementById('doc-detail');
+            detail.className='doc-detail open';
+            detail.innerHTML=`
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <h3 style="margin:0">${icon} ${escapeHtml(d.title)}</h3>
+                    <button class="btn" onclick="closeDetail()">✕ 关闭</button>
+                </div>
+                <div class="doc-meta" style="font-size:12px;color:var(--kb-dim);margin-bottom:12px;display:flex;gap:12px">
+                    <span>ID: ${d.doc_id}</span>
+                    <span>📅 ${(d.created_at||'').slice(0,19)}</span>
+                    ${d.source_agent?'<span>🤖 '+escapeHtml(d.source_agent)+'</span>':''}
+                    ${d.source_team?'<span>👥 '+escapeHtml(d.source_team)+'</span>':''}
+                    <span>📂 ${d.category}</span>
+                    <span>📏 ${formatSize(d.size||0)}</span>
+                </div>
+                ${tags?'<div class="doc-tags" style="margin-bottom:12px">'+tags+'</div>':''}
+                <pre>${escapeHtml(d.content||'')}</pre>
+                <div class="toolbar">
+                    <button class="btn btn-danger" onclick="deleteDoc('${d.doc_id}')">🗑 删除</button>
+                </div>
+            `;
+            detail.scrollIntoView({behavior:'smooth',block:'start'});
+        }catch(e){}
+    }
+
+    function closeDetail(){
+        document.getElementById('doc-detail').className='doc-detail';
+    }
+
+    async function deleteDoc(docId){
+        if(!confirm('确认删除此文档?'))return;
+        await fetch(A+'/knowledge-base/documents/'+docId,{method:'DELETE'});
+        showToast('已删除');
+        closeDetail();
+        loadDocs();
+        loadStats();
+    }
+
+    function toggleAddForm(){
+        document.getElementById('add-form').classList.toggle('open');
+    }
+
+    async function submitDoc(){
+        var title=document.getElementById('add-title').value.trim();
+        var content=document.getElementById('add-content').value.trim();
+        if(!title||!content){showToast('标题和内容不能为空');return}
+        var tags=document.getElementById('add-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+        try{
+            await fetch(A+'/knowledge-base/documents',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                    title:title,
+                    content:content,
+                    category:document.getElementById('add-category').value,
+                    source_agent:document.getElementById('add-agent').value.trim(),
+                    tags:tags
+                })
+            });
+            showToast('文档已添加');
+            toggleAddForm();
+            document.getElementById('add-title').value='';
+            document.getElementById('add-content').value='';
+            document.getElementById('add-tags').value='';
+            loadDocs();
+            loadStats();
+        }catch(e){showToast('添加失败')}
+    }
+
+    // Init
+    loadStats();
+    loadDocs();
+    </script>
+    <script src="/js/nav-sidebar.js" data-active="kb"></script>
+</body>
+</html>

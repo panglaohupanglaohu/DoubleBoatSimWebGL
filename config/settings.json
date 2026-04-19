@@ -43,5 +43,16 @@
   "logging": {
     "level": "INFO",
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  "token_factory": {
+    "tunnel": {
+      "local_port": 11434,
+      "remote_port": 11434,
+      "remote_host": "gpu11",
+      "jump_host": "root@111.186.43.30",
+      "ssh_key_path": ""
+    },
+    "health_ttl": 30,
+    "auto_start_tunnel": true
   }
 }

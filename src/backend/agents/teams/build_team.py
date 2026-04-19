@@ -7,14 +7,15 @@ from ..models import (
 def _model_copilot() -> ModelConfig:
     return ModelConfig(
         model_id="copilot", provider="github", name="copilot-chat",
-        max_tokens=16384, temperature=0.3, is_default=True,
+        max_tokens=16384, temperature=0.3, is_default=False,
     )
 
 
 def _model_deepseek_r1() -> ModelConfig:
     return ModelConfig(
-        model_id="deepseek_r1", provider="deepseek", name="deepseek-reasoner",
-        max_tokens=32768, temperature=0.2,
+        model_id="deepseek", provider="deepseek", name="deepseek-chat",
+        max_tokens=8192, temperature=0.2, is_default=True,
+        api_base_url="https://api.deepseek.com/v1",
     )
 
 
@@ -23,7 +24,7 @@ def _agent_pm() -> AgentProfile:
         agent_id="build_pm", name="PM", role="project_manager",
         description="Build system project manager",
         template_type=AgentTemplateType.COORDINATOR,
-        model_id="copilot",
+        model_id="deepseek",
         system_prompt="You are the build system PM. Coordinate tasks, track progress, resolve blockers.",
         personality=AgentPersonality(
             tone="directive", language="zh-CN",
@@ -48,7 +49,7 @@ def _agent_researcher() -> AgentProfile:
         agent_id="build_researcher", name="Researcher", role="researcher",
         description="Domain and technology researcher",
         template_type=AgentTemplateType.RESEARCHER,
-        model_id="deepseek_r1",
+        model_id="deepseek",
         system_prompt="You research maritime domain requirements and technology options.",
         personality=AgentPersonality(
             tone="analytical", language="zh-CN",
@@ -73,7 +74,7 @@ def _agent_architect() -> AgentProfile:
         agent_id="build_architect", name="Architect", role="architect",
         description="System architecture designer",
         template_type=AgentTemplateType.ANALYST,
-        model_id="deepseek_r1",
+        model_id="deepseek",
         system_prompt="You design system architecture, define interfaces, and make technology decisions.",
         personality=AgentPersonality(
             tone="precise", language="zh-CN",
@@ -98,7 +99,7 @@ def _agent_developer() -> AgentProfile:
         agent_id="build_developer", name="Developer", role="developer",
         description="Core code developer",
         template_type=AgentTemplateType.DEVELOPER,
-        model_id="copilot",
+        model_id="deepseek",
         system_prompt="You implement features, fix bugs, and write clean production code.",
         personality=AgentPersonality(
             tone="pragmatic", language="zh-CN",
@@ -123,7 +124,7 @@ def _agent_tester() -> AgentProfile:
         agent_id="build_tester", name="Tester", role="qa_engineer",
         description="Quality assurance and testing",
         template_type=AgentTemplateType.ANALYST,
-        model_id="copilot",
+        model_id="deepseek",
         system_prompt="You write tests, run test suites, and verify quality standards.",
         personality=AgentPersonality(
             tone="meticulous", language="zh-CN",
@@ -148,7 +149,7 @@ def _agent_deployer() -> AgentProfile:
         agent_id="build_deployer", name="Deployer", role="devops",
         description="Build and deployment automation",
         template_type=AgentTemplateType.ENGINEER,
-        model_id="copilot",
+        model_id="deepseek",
         system_prompt="You manage builds, deployments, and CI/CD pipelines.",
         personality=AgentPersonality(
             tone="cautious", language="zh-CN",
@@ -173,7 +174,7 @@ def _agent_doc_writer() -> AgentProfile:
         agent_id="build_doc_writer", name="Doc Writer", role="documentation",
         description="Documentation and knowledge management",
         template_type=AgentTemplateType.CUSTOM,
-        model_id="copilot",
+        model_id="deepseek",
         system_prompt="You write and maintain project documentation, API docs, and guides.",
         personality=AgentPersonality(
             tone="clear", language="zh-CN",

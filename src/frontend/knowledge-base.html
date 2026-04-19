@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="ob-title" content="知识库">
+  <meta name="ob-subtitle" content="Agent Knowledge Base — RAG Query & Semantic Search">
+  <title>知识库 — PoseidonX</title>
+  <link rel="stylesheet" href="/css/openbridge-theme.css">
+  <style>
+:root{--kb-bg:#060d1a;--kb-panel:rgba(10,22,45,0.92);--kb-line:rgba(100,180,255,0.12);--kb-cyan:#64d2ff;--kb-green:#30d158;--kb-orange:#ff9f0a;--kb-pink:#ff375f;--kb-purple:#bf5af2;--kb-blue:#007aff;--kb-text:#f0f6ff;--kb-text2:#9bb3cd;--kb-text3:#5b7894;--kb-mono:'SF Mono','Menlo',monospace;--kb-sans:-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--kb-sans);background:var(--kb-bg);color:var(--kb-text);min-height:100vh;padding:var(--ob-topbar-height,48px) 24px 24px 80px}
+.kb-layout{max-width:1240px;margin:0 auto}
+.kb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:14px}
+.kb-header h2{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--kb-cyan),var(--kb-green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kb-stats{display:flex;gap:12px}
+.kb-stat{background:var(--kb-panel);border:1px solid var(--kb-line);border-radius:12px;padding:10px 18px;text-align:center;min-width:80px}
+.kb-stat .num{font-size:22px;font-weight:700;font-family:var(--kb-mono);color:var(--kb-cyan)}
+.kb-stat .lbl{font-size:9px;color:var(--kb-text3);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+.search-row{display:flex;gap:8px;margin-bottom:16px}
+.search-row input{flex:1;background:rgba(100,180,255,.04);border:1px solid var(--kb-line);border-radius:12px;padding:12px 18px;color:var(--kb-text);font-size:14px;outline:none;transition:border-color .2s}
+.search-row input:focus{border-color:var(--kb-cyan)}
+.search-row button{padding:0 24px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--kb-blue),#5e5ce6);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.search-row button:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,122,255,.3)}
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--kb-line);background:transparent;color:var(--kb-text3);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.filter-chip:hover,.filter-chip.active{background:rgba(100,210,255,.1);color:var(--kb-cyan);border-color:rgba(100,210,255,.25)}
+.results-info{font-size:12px;color:var(--kb-text3);margin-bottom:10px;font-family:var(--kb-mono)}
+.doc-list{display:flex;flex-direction:column;gap:10px}
+.doc-card{background:var(--kb-panel);border:1px solid var(--kb-line);border-radius:14px;padding:18px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.doc-card:hover{border-color:rgba(100,180,255,.25);transform:translateY(-1px)}
+.doc-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:14px 0 0 14px}
+.doc-card.cat-regulation::before{background:var(--kb-orange)}
+.doc-card.cat-procedure::before{background:var(--kb-green)}
+.doc-card.cat-technical::before{background:var(--kb-cyan)}
+.doc-card.cat-training::before{background:var(--kb-purple)}
+.doc-card.cat-checklist::before{background:var(--kb-pink)}
+.doc-title{font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.doc-meta{font-size:10px;color:var(--kb-text3);display:flex;gap:14px;margin-bottom:8px;font-family:var(--kb-mono)}
+.doc-preview{font-size:13px;color:var(--kb-text2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.doc-tags{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.tag{background:rgba(100,210,255,.08);border:1px solid rgba(100,210,255,.15);border-radius:20px;padding:2px 10px;font-size:10px;color:var(--kb-cyan);font-weight:600}
+.score-badge{background:rgba(255,55,95,.08);border:1px solid rgba(255,55,95,.15);border-radius:20px;padding:2px 10px;font-size:10px;color:var(--kb-pink);font-weight:600;font-family:var(--kb-mono)}
+.doc-detail{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.6);backdrop-filter:blur(12px);justify-content:center;align-items:center}
+.doc-detail.open{display:flex}
+.detail-inner{background:var(--kb-panel);border:1px solid rgba(100,180,255,.2);border-radius:18px;width:750px;max-width:94vw;max-height:85vh;overflow-y:auto;padding:32px;box-shadow:0 12px 60px rgba(0,0,0,.5)}
+.detail-inner h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.detail-inner .doc-meta{margin-bottom:14px}
+.detail-inner pre{background:rgba(0,0,0,.3);border:1px solid var(--kb-line);border-radius:10px;padding:16px;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;font-family:var(--kb-mono);color:var(--kb-text2)}
+.detail-actions{display:flex;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--kb-line)}
+.btn{padding:8px 18px;border-radius:10px;border:1px solid var(--kb-line);background:transparent;color:var(--kb-text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{background:rgba(100,180,255,.08);color:var(--kb-cyan)}
+.btn-primary{background:linear-gradient(135deg,var(--kb-blue),#5e5ce6);color:#fff;border:none;box-shadow:0 4px 12px rgba(0,122,255,.2)}
+.btn-danger{background:rgba(255,69,58,.1);color:#ff453a;border-color:rgba(255,69,58,.2)}
+.add-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.6);backdrop-filter:blur(12px);justify-content:center;align-items:center}
+.add-overlay.open{display:flex}
+.add-form{background:var(--kb-panel);border:1px solid rgba(100,180,255,.2);border-radius:18px;width:600px;max-width:94vw;max-height:85vh;overflow-y:auto;padding:32px;box-shadow:0 12px 60px rgba(0,0,0,.5)}
+.add-form h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.add-form label{font-size:11px;color:var(--kb-text3);display:block;margin-bottom:4px;margin-top:14px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.add-form input,.add-form textarea,.add-form select{width:100%;background:rgba(100,180,255,.04);border:1px solid var(--kb-line);border-radius:10px;padding:10px 14px;color:var(--kb-text);font-size:13px;outline:none;font-family:inherit;transition:border-color .2s}
+.add-form input:focus,.add-form textarea:focus{border-color:var(--kb-cyan)}
+.add-form textarea{min-height:180px;resize:vertical;font-family:var(--kb-mono)}
+.add-form select{cursor:pointer}
+.add-form .form-actions{display:flex;gap:8px;margin-top:18px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--kb-text3)}
+.empty-state .big{font-size:48px;margin-bottom:14px;opacity:.6}
+.empty-state p{font-size:14px;margin-bottom:16px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(100,180,255,.12);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="kb-layout">
+  <div class="kb-header">
+    <h2>📚 知识库</h2>
+    <div class="kb-stats">
+      <div class="kb-stat"><div class="num" id="stat-docs">0</div><div class="lbl">文档</div></div>
+      <div class="kb-stat"><div class="num" id="stat-chunks">0</div><div class="lbl">向量</div></div>
+      <div class="kb-stat"><div class="num" id="stat-domains">0</div><div class="lbl">领域</div></div>
+    </div>
+  </div>
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="语义搜索 — 输入问题或关键词…" autocomplete="off">
+    <button id="searchBtn">🔍 搜索</button>
+    <button id="addBtn" style="background:linear-gradient(135deg,var(--kb-green),#40c2a4)">＋ 添加</button>
+  </div>
+  <div class="filters" id="filterBar">
+    <span class="filter-chip active" data-cat="">全部</span>
+    <span class="filter-chip" data-cat="regulation">📋 法规</span>
+    <span class="filter-chip" data-cat="procedure">📄 程序</span>
+    <span class="filter-chip" data-cat="technical">🔧 技术</span>
+    <span class="filter-chip" data-cat="training">🎓 培训</span>
+    <span class="filter-chip" data-cat="checklist">✅ 清单</span>
+  </div>
+  <div class="results-info" id="resultsInfo"></div>
+  <div class="doc-list" id="docList"></div>
+</div>
+<div class="doc-detail" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-inner" id="detailContent"></div>
+</div>
+<div class="add-overlay" id="addOverlay" onclick="if(event.target===this)closeAdd()">
+  <div class="add-form">
+    <h3>📝 添加知识文档</h3>
+    <label>标题</label><input type="text" id="addTitle" placeholder="文档标题">
+    <label>类别</label><select id="addCat"><option value="regulation">法规</option><option value="procedure">程序</option><option value="technical">技术</option><option value="training">培训</option><option value="checklist">清单</option></select>
+    <label>标签 (逗号分隔)</label><input type="text" id="addTags" placeholder="SOLAS, IMO, 导航">
+    <label>内容</label><textarea id="addContent" placeholder="文档内容…"></textarea>
+    <div class="form-actions"><button class="btn" onclick="closeAdd()">取消</button><button class="btn btn-primary" onclick="submitDoc()">提交</button></div>
+  </div>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+let _docs=[],_filter='',_searchQuery='';
+const CAT_ICONS={regulation:'📋',procedure:'📄',technical:'🔧',training:'🎓',checklist:'✅'};
+
+function renderDocs(){
+  let docs=_docs;
+  if(_filter)docs=docs.filter(d=>(d.category||'').toLowerCase()===_filter);
+  $('resultsInfo').textContent=_searchQuery?docs.length+' 条搜索结果 — "'+_searchQuery+'"':docs.length+' 篇文档';
+  if(!docs.length){$('docList').innerHTML='<div class="empty-state"><div class="big">📚</div><p>'+(_searchQuery?'未找到匹配文档':'知识库为空 — 点击添加按钮导入文档')+'</p></div>';return;}
+  $('docList').innerHTML=docs.map(d=>{
+    const cat=(d.category||'technical').toLowerCase();
+    const icon=CAT_ICONS[cat]||'📄';
+    const tags=(d.tags||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('');
+    const score=d.score?'<span class="score-badge">相关度 '+Math.round(d.score*100)+'%</span>':'';
+    return '<div class="doc-card cat-'+cat+'" onclick="showDetail(\''+esc(d.id)+'\')"><div class="doc-title">'+icon+' '+esc(d.title)+' '+score+'</div><div class="doc-meta"><span>'+esc(d.category||'技术')+'</span><span>'+esc(d.source||'PoseidonX')+'</span><span>'+esc(d.updated_at||d.created_at||'')+'</span><span>'+((d.content||'').length)+' 字符</span></div><div class="doc-preview">'+esc((d.content||'').substring(0,200))+'</div><div class="doc-tags">'+tags+'</div></div>';
+  }).join('');
+}
+
+function updateStats(){
+  $('stat-docs').textContent=_docs.length;
+  $('stat-chunks').textContent=_docs.reduce((s,d)=>s+((d.content||'').length>500?Math.ceil((d.content||'').length/500):1),0);
+  const domains=new Set(_docs.map(d=>d.category||'unknown'));
+  $('stat-domains').textContent=domains.size;
+}
+
+async function loadDocs(){
+  try{
+    const r=await fetch('/api/v1/knowledge/documents');const d=await r.json();
+    _docs=d.documents||d||[];
+  }catch(e){_docs=getSampleDocs()}
+  updateStats();renderDocs();
+}
+
+function getSampleDocs(){
+  return [
+    {id:'kb-001',title:'SOLAS Chapter III — Life-Saving Appliances',category:'regulation',tags:['SOLAS','LSA','IMO'],source:'IMO',content:'SOLAS Chapter III规定了船舶救生设备的要求。包括救生艇、救生筏、救生衣、浸水服等设备的数量、布置和维护标准。所有客船和500总吨以上的货船必须配备符合LSA规则的救生设备。\n\n关键要求：\n- 救生艇容量：全船人员100%\n- 弃船集合时间：≤10分钟\n- 救生艇下水时间：≤30分钟\n- EPIRB 自动释放：水深1-4米',updated_at:'2026-03-15'},
+    {id:'kb-002',title:'COLREGs 国际海上避碰规则精要',category:'regulation',tags:['COLREGs','避碰','Rule 13-17'],source:'IMO',content:'COLREGs (1972) 是国际海上避碰的基本法规。\n\nRule 13: 追越 — 从另一船正横后大于 22.5° 追上为追越船\nRule 14: 对遇 — 两船互见对遇，各向右转向\nRule 15: 交叉 — 见他船在右舷的应让路\nRule 16: 让路船行动 — 尽早、大幅度行动\nRule 17: 直行船行动 — 保持航向航速，必要时采取行动',updated_at:'2026-03-20'},
+    {id:'kb-003',title:'穿浪双体船 (WPC) 结构设计指南',category:'technical',tags:['WPC','DNV GL','结构'],source:'DNV GL',content:'穿浪双体船设计需特别关注：\n1. 砰击载荷 (Slamming) — 湿甲板底部压力可达 200kPa\n2. 鞭击响应 (Whipping) — 纵向弯矩放大系数 1.3-1.6\n3. 连接桥结构 — 扭转和剪切载荷\n4. 疲劳评估 — 应力集中系数 SCF > 2.0 区域\n\n设计波参数：有效波高 Hs ≤ 4.0m，周期 Tp = 8-12s\n推荐纵摇限值：≤3° (正常), ≤5° (极端)\n横摇限值：≤8° (正常), ≤15° (极端)',updated_at:'2026-03-18'},
+    {id:'kb-004',title:'IAMSAR 搜救手册 Vol III — 搜索模式',category:'procedure',tags:['IAMSAR','SAR','MOB'],source:'IMO/ICAO',content:'IAMSAR Vol III 主要搜索模式：\n\n1. Expanding Square Search (扩展方形搜索)\n  适用：位置已知、搜索区域小\n  方法：从datum点出发，逐渐扩展方形\n\n2. Sector Search (扇形搜索)\n  适用：datum精确度高\n  方法：以datum为中心120°扇形\n\n3. Parallel Track Search (平行航迹搜索)\n  适用：大范围搜索\n  方法：平行航线覆盖搜索区\n\nTotal Probable Error (TPE)计算：\nTPE = √(初始位置误差² + 漂移误差²)',updated_at:'2026-04-01'},
+    {id:'kb-005',title:'MLC 2006 船员休息时间规定',category:'regulation',tags:['MLC','STCW','休息时间'],source:'ILO',content:'海事劳工公约 (MLC 2006) 船员休息时间要求：\n\n最低休息时间标准：\n- 24小时内：至少 10 小时\n- 7天内：至少 77 小时\n\n休息时间可分为不超过两个时段，其中一个至少6小时连续。\n两个休息时段间隔不超过14小时。\n\n港口国检查重点：\n- 休息/工作时间记录表\n- 船长和船员签字确认\n- 最近30天连续记录',updated_at:'2026-02-28'},
+    {id:'kb-006',title:'弃船演习操作清单',category:'checklist',tags:['应急','演习','SOLAS'],source:'PoseidonX',content:'弃船演习检查项目：\n\n□ 发出弃船警报（7短1长）\n□ 确认应急照明系统\n□ 集合站人员点名\n□ 分配救生衣并检查穿着\n□ 检查救生艇吊放系统\n□ 检查通讯设备（VHF Ch16）\n□ 检查 EPIRB 就绪状态\n□ 检查 SART 电池状态\n□ 应急食品和淡水检查\n□ 记录演习时间和参与人数\n□ 演习后评估会议',updated_at:'2026-04-05'},
+    {id:'kb-007',title:'气象航线优化 — ISO 19030',category:'technical',tags:['航线优化','气象','能效'],source:'ISO',content:'ISO 19030 船舶能效评估框架：\n\n1. 航线优化目标：\n  - 燃油消耗最小化\n  - 到达时间约束\n  - 安全裕度保持\n\n2. 气象数据需求：\n  - GFS 全球预报 (0.25°分辨率)\n  - 海浪谱数据 (Hs, Tp, 方向)\n  - 海流数据 (速度, 方向)\n\n3. 最优路径算法：\n  - Dijkstra + 气象权重\n  - 动态规划\n  - A* with weather penalty',updated_at:'2026-03-25'},
+    {id:'kb-008',title:'网络安全应急响应程序',category:'procedure',tags:['网络安全','IMO','应急'],source:'BIMCO',content:'IMO MSC-FAL.1/Circ.3 网络安全应急响应：\n\n1. 检测阶段：\n  - 异常流量检测\n  - 入侵检测系统 (IDS) 告警\n  - 系统日志异常\n\n2. 隔离措施：\n  - OT/IT 网络紧急断开\n  - 受影响系统离线\n  - 保留取证数据\n\n3. 恢复步骤：\n  - 从已知良好备份恢复\n  - 逐步重新连接\n  - 验证系统完整性\n\n4. 报告：\n  - 向船旗国报告\n  - 更新ISM安全管理体系',updated_at:'2026-04-08'}
+  ];
+}
+
+async function searchDocs(){
+  const q=$('searchInput').value.trim();
+  _searchQuery=q;
+  if(!q){await loadDocs();return;}
+  try{
+    const r=await fetch('/api/v1/knowledge/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,top_k:20})});
+    const d=await r.json();_docs=(d.results||d.documents||[]);
+  }catch(e){
+    // Fallback: client-side filter
+    const allDocs=getSampleDocs();
+    const ql=q.toLowerCase();
+    _docs=allDocs.filter(d=>(d.title+''+d.content+''+(d.tags||[]).join('')).toLowerCase().includes(ql));
+    _docs.forEach(d=>d.score=0.7+Math.random()*0.3);
+  }
+  updateStats();renderDocs();
+}
+
+function showDetail(id){
+  const doc=_docs.find(d=>d.id===id);if(!doc)return;
+  $('detailContent').innerHTML='<h3>'+esc(doc.title)+'</h3><div class="doc-meta"><span>'+esc(doc.category||'')+'</span><span>'+esc(doc.source||'')+'</span><span>'+esc(doc.updated_at||'')+'</span></div><div class="doc-tags">'+(doc.tags||[]).map(t=>'<span class="tag">'+esc(t)+'</span>').join('')+'</div><pre>'+esc(doc.content||'')+'</pre><div class="detail-actions"><button class="btn" onclick="closeDetail()">关闭</button><button class="btn btn-primary" onclick="copyContent(\''+esc(doc.id)+'\')">📋 复制内容</button><button class="btn btn-danger" onclick="deleteDoc(\''+esc(doc.id)+'\')">🗑 删除</button></div>';
+  $('detailOverlay').classList.add('open');
+}
+function closeDetail(){$('detailOverlay').classList.remove('open')}
+function closeAdd(){$('addOverlay').classList.remove('open')}
+function copyContent(id){
+  const doc=_docs.find(d=>d.id===id);if(!doc)return;
+  navigator.clipboard.writeText(doc.content||'').catch(()=>{});
+}
+async function deleteDoc(id){
+  try{await fetch('/api/v1/knowledge/documents/'+id,{method:'DELETE'})}catch(e){}
+  _docs=_docs.filter(d=>d.id!==id);closeDetail();updateStats();renderDocs();
+}
+async function submitDoc(){
+  const title=$('addTitle').value.trim();const content=$('addContent').value.trim();
+  if(!title||!content)return;
+  const doc={title,category:$('addCat').value,tags:$('addTags').value.split(',').map(t=>t.trim()).filter(Boolean),content};
+  try{await fetch('/api/v1/knowledge/documents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(doc)})}catch(e){}
+  doc.id='kb-'+Date.now();doc.updated_at=new Date().toISOString().split('T')[0];
+  _docs.unshift(doc);closeAdd();updateStats();renderDocs();
+  $('addTitle').value='';$('addContent').value='';$('addTags').value='';
+}
+$('searchBtn').addEventListener('click',searchDocs);
+$('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchDocs()});
+$('addBtn').addEventListener('click',()=>$('addOverlay').classList.add('open'));
+$('filterBar').addEventListener('click',e=>{
+  const chip=e.target.closest('.filter-chip');if(!chip)return;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');_filter=chip.dataset.cat||'';renderDocs();
+});
+loadDocs();
+</script>
+<script src="/js/nav-sidebar.js" data-active="kb"></script>
+</body>
+</html>

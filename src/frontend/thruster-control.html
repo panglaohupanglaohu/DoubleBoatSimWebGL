@@ -1,85 +1,471 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-obc-theme="dusk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="ob-title" content="推进控制">
-    <meta name="ob-subtitle" content="K-Thrust RCS — Thruster Remote Control">
-    <title>推进控制 — PoseidonX</title>
-    <link rel="stylesheet" href="/css/openbridge-theme.css">
-    <style>
-        body{margin:0;padding:var(--ob-topbar-height,48px) 24px 24px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,sans-serif);}
-        .top-readouts{display:flex;gap:16px;margin-bottom:20px;}
-        .top-readouts .ob-readout{flex:1;}
-        .thrusters{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
-        .thr-card{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;display:flex;flex-direction:column;align-items:center;}
-        .thr-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;width:100%;}
-        .thr-name{font-weight:600;font-size:14px;}
-        .rpm-gauge{width:48px;height:140px;background:var(--ob-bg-section);border-radius:var(--ob-radius-sm);position:relative;overflow:hidden;margin:8px 0;}
-        .rpm-fill{position:absolute;bottom:0;left:0;right:0;background:var(--ob-running,#00b0f0);transition:height .6s ease;}
-        .rpm-label{font-size:11px;color:var(--ob-text-tertiary);margin-top:4px;}
-        .rpm-value{font-size:20px;font-weight:700;margin:4px 0;}
-        .thr-row{display:flex;justify-content:space-between;width:100%;font-size:13px;margin-top:6px;}
-        .telegraph{display:flex;gap:6px;margin-top:10px;}
-        .telegraph button{padding:4px 10px;border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);background:var(--ob-bg-section);color:var(--ob-text-primary);font-size:11px;cursor:pointer;}
-        .telegraph button.active{background:var(--ob-accent,#0078d4);color:#fff;border-color:var(--ob-accent,#0078d4);}
-        .bottom-bar{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-        .telegraph-zone{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;}
-        .telegraph-zone h3{margin:0 0 12px;font-size:14px;font-weight:600;}
-        .tele-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:13px;}
-        .tele-indicator{width:10px;height:10px;border-radius:50%;background:var(--ob-running,#00b0f0);}
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="ob-title" content="推进控制">
+  <meta name="ob-subtitle" content="K-Thrust RCS — Thruster Remote Control System">
+  <title>推进控制 — PoseidonX</title>
+  <link rel="stylesheet" href="/css/openbridge-theme.css">
+  <style>
+:root{--thr-bg:#060d1a;--thr-panel:rgba(10,22,45,0.92);--thr-glass:rgba(12,25,50,0.7);--thr-line:rgba(100,180,255,0.12);--thr-cyan:#64d2ff;--thr-green:#30d158;--thr-orange:#ff9f0a;--thr-red:#ff453a;--thr-blue:#007aff;--thr-text:#f0f6ff;--thr-text2:#9bb3cd;--thr-text3:#5b7894;--thr-mono:'SF Mono','Menlo',monospace;--thr-sans:-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--thr-sans);background:var(--thr-bg);color:var(--thr-text);min-height:100vh;padding:var(--ob-topbar-height,48px) 20px 20px 80px;overflow-x:hidden}
+.top-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;align-items:stretch}
+.readout{background:var(--thr-panel);border:1px solid var(--thr-line);border-radius:12px;padding:14px 18px;flex:1;min-width:140px;position:relative;overflow:hidden;transition:all .3s}
+.readout:hover{border-color:rgba(100,180,255,0.25);transform:translateY(-1px)}
+.readout::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.readout.r-cyan::before{background:linear-gradient(90deg,var(--thr-cyan),transparent)}
+.readout.r-green::before{background:linear-gradient(90deg,var(--thr-green),transparent)}
+.readout.r-orange::before{background:linear-gradient(90deg,var(--thr-orange),transparent)}
+.readout.r-blue::before{background:linear-gradient(90deg,var(--thr-blue),transparent)}
+.readout .r-label{font-size:10px;color:var(--thr-text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px}
+.readout .r-value{font-size:28px;font-weight:700;font-family:var(--thr-mono);line-height:1}
+.readout .r-unit{font-size:12px;color:var(--thr-text3);font-weight:400;margin-left:4px}
+.readout .r-sub{font-size:10px;color:var(--thr-text3);margin-top:4px;font-family:var(--thr-mono)}
+.link-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,var(--thr-blue),#5e5ce6);color:#fff;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;letter-spacing:.5px;transition:all .25s;box-shadow:0 4px 12px rgba(0,122,255,.3)}
+.link-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,122,255,.45)}
+.main-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+@media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
+.thrusters{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.thr-card{background:var(--thr-panel);border:1px solid var(--thr-line);border-radius:14px;padding:18px;display:flex;flex-direction:column;align-items:center;transition:all .3s;position:relative;overflow:hidden}
+.thr-card:hover{border-color:rgba(100,180,255,.25);transform:translateY(-2px)}
+.thr-card.thr-running{border-color:rgba(48,209,88,.3)}
+.thr-card.thr-running::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--thr-green),transparent);border-radius:14px 14px 0 0}
+.thr-card.thr-alarm{border-color:rgba(255,69,58,.3)}
+.thr-card.thr-alarm::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--thr-red),transparent);border-radius:14px 14px 0 0}
+.thr-header{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px}
+.thr-name{font-size:14px;font-weight:700}
+.thr-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.thr-badge.b-run{background:rgba(48,209,88,.15);color:var(--thr-green);border:1px solid rgba(48,209,88,.25)}
+.thr-badge.b-stop{background:rgba(100,180,255,.1);color:var(--thr-text3);border:1px solid rgba(100,180,255,.15)}
+.thr-badge.b-alarm{background:rgba(255,69,58,.15);color:var(--thr-red);border:1px solid rgba(255,69,58,.25)}
+.gauge-wrap{position:relative;width:100%;height:140px;margin:8px 0}
+.gauge-wrap canvas{width:100%;height:100%}
+.thr-rpm{text-align:center;margin:4px 0}
+.thr-rpm .rpm-val{font-size:32px;font-weight:700;font-family:var(--thr-mono)}
+.thr-rpm .rpm-unit{font-size:11px;color:var(--thr-text3)}
+.thr-stats{display:flex;justify-content:space-between;width:100%;font-size:12px;color:var(--thr-text2);margin-top:6px;padding-top:8px;border-top:1px solid rgba(100,180,255,.06)}
+.thr-stats .stat-val{font-family:var(--thr-mono);font-weight:600}
+.telegraph-btns{display:flex;gap:4px;margin-top:10px;width:100%}
+.telegraph-btns button{flex:1;padding:6px 2px;border:1px solid var(--thr-line);border-radius:8px;background:transparent;color:var(--thr-text3);font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--thr-sans);letter-spacing:.3px}
+.telegraph-btns button:hover{background:rgba(100,180,255,.08);color:var(--thr-cyan)}
+.telegraph-btns button.active{background:rgba(48,209,88,.15);color:var(--thr-green);border-color:rgba(48,209,88,.3)}
+.telegraph-btns button.active-stop{background:rgba(255,159,10,.12);color:var(--thr-orange);border-color:rgba(255,159,10,.25)}
+.side-panel{display:flex;flex-direction:column;gap:14px}
+.panel-card{background:var(--thr-panel);border:1px solid var(--thr-line);border-radius:14px;padding:18px}
+.panel-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel-title .icon{font-size:16px}
+.tele-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(100,180,255,.05);font-size:13px}
+.tele-row:last-child{border-bottom:none}
+.tele-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tele-dot.d-ahead{background:var(--thr-green);box-shadow:0 0 8px rgba(48,209,88,.4)}
+.tele-dot.d-stop{background:var(--thr-orange)}
+.tele-dot.d-astern{background:var(--thr-red)}
+.tele-label{flex:1;color:var(--thr-text2)}
+.tele-val{font-family:var(--thr-mono);font-size:12px;font-weight:600;color:var(--thr-text)}
+.eng-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.eng-item{padding:10px;background:rgba(100,180,255,.03);border-radius:10px;border:1px solid rgba(100,180,255,.06)}
+.eng-item .eng-label{font-size:10px;color:var(--thr-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.eng-item .eng-val{font-size:18px;font-weight:700;font-family:var(--thr-mono)}
+.eng-item .eng-unit{font-size:10px;color:var(--thr-text3);font-weight:400}
+.power-chart-wrap{height:120px;position:relative}
+.power-chart-wrap canvas{width:100%;height:100%}
+  </style>
 </head>
 <body>
-    <div class="top-readouts">
-        <div class="ob-readout"><span class="ob-readout-label">主机转速</span><span class="ob-readout-value">185</span><span class="ob-readout-unit">RPM</span></div>
-        <div class="ob-readout"><span class="ob-readout-label">主机功率</span><span class="ob-readout-value">7820</span><span class="ob-readout-unit">kW</span></div>
-        <div class="ob-readout"><span class="ob-readout-label">滑油温度</span><span class="ob-readout-value">62.3</span><span class="ob-readout-unit">°C</span></div>
-        <div class="ob-readout"><span class="ob-readout-label">冷却水温</span><span class="ob-readout-value">48.7</span><span class="ob-readout-unit">°C</span></div>
-    </div>
+<div class="top-bar">
+  <div class="readout r-cyan"><div class="r-label">主机转速</div><div class="r-value" id="r-rpm">185<span class="r-unit">RPM</span></div><div class="r-sub" id="r-rpm-sub">额定 250 RPM</div></div>
+  <div class="readout r-green"><div class="r-label">主机功率</div><div class="r-value" id="r-power">7820<span class="r-unit">kW</span></div><div class="r-sub" id="r-power-sub">负荷 78%</div></div>
+  <div class="readout r-orange"><div class="r-label">滑油温度</div><div class="r-value" id="r-oil">62.3<span class="r-unit">°C</span></div><div class="r-sub">限值 85°C</div></div>
+  <div class="readout r-blue"><div class="r-label">冷却水温</div><div class="r-value" id="r-cool">48.7<span class="r-unit">°C</span></div><div class="r-sub">限值 65°C</div></div>
+  <a href="/thruster-control2.html" class="link-btn">PX-TCS 高级控制 →</a>
+</div>
+<div class="main-grid">
+  <div>
     <div class="thrusters" id="thrGrid"></div>
-    <div class="bottom-bar">
-        <div class="telegraph-zone ob-card">
-            <h3 class="ob-card-title">Telegraph 车钟指令</h3>
-            <div class="tele-row"><span class="tele-indicator"></span><span>Port Main — FULL AHEAD</span></div>
-            <div class="tele-row"><span class="tele-indicator"></span><span>Stbd Main — FULL AHEAD</span></div>
-            <div class="tele-row"><span class="tele-indicator" style="background:var(--ob-warning)"></span><span>Bow Thr — STOP</span></div>
-            <div class="tele-row"><span class="tele-indicator" style="background:var(--ob-warning)"></span><span>Stern Thr — STOP</span></div>
-        </div>
-        <div class="ob-card telegraph-zone">
-            <h3 class="ob-card-title">机舱综合状态</h3>
-            <div class="ob-grid-2" style="gap:12px;">
-                <div class="ob-readout"><span class="ob-readout-label">燃油压力</span><span class="ob-readout-value">4.2</span><span class="ob-readout-unit">bar</span></div>
-                <div class="ob-readout"><span class="ob-readout-label">排气温度</span><span class="ob-readout-value">385</span><span class="ob-readout-unit">°C</span></div>
-                <div class="ob-readout"><span class="ob-readout-label">振动水平</span><span class="ob-readout-value">2.1</span><span class="ob-readout-unit">mm/s</span></div>
-                <div class="ob-readout"><span class="ob-readout-label">舱底水位</span><span class="ob-readout-value">正常</span><span class="ob-readout-unit"><span class="ob-badge ob-badge-ok">OK</span></span></div>
-            </div>
-        </div>
+  </div>
+  <div class="side-panel">
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">📡</span> Telegraph 车钟</div>
+      <div id="teleRows">
+        <div class="tele-row"><span class="tele-dot d-ahead"></span><span class="tele-label">Port Main</span><span class="tele-val">FULL AHEAD</span></div>
+        <div class="tele-row"><span class="tele-dot d-ahead"></span><span class="tele-label">Stbd Main</span><span class="tele-val">FULL AHEAD</span></div>
+        <div class="tele-row"><span class="tele-dot d-stop"></span><span class="tele-label">Bow Thruster</span><span class="tele-val">STOP</span></div>
+        <div class="tele-row"><span class="tele-dot d-stop"></span><span class="tele-label">Stern Thruster</span><span class="tele-val">STOP</span></div>
+      </div>
     </div>
-    <script>
-    (function(){
-        var thrusters=[
-            {name:"Bow Thruster",status:"STANDBY",sc:"ob-badge-neutral",rpm:0,mx:1200,pw:0,ord:"STOP"},
-            {name:"Stern Thruster",status:"STANDBY",sc:"ob-badge-neutral",rpm:0,mx:1200,pw:0,ord:"STOP"},
-            {name:"Port Main",status:"RUNNING",sc:"ob-badge-ok",rpm:185,mx:250,pw:78,ord:"AHEAD"},
-            {name:"Stbd Main",status:"RUNNING",sc:"ob-badge-ok",rpm:183,mx:250,pw:77,ord:"AHEAD"}
-        ];
-        var g=document.getElementById("thrGrid");
-        thrusters.forEach(function(t){
-            var pct=Math.round((t.rpm/t.mx)*100);
-            var h='<div class="thr-card">';
-            h+='<div class="thr-header"><span class="thr-name">'+t.name+'</span><span class="ob-badge '+t.sc+'">'+t.status+'</span></div>';
-            h+='<div class="rpm-gauge"><div class="rpm-fill" style="height:'+pct+'%"></div></div>';
-            h+='<div class="rpm-label">RPM</div><div class="rpm-value">'+t.rpm+'</div>';
-            h+='<div class="thr-row"><span>功率</span><span>'+t.pw+' %</span></div>';
-            h+='<div class="telegraph">';
-            ["AHEAD","STOP","ASTERN"].forEach(function(c){h+='<button class="'+(c===t.ord?"active":"")+'">'+c+'</button>';});
-            h+='</div></div>';
-            g.innerHTML+=h;
-        });
-    })();
-    </script>
-    <script src="/js/nav-sidebar.js" data-active="thruster"></script>
-    <script>(function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(cn,5000);};}catch(e){setTimeout(cn,5000);}}cn();})();</script>
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">🔧</span> 机舱综合状态</div>
+      <div class="eng-grid">
+        <div class="eng-item"><div class="eng-label">燃油压力</div><div class="eng-val" id="e-fuel">4.2 <span class="eng-unit">bar</span></div></div>
+        <div class="eng-item"><div class="eng-label">排气温度</div><div class="eng-val" id="e-exh">385 <span class="eng-unit">°C</span></div></div>
+        <div class="eng-item"><div class="eng-label">振动水平</div><div class="eng-val" id="e-vib">2.1 <span class="eng-unit">mm/s</span></div></div>
+        <div class="eng-item"><div class="eng-label">舱底水位</div><div class="eng-val" id="e-bilge" style="color:var(--thr-green)">正常</div></div>
+      </div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">📊</span> 功率趋势</div>
+      <div class="power-chart-wrap"><canvas id="powerChart"></canvas></div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">📳</span> 振动频谱</div>
+      <div class="power-chart-wrap"><canvas id="vibSpectrum"></canvas></div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">🌡</span> 缸温分布</div>
+      <div class="power-chart-wrap"><canvas id="cylTempChart"></canvas></div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">🛢</span> 燃油流量</div>
+      <div class="power-chart-wrap"><canvas id="fuelFlowChart"></canvas></div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-title"><span class="icon">⚡</span> 能效指标</div>
+      <div class="eng-grid">
+        <div class="eng-item"><div class="eng-label">SFOC</div><div class="eng-val" id="e-sfoc">182 <span class="eng-unit">g/kWh</span></div></div>
+        <div class="eng-item"><div class="eng-label">推进效率</div><div class="eng-val" id="e-eff" style="color:var(--thr-green)">87.2 <span class="eng-unit">%</span></div></div>
+        <div class="eng-item"><div class="eng-label">总运行时</div><div class="eng-val" id="e-hrs">12480 <span class="eng-unit">h</span></div></div>
+        <div class="eng-item"><div class="eng-label">下次保养</div><div class="eng-val" id="e-maint" style="color:var(--thr-orange)">320 <span class="eng-unit">h</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const THR_COLORS={running:'#30d158',standby:'#5b7894',alarm:'#ff453a'};
+const _powerHistory=[];
+for(let i=0;i<30;i++)_powerHistory.push(7500+Math.random()*800);
+
+function drawGauge(canvas,rpm,maxRpm,loadPct,color){
+  const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+  const w=canvas.parentElement.clientWidth,h=140;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const cx=w/2,cy=h-10,radius=Math.min(w/2-10,h-20);
+  const startAngle=Math.PI,endAngle=2*Math.PI;
+  // Background arc
+  ctx.beginPath();ctx.arc(cx,cy,radius,startAngle,endAngle);
+  ctx.strokeStyle='rgba(100,180,255,0.08)';ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
+  // Value arc
+  const pct=Math.min(rpm/Math.max(1,maxRpm),1);
+  const valAngle=startAngle+(endAngle-startAngle)*pct;
+  if(pct>0){
+    ctx.beginPath();ctx.arc(cx,cy,radius,startAngle,valAngle);
+    const grad=ctx.createLinearGradient(cx-radius,0,cx+radius,0);
+    grad.addColorStop(0,color+'80');grad.addColorStop(0.7,color);grad.addColorStop(1,pct>0.9?'#ff453a':color);
+    ctx.strokeStyle=grad;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
+    // Glow
+    ctx.shadowColor=color;ctx.shadowBlur=15;ctx.beginPath();ctx.arc(cx,cy,radius,valAngle-0.02,valAngle);ctx.strokeStyle=color;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();ctx.shadowBlur=0;
+  }
+  // Scale marks
+  for(let i=0;i<=10;i++){
+    const a=startAngle+(endAngle-startAngle)*i/10;
+    const x1=cx+Math.cos(a)*(radius+8),y1=cy+Math.sin(a)*(radius+8);
+    const x2=cx+Math.cos(a)*(radius+14),y2=cy+Math.sin(a)*(radius+14);
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=i%5===0?'rgba(100,180,255,0.3)':'rgba(100,180,255,0.12)';ctx.lineWidth=i%5===0?2:1;ctx.stroke();
+  }
+  // Load percentage in center
+  ctx.font='700 11px -apple-system,sans-serif';ctx.fillStyle='rgba(155,179,205,0.7)';ctx.textAlign='center';
+  ctx.fillText('LOAD',cx,cy-18);
+  ctx.font='700 20px "SF Mono","Menlo",monospace';ctx.fillStyle=color;
+  ctx.fillText(Math.round(loadPct)+'%',cx,cy+2);
+}
+
+function renderThrusters(thrusters){
+  const grid=$('thrGrid');
+  grid.innerHTML='';
+  thrusters.forEach(function(t){
+    const rpm=t.rpm||0,mx=t.rpm_max||250,pw=t.load_pct||0;
+    const status=t.status||'standby';
+    const color=THR_COLORS[status]||THR_COLORS.standby;
+    const cls=status==='running'?'thr-running':status==='alarm'?'thr-alarm':'';
+    const badgeCls=status==='running'?'b-run':status==='alarm'?'b-alarm':'b-stop';
+    const card=document.createElement('div');
+    card.className='thr-card '+cls;
+    card.innerHTML='<div class="thr-header"><span class="thr-name">'+(t.name||t.id)+'</span><span class="thr-badge '+badgeCls+'">'+status.toUpperCase()+'</span></div><div class="gauge-wrap"><canvas data-rpm="'+rpm+'" data-max="'+mx+'" data-load="'+pw+'" data-color="'+color+'"></canvas></div><div class="thr-rpm"><div class="rpm-val" style="color:'+color+'">'+Math.round(rpm)+'</div><div class="rpm-unit">RPM</div></div><div class="thr-stats"><span>功率 <span class="stat-val">'+pw+'%</span></span><span>温度 <span class="stat-val">'+(t.temp_motor||'—')+'°C</span></span></div><div class="telegraph-btns"><button data-tid="'+t.id+'" data-cmd="AHEAD" class="thr-cmd '+(status==='running'?'active':'')+'">AHEAD</button><button data-tid="'+t.id+'" data-cmd="STOP" class="thr-cmd '+(status!=='running'?'active-stop':'')+'">STOP</button><button data-tid="'+t.id+'" data-cmd="ASTERN" class="thr-cmd">ASTERN</button></div>';
+    grid.appendChild(card);
+  });
+  // Draw gauges
+  grid.querySelectorAll('.gauge-wrap canvas').forEach(function(c){
+    drawGauge(c,+c.dataset.rpm,+c.dataset.max,+c.dataset.load,c.dataset.color);
+  });
+}
+
+function drawPowerChart(){
+  const canvas=$('powerChart');if(!canvas)return;
+  const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+  const w=canvas.parentElement.clientWidth,h=120;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const pad={top:8,right:8,bottom:20,left:36};
+  const cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
+  const data=_powerHistory;
+  const maxV=Math.max(...data)*1.1,minV=Math.min(...data)*0.9;
+  // Grid lines
+  ctx.strokeStyle='rgba(100,180,255,0.06)';ctx.lineWidth=1;
+  for(let i=0;i<=3;i++){
+    const y=pad.top+ch*i/3;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();
+    ctx.fillStyle='#5b7894';ctx.font='9px "SF Mono",monospace';ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV-(maxV-minV)*i/3),pad.left-4,y+3);
+  }
+  // Line
+  ctx.beginPath();
+  data.forEach(function(v,i){
+    const x=pad.left+(cw/(data.length-1))*i;
+    const y=pad.top+ch*(1-(v-minV)/(maxV-minV));
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='#64d2ff';ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+  // Fill
+  const lastX=pad.left+cw,lastY=pad.top+ch*(1-(data[data.length-1]-minV)/(maxV-minV));
+  ctx.lineTo(lastX,pad.top+ch);ctx.lineTo(pad.left,pad.top+ch);ctx.closePath();
+  const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
+  grad.addColorStop(0,'rgba(100,210,255,0.15)');grad.addColorStop(1,'rgba(100,210,255,0)');
+  ctx.fillStyle=grad;ctx.fill();
+  // Current value dot
+  ctx.beginPath();ctx.arc(lastX,lastY,4,0,Math.PI*2);ctx.fillStyle='#64d2ff';ctx.fill();
+  ctx.beginPath();ctx.arc(lastX,lastY,8,0,Math.PI*2);ctx.fillStyle='rgba(100,210,255,0.2)';ctx.fill();
+  // Label
+  ctx.fillStyle='#5b7894';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.fillText('30s ago',pad.left,h-4);ctx.fillText('now',pad.left+cw,h-4);
+}
+
+function updateReadouts(thrusters){
+  var main=thrusters.find(function(t){return t.type==='main'&&t.status==='running'});
+  if(main){
+    $('r-rpm').innerHTML=Math.round(main.rpm)+'<span class="r-unit">RPM</span>';
+    $('r-rpm-sub').textContent='额定 '+(main.rpm_max||250)+' RPM · '+Math.round(main.rpm/(main.rpm_max||250)*100)+'%';
+    $('r-power').innerHTML=Math.round(main.power_kw||7820)+'<span class="r-unit">kW</span>';
+    $('r-power-sub').textContent='负荷 '+(main.load_pct||78)+'%';
+    if(main.temp_motor)$('r-oil').innerHTML=main.temp_motor.toFixed(1)+'<span class="r-unit">°C</span>';
+    if(main.temp_bearing)$('r-cool').innerHTML=main.temp_bearing.toFixed(1)+'<span class="r-unit">°C</span>';
+    _powerHistory.push(main.power_kw||7820);if(_powerHistory.length>30)_powerHistory.shift();
+  }
+}
+
+$('thrGrid').addEventListener('click',function(e){
+  var btn=e.target.closest('.thr-cmd');if(!btn)return;
+  var tid=btn.dataset.tid,cmd=btn.dataset.cmd;
+  var orderMap={AHEAD:'FULL',STOP:'STOP',ASTERN:'DEAD_SLOW'};
+  fetch('/api/v1/propulsion/telegraph',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thruster_id:tid,order:orderMap[cmd]||'STOP'})}).then(function(){fetchTCS()});
+});
+
+function fetchTCS(){
+  fetch('/api/v1/tcs/status').then(function(r){return r.json()}).then(function(d){
+    var thrusters=Object.values(d.thrusters||{});
+    renderThrusters(thrusters);
+    updateReadouts(thrusters);
+    drawPowerChart();
+  }).catch(function(){});
+}
+fetchTCS();setInterval(fetchTCS,3000);
+
+// WebSocket for real-time updates
+(function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onmessage=function(e){try{var d=JSON.parse(e.data);if(d.data&&d.data.engine){var en=d.data.engine;if(en.cooling_water_temp)$('r-cool').innerHTML=en.cooling_water_temp.toFixed(1)+'<span class="r-unit">°C</span>';}}catch(ex){}};ws.onclose=function(){setTimeout(cn,5000)};}catch(e){setTimeout(cn,5000);}}cn()})();
+
+// Initial power chart draw
+drawPowerChart();
+drawVibSpectrum();
+let _resizeTimer;window.addEventListener('resize',function(){clearTimeout(_resizeTimer);_resizeTimer=setTimeout(function(){drawPowerChart();drawVibSpectrum();fetchTCS();},200)});
+
+function drawVibSpectrum(){
+  const canvas=$('vibSpectrum');if(!canvas)return;
+  const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+  const w=canvas.parentElement.clientWidth,h=120;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const pad={top:8,right:8,bottom:20,left:30};
+  const cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
+  // 模拟振动频谱 (32 bars)
+  const bars=32;
+  const barW=cw/bars-2;
+  // 主频率成分 (基频 + 2倍频 + 叶频)
+  const now=Date.now()*0.001;
+  for(let i=0;i<bars;i++){
+    const freq=(i+1)*5; // 5Hz ~ 160Hz
+    let amp=0.3+Math.random()*0.15;
+    // 主机基频峰值 (~25Hz)
+    if(i>=4&&i<=6) amp=0.5+Math.sin(now*0.5)*0.15+Math.random()*0.1;
+    // 2倍频 (~50Hz)
+    if(i>=9&&i<=11) amp=0.35+Math.sin(now*0.7)*0.1+Math.random()*0.08;
+    // 叶频 (~75Hz)
+    if(i>=14&&i<=16) amp=0.25+Math.sin(now*0.3)*0.08;
+    amp=Math.min(amp,1.0);
+    const barH=ch*amp;
+    const x=pad.left+i*(barW+2);
+    const y=pad.top+ch-barH;
+    // 颜色渐变 (绿→黄→红)
+    let color;
+    if(amp<0.4) color='rgba(48,209,88,0.8)';
+    else if(amp<0.65) color='rgba(100,210,255,0.8)';
+    else if(amp<0.8) color='rgba(255,214,10,0.8)';
+    else color='rgba(255,69,58,0.8)';
+    ctx.fillStyle=color;
+    ctx.fillRect(x,y,barW,barH);
+    // 微发光
+    ctx.fillStyle=color.replace('0.8','0.15');
+    ctx.fillRect(x,y-3,barW,3);
+  }
+  // X 轴标签
+  ctx.fillStyle='#5b7894';ctx.font='8px monospace';ctx.textAlign='center';
+  ['25','50','75','100','150'].forEach(function(f,i){
+    ctx.fillText(f+'Hz',pad.left+cw*(i/4),h-4);
+  });
+  // Y 轴
+  ctx.textAlign='right';
+  ctx.fillText('mm/s',pad.left-4,pad.top+8);
+}
+setInterval(drawVibSpectrum,200); // 5fps 更新频谱
+
+// ══ 缸温分布图 ══
+const _cylTemps = [365, 372, 385, 378, 390, 368]; // 6缸初始温度
+function drawCylTempChart() {
+    const canvas = $('cylTempChart'); if (!canvas) return;
+    const ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio || 1;
+    const w = canvas.parentElement.clientWidth, h = 120;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const pad = { top: 12, right: 8, bottom: 20, left: 36 };
+    const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+    const bars = _cylTemps.length;
+    const barW = cw / bars - 6;
+    const maxT = 450, minT = 300;
+    const now = Date.now() * 0.001;
+    
+    // 模拟温度波动
+    for (let i = 0; i < bars; i++) {
+        _cylTemps[i] += (Math.random() - 0.5) * 2;
+        _cylTemps[i] = Math.max(340, Math.min(420, _cylTemps[i]));
+    }
+    const avg = _cylTemps.reduce((a, b) => a + b, 0) / bars;
+    
+    // 平均温度参考线
+    const avgY = pad.top + ch * (1 - (avg - minT) / (maxT - minT));
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = 'rgba(100,210,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left, avgY); ctx.lineTo(pad.left + cw, avgY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#5b7894'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(avg) + '°', pad.left - 4, avgY + 3);
+    
+    // 报警线 (400°C)
+    const alarmY = pad.top + ch * (1 - (400 - minT) / (maxT - minT));
+    ctx.strokeStyle = 'rgba(255,69,58,0.3)'; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(pad.left, alarmY); ctx.lineTo(pad.left + cw, alarmY); ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // 绘制各缸温度条
+    for (let i = 0; i < bars; i++) {
+        const t = _cylTemps[i];
+        const barH = ch * ((t - minT) / (maxT - minT));
+        const x = pad.left + i * (barW + 6) + 3;
+        const y = pad.top + ch - barH;
+        const deviation = Math.abs(t - avg);
+        let color;
+        if (deviation < 8) color = '#30d158';
+        else if (deviation < 15) color = '#facc15';
+        else color = '#ff453a';
+        
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, barH, [3, 3, 0, 0]);
+        ctx.fill();
+        
+        // 温度值
+        ctx.fillStyle = '#e0f0ff'; ctx.font = '700 9px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(Math.round(t), x + barW / 2, y - 3);
+        
+        // 缸号标签
+        ctx.fillStyle = '#5b7894'; ctx.font = '9px sans-serif';
+        ctx.fillText('#' + (i + 1), x + barW / 2, h - 4);
+    }
+    
+    // Y轴标签
+    ctx.fillStyle = '#5b7894'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(maxT + '°C', pad.left - 2, pad.top + 8);
+    ctx.fillText(minT + '°C', pad.left - 2, pad.top + ch);
+}
+setInterval(drawCylTempChart, 500);
+drawCylTempChart();
+
+// ══ 燃油流量趋势 ══
+const _fuelFlowHistory = [];
+for (let i = 0; i < 40; i++) _fuelFlowHistory.push(125 + Math.random() * 15);
+
+function drawFuelFlowChart() {
+    const canvas = $('fuelFlowChart'); if (!canvas) return;
+    const ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio || 1;
+    const w = canvas.parentElement.clientWidth, h = 120;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const pad = { top: 8, right: 8, bottom: 20, left: 36 };
+    const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+    
+    // 添加新数据点
+    _fuelFlowHistory.push(125 + Math.sin(Date.now() * 0.0005) * 8 + (Math.random() - 0.5) * 6);
+    if (_fuelFlowHistory.length > 40) _fuelFlowHistory.shift();
+    
+    const data = _fuelFlowHistory;
+    const maxV = Math.max(...data) * 1.05, minV = Math.min(...data) * 0.95;
+    
+    // 网格线
+    ctx.strokeStyle = 'rgba(100,180,255,0.06)'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+        const y = pad.top + ch * i / 3;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+        ctx.fillStyle = '#5b7894'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+        ctx.fillText(Math.round(maxV - (maxV - minV) * i / 3), pad.left - 4, y + 3);
+    }
+    
+    // 填充区域
+    ctx.beginPath();
+    data.forEach(function(v, i) {
+        const x = pad.left + (cw / (data.length - 1)) * i;
+        const y = pad.top + ch * (1 - (v - minV) / (maxV - minV));
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    const lastX = pad.left + cw;
+    ctx.lineTo(lastX, pad.top + ch); ctx.lineTo(pad.left, pad.top + ch); ctx.closePath();
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+    grad.addColorStop(0, 'rgba(255,159,10,0.2)'); grad.addColorStop(1, 'rgba(255,159,10,0)');
+    ctx.fillStyle = grad; ctx.fill();
+    
+    // 线条
+    ctx.beginPath();
+    data.forEach(function(v, i) {
+        const x = pad.left + (cw / (data.length - 1)) * i;
+        const y = pad.top + ch * (1 - (v - minV) / (maxV - minV));
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#ff9f0a'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    
+    // 当前值点
+    const lastY = pad.top + ch * (1 - (data[data.length - 1] - minV) / (maxV - minV));
+    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.fillStyle = '#ff9f0a'; ctx.fill();
+    ctx.beginPath(); ctx.arc(lastX, lastY, 8, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,159,10,0.2)'; ctx.fill();
+    
+    // 标签
+    ctx.fillStyle = '#5b7894'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('2min ago', pad.left, h - 4); ctx.fillText('now', lastX, h - 4);
+    ctx.fillText('L/h', pad.left + cw / 2, h - 4);
+}
+setInterval(drawFuelFlowChart, 1000);
+drawFuelFlowChart();
+</script>
+<script src="/js/nav-sidebar.js" data-active="thruster"></script>
 </body>
 </html>

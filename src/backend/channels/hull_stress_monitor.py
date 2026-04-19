@@ -159,6 +159,33 @@ class HullStressMonitorChannel(MarineChannel):
             return {"status": "recorded", "sensor": result}
         return {"status": "ignored", "reason": f"unknown event type: {event_type}"}
 
+    # ── DNV GL WPC 砰击/鞭击检测 ──
+    def slamming_detection(self, acceleration_g: float = 0.0,
+                           threshold_g: float = 2.5) -> Dict[str, Any]:
+        """砰击检测 (DNV GL Rules for WPC, CSR-BC&OT).
+        Monitors vertical acceleration for bow slamming events."""
+        is_slamming = abs(acceleration_g) > threshold_g
+        return {
+            "slamming_detected": is_slamming,
+            "acceleration_g": acceleration_g,
+            "threshold_g": threshold_g,
+            "severity": "high" if acceleration_g > threshold_g * 1.5 else "moderate" if is_slamming else "none",
+            "reference": "DNV GL Rules for WPC",
+        }
+
+    def whipping_detection(self, frequency_hz: float = 0.0,
+                           hull_girder_natural_freq_hz: float = 0.5) -> Dict[str, Any]:
+        """鞭击检测: 高频振动响应是否接近船体梁自然频率."""
+        ratio = frequency_hz / hull_girder_natural_freq_hz if hull_girder_natural_freq_hz > 0 else 0
+        is_whipping = 0.8 <= ratio <= 1.2
+        return {
+            "whipping_detected": is_whipping,
+            "frequency_hz": frequency_hz,
+            "natural_freq_hz": hull_girder_natural_freq_hz,
+            "ratio": round(ratio, 3),
+            "reference": "DNV GL CSR-BC&OT",
+        }
+
     def get_status(self) -> Dict[str, Any]:
         health = self.get_structural_health()
         return {

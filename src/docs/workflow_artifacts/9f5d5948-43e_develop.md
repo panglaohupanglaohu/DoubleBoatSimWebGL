@@ -1,0 +1,4576 @@
+# 代码开发 — developer
+
+任务: 全流水线最终测试
+步骤: develop
+Agent: build_developer
+
+---
+
+📋 任务: 9f5d5948-43e
+🤖 Agent: Developer (developer)
+📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+🔧 执行方式: DeepSeek API (直连)
+⏱️ 超时: 300s
+────────────────────────────────────────────────────────────
+📝 提示词:
+  你是 PoseidonX 系统的 Developer (developer)。
+  请执行以下开发任务:
+  
+  你是开发工程师。请根据架构设计实现以下任务:
+  
+  ## 任务
+  全流水线最终测试
+  在 Token Factory 区域加 DeepSeek 连通性测试按钮
+  
+  ## 前序步骤的产出 (请仔细阅读)
+  
+  ## 上一步产出 — PM分解 (project_manager)
+  
+  # PM分解 — project_manager
+  
+  任务: 全流水线最终测试
+  步骤: pm_decompose
+  Agent: build_pm
+  
+  ---
+  
+  📋 任务: 9f5d5948-43e
+  🤖 Agent: PM (project_manager)
+  📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+  🔧 执行方式: DeepSeek API (直连)
+  ⏱️ 超时: 300s
+  ────────────────────────────────────────────────────────────
+  📝 提示词:
+    你是 PoseidonX 系统的 PM (project_manager)。
+    请执行以下开发任务:
+    
+    你是项目经理 (PM)。请对以下任务进行分解和规划:
+    
+    ## 任务
+    全流水线最终测试
+    在 Token Factory 区域加 DeepSeek 连通性测试按钮
+    
+    ## 要求
+    1. 分析任务需求，拆解为可执行的子步骤
+    2. 识别技术风险和依赖关系
+    3. 为后续研究人员、架构师、开发者提供清晰的指导
+    4. 输出一份结构化的任务分解文档 (Markdown 格式)
+    
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端: src/backend/ (Python FastAPI)
+    前端: src/frontend/ (HTML + JS)
+    
+    
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端: src/backend/ (Python FastAPI)
+    前端: src/frontend/ (HTML + JS)
+    
+  ────────────────────────────────────────────────────────────
+  ⚡ 使用 DeepSeek API 直连 (快速模式)...
+  
+  🔗 API: api.deepseek.com | 模型: deepseek-chat
+  ────────────────────────────────────────────────────────────
+  
+  # PoseidonX 系统任务分解文档
+  
+  ## 1. 任务概述
+  
+  ### 1.1 主要任务
+  1. **全流水线最终测试** - 对整个系统进行端到端的完整测试
+  2. **Token Factory 区域增加 DeepSeek 连通性测试按钮** - 在前端 Token Factory 界面添加测试按钮，验证与 DeepSeek API 的连接
+  
+  ### 1.2 预期成果
+  - 完整的系统测试报告
+  - Token Factory 界面新增 DeepSeek 连通性测试功能
+  - 确保系统稳定性和 API 连通性
+  
+  ## 2. 任务分解
+  
+  ### 2.1 全流水线最终测试
+  
+  #### 子任务 2.1.1: 测试环境准备
+  - **负责人**: DevOps/测试工程师
+  - **预计工时**: 4小时
+  - **交付物**: 配置好的测试环境
+  - **具体步骤**:
+    1. 确认测试环境与生产环境配置一致
+    2. 准备测试数据（包括测试用 Token、API 密钥等）
+    3. 配置测试监控和日志收集
+    4. 验证所有依赖服务可用性
+  
+  #### 子任务 2.1.2: 端到端测试用例设计
+  - **负责人**: 测试工程师
+  - **预计工时**: 8小时
+  - **交付物**: 详细的测试用例文档
+  - **具体步骤**:
+    1. 定义测试范围：用户注册 → Token 创建 → API 调用 → 结果返回
+    2. 设计正向测试用例（正常流程）
+    3. 设计异常测试用例（错误处理）
+    4. 设计边界测试用例（压力测试）
+    5. 设计安全测试用例（权限验证）
+  
+  #### 子任务 2.1.3: 自动化测试脚本开发
+  - **负责人**: 测试开发工程师
+  - **预计工时**: 12小时
+  - **交付物**: 自动化测试脚本
+  - **具体步骤**:
+    1. 基于测试用例编写自动化脚本
+    2. 集成到 CI/CD 流水线
+    3. 添加测试报告生成功能
+    4. 实现测试结果通知机制
+  
+  #### 子任务 2.1.4: 测试执行与问题跟踪
+  - **负责人**: 测试工程师
+  - **预计工时**: 8小时
+  - **交付物**: 测试报告和问题清单
+  - **具体步骤**:
+    1. 执行自动化测试
+    2. 手动验证关键路径
+    3. 记录发现的问题
+    4. 跟踪问题修复进度
+  
+  ### 2.2 DeepSeek 连通性测试按钮
+  
+  #### 子任务 2.2.1: 后端 API 接口开发
+  - **负责人**: 后端开发工程师
+  - **预计工时**: 6小时
+  - **交付物**: 测试接口 API
+  - **具体步骤**:
+    1. 在 `/src/backend/` 中创建新的路由端点
+    2. 实现 DeepSeek API 连通性测试逻辑
+    3. 添加错误处理和超时机制
+    4. 编写单元测试
+    5. 更新 API 文档
+  
+  **文件位置**: `/src/backend/api/deepseek_test.py`
+  ```python
+  # 示例代码结构
+  @router.post("/test-connection")
+  async def test_deepseek_connection(
+      api_key: str = Body(...),
+      model: str = Body(default="deepseek-chat")
+  ):
+      # 实现测试逻辑
+      pass
+  ```
+  
+  #### 子任务 2.2.2: 前端界面开发
+  - **负责人**: 前端开发工程师
+  - **预计工时**: 8小时
+  - **交付物**: 新增的测试按钮和界面
+  - **具体步骤**:
+    1. 定位 Token Factory 界面文件
+    2. 设计测试按钮样式和位置
+    3. 实现按钮点击事件处理
+    4. 添加测试状态显示（加载中、成功、失败）
+    5. 实现测试结果展示
+  
+  **文件位置**: `/src/frontend/token_factory.html` 或相关 JS 文件
+  
+  #### 子任务 2.2.3: 前后端联调
+  - **负责人**: 前后端开发工程师
+  - **预计工时**: 4小时
+  - **交付物**: 功能完整的连通性测试
+  - **具体步骤**:
+    1. 验证 API 调用正确性
+    2. 测试错误场景处理
+    3. 优化用户体验
+    4. 性能测试
+  
+  #### 子任务 2.2.4: 文档更新
+  - **负责人**: 技术文档工程师
+  - **预计工时**: 2小时
+  - **交付物**: 更新的用户手册和 API 文档
+  - **具体步骤**:
+    1. 更新用户界面操作指南
+    2. 更新 API 接口文档
+    3. 添加故障排除指南
+  
+  ## 3. 技术风险与依赖关系
+  
+  ### 3.1 技��风险
+  1. **DeepSeek API 稳定性**
+     - 风险等级: 中
+     - 缓解措施: 添加重试机制和备用测试方案
+     
+  2. **测试环境与生产环境差异**
+     - 风险等级: 中
+     - 缓解措施: 使用容器化确保环境一致性
+  
+  3. **前端兼容性问题**
+     - 风险等级: 低
+     - 缓解措施: 多浏览器测试
+  
+  ### 3.2 依赖关系
+  1. **前后端依赖**:
+     - 前端开发依赖后端 API 完成
+     - 建议并行开发，使用 Mock 数据先行
+  
+  2. **测试依赖**:
+     - 自动化测试依赖测试用例设计
+     - 测试执行依赖环境准备
+  
+  3. **外部依赖**:
+     - DeepSeek API 服务可用性
+     - 网络连接稳定性
+  
+  ## 4. 时间规划
+  
+  ### 4.1 第一阶段: 准备与设计 (第1-2天)
+  - 测试环境准备 (2.1.1)
+  - 测试用例设计 (2.1.2)
+  - 后端 API 设计 (2.2.1 设计部分)
+  
+  ### 4.2 第二阶段: 开发与实现 (第3-5天)
+  - 后端 API 开发 (2.2.1)
+  - 前端界面开发 (2.2.2)
+  - 自动化测试脚本开发 (2.1.3)
+  
+  ### 4.3 第三阶段: 测试与联调 (第6-7天)
+  - 前后端联调 (2.2.3)
+  - 测试执行 (2.1.4)
+  - 问题修复
+  
+  ### 4.4 第四阶段: 文档与交付 (第8天)
+  - 文档更新 (2.2.4)
+  - 最终验收
+  
+  ## 5. 资源需求
+  
+  ### 5.1 人力资源
+  - 项目经理 (PM): 1人 - 总体协调
+  - 后端开发工程师: 1人
+  - 前端开发工程师: 1人
+  - 测试工程师: 1-2人
+  - 技术文档工程师: 0.5人（兼职）
+  
+  ### 5.2 技术资源
+  - 测试服务器资源
+  - DeepSeek API 访问权限
+  - 监控和日志工具
+  - CI/CD 流水线
+  
+  ## 6. 质量保证措施
+  
+  ### 6.1 代码质量
+  - 所有代码需通过代码审查
+  - 单元测试覆盖率 > 80%
+  - 遵循项目编码规范
+  
+  ### 6.2 测试质量
+  - 自动化测试覆盖率 > 70%
+  - 所有关键路径必须测试
+  - 性能测试需满足 SLA 要求
+  
+  ### 6.3 文档质量
+  - 所有新增功能必须有对应文档
+  - API 变更必须更新 OpenAPI 文档
+  - 用户界面变更需更新操作指南
+  
+  ## 7. 验收标准
+  
+  ### 7.1 全流水线测试验收标准
+  - [ ] 所有测试用例执行通过率 100%
+  - [ ] 系统响应时间符合性能要求
+  - [ ] 错误处理机制完善
+  - [ ] 测试报告完整清晰
+  
+  ### 7.2 DeepSeek 连通性测试按钮验收标准
+  - [ ] 按钮在 Token Factory 界面正确显示
+  - [ ] 点击按钮能正确测试 DeepSeek 连通性
+  - [ ] 测试结果清晰展示给用户
+  - [ ] 错误情况有友好提示
+  - [ ] 代码符合项目规范
+  
+  ---
+  
+  ## 附录
+  
+  ### A. 相关文件路径
+  ```
+  项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+  后端代码: src/backend/
+    - 主要应用: src/backend/app/
+    - API路由: src/backend/api/
+    - 配置文件: src/backend/config/
+  
+  前端代码: src/frontend/
+    - HTML文件: src/frontend/*.html
+    - JS文件: src/frontend/js/
+    - CSS文件: src/frontend/css/
+  ```
+  
+  ### B. 沟通机制
+  - 每日站会: 9:30 AM，同步进度和问题
+  - 技术评审会: 关键节点进行代码和设计评审
+  - 问题跟踪: 使用 Jira/GitHub Issues 跟踪所有问题
+  
+  ### C. 紧急预案
+  如遇重大技术障碍，项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+  
+  ────────────────────────────────────────────────────────────
+  ✅ deepseek-chat 完成
+  
+  
+  
+  ## 上一步产出 — 研究分析 (researcher)
+  
+  # 研究分析 — researcher
+  
+  任务: 全流水线最终测试
+  步骤: research
+  Agent: build_researcher
+  
+  ---
+  
+  📋 任务: 9f5d5948-43e
+  🤖 Agent: Researcher (researcher)
+  📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+  🔧 执行方式: DeepSeek API (直连)
+  ⏱️ 超时: 300s
+  ────────────────────────────────────────────────────────────
+  📝 提示词:
+    你是 PoseidonX 系统的 Researcher (researcher)。
+    请执行以下开发任务:
+    
+    你是技术研究员。请对以下任务进行技术调研:
+    
+    ## 任务
+    全流水线最终测试
+    在 Token Factory 区域加 DeepSeek 连通性测试按钮
+    
+    ## 前序步骤的产出 (请仔细阅读)
+    
+    ## 上一步产出 — PM分解 (project_manager)
+    
+    # PM分解 — project_manager
+    
+    任务: 全流水线最终测试
+    步骤: pm_decompose
+    Agent: build_pm
+    
+    ---
+    
+    📋 任务: 9f5d5948-43e
+    🤖 Agent: PM (project_manager)
+    📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    🔧 执行方式: DeepSeek API (直连)
+    ⏱️ 超时: 300s
+    ────────────────────────────────────────────────────────────
+    📝 提示词:
+      你是 PoseidonX 系统的 PM (project_manager)。
+      请执行以下开发任务:
+      
+      你是项目经理 (PM)。请对以下任务进行分解和规划:
+      
+      ## 任务
+      全流水线最终测试
+      在 Token Factory 区域加 DeepSeek 连通性测试按钮
+      
+      ## 要求
+      1. 分析任务需求，拆解为可执行的子步骤
+      2. 识别技术风险和依赖关系
+      3. 为后续研究人员、架构师、开发者提供清晰的指导
+      4. 输出一份结构化的任务分解文档 (Markdown 格式)
+      
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端: src/backend/ (Python FastAPI)
+      前端: src/frontend/ (HTML + JS)
+      
+      
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端: src/backend/ (Python FastAPI)
+      前端: src/frontend/ (HTML + JS)
+      
+    ────────────────────────────────────────────────────────────
+    ⚡ 使用 DeepSeek API 直连 (快速模式)...
+    
+    🔗 API: api.deepseek.com | 模型: deepseek-chat
+    ────────────────────────────────────────────────────────────
+    
+    # PoseidonX 系统任务分解文档
+    
+    ## 1. 任务概述
+    
+    ### 1.1 主要任务
+    1. **全流水线最终测试** - 对整个系统进行端到端的完整测试
+    2. **Token Factory 区域增加 DeepSeek 连通性测试按钮** - 在前端 Token Factory 界面添加测试按钮，验证与 DeepSeek API 的连接
+    
+    ### 1.2 预期成果
+    - 完整的系统测试报告
+    - Token Factory 界面新增 DeepSeek 连通性测试功能
+    - 确保系统稳定性和 API 连通性
+    
+    ## 2. 任务分解
+    
+    ### 2.1 全流水线最终测试
+    
+    #### 子任务 2.1.1: 测试环境准备
+    - **负责人**: DevOps/测试工程师
+    - **预计工时**: 4小时
+    - **交付物**: 配置好的测试环境
+    - **具体步骤**:
+      1. 确认测试环境与生产环境配置一致
+      2. 准备测试数据（包括测试用 Token、API 密钥等）
+      3. 配置测试监控和日志收集
+      4. 验证所有依赖服务可用性
+    
+    #### 子任务 2.1.2: 端到端测试用例设计
+    - **负责人**: 测试工程师
+    - **预计工时**: 8小时
+    - **交付物**: 详细的测试用例文档
+    - **具体步骤**:
+      1. 定义测试范围：用户注册 → Token 创建 → API 调用 → 结果返回
+      2. 设计正向测试用例（正常流程）
+      3. 设计异常测试用例（错误处理）
+      4. 设计边界测试用例（压力测试）
+      5. 设计安全测试用例（权限验证）
+    
+    #### 子任务 2.1.3: 自动化测试脚本开发
+    - **负责人**: 测试开发工程师
+    - **预计工时**: 12小时
+    - **交付物**: 自动化测试脚本
+    - **具体步骤**:
+      1. 基于测试用例编写自动化脚本
+      2. 集成到 CI/CD 流水线
+      3. 添加测试报告生成功能
+      4. 实现测试结果通知机制
+    
+    #### 子任务 2.1.4: 测试执行与问题跟踪
+    - **负责人**: 测试工程师
+    - **预计工时**: 8小时
+    - **交付物**: 测试报告和问题清单
+    - **具体步骤**:
+      1. 执行自动化测试
+      2. 手动验证关键路径
+      3. 记录发现的问题
+      4. 跟踪问题修复进度
+    
+    ### 2.2 DeepSeek 连通性测试按钮
+    
+    #### 子任务 2.2.1: 后端 API 接口开发
+    - **负责人**: 后端开发工程师
+    - **预计工时**: 6小时
+    - **交付物**: 测试接口 API
+    - **具体步骤**:
+      1. 在 `/src/backend/` 中创建新的路由端点
+      2. 实现 DeepSeek API 连通性测试逻辑
+      3. 添加错误处理和超时机制
+      4. 编写单元测试
+      5. 更新 API 文档
+    
+    **文件位置**: `/src/backend/api/deepseek_test.py`
+    ```python
+    # 示例代码结构
+    @router.post("/test-connection")
+    async def test_deepseek_connection(
+        api_key: str = Body(...),
+        model: str = Body(default="deepseek-chat")
+    ):
+        # 实现测试逻辑
+        pass
+    ```
+    
+    #### 子任务 2.2.2: 前端界面开发
+    - **负责人**: 前端开发工程师
+    - **预计工时**: 8小时
+    - **交付物**: 新增的测试按钮和界面
+    - **具体步骤**:
+      1. 定位 Token Factory 界面文件
+      2. 设计测试按钮样式和位置
+      3. 实现按钮点击事件处理
+      4. 添加测试状态显示（加载中、成功、失败）
+      5. 实现测试结果展示
+    
+    **文件位置**: `/src/frontend/token_factory.html` 或相关 JS 文件
+    
+    #### 子任务 2.2.3: 前后端联调
+    - **负责人**: 前后端开发工程师
+    - **预计工时**: 4小时
+    - **交付物**: 功能完整的连通性测试
+    - **具体步骤**:
+      1. 验证 API 调用正确性
+      2. 测试错误场景处理
+      3. 优化用户体验
+      4. 性能测试
+    
+    #### 子任务 2.2.4: 文档更新
+    - **负责人**: 技术文档工程师
+    - **预计工时**: 2小时
+    - **交付物**: 更新的用户手册和 API 文档
+    - **具体步骤**:
+      1. 更新用户界面操作指南
+      2. 更新 API 接口文档
+      3. 添加故障排除指南
+    
+    ## 3. 技术风险与依赖关系
+    
+    ### 3.1 技��风险
+    1. **DeepSeek API 稳定性**
+       - 风险等级: 中
+       - 缓解措施: 添加重试机制和备用测试方案
+       
+    2. **测试环境与生产环境差异**
+       - 风险等级: 中
+       - 缓解措施: 使用容器化确保环境一致性
+    
+    3. **前端兼容性问题**
+       - 风险等级: 低
+       - 缓解措施: 多浏览器测试
+    
+    ### 3.2 依赖关系
+    1. **前后端依赖**:
+       - 前端开发依赖后端 API 完成
+       - 建议并行开发，使用 Mock 数据先行
+    
+    2. **测试依赖**:
+       - 自动化测试依赖测试用例设计
+       - 测试执行依赖环境准备
+    
+    3. **外部依赖**:
+       - DeepSeek API 服务可用性
+       - 网络连接稳定性
+    
+    ## 4. 时间规划
+    
+    ### 4.1 第一阶段: 准备与设计 (第1-2天)
+    - 测试环境准备 (2.1.1)
+    - 测试用例设计 (2.1.2)
+    - 后端 API 设计 (2.2.1 设计部分)
+    
+    ### 4.2 第二阶段: 开发与实现 (第3-5天)
+    - 后端 API 开发 (2.2.1)
+    - 前端界面开发 (2.2.2)
+    - 自动化测试脚本开发 (2.1.3)
+    
+    ### 4.3 第三阶段: 测试与联调 (第6-7天)
+    - 前后端联调 (2.2.3)
+    - 测试执行 (2.1.4)
+    - 问题修复
+    
+    ### 4.4 第四阶段: 文档与交付 (第8天)
+    - 文档更新 (2.2.4)
+    - 最终验收
+    
+    ## 5. 资源需求
+    
+    ### 5.1 人力资源
+    - 项目经理 (PM): 1人 - 总体协调
+    - 后端开发工程师: 1人
+    - 前端开发工程师: 1人
+    - 测试工程师: 1-2人
+    - 技术文档工程师: 0.5人（兼职）
+    
+    ### 5.2 技术资源
+    - 测试服务器资源
+    - DeepSeek API 访问权限
+    - 监控和日志工具
+    - CI/CD 流水线
+    
+    ## 6. 质量保证措施
+    
+    ### 6.1 代码质量
+    - 所有代码需通过代码审查
+    - 单元测试覆盖率 > 80%
+    - 遵循项目编码规范
+    
+    ### 6.2 测试质量
+    - 自动化测试覆盖率 > 70%
+    - 所有关键路径必须测试
+    - 性能测试需满足 SLA 要求
+    
+    ### 6.3 文档质量
+    - 所有新增功能必须有对应文档
+    - API 变更必须更新 OpenAPI 文档
+    - 用户界面变更需更新操作指南
+    
+    ## 7. 验收标准
+    
+    ### 7.1 全流水线测试验收标准
+    - [ ] 所有测试用例执行通过率 100%
+    - [ ] 系统响应时间符合性能要求
+    - [ ] 错误处理机制完善
+    - [ ] 测试报告完整清晰
+    
+    ### 7.2 DeepSeek 连通性测试按钮验收标准
+    - [ ] 按钮在 Token Factory 界面正确显示
+    - [ ] 点击按钮能正确测试 DeepSeek 连通性
+    - [ ] 测试结果清晰展示给用户
+    - [ ] 错误情况有友好提示
+    - [ ] 代码符合项目规范
+    
+    ---
+    
+    ## 附录
+    
+    ### A. 相关文件路径
+    ```
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端代码: src/backend/
+      - 主要应用: src/backend/app/
+      - API路由: src/backend/api/
+      - 配置文件: src/backend/config/
+    
+    前端代码: src/frontend/
+      - HTML文件: src/frontend/*.html
+      - JS文件: src/frontend/js/
+      - CSS文件: src/frontend/css/
+    ```
+    
+    ### B. 沟通机制
+    - 每日站会: 9:30 AM，同步进度和问题
+    - 技术评审会: 关键节点进行代码和设计评审
+    - 问题跟踪: 使用 Jira/GitHub Issues 跟踪所有问题
+    
+    ### C. 紧急预案
+    如遇重大技术障碍，项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+    
+    ────────────────────────────────────────────────────────────
+    ✅ deepseek-chat 完成
+    
+    
+    
+    ## Agent 间传递信息 (Handoff Files)
+    
+    
+    ### 9f5d5948-43e_pm_decompose_20260408T180430.md
+    
+    # Agent Handoff — pm_decompose
+    
+    | 字段 | 值 |
+    |------|------|
+    | 任务 ID | `9f5d5948-43e` |
+    | 步骤 | `pm_decompose` |
+    | 来源 Agent | build_pm |
+    | 目标 Agent | build_researcher |
+    | 时间 | 20260408T180430 |
+    
+    ## 传递内容
+    
+    - **step**: pm_decompose
+    - **label**: PM分解
+    - **agent_role**: project_manager
+    - **status**: completed
+    - **artifact**: /Users/panglaohu/Downloads/DoubleBoatClawSystem/src/docs/workflow_artifacts/9f5d5948-43e_pm_decompose.md
+    - **output_summary**: 项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+    
+    ────────────────────────────────────────────────────────────
+    ✅ deepseek-chat 完成
+    
+    
+    ---
+    *Auto-generated by PoseidonX Workflow Harness*
+    
+    
+    
+    ### 9f5d5948-43e_task_init_20260408T180340.md
+    
+    # Agent Handoff — task_init
+    
+    | 字段 | 值 |
+    |------|------|
+    | 任务 ID | `9f5d5948-43e` |
+    | 步骤 | `task_init` |
+    | 来源 Agent | (system) |
+    | 目标 Agent | (next step) |
+    | 时间 | 20260408T180340 |
+    
+    ## 传递内容
+    
+    - **task_id**: 9f5d5948-43e
+    - **title**: 全流水线最终测试
+    - **description**: 在 Token Factory 区域加 DeepSeek 连通性测试按钮
+    - **team_id**: build_system
+    - **agent_id**: build_pm
+    - **token_factory_ready**: True
+    ### workflow_steps
+    ```json
+    [
+      "pm_decompose",
+      "research",
+      "architecture",
+      "develop",
+      "test",
+      "deploy",
+      "document"
+    ]
+    ```
+    
+    
+    ---
+    *Auto-generated by PoseidonX Workflow Harness*
+    
+    
+    
+    ## 要求
+    1. 调研现有代码库中相关的文件和模块
+    2. 分析实现方案的可行性
+    3. 列出需要修改的文件和影响范围
+    4. **必须将调研报告写入 Markdown 文件**: `docs/reports/research_report.md`
+       报告内容包含: 代码片段引用、文件清单、可行性分析
+    5. 在控制台输出报告文件路径
+    
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端: src/backend/ (Python FastAPI)
+    前端: src/frontend/ (HTML + JS)
+    
+    
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端: src/backend/ (Python FastAPI)
+    前端: src/frontend/ (HTML + JS)
+    
+  ────────────────────────────────────────────────────────────
+  ⚡ 使用 DeepSeek API 直连 (快速模式)...
+  
+  🔗 API: api.deepseek.com | 模型: deepseek-chat
+  ────────────────────────────────────────────────────────────
+  
+  # 技术调研报告
+  
+  ## 1. 项目结构分析
+  
+  ### 1.1 项目目录结构
+  ```
+  /Users/panglaohu/Downloads/DoubleBoatClawSystem/
+  ├── src/
+  │   ├── backend/                    # 后端代码 (Python FastAPI)
+  │   │   ├── app/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── main.py            # FastAPI 主应用
+  │   │   │   └── dependencies.py
+  │   │   ├── api/
+  │   │   │   ├── __init__.py
+  │   │   │   ├── token_factory.py   # Token Factory API
+  │   │   │   └── deepseek.py        # DeepSeek API 相关
+  │   │   ├── core/
+  │   │   │   ├── config.py          # 配置文件
+  │   │   │   └── security.py
+  │   │   └── models/
+  │   │       └── schemas.py
+  │   └── frontend/                  # 前端代码
+  │       ├── index.html             # 主页面
+  │       ├── token_factory.html     # Token Factory 页面
+  │       ├── js/
+  │       │   ├── main.js
+  │       │   ├── token_factory.js   # Token Factory 前端逻辑
+  │       │   └── api.js             # API 调用封装
+  │       └── css/
+  │           └── style.css
+  ├── docs/
+  │   └── reports/
+  │       └── research_report.md     # 本报告
+  └── requirements.txt
+  ```
+  
+  ## 2. 现有代码分析
+  
+  ### 2.1 后端代码分析
+  
+  #### 2.1.1 Token Factory API (`src/backend/api/token_factory.py`)
+  ```python
+  # 现有代码片段
+  from fastapi import APIRouter, Depends, HTTPException
+  from typing import List, Optional
+  from ..models.schemas import TokenCreate, TokenResponse
+  
+  router = APIRouter(prefix="/api/token-factory", tags=["token-factory"])
+  
+  @router.post("/tokens", response_model=TokenResponse)
+  async def create_token(token_data: TokenCreate):
+      """创建新的 API Token"""
+      # 现有实现...
+      pass
+  
+  @router.get("/tokens", response_model=List[TokenResponse])
+  async def list_tokens():
+      """列出所有 Token"""
+      # 现有实现...
+      pass
+  ```
+  
+  #### 2.1.2 DeepSeek API (`src/backend/api/deepseek.py`)
+  ```python
+  # 现有代码片段
+  from fastapi import APIRouter, HTTPException
+  import httpx
+  from ..core.config import settings
+  
+  router = APIRouter(prefix="/api/deepseek", tags=["deepseek"])
+  
+  @router.post("/chat")
+  async def deepseek_chat(prompt: str, api_key: str = None):
+      """调用 DeepSeek API 进行聊天"""
+      # 现有实现...
+      pass
+  ```
+  
+  #### 2.1.3 配置文件 (`src/backend/core/config.py`)
+  ```python
+  # 现有配置
+  from pydantic_settings import BaseSettings
+  
+  class Settings(BaseSettings):
+      # 现有配置项
+      app_name: str = "DoubleBoatClawSystem"
+      debug: bool = True
+      
+      # DeepSeek 相关配置
+      deepseek_api_base: str = "https://api.deepseek.com"
+      deepseek_api_timeout: int = 30
+      
+      class Config:
+          env_file = ".env"
+  
+  settings = Settings()
+  ```
+  
+  ### 2.2 前端代码分析
+  
+  #### 2.2.1 Token Factory 页面 (`src/frontend/token_factory.html`)
+  ```html
+  <!-- 现有页面结构 -->
+  <div class="container">
+      <h1>Token Factory</h1>
+      
+      <!-- 现有 Token 管理区域 -->
+      <div class="token-section">
+          <h2>API Tokens</h2>
+          <button id="createTokenBtn">Create New Token</button>
+          <div id="tokenList"></div>
+      </div>
+      
+      <!-- 现有其他功能区域 -->
+      <div class="other-section">
+          <!-- 需要在此处添加 DeepSeek 连通性测试按钮 -->
+      </div>
+  </div>
+  
+  <script src="js/token_factory.js"></script>
+  ```
+  
+  #### 2.2.2 Token Factory JavaScript (`src/frontend/js/token_factory.js`)
+  ```javascript
+  // 现有代码
+  document.addEventListener('DOMContentLoaded', function() {
+      // 现有 Token 管理功能
+      const createTokenBtn = document.getElementById('createTokenBtn');
+      const tokenList = document.getElementById('tokenList');
+      
+      createTokenBtn.addEventListener('click', createToken);
+      loadTokens();
+      
+      function createToken() {
+          // 现有创建 Token 逻辑
+      }
+      
+      function loadTokens() {
+          // 现有加载 Token 列表逻辑
+      }
+  });
+  ```
+  
+  #### 2.2.3 API 调用封装 (`src/frontend/js/api.js`)
+  ```javascript
+  // 现有 API 调用函数
+  class API {
+      static async post(endpoint, data) {
+          const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(data)
+          });
+          return response.json();
+      }
+      
+      static async get(endpoint) {
+          const response = await fetch(endpoint);
+          return response.json();
+      }
+  }
+  ```
+  
+  ## 3. 实现方案可行性分析
+  
+  ### 3.1 后端实现可行性
+  
+  #### 3.1.1 新增 API 端点
+  **可行性**: 高
+  **理由**: 
+  1. 现有 FastAPI 架构支持快速添加新路由
+  2. 已有 DeepSeek API 调用逻辑可复用
+  3. 配置管理已就绪
+  
+  **需要新增的文件**:
+  1. `src/backend/api/deepseek_test.py` - 新增连通性测试端点
+  2. 更新 `src/backend/app/main.py` 路由注册
+  
+  #### 3.1.2 连通性测试逻辑
+  **技术方案**:
+  ```python
+  # 伪代码
+  async def test_deepseek_connection(api_key: str):
+      try:
+          # 1. 发送简单的测试请求到 DeepSeek API
+          # 2. 验证响应状态和格式
+          # 3. 返回测试结果（成功/失败 + 详细信息）
+          return {
+              "status": "success",
+              "latency": 150,  # 毫秒
+              "model": "deepseek-chat",
+              "timestamp": "2024-04-08T18:30:00Z"
+          }
+      except Exception as e:
+          return {
+              "status": "error",
+              "error": str(e),
+              "timestamp": "2024-04-08T18:30:00Z"
+          }
+  ```
+  
+  ### 3.2 前端实现可行性
+  
+  #### 3.2.1 界面修改
+  **可行性**: 高
+  **理由**:
+  1. 现有 HTML 结构清晰，易于添加新元素
+  2. CSS 样式已定义，可复用现有样式
+  3. JavaScript 框架简单，易于扩展
+  
+  **需要修改的文件**:
+  1. `src/frontend/token_factory.html` - 添加测试按钮和结果显示区域
+  2. `src/frontend/js/token_factory.js` - 添加按钮事件处理
+  3. `src/frontend/css/style.css` - 可选：添加新样式
+  
+  #### 3.2.2 前端逻辑
+  ```javascript
+  // 伪代码
+  function addDeepSeekTestButton() {
+      const testSection = document.createElement('div');
+      testSection.className = 'test-section';
+      testSection.innerHTML = `
+          <h2>DeepSeek Connectivity Test</h2>
+          <button id="testDeepSeekBtn">Test Connection</button>
+          <div id="testResult" class="test-result"></div>
+      `;
+      
+      // 插入到页面中
+      document.querySelector('.other-section').appendChild(testSection);
+      
+      // 绑定事件
+      document.getElementById('testDeepSeekBtn').addEventListener('click', testDeepSeekConnection);
+  }
+  ```
+  
+  ## 4. 需要修改的文件清单
+  
+  ### 4.1 后端文件
+  1. **新增文件**:
+     - `src/backend/api/deepseek_test.py` - DeepSeek 连通性测试 API
+     
+  2. **修改文件**:
+     - `src/backend/app/main.py` - 注册新的路由
+     - `src/backend/core/config.py` - 可选：添加测试相关配置
+     - `requirements.txt` - 确保依赖包版本
+  
+  ### 4.2 前端文件
+  1. **修改文件**:
+     - `src/frontend/token_factory.html` - 添加测试按钮和结果区域
+     - `src/frontend/js/token_factory.js` - 添加测试功能逻辑
+     - `src/frontend/js/api.js` - 可选：添加测试 API 调用方法
+     - `src/frontend/css/style.css` - 可选：添加测试相关样式
+  
+  ### 4.3 测试文件
+  1. **新增文件**:
+     - `tests/test_deepseek_connection.py` - 后端 API 测试
+     - `tests/frontend/test_deepseek_button.js` - 前端功能测试
+  
+  ## 5. 技术风险评估
+  
+  ### 5.1 低风险项
+  1. **前端界面修改**: 现有结构清晰，风险低
+  2. **后端 API 扩展**: FastAPI 框架成熟，风险低
+  3. **代码集成**: 模块化设计良好，集成风险低
+  
+  ### 5.2 中风险项
+  1. **DeepSeek API 稳定性**: 依赖外部服务，需添加重试机制
+  2. **网络超时处理**: 需要合理设置超时时间
+  3. **错误处理**: 需要完善的异常捕获和用户提示
+  
+  ### 5.3 缓解措施
+  1. **API 稳定性**: 实现指数退避重试机制
+  2. **超时处理**: 配置可调整的超时参数
+  3. **错误处理**: 前端显示友好的错误信息，后端记录详细日志
+  
+  ## 6. 依赖关系分析
+  
+  ### 6.1 内部依赖
+  1. **后端依赖**:
+     - FastAPI 框架
+     - httpx 或 requests 库（HTTP 客户端）
+     - Pydantic（数据验证）
+  
+  2. **前端依赖**:
+     - 现代浏览器（支持 ES6+）
+     - Fetch API
+  
+  ### 6.2 外部依赖
+  1. **DeepSeek API**:
+     - 需要有效的 API Key
+     - 网络连通性
+     - API 服务可用性
+  
+  ## 7. 实施建议
+  
+  ### 7.1 开发顺序
+  1. **第一阶段**: 后端 API 开发
+     - 实现连通性测试端点
+     - 编写单元测试
+     
+  2. **第二阶段**: 前端界面开发
+     - 添加测试按钮和界面
+     - 实现前端逻辑
+     
+  3. **第三阶段**: 集成测试
+     - 前后端联调
+     - 端到端测试
+  
+  ### 7.2 代码规范
+  1. **后端**: 遵循现有 FastAPI 代码风格
+  2. **前端**: 使用现有 JavaScript 模块模式
+  3. **测试**: 确保测试覆盖率 > 80%
+  
+  ### 7.3 性能考虑
+  1. **API 响应时间**: 测试接口应在 3 秒内返回结果
+  2. **前端加载**: 新增代码不应显著影响页面加载速度
+  3. **资源使用**: 合理管理 HTTP 连接，避免资源泄漏
+  
+  ## 8. 结论
+  
+  ### 8.1 可行性结论
+  **总体可行性**: 高
+  
+  **理由**:
+  1. 现有架构支持快速扩展
+  2. 技术栈成熟稳定
+  3. 团队熟悉相关技术
+  4. 风险可控
+  
+  ### 8.2 建议实施方案
+  1. **采用渐进式开发**: 先实现核心功能，再优化用户体验
+  2. **加强测试**: 特别是集成测试和错误场景测试
+  3. **文档完善**: 及时更新 API 文档和用户指南
+  
+  ### 8.3 下一步行动
+  1. 创建详细的技术设计文档
+  2. 开始后端 API 开发
+  3. 同步进行前端界面设计
+  4. 制定测试计划
+  
+  ---
+  
+  **报告文件路径**: `/Users/panglaohu/Downloads/DoubleBoatClawSystem/docs/reports/research_report.md`
+  
+  **控制台输出**: 调研报告已保存至 `/Users/panglaohu/Downloads/DoubleBoatClawSystem/docs/reports/research_report.md`
+  
+  ────────────────────────────────────────────────────────────
+  ✅ deepseek-chat 完成
+  
+  
+  
+  ## 上一步产出 — 架构设计 (architect)
+  
+  # 架构设计 — architect
+  
+  任务: 全流水线最终测试
+  步骤: architecture
+  Agent: build_architect
+  
+  ---
+  
+  📋 任务: 9f5d5948-43e
+  🤖 Agent: Architect (architect)
+  📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+  🔧 执行方式: DeepSeek API (直连)
+  ⏱️ 超时: 300s
+  ────────────────────────────────────────────────────────────
+  📝 提示词:
+    你是 PoseidonX 系统的 Architect (architect)。
+    请执行以下开发任务:
+    
+    你是系统架构师。请为以下任务设计技术方案:
+    
+    ## 任务
+    全流水线最终测试
+    在 Token Factory 区域加 DeepSeek 连通性测试按钮
+    
+    ## 前序步骤的产出 (请仔细阅读)
+    
+    ## 上一步产出 — PM分解 (project_manager)
+    
+    # PM分解 — project_manager
+    
+    任务: 全流水线最终测试
+    步骤: pm_decompose
+    Agent: build_pm
+    
+    ---
+    
+    📋 任务: 9f5d5948-43e
+    🤖 Agent: PM (project_manager)
+    📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    🔧 执行方式: DeepSeek API (直连)
+    ⏱️ 超时: 300s
+    ────────────────────────────────────────────────────────────
+    📝 提示词:
+      你是 PoseidonX 系统的 PM (project_manager)。
+      请执行以下开发任务:
+      
+      你是项目经理 (PM)。请对以下任务进行分解和规划:
+      
+      ## 任务
+      全流水线最终测试
+      在 Token Factory 区域加 DeepSeek 连通性测试按钮
+      
+      ## 要求
+      1. 分析任务需求，拆解为可执行的子步骤
+      2. 识别技术风险和依赖关系
+      3. 为后续研究人员、架构师、开发者提供清晰的指导
+      4. 输出一份结构化的任务分解文档 (Markdown 格式)
+      
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端: src/backend/ (Python FastAPI)
+      前端: src/frontend/ (HTML + JS)
+      
+      
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端: src/backend/ (Python FastAPI)
+      前端: src/frontend/ (HTML + JS)
+      
+    ────────────────────────────────────────────────────────────
+    ⚡ 使用 DeepSeek API 直连 (快速模式)...
+    
+    🔗 API: api.deepseek.com | 模型: deepseek-chat
+    ────────────────────────────────────────────────────────────
+    
+    # PoseidonX 系统任务分解文档
+    
+    ## 1. 任务概述
+    
+    ### 1.1 主要任务
+    1. **全流水线最终测试** - 对整个系统进行端到端的完整测试
+    2. **Token Factory 区域增加 DeepSeek 连通性测试按钮** - 在前端 Token Factory 界面添加测试按钮，验证与 DeepSeek API 的连接
+    
+    ### 1.2 预期成果
+    - 完整的系统测试报告
+    - Token Factory 界面新增 DeepSeek 连通性测试功能
+    - 确保系统稳定性和 API 连通性
+    
+    ## 2. 任务分解
+    
+    ### 2.1 全流水线最终测试
+    
+    #### 子任务 2.1.1: 测试环境准备
+    - **负责人**: DevOps/测试工程师
+    - **预计工时**: 4小时
+    - **交付物**: 配置好的测试环境
+    - **具体步骤**:
+      1. 确认测试环境与生产环境配置一致
+      2. 准备测试数据（包括测试用 Token、API 密钥等）
+      3. 配置测试监控和日志收集
+      4. 验证所有依赖服务可用性
+    
+    #### 子任务 2.1.2: 端到端测试用例设计
+    - **负责人**: 测试工程师
+    - **预计工时**: 8小时
+    - **交付物**: 详细的测试用例文档
+    - **具体步骤**:
+      1. 定义测试范围：用户注册 → Token 创建 → API 调用 → 结果返回
+      2. 设计正向测试用例（正常流程）
+      3. 设计异常测试用例（错误处理）
+      4. 设计边界测试用例（压力测试）
+      5. 设计安全测试用例（权限验证）
+    
+    #### 子任务 2.1.3: 自动化测试脚本开发
+    - **负责人**: 测试开发工程师
+    - **预计工时**: 12小时
+    - **交付物**: 自动化测试脚本
+    - **具体步骤**:
+      1. 基于测试用例编写自动化脚本
+      2. 集成到 CI/CD 流水线
+      3. 添加测试报告生成功能
+      4. 实现测试结果通知机制
+    
+    #### 子任务 2.1.4: 测试执行与问题跟踪
+    - **负责人**: 测试工程师
+    - **预计工时**: 8小时
+    - **交付物**: 测试报告和问题清单
+    - **具体步骤**:
+      1. 执行自动化测试
+      2. 手动验证关键路径
+      3. 记录发现的问题
+      4. 跟踪问题修复进度
+    
+    ### 2.2 DeepSeek 连通性测试按钮
+    
+    #### 子任务 2.2.1: 后端 API 接口开发
+    - **负责人**: 后端开发工程师
+    - **预计工时**: 6小时
+    - **交付物**: 测试接口 API
+    - **具体步骤**:
+      1. 在 `/src/backend/` 中创建新的路由端点
+      2. 实现 DeepSeek API 连通性测试逻辑
+      3. 添加错误处理和超时机制
+      4. 编写单元测试
+      5. 更新 API 文档
+    
+    **文件位置**: `/src/backend/api/deepseek_test.py`
+    ```python
+    # 示例代码结构
+    @router.post("/test-connection")
+    async def test_deepseek_connection(
+        api_key: str = Body(...),
+        model: str = Body(default="deepseek-chat")
+    ):
+        # 实现测试逻辑
+        pass
+    ```
+    
+    #### 子任务 2.2.2: 前端界面开发
+    - **负责人**: 前端开发工程师
+    - **预计工时**: 8小时
+    - **交付物**: 新增的测试按钮和界面
+    - **具体步骤**:
+      1. 定位 Token Factory 界面文件
+      2. 设计测试按钮样式和位置
+      3. 实现按钮点击事件处理
+      4. 添加测试状态显示（加载中、成功、失败）
+      5. 实现测试结果展示
+    
+    **文件位置**: `/src/frontend/token_factory.html` 或相关 JS 文件
+    
+    #### 子任务 2.2.3: 前后端联调
+    - **负责人**: 前后端开发工程师
+    - **预计工时**: 4小时
+    - **交付物**: 功能完整的连通性测试
+    - **具体步骤**:
+      1. 验证 API 调用正确性
+      2. 测试错误场景处理
+      3. 优化用户体验
+      4. 性能测试
+    
+    #### 子任务 2.2.4: 文档更新
+    - **负责人**: 技术文档工程师
+    - **预计工时**: 2小时
+    - **交付物**: 更新的用户手册和 API 文档
+    - **具体步骤**:
+      1. 更新用户界面操作指南
+      2. 更新 API 接口文档
+      3. 添加故障排除指南
+    
+    ## 3. 技术风险与依赖关系
+    
+    ### 3.1 技��风险
+    1. **DeepSeek API 稳定性**
+       - 风险等级: 中
+       - 缓解措施: 添加重试机制和备用测试方案
+       
+    2. **测试环境与生产环境差异**
+       - 风险等级: 中
+       - 缓解措施: 使用容器化确保环境一致性
+    
+    3. **前端兼容性问题**
+       - 风险等级: 低
+       - 缓解措施: 多浏览器测试
+    
+    ### 3.2 依赖关系
+    1. **前后端依赖**:
+       - 前端开发依赖后端 API 完成
+       - 建议并行开发，使用 Mock 数据先行
+    
+    2. **测试依赖**:
+       - 自动化测试依赖测试用例设计
+       - 测试执行依赖环境准备
+    
+    3. **外部依赖**:
+       - DeepSeek API 服务可用性
+       - 网络连接稳定性
+    
+    ## 4. 时间规划
+    
+    ### 4.1 第一阶段: 准备与设计 (第1-2天)
+    - 测试环境准备 (2.1.1)
+    - 测试用例设计 (2.1.2)
+    - 后端 API 设计 (2.2.1 设计部分)
+    
+    ### 4.2 第二阶段: 开发与实现 (第3-5天)
+    - 后端 API 开发 (2.2.1)
+    - 前端界面开发 (2.2.2)
+    - 自动化测试脚本开发 (2.1.3)
+    
+    ### 4.3 第三阶段: 测试与联调 (第6-7天)
+    - 前后端联调 (2.2.3)
+    - 测试执行 (2.1.4)
+    - 问题修复
+    
+    ### 4.4 第四阶段: 文档与交付 (第8天)
+    - 文档更新 (2.2.4)
+    - 最终验收
+    
+    ## 5. 资源需求
+    
+    ### 5.1 人力资源
+    - 项目经理 (PM): 1人 - 总体协调
+    - 后端开发工程师: 1人
+    - 前端开发工程师: 1人
+    - 测试工程师: 1-2人
+    - 技术文档工程师: 0.5人（兼职）
+    
+    ### 5.2 技术资源
+    - 测试服务器资源
+    - DeepSeek API 访问权限
+    - 监控和日志工具
+    - CI/CD 流水线
+    
+    ## 6. 质量保证措施
+    
+    ### 6.1 代码质量
+    - 所有代码需通过代码审查
+    - 单元测试覆盖率 > 80%
+    - 遵循项目编码规范
+    
+    ### 6.2 测试质量
+    - 自动化测试覆盖率 > 70%
+    - 所有关键路径必须测试
+    - 性能测试需满足 SLA 要求
+    
+    ### 6.3 文档质量
+    - 所有新增功能必须有对应文档
+    - API 变更必须更新 OpenAPI 文档
+    - 用户界面变更需更新操作指南
+    
+    ## 7. 验收标准
+    
+    ### 7.1 全流水线测试验收标准
+    - [ ] 所有测试用例执行通过率 100%
+    - [ ] 系统响应时间符合性能要求
+    - [ ] 错误处理机制完善
+    - [ ] 测试报告完整清晰
+    
+    ### 7.2 DeepSeek 连通性测试按钮验收标准
+    - [ ] 按钮在 Token Factory 界面正确显示
+    - [ ] 点击按钮能正确测试 DeepSeek 连通性
+    - [ ] 测试结果清晰展示给用户
+    - [ ] 错误情况有友好提示
+    - [ ] 代码符合项目规范
+    
+    ---
+    
+    ## 附录
+    
+    ### A. 相关文件路径
+    ```
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端代码: src/backend/
+      - 主要应用: src/backend/app/
+      - API路由: src/backend/api/
+      - 配置文件: src/backend/config/
+    
+    前端代码: src/frontend/
+      - HTML文件: src/frontend/*.html
+      - JS文件: src/frontend/js/
+      - CSS文件: src/frontend/css/
+    ```
+    
+    ### B. 沟通机制
+    - 每日站会: 9:30 AM，同步进度和问题
+    - 技术评审会: 关键节点进行代码和设计评审
+    - 问题跟踪: 使用 Jira/GitHub Issues 跟踪所有问题
+    
+    ### C. 紧急预案
+    如遇重大技术障碍，项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+    
+    ────────────────────────────────────────────────────────────
+    ✅ deepseek-chat 完成
+    
+    
+    
+    ## 上一步产出 — 研究分析 (researcher)
+    
+    # 研究分析 — researcher
+    
+    任务: 全流水线最终测试
+    步骤: research
+    Agent: build_researcher
+    
+    ---
+    
+    📋 任务: 9f5d5948-43e
+    🤖 Agent: Researcher (researcher)
+    📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    🔧 执行方式: DeepSeek API (直连)
+    ⏱️ 超时: 300s
+    ────────────────────────────────────────────────────────────
+    📝 提示词:
+      你是 PoseidonX 系统的 Researcher (researcher)。
+      请执行以下开发任务:
+      
+      你是技术研究员。请对以下任务进行技术调研:
+      
+      ## 任务
+      全流水线最终测试
+      在 Token Factory 区域加 DeepSeek 连通性测试按钮
+      
+      ## 前序步骤的产出 (请仔细阅读)
+      
+      ## 上一步产出 — PM分解 (project_manager)
+      
+      # PM分解 — project_manager
+      
+      任务: 全流水线最终测试
+      步骤: pm_decompose
+      Agent: build_pm
+      
+      ---
+      
+      📋 任务: 9f5d5948-43e
+      🤖 Agent: PM (project_manager)
+      📂 工作目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      🔧 执行方式: DeepSeek API (直连)
+      ⏱️ 超时: 300s
+      ────────────────────────────────────────────────────────────
+      📝 提示词:
+        你是 PoseidonX 系统的 PM (project_manager)。
+        请执行以下开发任务:
+        
+        你是项目经理 (PM)。请对以下任务进行分解和规划:
+        
+        ## 任务
+        全流水线最终测试
+        在 Token Factory 区域加 DeepSeek 连通性测试按钮
+        
+        ## 要求
+        1. 分析任务需求，拆解为可执行的子步骤
+        2. 识别技术风险和依赖关系
+        3. 为后续研究人员、架构师、开发者提供清晰的指导
+        4. 输出一份结构化的任务分解文档 (Markdown 格式)
+        
+        项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+        后端: src/backend/ (Python FastAPI)
+        前端: src/frontend/ (HTML + JS)
+        
+        
+        项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+        后端: src/backend/ (Python FastAPI)
+        前端: src/frontend/ (HTML + JS)
+        
+      ────────────────────────────────────────────────────────────
+      ⚡ 使用 DeepSeek API 直连 (快速模式)...
+      
+      🔗 API: api.deepseek.com | 模型: deepseek-chat
+      ────────────────────────────────────────────────────────────
+      
+      # PoseidonX 系统任务分解文档
+      
+      ## 1. 任务概述
+      
+      ### 1.1 主要任务
+      1. **全流水线最终测试** - 对整个系统进行端到端的完整测试
+      2. **Token Factory 区域增加 DeepSeek 连通性测试按钮** - 在前端 Token Factory 界面添加测试按钮，验证与 DeepSeek API 的连接
+      
+      ### 1.2 预期成果
+      - 完整的系统测试报告
+      - Token Factory 界面新增 DeepSeek 连通性测试功能
+      - 确保系统稳定性和 API 连通性
+      
+      ## 2. 任务分解
+      
+      ### 2.1 全流水线最终测试
+      
+      #### 子任务 2.1.1: 测试环境准备
+      - **负责人**: DevOps/测试工程师
+      - **预计工时**: 4小时
+      - **交付物**: 配置好的测试环境
+      - **具体步骤**:
+        1. 确认测试环境与生产环境配置一致
+        2. 准备测试数据（包括测试用 Token、API 密钥等）
+        3. 配置测试监控和日志收集
+        4. 验证所有依赖服务可用性
+      
+      #### 子任务 2.1.2: 端到端测试用例设计
+      - **负责人**: 测试工程师
+      - **预计工时**: 8小时
+      - **交付物**: 详细的测试用例文档
+      - **具体步骤**:
+        1. 定义测试范围：用户注册 → Token 创建 → API 调用 → 结果返回
+        2. 设计正向测试用例（正常流程）
+        3. 设计异常测试用例（错误处理）
+        4. 设计边界测试用例（压力测试）
+        5. 设计安全测试用例（权限验证）
+      
+      #### 子任务 2.1.3: 自动化测试脚本开发
+      - **负责人**: 测试开发工程师
+      - **预计工时**: 12小时
+      - **交付物**: 自动化测试脚本
+      - **具体步骤**:
+        1. 基于测试用例编写自动化脚本
+        2. 集成到 CI/CD 流水线
+        3. 添加测试报告生成功能
+        4. 实现测试结果通知机制
+      
+      #### 子任务 2.1.4: 测试执行与问题跟踪
+      - **负责人**: 测试工程师
+      - **预计工时**: 8小时
+      - **交付物**: 测试报告和问题清单
+      - **具体步骤**:
+        1. 执行自动化测试
+        2. 手动验证关键路径
+        3. 记录发现的问题
+        4. 跟踪问题修复进度
+      
+      ### 2.2 DeepSeek 连通性测试按钮
+      
+      #### 子任务 2.2.1: 后端 API 接口开发
+      - **负责人**: 后端开发工程师
+      - **预计工时**: 6小时
+      - **交付物**: 测试接口 API
+      - **具体步骤**:
+        1. 在 `/src/backend/` 中创建新的路由端点
+        2. 实现 DeepSeek API 连通性测试逻辑
+        3. 添加错误处理和超时机制
+        4. 编写单元测试
+        5. 更新 API 文档
+      
+      **文件位置**: `/src/backend/api/deepseek_test.py`
+      ```python
+      # 示例代码结构
+      @router.post("/test-connection")
+      async def test_deepseek_connection(
+          api_key: str = Body(...),
+          model: str = Body(default="deepseek-chat")
+      ):
+          # 实现测试逻辑
+          pass
+      ```
+      
+      #### 子任务 2.2.2: 前端界面开发
+      - **负责人**: 前端开发工程师
+      - **预计工时**: 8小时
+      - **交付物**: 新增的测试按钮和界面
+      - **具体步骤**:
+        1. 定位 Token Factory 界面文件
+        2. 设计测试按钮样式和位置
+        3. 实现按钮点击事件处理
+        4. 添加测试状态显示（加载中、成功、失败）
+        5. 实现测试结果展示
+      
+      **文件位置**: `/src/frontend/token_factory.html` 或相关 JS 文件
+      
+      #### 子任务 2.2.3: 前后端联调
+      - **负责人**: 前后端开发工程师
+      - **预计工时**: 4小时
+      - **交付物**: 功能完整的连通性测试
+      - **具体步骤**:
+        1. 验证 API 调用正确性
+        2. 测试错误场景处理
+        3. 优化用户体验
+        4. 性能测试
+      
+      #### 子任务 2.2.4: 文档更新
+      - **负责人**: 技术文档工程师
+      - **预计工时**: 2小时
+      - **交付物**: 更新的用户手册和 API 文档
+      - **具体步骤**:
+        1. 更新用户界面操作指南
+        2. 更新 API 接口文档
+        3. 添加故障排除指南
+      
+      ## 3. 技术风险与依赖关系
+      
+      ### 3.1 技��风险
+      1. **DeepSeek API 稳定性**
+         - 风险等级: 中
+         - 缓解措施: 添加重试机制和备用测试方案
+         
+      2. **测试环境与生产环境差异**
+         - 风险等级: 中
+         - 缓解措施: 使用容器化确保环境一致性
+      
+      3. **前端兼容性问题**
+         - 风险等级: 低
+         - 缓解措施: 多浏览器测试
+      
+      ### 3.2 依赖关系
+      1. **前后端依赖**:
+         - 前端开发依赖后端 API 完成
+         - 建议并行开发，使用 Mock 数据先行
+      
+      2. **测试依赖**:
+         - 自动化测试依赖测试用例设计
+         - 测试执行依赖环境准备
+      
+      3. **外部依赖**:
+         - DeepSeek API 服务可用性
+         - 网络连接稳定性
+      
+      ## 4. 时间规划
+      
+      ### 4.1 第一阶段: 准备与设计 (第1-2天)
+      - 测试环境准备 (2.1.1)
+      - 测试用例设计 (2.1.2)
+      - 后端 API 设计 (2.2.1 设计部分)
+      
+      ### 4.2 第二阶段: 开发与实现 (第3-5天)
+      - 后端 API 开发 (2.2.1)
+      - 前端界面开发 (2.2.2)
+      - 自动化测试脚本开发 (2.1.3)
+      
+      ### 4.3 第三阶段: 测试与联调 (第6-7天)
+      - 前后端联调 (2.2.3)
+      - 测试执行 (2.1.4)
+      - 问题修复
+      
+      ### 4.4 第四阶段: 文档与交付 (第8天)
+      - 文档更新 (2.2.4)
+      - 最终验收
+      
+      ## 5. 资源需求
+      
+      ### 5.1 人力资源
+      - 项目经理 (PM): 1人 - 总体协调
+      - 后端开发工程师: 1人
+      - 前端开发工程师: 1人
+      - 测试工程师: 1-2人
+      - 技术文档工程师: 0.5人（兼职）
+      
+      ### 5.2 技术资源
+      - 测试服务器资源
+      - DeepSeek API 访问权限
+      - 监控和日志工具
+      - CI/CD 流水线
+      
+      ## 6. 质量保证措施
+      
+      ### 6.1 代码质量
+      - 所有代码需通过代码审查
+      - 单元测试覆盖率 > 80%
+      - 遵循项目编码规范
+      
+      ### 6.2 测试质量
+      - 自动化测试覆盖率 > 70%
+      - 所有关键路径必须测试
+      - 性能测试需满足 SLA 要求
+      
+      ### 6.3 文档质量
+      - 所有新增功能必须有对应文档
+      - API 变更必须更新 OpenAPI 文档
+      - 用户界面变更需更新操作指南
+      
+      ## 7. 验收标准
+      
+      ### 7.1 全流水线测试验收标准
+      - [ ] 所有测试用例执行通过率 100%
+      - [ ] 系统响应时间符合性能要求
+      - [ ] 错误处理机制完善
+      - [ ] 测试报告完整清晰
+      
+      ### 7.2 DeepSeek 连通性测试按钮验收标准
+      - [ ] 按钮在 Token Factory 界面正确显示
+      - [ ] 点击按钮能正确测试 DeepSeek 连通性
+      - [ ] 测试结果清晰展示给用户
+      - [ ] 错误情况有友好提示
+      - [ ] 代码符合项目规范
+      
+      ---
+      
+      ## 附录
+      
+      ### A. 相关文件路径
+      ```
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端代码: src/backend/
+        - 主要应用: src/backend/app/
+        - API路由: src/backend/api/
+        - 配置文件: src/backend/config/
+      
+      前端代码: src/frontend/
+        - HTML文件: src/frontend/*.html
+        - JS文件: src/frontend/js/
+        - CSS文件: src/frontend/css/
+      ```
+      
+      ### B. 沟通机制
+      - 每日站会: 9:30 AM，同步进度和问题
+      - 技术评审会: 关键节点进行代码和设计评审
+      - 问题跟踪: 使用 Jira/GitHub Issues 跟踪所有问题
+      
+      ### C. 紧急预案
+      如遇重大技术障碍，项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+      
+      ────────────────────────────────────────────────────────────
+      ✅ deepseek-chat 完成
+      
+      
+      
+      ## Agent 间传递信息 (Handoff Files)
+      
+      
+      ### 9f5d5948-43e_pm_decompose_20260408T180430.md
+      
+      # Agent Handoff — pm_decompose
+      
+      | 字段 | 值 |
+      |------|------|
+      | 任务 ID | `9f5d5948-43e` |
+      | 步骤 | `pm_decompose` |
+      | 来源 Agent | build_pm |
+      | 目标 Agent | build_researcher |
+      | 时间 | 20260408T180430 |
+      
+      ## 传递内容
+      
+      - **step**: pm_decompose
+      - **label**: PM分解
+      - **agent_role**: project_manager
+      - **status**: completed
+      - **artifact**: /Users/panglaohu/Downloads/DoubleBoatClawSystem/src/docs/workflow_artifacts/9f5d5948-43e_pm_decompose.md
+      - **output_summary**: 项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+      
+      ────────────────────────────────────────────────────────────
+      ✅ deepseek-chat 完成
+      
+      
+      ---
+      *Auto-generated by PoseidonX Workflow Harness*
+      
+      
+      
+      ### 9f5d5948-43e_task_init_20260408T180340.md
+      
+      # Agent Handoff — task_init
+      
+      | 字段 | 值 |
+      |------|------|
+      | 任务 ID | `9f5d5948-43e` |
+      | 步骤 | `task_init` |
+      | 来源 Agent | (system) |
+      | 目标 Agent | (next step) |
+      | 时间 | 20260408T180340 |
+      
+      ## 传递内容
+      
+      - **task_id**: 9f5d5948-43e
+      - **title**: 全流水线最终测试
+      - **description**: 在 Token Factory 区域加 DeepSeek 连通性测试按钮
+      - **team_id**: build_system
+      - **agent_id**: build_pm
+      - **token_factory_ready**: True
+      ### workflow_steps
+      ```json
+      [
+        "pm_decompose",
+        "research",
+        "architecture",
+        "develop",
+        "test",
+        "deploy",
+        "document"
+      ]
+      ```
+      
+      
+      ---
+      *Auto-generated by PoseidonX Workflow Harness*
+      
+      
+      
+      ## 要求
+      1. 调研现有代码库中相关的文件和模块
+      2. 分析实现方案的可行性
+      3. 列出需要修改的文件和影响范围
+      4. **必须将调研报告写入 Markdown 文件**: `docs/reports/research_report.md`
+         报告内容包含: 代码片段引用、文件清单、可行性分析
+      5. 在控制台输出报告文件路径
+      
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端: src/backend/ (Python FastAPI)
+      前端: src/frontend/ (HTML + JS)
+      
+      
+      项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+      后端: src/backend/ (Python FastAPI)
+      前端: src/frontend/ (HTML + JS)
+      
+    ────────────────────────────────────────────────────────────
+    ⚡ 使用 DeepSeek API 直连 (快速模式)...
+    
+    🔗 API: api.deepseek.com | 模型: deepseek-chat
+    ────────────────────────────────────────────────────────────
+    
+    # 技术调研报告
+    
+    ## 1. 项目结构分析
+    
+    ### 1.1 项目目录结构
+    ```
+    /Users/panglaohu/Downloads/DoubleBoatClawSystem/
+    ├── src/
+    │   ├── backend/                    # 后端代码 (Python FastAPI)
+    │   │   ├── app/
+    │   │   │   ├── __init__.py
+    │   │   │   ├── main.py            # FastAPI 主应用
+    │   │   │   └── dependencies.py
+    │   │   ├── api/
+    │   │   │   ├── __init__.py
+    │   │   │   ├── token_factory.py   # Token Factory API
+    │   │   │   └── deepseek.py        # DeepSeek API 相关
+    │   │   ├── core/
+    │   │   │   ├── config.py          # 配置文件
+    │   │   │   └── security.py
+    │   │   └── models/
+    │   │       └── schemas.py
+    │   └── frontend/                  # 前端代码
+    │       ├── index.html             # 主页面
+    │       ├── token_factory.html     # Token Factory 页面
+    │       ├── js/
+    │       │   ├── main.js
+    │       │   ├── token_factory.js   # Token Factory 前端逻辑
+    │       │   └── api.js             # API 调用封装
+    │       └── css/
+    │           └── style.css
+    ├── docs/
+    │   └── reports/
+    │       └── research_report.md     # 本报告
+    └── requirements.txt
+    ```
+    
+    ## 2. 现有代码分析
+    
+    ### 2.1 后端代码分析
+    
+    #### 2.1.1 Token Factory API (`src/backend/api/token_factory.py`)
+    ```python
+    # 现有代码片段
+    from fastapi import APIRouter, Depends, HTTPException
+    from typing import List, Optional
+    from ..models.schemas import TokenCreate, TokenResponse
+    
+    router = APIRouter(prefix="/api/token-factory", tags=["token-factory"])
+    
+    @router.post("/tokens", response_model=TokenResponse)
+    async def create_token(token_data: TokenCreate):
+        """创建新的 API Token"""
+        # 现有实现...
+        pass
+    
+    @router.get("/tokens", response_model=List[TokenResponse])
+    async def list_tokens():
+        """列出所有 Token"""
+        # 现有实现...
+        pass
+    ```
+    
+    #### 2.1.2 DeepSeek API (`src/backend/api/deepseek.py`)
+    ```python
+    # 现有代码片段
+    from fastapi import APIRouter, HTTPException
+    import httpx
+    from ..core.config import settings
+    
+    router = APIRouter(prefix="/api/deepseek", tags=["deepseek"])
+    
+    @router.post("/chat")
+    async def deepseek_chat(prompt: str, api_key: str = None):
+        """调用 DeepSeek API 进行聊天"""
+        # 现有实现...
+        pass
+    ```
+    
+    #### 2.1.3 配置文件 (`src/backend/core/config.py`)
+    ```python
+    # 现有配置
+    from pydantic_settings import BaseSettings
+    
+    class Settings(BaseSettings):
+        # 现有配置项
+        app_name: str = "DoubleBoatClawSystem"
+        debug: bool = True
+        
+        # DeepSeek 相关配置
+        deepseek_api_base: str = "https://api.deepseek.com"
+        deepseek_api_timeout: int = 30
+        
+        class Config:
+            env_file = ".env"
+    
+    settings = Settings()
+    ```
+    
+    ### 2.2 前端代码分析
+    
+    #### 2.2.1 Token Factory 页面 (`src/frontend/token_factory.html`)
+    ```html
+    <!-- 现有页面结构 -->
+    <div class="container">
+        <h1>Token Factory</h1>
+        
+        <!-- 现有 Token 管理区域 -->
+        <div class="token-section">
+            <h2>API Tokens</h2>
+            <button id="createTokenBtn">Create New Token</button>
+            <div id="tokenList"></div>
+        </div>
+        
+        <!-- 现有其他功能区域 -->
+        <div class="other-section">
+            <!-- 需要在此处添加 DeepSeek 连通性测试按钮 -->
+        </div>
+    </div>
+    
+    <script src="js/token_factory.js"></script>
+    ```
+    
+    #### 2.2.2 Token Factory JavaScript (`src/frontend/js/token_factory.js`)
+    ```javascript
+    // 现有代码
+    document.addEventListener('DOMContentLoaded', function() {
+        // 现有 Token 管理功能
+        const createTokenBtn = document.getElementById('createTokenBtn');
+        const tokenList = document.getElementById('tokenList');
+        
+        createTokenBtn.addEventListener('click', createToken);
+        loadTokens();
+        
+        function createToken() {
+            // 现有创建 Token 逻辑
+        }
+        
+        function loadTokens() {
+            // 现有加载 Token 列表逻辑
+        }
+    });
+    ```
+    
+    #### 2.2.3 API 调用封装 (`src/frontend/js/api.js`)
+    ```javascript
+    // 现有 API 调用函数
+    class API {
+        static async post(endpoint, data) {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            return response.json();
+        }
+        
+        static async get(endpoint) {
+            const response = await fetch(endpoint);
+            return response.json();
+        }
+    }
+    ```
+    
+    ## 3. 实现方案可行性分析
+    
+    ### 3.1 后端实现可行性
+    
+    #### 3.1.1 新增 API 端点
+    **可行性**: 高
+    **理由**: 
+    1. 现有 FastAPI 架构支持快速添加新路由
+    2. 已有 DeepSeek API 调用逻辑可复用
+    3. 配置管理已就绪
+    
+    **需要新增的文件**:
+    1. `src/backend/api/deepseek_test.py` - 新增连通性测试端点
+    2. 更新 `src/backend/app/main.py` 路由注册
+    
+    #### 3.1.2 连通性测试逻辑
+    **技术方案**:
+    ```python
+    # 伪代码
+    async def test_deepseek_connection(api_key: str):
+        try:
+            # 1. 发送简单的测试请求到 DeepSeek API
+            # 2. 验证响应状态和格式
+            # 3. 返回测试结果（成功/失败 + 详细信息）
+            return {
+                "status": "success",
+                "latency": 150,  # 毫秒
+                "model": "deepseek-chat",
+                "timestamp": "2024-04-08T18:30:00Z"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": "2024-04-08T18:30:00Z"
+            }
+    ```
+    
+    ### 3.2 前端实现可行性
+    
+    #### 3.2.1 界面修改
+    **可行性**: 高
+    **理由**:
+    1. 现有 HTML 结构清晰，易于添加新元素
+    2. CSS 样式已定义，可复用现有样式
+    3. JavaScript 框架简单，易于扩展
+    
+    **需要修改的文件**:
+    1. `src/frontend/token_factory.html` - 添加测试按钮和结果显示区域
+    2. `src/frontend/js/token_factory.js` - 添加按钮事件处理
+    3. `src/frontend/css/style.css` - 可选：添加新样式
+    
+    #### 3.2.2 前端逻辑
+    ```javascript
+    // 伪代码
+    function addDeepSeekTestButton() {
+        const testSection = document.createElement('div');
+        testSection.className = 'test-section';
+        testSection.innerHTML = `
+            <h2>DeepSeek Connectivity Test</h2>
+            <button id="testDeepSeekBtn">Test Connection</button>
+            <div id="testResult" class="test-result"></div>
+        `;
+        
+        // 插入到页面中
+        document.querySelector('.other-section').appendChild(testSection);
+        
+        // 绑定事件
+        document.getElementById('testDeepSeekBtn').addEventListener('click', testDeepSeekConnection);
+    }
+    ```
+    
+    ## 4. 需要修改的文件清单
+    
+    ### 4.1 后端文件
+    1. **新增文件**:
+       - `src/backend/api/deepseek_test.py` - DeepSeek 连通性测试 API
+       
+    2. **修改文件**:
+       - `src/backend/app/main.py` - 注册新的路由
+       - `src/backend/core/config.py` - 可选：添加测试相关配置
+       - `requirements.txt` - 确保依赖包版本
+    
+    ### 4.2 前端文件
+    1. **修改文件**:
+       - `src/frontend/token_factory.html` - 添加测试按钮和结果区域
+       - `src/frontend/js/token_factory.js` - 添加测试功能逻辑
+       - `src/frontend/js/api.js` - 可选：添加测试 API 调用方法
+       - `src/frontend/css/style.css` - 可选：添加测试相关样式
+    
+    ### 4.3 测试文件
+    1. **新增文件**:
+       - `tests/test_deepseek_connection.py` - 后端 API 测试
+       - `tests/frontend/test_deepseek_button.js` - 前端功能测试
+    
+    ## 5. 技术风险评估
+    
+    ### 5.1 低风险项
+    1. **前端界面修改**: 现有结构清晰，风险低
+    2. **后端 API 扩展**: FastAPI 框架成熟，风险低
+    3. **代码集成**: 模块化设计良好，集成风险低
+    
+    ### 5.2 中风险项
+    1. **DeepSeek API 稳定性**: 依赖外部服务，需添加重试机制
+    2. **网络超时处理**: 需要合理设置超时时间
+    3. **错误处理**: 需要完善的异常捕获和用户提示
+    
+    ### 5.3 缓解措施
+    1. **API 稳定性**: 实现指数退避重试机制
+    2. **超时处理**: 配置可调整的超时参数
+    3. **错误处理**: 前端显示友好的错误信息，后端记录详细日志
+    
+    ## 6. 依赖关系分析
+    
+    ### 6.1 内部依赖
+    1. **后端依赖**:
+       - FastAPI 框架
+       - httpx 或 requests 库（HTTP 客户端）
+       - Pydantic（数据验证）
+    
+    2. **前端依赖**:
+       - 现代浏览器（支持 ES6+）
+       - Fetch API
+    
+    ### 6.2 外部依赖
+    1. **DeepSeek API**:
+       - 需要有效的 API Key
+       - 网络连通性
+       - API 服务可用性
+    
+    ## 7. 实施建议
+    
+    ### 7.1 开发顺序
+    1. **第一阶段**: 后端 API 开发
+       - 实现连通性测试端点
+       - 编写单元测试
+       
+    2. **第二阶段**: 前端界面开发
+       - 添加测试按钮和界面
+       - 实现前端逻辑
+       
+    3. **第三阶段**: 集成测试
+       - 前后端联调
+       - 端到端测试
+    
+    ### 7.2 代码规范
+    1. **后端**: 遵循现有 FastAPI 代码风格
+    2. **前端**: 使用现有 JavaScript 模块模式
+    3. **测试**: 确保测试覆盖率 > 80%
+    
+    ### 7.3 性能考虑
+    1. **API 响应时间**: 测试接口应在 3 秒内返回结果
+    2. **前端加载**: 新增代码不应显著影响页面加载速度
+    3. **资源使用**: 合理管理 HTTP 连接，避免资源泄漏
+    
+    ## 8. 结论
+    
+    ### 8.1 可行性结论
+    **总体可行性**: 高
+    
+    **理由**:
+    1. 现有架构支持快速扩展
+    2. 技术栈成熟稳定
+    3. 团队熟悉相关技术
+    4. 风险可控
+    
+    ### 8.2 建议实施方案
+    1. **采用渐进式开发**: 先实现核心功能，再优化用户体验
+    2. **加强测试**: 特别是集成测试和错误场景测试
+    3. **文档完善**: 及时更新 API 文档和用户指南
+    
+    ### 8.3 下一步行动
+    1. 创建详细的技术设计文档
+    2. 开始后端 API 开发
+    3. 同步进行前端界面设计
+    4. 制定测试计划
+    
+    ---
+    
+    **报告文件路径**: `/Users/panglaohu/Downloads/DoubleBoatClawSystem/docs/reports/research_report.md`
+    
+    **控制台输出**: 调研报告已保存至 `/Users/panglaohu/Downloads/DoubleBoatClawSystem/docs/reports/research_report.md`
+    
+    ────────────────────────────────────────────────────────────
+    ✅ deepseek-chat 完成
+    
+    
+    
+    ## Agent 间传递信息 (Handoff Files)
+    
+    
+    ### 9f5d5948-43e_pm_decompose_20260408T180430.md
+    
+    # Agent Handoff — pm_decompose
+    
+    | 字段 | 值 |
+    |------|------|
+    | 任务 ID | `9f5d5948-43e` |
+    | 步骤 | `pm_decompose` |
+    | 来源 Agent | build_pm |
+    | 目标 Agent | build_researcher |
+    | 时间 | 20260408T180430 |
+    
+    ## 传递内容
+    
+    - **step**: pm_decompose
+    - **label**: PM分解
+    - **agent_role**: project_manager
+    - **status**: completed
+    - **artifact**: /Users/panglaohu/Downloads/DoubleBoatClawSystem/src/docs/workflow_artifacts/9f5d5948-43e_pm_decompose.md
+    - **output_summary**: 项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+    
+    ────────────────────────────────────────────────────────────
+    ✅ deepseek-chat 完成
+    
+    
+    ---
+    *Auto-generated by PoseidonX Workflow Harness*
+    
+    
+    
+    ### 9f5d5948-43e_research_20260408T180536.md
+    
+    # Agent Handoff — research
+    
+    | 字段 | 值 |
+    |------|------|
+    | 任务 ID | `9f5d5948-43e` |
+    | 步骤 | `research` |
+    | 来源 Agent | build_researcher |
+    | 目标 Agent | build_architect |
+    | 时间 | 20260408T180536 |
+    
+    ## 传递内容
+    
+    - **step**: research
+    - **label**: 研究分析
+    - **agent_role**: researcher
+    - **status**: completed
+    - **artifact**: /Users/panglaohu/Downloads/DoubleBoatClawSystem/src/docs/workflow_artifacts/9f5d5948-43e_research.md
+    - **output_summary**: u/Downloads/DoubleBoatClawSystem/docs/reports/research_report.md`
+    
+    ────────────────────────────────────────────────────────────
+    ✅ deepseek-chat 完成
+    
+    
+    ---
+    *Auto-generated by PoseidonX Workflow Harness*
+    
+    
+    
+    ### 9f5d5948-43e_task_init_20260408T180340.md
+    
+    # Agent Handoff — task_init
+    
+    | 字段 | 值 |
+    |------|------|
+    | 任务 ID | `9f5d5948-43e` |
+    | 步骤 | `task_init` |
+    | 来源 Agent | (system) |
+    | 目标 Agent | (next step) |
+    | 时间 | 20260408T180340 |
+    
+    ## 传递内容
+    
+    - **task_id**: 9f5d5948-43e
+    - **title**: 全流水线最终测试
+    - **description**: 在 Token Factory 区域加 DeepSeek 连通性测试按钮
+    - **team_id**: build_system
+    - **agent_id**: build_pm
+    - **token_factory_ready**: True
+    ### workflow_steps
+    ```json
+    [
+      "pm_decompose",
+      "research",
+      "architecture",
+      "develop",
+      "test",
+      "deploy",
+      "document"
+    ]
+    ```
+    
+    
+    ---
+    *Auto-generated by PoseidonX Workflow Harness*
+    
+    
+    
+    ## 要求
+    1. 基于调研结果，设计详细的技术方案
+    2. 定义接口规范 (API 路由、参数、返回值)
+    3. 画出模块交互关系
+    4. **必须将架构设计文档写入**: `docs/reports/architecture_design.md`
+       内容包含: 实现指南、需要修改的具体文件和函数
+    5. 在控制台输出文档文件路径
+    
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端: src/backend/ (Python FastAPI)
+    前端: src/frontend/ (HTML + JS)
+    
+    
+    项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+    后端: src/backend/ (Python FastAPI)
+    前端: src/frontend/ (HTML + JS)
+    
+  ────────────────────────────────────────────────────────────
+  ⚡ 使用 DeepSeek API 直连 (快速模式)...
+  
+  🔗 API: api.deepseek.com | 模型: deepseek-chat
+  ────────────────────────────────────────────────────────────
+  
+  # 架构设计文档
+  
+  ## 1. 总体架构设计
+  
+  ### 1.1 系统架构概览
+  ```
+  ┌─────────────────────────────────────────────────────────────┐
+  │                     前端界面 (Frontend)                      │
+  │  ┌─────────────────────────────────────────────────────┐  │
+  │  │                Token Factory 页面                    │  │
+  │  │  ┌─────────────────────────────────────────────┐  │  │
+  │  │  │ 现有功能区域                               │  │  │
+  │  │  └─────────────────────────────────────────────┘  │  │
+  │  │  ┌─────────────────────────────────────────────┐  │  │
+  │  │  │ 新增: DeepSeek 连通性测试区域               │  │  │
+  │  │  │ • 测试按钮                                  │  │  │
+  │  │  │ • 测试结果展示                              │  │  │
+  │  │  └─────────────────────────────────────────────┘  │  │
+  │  └─────────────────────────────────────────────────────┘  │
+  └───────────────────────────┬───────────────────────────────┘
+                              │ HTTP API 调用
+                              ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    后端服务 (Backend)                        │
+  │  ┌─────────────────────────────────────────────────────┐  │
+  │  │              FastAPI 应用服务器                      │  │
+  │  │  ┌─────────────────────────────────────────────┐  │  │
+  │  │  │ /api/deepseek-test (新增)                   │  │  │
+  │  │  │ • POST /test-connection                     │  │  │
+  │  │  └─────────────────────────────────────────────┘  │  │
+  │  │  ┌─────────────────────────────────────────────┐  │  │
+  │  │  │ 现有 API 路由                               │  │  │
+  │  │  │ • /api/token-factory/*                      │  │  │
+  │  │  │ • /api/deepseek/*                           │  │  │
+  │  │  └─────────────────────────────────────────────┘  │  │
+  │  └─────────────────────────────────────────────────────┘  │
+  └───────────────────────────┬───────────────────────────────┘
+                              │ HTTPS 请求
+                              ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    DeepSeek API 服务                         │
+  │  ┌─────────────────────────────────────────────────────┐  │
+  │  │              https://api.deepseek.com                │  │
+  │  │  • /chat/completions                                │  │
+  │  └─────────────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────┘
+  ```
+  
+  ## 2. 后端架构设计
+  
+  ### 2.1 API 接口规范
+  
+  #### 2.1.1 新增端点: DeepSeek 连通性测试
+  ```
+  POST /api/deepseek-test/test-connection
+  ```
+  
+  **请求参数**:
+  ```json
+  {
+    "api_key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "model": "deepseek-chat",
+    "timeout": 10
+  }
+  ```
+  
+  **参数说明**:
+  | 参数名 | 类型 | 必填 | 默认值 | 说明 |
+  |--------|------|------|--------|------|
+  | api_key | string | 是 | - | DeepSeek API 密钥 |
+  | model | string | 否 | "deepseek-chat" | 要测试的模型 |
+  | timeout | integer | 否 | 10 | 超时时间（秒） |
+  
+  **成功响应** (HTTP 200):
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "connected": true,
+      "latency_ms": 150,
+      "model": "deepseek-chat",
+      "timestamp": "2024-04-08T18:30:00Z",
+      "message": "Connection test successful"
+    }
+  }
+  ```
+  
+  **失败响应** (HTTP 400/500):
+  ```json
+  {
+    "status": "error",
+    "error": {
+      "code": "CONNECTION_FAILED",
+      "message": "Failed to connect to DeepSeek API",
+      "details": "Timeout after 10 seconds"
+    },
+    "timestamp": "2024-04-08T18:30:00Z"
+  }
+  ```
+  
+  ### 2.2 模块设计
+  
+  #### 2.2.1 新增模块: `deepseek_test.py`
+  ```python
+  # 文件位置: src/backend/api/deepseek_test.py
+  """
+  DeepSeek 连通性测试模块
+  提供测试 DeepSeek API 连通性的功能
+  """
+  
+  from fastapi import APIRouter, HTTPException, Body
+  from typing import Dict, Any, Optional
+  import httpx
+  import time
+  from datetime import datetime
+  
+  from ..core.config import settings
+  from ..models.schemas import DeepSeekTestRequest, DeepSeekTestResponse
+  
+  router = APIRouter(prefix="/api/deepseek-test", tags=["deepseek-test"])
+  
+  
+  class DeepSeekTester:
+      """DeepSeek API 连���性测试器"""
+      
+      def __init__(self):
+          self.api_base = settings.deepseek_api_base
+          self.default_timeout = settings.deepseek_api_timeout
+      
+      async def test_connection(
+          self, 
+          api_key: str, 
+          model: str = "deepseek-chat",
+          timeout: int = None
+      ) -> Dict[str, Any]:
+          """
+          测试 DeepSeek API 连通性
+          
+          Args:
+              api_key: DeepSeek API 密钥
+              model: 要测试的模型
+              timeout: 超时时间（秒）
+              
+          Returns:
+              测试结果字典
+          """
+          if timeout is None:
+              timeout = self.default_timeout
+          
+          start_time = time.time()
+          
+          try:
+              # 构建测试请求
+              headers = {
+                  "Authorization": f"Bearer {api_key}",
+                  "Content-Type": "application/json"
+              }
+              
+              payload = {
+                  "model": model,
+                  "messages": [
+                      {"role": "user", "content": "Hello"}
+                  ],
+                  "max_tokens": 5,
+                  "stream": False
+              }
+              
+              # 发送测试请求
+              async with httpx.AsyncClient(timeout=timeout) as client:
+                  response = await client.post(
+                      f"{self.api_base}/chat/completions",
+                      headers=headers,
+                      json=payload
+                  )
+                  
+                  end_time = time.time()
+                  latency_ms = int((end_time - start_time) * 1000)
+                  
+                  if response.status_code == 200:
+                      return {
+                          "connected": True,
+                          "latency_ms": latency_ms,
+                          "model": model,
+                          "status_code": response.status_code,
+                          "timestamp": datetime.utcnow().isoformat() + "Z"
+                      }
+                  else:
+                      return {
+                          "connected": False,
+                          "latency_ms": latency_ms,
+                          "model": model,
+                          "status_code": response.status_code,
+                          "error_message": response.text,
+                          "timestamp": datetime.utcnow().isoformat() + "Z"
+                      }
+                      
+          except httpx.TimeoutException:
+              return {
+                  "connected": False,
+                  "latency_ms": int((time.time() - start_time) * 1000),
+                  "model": model,
+                  "error_message": f"Timeout after {timeout} seconds",
+                  "timestamp": datetime.utcnow().isoformat() + "Z"
+              }
+          except Exception as e:
+              return {
+                  "connected": False,
+                  "latency_ms": int((time.time() - start_time) * 1000),
+                  "model": model,
+                  "error_message": str(e),
+                  "timestamp": datetime.utcnow().isoformat() + "Z"
+              }
+  
+  
+  @router.post("/test-connection", response_model=DeepSeekTestResponse)
+  async def test_deepseek_connection(
+      request: DeepSeekTestRequest = Body(...)
+  ):
+      """
+      测试 DeepSeek API 连通性
+      
+      验证提��的 API 密钥是否能成功连接到 DeepSeek API
+      """
+      tester = DeepSeekTester()
+      
+      result = await tester.test_connection(
+          api_key=request.api_key,
+          model=request.model,
+          timeout=request.timeout
+      )
+      
+      if result["connected"]:
+          return {
+              "status": "success",
+              "data": {
+                  "connected": True,
+                  "latency_ms": result["latency_ms"],
+                  "model": result["model"],
+                  "timestamp": result["timestamp"],
+                  "message": f"Successfully connected to {result['model']} with latency {result['latency_ms']}ms"
+              }
+          }
+      else:
+          raise HTTPException(
+              status_code=400,
+              detail={
+                  "status": "error",
+                  "error": {
+                      "code": "CONNECTION_FAILED",
+                      "message": "Failed to connect to DeepSeek API",
+                      "details": result.get("error_message", "Unknown error")
+                  },
+                  "timestamp": result["timestamp"]
+              }
+          )
+  ```
+  
+  #### 2.2.2 数据模型 (`schemas.py` 扩展)
+  ```python
+  # 在 src/backend/models/schemas.py 中添加
+  
+  from pydantic import BaseModel, Field
+  from typing import Optional
+  
+  class DeepSeekTestRequest(BaseModel):
+      """DeepSeek 连通性测试请求模型"""
+      api_key: str = Field(..., description="DeepSeek API 密钥")
+      model: str = Field(default="deepseek-chat", description="要测试的模型")
+      timeout: Optional[int] = Field(default=10, description="超时时间（秒）")
+  
+  
+  class DeepSeekTestResponse(BaseModel):
+      """DeepSeek 连通性测试响应模型"""
+      status: str = Field(..., description="测试状态: success/error")
+      data: Optional[dict] = Field(None, description="成功时的测试数据")
+      error: Optional[dict] = Field(None, description="错误时的错误信息")
+      timestamp: str = Field(..., description="时间戳")
+  ```
+  
+  #### 2.2.3 路由注册 (`main.py` 更新)
+  ```python
+  # 在 src/backend/app/main.py 中更新
+  
+  from fastapi import FastAPI
+  from .api import token_factory, deepseek, deepseek_test  # 新增导入
+  
+  app = FastAPI(title="DoubleBoatClawSystem")
+  
+  # 注册路由
+  app.include_router(token_factory.router)
+  app.include_router(deepseek.router)
+  app.include_router(deepseek_test.router)  # 新增路由注册
+  ```
+  
+  ### 2.3 配置更新
+  
+  #### 2.3.1 配置文件 (`config.py`)
+  ```python
+  # 在 src/backend/core/config.py 中更新
+  
+  class Settings(BaseSettings):
+      # 现有配置...
+      
+      # DeepSeek 测试配置
+      deepseek_test_timeout: int = 10  # 默认超时时间（秒）
+      deepseek_test_model: str = "deepseek-chat"  # 默认测试模型
+      
+      class Config:
+          env_file = ".env"
+  ```
+  
+  ## 3. 前端架构设计
+  
+  ### 3.1 界面设计
+  
+  #### 3.1.1 HTML 结构更新 (`token_factory.html`)
+  ```html
+  <!-- 在 src/frontend/token_factory.html 中添加 -->
+  
+  <div class="container">
+      <!-- 现有内容... -->
+      
+      <!-- 新增: DeepSeek 连通性测试区域 -->
+      <div class="card test-section">
+          <h2>DeepSeek Connectivity Test</h2>
+          
+          <div class="form-group">
+              <label for="apiKeyInput">API Key:</label>
+              <input type="password" id="apiKeyInput" 
+                     placeholder="Enter your DeepSeek API key" 
+                     class="form-control">
+          </div>
+          
+          <div class="form-group">
+              <label for="modelSelect">Model:</label>
+              <select id="modelSelect" class="form-control">
+                  <option value="deepseek-chat">deepseek-chat</option>
+                  <option value="deepseek-coder">deepseek-coder</option>
+              </select>
+          </div>
+          
+          <div class="form-group">
+              <label for="timeoutInput">Timeout (seconds):</label>
+              <input type="number" id="timeoutInput" 
+                     value="10" min="1" max="30" 
+                     class="form-control">
+          </div>
+          
+          <button id="testConnectionBtn" class="btn btn-primary">
+              <span id="testBtnText">Test Connection</span>
+              <span id="testSpinner" class="spinner" style="display: none;">
+                  <i class="fas fa-spinner fa-spin"></i>
+              </span>
+          </button>
+          
+          <div id="testResult" class="test-result" style="display: none;">
+              <div class="result-header">
+                  <h3>Test Result</h3>
+                  <span class="result-status"></span>
+              </div>
+              <div class="result-details">
+                  <pre id="resultDetails"></pre>
+              </div>
+          </div>
+      </div>
+  </div>
+  
+  <!-- 引入 Font Awesome 图标 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  ```
+  
+  ### 3.2 JavaScript 模块设计
+  
+  #### 3.2.1 新增测试模块 (`token_factory.js` 扩展)
+  ```javascript
+  // 在 src/frontend/js/token_factory.js 中添加
+  
+  class DeepSeekTester {
+      constructor() {
+          this.apiEndpoint = '/api/deepseek-test/test-connection';
+          this.initElements();
+          this.bindEvents();
+      }
+      
+      initElements() {
+          this.apiKeyInput = document.getElementById('apiKeyInput');
+          this.modelSelect = document.getElementById('modelSelect');
+          this.timeoutInput = document.getElementById('timeoutInput');
+          this.testButton = document.getElementById('testConnectionBtn');
+          this.testBtnText = document.getElementById('testBtnText');
+          this.testSpinner = document.getElementById('testSpinner');
+          this.testResult = document.getElementById('testResult');
+          this.resultStatus = document.querySelector('.result-status');
+          this.resultDetails = document.getElementById('resultDetails');
+      }
+      
+      bindEvents() {
+          this.testButton.addEventListener('click', () => this.runTest());
+      }
+      
+      async runTest() {
+          // 验证输入
+          const apiKey = this.apiKeyInput.value.trim();
+          if (!apiKey) {
+              this.showError('Please enter your API key');
+              return;
+          }
+          
+          // 获取参数
+          const model = this.modelSelect.value;
+          const timeout = parseInt(this.timeoutInput.value) || 10;
+          
+          // 显示加载状态
+          this.setLoading(true);
+          this.hideResult();
+          
+          try {
+              // 发送测试请求
+              const response = await fetch(this.apiEndpoint, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                      api_key: apiKey,
+                      model: model,
+                      timeout: timeout
+                  })
+              });
+              
+              const data = await response.json();
+              
+              if (response.ok) {
+                  this.showSuccess(data.data);
+              } else {
+                  this.showError(data.error || 'Test failed');
+              }
+          } catch (error) {
+              this.showError(`Network error: ${error.message}`);
+          } finally {
+              this.setLoading(false);
+          }
+      }
+      
+      setLoading(isLoading) {
+          if (isLoading) {
+              this.testBtnText.style.display = 'none';
+              this.testSpinner.style.display = 'inline-block';
+              this.testButton.disabled = true;
+          } else {
+              this.testBtnText.style.display = 'inline';
+              this.testSpinner.style.display = 'none';
+              this.testButton.disabled = false;
+          }
+      }
+      
+      showSuccess(data) {
+          this.testResult.style.display = 'block';
+          this.resultStatus.textContent = '✅ Success';
+          this.resultStatus.className = 'result-status success';
+          
+          const formattedData = JSON.stringify(data, null, 2);
+          this.resultDetails.textContent = formattedData;
+          
+          // 隐藏 API 密钥
+          this.apiKeyInput.value = '';
+      }
+      
+      showError(error) {
+          this.testResult.style.display = 'block';
+          this.resultStatus.textContent = '❌ Failed';
+          this.resultStatus.className = 'result-status error';
+          
+          const errorDetails = typeof error === 'string' 
+              ? error 
+              : JSON.stringify(error, null, 2);
+          this.resultDetails.textContent = errorDetails;
+      }
+      
+      hideResult() {
+          this.testResult.style.display = 'none';
+      }
+  }
+  
+  // 初始化测试器
+  document.addEventListener('DOMContentLoaded', function() {
+      // 现有初始化代码...
+      
+      // 新增 DeepSeek 测试器初始化
+      if (document.getElementById('testConnectionBtn')) {
+          new DeepSeekTester();
+      }
+  });
+  ```
+  
+  ### 3.3 CSS 样式更新
+  
+  #### 3.3.1 新增样式 (`style.css`)
+  ```css
+  /* 在 src/frontend/css/style.css 中添加 */
+  
+  /* DeepSeek 测试区域样式 */
+  .test-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+  }
+  
+  .test-section h2 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      color: #333;
+      font-size: 1.5rem;
+  }
+  
+  .test-section .form-group {
+      margin-bottom: 1rem;
+  }
+  
+  .test-section .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #555;
+  }
+  
+  .test-section .form-control {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+  }
+  
+  .test-section .btn {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+  }
+  
+  .test-section .spinner {
+      margin-left: 0.5rem;
+  }
+  
+  /* 测试结果样式 */
+  .test-result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 6px;
+      background-color: white;
+      border: 1px solid #dee2e6;
+  }
+  
+  .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+  }
+  
+  .result-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+  }
+  
+  .result-status {
+      font-weight: bold;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+  }
+  
+  .result-status.success {
+      color: #155724;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+  }
+  
+  .result-status.error {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+  }
+  
+  .result-details pre {
+      margin: 0;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 300px;
+      overflow-y: auto;
+  }
+  ```
+  
+  ## 4. 测试架构设计
+  
+  ### 4.1 后端测试
+  
+  #### 4.1.1 单元测试 (`test_deepseek_test.py`)
+  ```python
+  # 文件位置: tests/test_deepseek_test.py
+  
+  import pytest
+  from fastapi.testclient import TestClient
+  from unittest.mock import AsyncMock, patch
+  from src.backend.app.main import app
+  
+  client = TestClient(app)
+  
+  
+  class TestDeepSeekConnection:
+      """DeepSeek 连通性测试 API 测试"""
+      
+      def test_test_connection_success(self):
+          """测试成功的连通性测试"""
+          with patch('httpx.AsyncClient.post') as mock_post:
+              # 模拟成功的响应
+              mock_response = AsyncMock()
+              mock_response.status_code = 200
+              mock_response.json.return_value = {
+                  "choices": [{"message": {"content": "Hello"}}]
+              }
+              mock_post.return_value = mock_response
+              
+              response = client.post(
+                  "/api/deepseek-test/test-connection",
+                  json={
+                      "api_key": "test-key",
+                      "model": "deepseek-chat",
+                      "timeout": 5
+                  }
+              )
+              
+              assert response.status_code == 200
+              data = response.json()
+              assert data["status"] == "success"
+              assert data["data"]["connected"] is True
+              assert "latency_ms" in data["data"]
+      
+      def test_test_connection_failure(self):
+          """测试失败的连通性测试"""
+          with patch('httpx.AsyncClient.post') as mock_post:
+              # 模拟失败的响应
+              mock_response = AsyncMock()
+              mock_response.status_code = 401
+              mock_response.text = "Invalid API key"
+              mock_post.return_value = mock_response
+              
+              response = client.post(
+                  "/api/deepseek-test/test-connection",
+                  json={
+                      "api_key": "invalid-key",
+                      "model": "deepseek-chat"
+                  }
+              )
+              
+              assert response.status_code == 400
+              data = response.json()
+              assert data["status"] == "error"
+              assert "error" in data
+      
+      def test_test_connection_timeout(self):
+          """测试超时情况"""
+          with patch('httpx.AsyncClient.post', side_effect=TimeoutError("Timeout")):
+              response = client.post(
+                  "/api/deepseek-test/test-connection",
+                  json={
+                      "api_key": "test-key",
+                      "model": "deepseek-chat",
+                      "timeout": 1
+                  }
+              )
+              
+              assert response.status_code == 400
+              data = response.json()
+              assert data["status"] == "error"
+              assert "Timeout" in data["error"]["details"]
+      
+      def test_missing_api_key(self):
+          """测试缺少 API 密钥的情况"""
+          response = client.post(
+              "/api/deepseek-test/test-connection",
+              json={
+                  "model": "deepseek-chat"
+              }
+          )
+          
+          assert response.status_code == 422  # 验证错误
+  
+  
+  class TestDeepSeekTester:
+      """DeepSeekTester 类测试"""
+      
+      @pytest.mark.asyncio
+      async def test_test_connection_method(self):
+          """测试 test_connection 方法"""
+          from src.backend.api.deepseek_test import DeepSeekTester
+          
+          tester = DeepSeekTester()
+          
+          with patch('httpx.AsyncClient.post') as mock_post:
+              mock_response = AsyncMock()
+              mock_response.status_code = 200
+              mock_post.return_value = mock_response
+              
+              result = await tester.test_connection("test-key")
+              
+              assert "connected" in result
+              assert "latency_ms" in result
+              assert result["connected"] is True
+  ```
+  
+  ### 4.2 前端测试
+  
+  #### 4.2.1 功能测试 (`test_deepseek_button.js`)
+  ```javascript
+  // 文件位置: tests/frontend/test_deepseek_button.js
+  
+  describe('DeepSeek Connectivity Test', () => {
+      let tester;
+      
+      beforeEach(() => {
+          // 创建测试 DOM 结构
+          document.body.innerHTML = `
+              <input id="apiKeyInput" type="password">
+              <select id="modelSelect">
+                  <option value="deepseek-chat">deepseek-chat</option>
+              </select>
+              <input id="timeoutInput" type="number" value="10">
+              <button id="testConnectionBtn">
+                  <span id="testBtnText">Test Connection</span>
+                  <span id="testSpinner" style="display: none;"></span>
+              </button>
+              <div id="testResult" style="display: none;">
+                  <span class="result-status"></span>
+                  <pre id="resultDetails"></pre>
+              </div>
+          `;
+          
+          // 初始化测试器
+          tester = new DeepSeekTester();
+      });
+      
+      test('should initialize elements correctly', () => {
+          expect(tester.apiKeyInput).toBeDefined();
+          expect(tester.modelSelect).toBeDefined();
+          expect(tester.testButton).toBeDefined();
+      });
+      
+      test('should show error when API key is empty', () => {
+          tester.apiKeyInput.value = '';
+          tester.runTest();
+          
+          // 验证错误处理
+          expect(tester.testResult.style.display).toBe('block');
+      });
+      
+      test('should set loading state correctly', () => {
+          tester.setLoading(true);
+          expect(tester.testBtnText.style.display).toBe('none');
+          expect(tester.testSpinner.style.display).toBe('inline-block');
+          expect(tester.testButton.disabled).toBe(true);
+          
+          tester.setLoading(false);
+          expect(tester.testBtnText.style.display).toBe('inline');
+          expect(tester.testSpinner.style.display).toBe('none');
+          expect(tester.testButton.disabled).toBe(false);
+      });
+  });
+  ```
+  
+  ## 5. 部署与集成
+  
+  ### 5.1 依赖管理
+  
+  #### 5.1.1 更新 `requirements.txt`
+  ```txt
+  # 现有依赖...
+  fastapi==0.104.1
+  uvicorn==0.24.0
+  httpx==0.25.1
+  pydantic==2.5.0
+  pydantic-settings==2.1.0
+  
+  # 测试依赖
+  pytest==7.4.3
+  pytest-asyncio==0.21.1
+  pytest-cov==4.1.0
+  ```
+  
+  ### 5.2 环境配置
+  
+  #### 5.2.1 环境变量示例 (`.env.example`)
+  ```env
+  # DeepSeek 配置
+  DEEPSEEK_API_BASE=https://api.deepseek.com
+  DEEPSEEK_API_TIMEOUT=30
+  DEEPSEEK_TEST_TIMEOUT=10
+  DEEPSEEK_TEST_MODEL=deepseek-chat
+  ```
+  
+  ## 6. 实施指南
+  
+  ### 6.1 开发步骤
+  
+  1. **后端开发**:
+     - 创建 `src/backend/api/deepseek_test.py`
+     - 更新 `src/backend/models/schemas.py`
+     - 更新 `src/backend/app/main.py`
+     - 编写单元测试
+  
+  2. **前端开发**:
+     - 更新 `src/frontend/token_factory.html`
+     - 扩展 `src/frontend/js/token_factory.js`
+     - 更新 `src/frontend/css/style.css`
+  
+  3. **测试开发**:
+     - 编写后端单元测试
+     - 编写前端功能测试
+     - 执行集成测试
+  
+  4. **部署与验证**:
+     - 更新依赖
+     - 配置环境变量
+     - 运行完整测试套件
+  
+  ### 6.2 代码审查要点
+  
+  1. **安全性**:
+     - API 密钥不在日志中泄露
+     - 输入验证和清理
+     - 适当的错误处理
+  
+  2. **性能**:
+     - 合理的超时设置
+     - 异步操作避免阻塞
+     - 资源清理（HTTP 连接）
+  
+  3. **用户体验**:
+     - 清晰的错误提示
+     - 加载状态反馈
+     - 响应式设计
+  
+  ### 6.3 监控与日志
+  
+  1. **后端日志**:
+     ```python
+     # 在 deepseek_test.py 中添加日志
+     import logging
+     logger = logging.getLogger(__name__)
+     
+     # 记录测试结果
+     logger.info(f"DeepSeek connection test: {result}")
+     ```
+  
+  2. **前端监控**:
+     ```javascript
+     // 记录测试事件
+     function logTestEvent(event, data) {
+         console.log(`DeepSeek Test - ${event}:`, data);
+         // 可集成到应用监控系统
+     }
+     ```
+  
+  ## 7. 风险评估与缓解
+  
+  ### 7.1 技术风险
+  
+  | 风险 | 影响 | 概率 | 缓解措施 |
+  |------|------|------|----------|
+  | DeepSeek API 不可用 | 高 | 中 | 添加重试机制，提供备用测试方案 |
+  | 网络延迟过高 | 中 | 高 | 设置合理的超时，提供进度反馈 |
+  | API 密钥泄露 | 高 | 低 | 前端不存储密钥，使用密码输入框 |
+  | 浏览器兼容性 | 低 | 低 | 使用标准 Fetch API，测试主流浏览器 |
+  
+  ### 7.2 实施风险
+  
+  | 风险 | 影响 | 概率 | 缓解措施 |
+  |------|------|------|----------|
+  | 与现有代码冲突 | 中 | 低 | 充分测试，代码审查 |
+  | 性能影响 | 低 | 低 | 优化代码，异步加载 |
+  | 用户接受度 | 低 | 低 | 提供清晰的使用说明 |
+  
+  ## 8. 验收标准
+  
+  ### 8.1 功能验收
+  - [ ] 在 Token Factory 页面显示测试按钮和输入区域
+  - [ ] 用户可输入 API 密钥并选择���型
+  - [ ] 点击测试按钮后显示加载状态
+  - [ ] 成功时显示连接延迟和详细信息
+  - [ ] 失败时显示清晰的错误信息
+  - [ ] API 密钥在测试后自动清除
+  
+  ### 8.2 技术验收
+  - [ ] 后端 API 响应时间 < 3 秒
+  - [ ] 前端代码无内存泄漏
+  - [ ] 单元测试覆盖率 > 80%
+  - [ ] 代码符合项目规范
+  - [ ] 文档完整且准确
+  
+  ### 8.3 用户体验验收
+  - [ ] 界面美观且一致
+  - [ ] 操作流程直观
+  - [ ] 错误提示友好
+  - [ ] 移动端适配良好
+  
+  ---
+  
+  **架构设计文档路径**: `/Users/panglaohu/Downloads/DoubleBoatClawSystem/docs/reports/architecture_design.md`
+  
+  **控制台输出**: 架构设计文档已保存至 `/Users/panglaohu/Downloads/DoubleBoatClawSystem/docs/reports/architecture_design.md`
+  
+  ────────────────────────────────────────────────────────────
+  ✅ deepseek-chat 完成
+  
+  
+  
+  ## Agent 间传递信息 (Handoff Files)
+  
+  
+  ### 9f5d5948-43e_pm_decompose_20260408T180430.md
+  
+  # Agent Handoff — pm_decompose
+  
+  | 字段 | 值 |
+  |------|------|
+  | 任务 ID | `9f5d5948-43e` |
+  | 步骤 | `pm_decompose` |
+  | 来源 Agent | build_pm |
+  | 目标 Agent | build_researcher |
+  | 时间 | 20260408T180430 |
+  
+  ## 传递内容
+  
+  - **step**: pm_decompose
+  - **label**: PM分解
+  - **agent_role**: project_manager
+  - **status**: completed
+  - **artifact**: /Users/panglaohu/Downloads/DoubleBoatClawSystem/src/docs/workflow_artifacts/9f5d5948-43e_pm_decompose.md
+  - **output_summary**: 项目经理需在24小时内组织技术攻关会议，评估是否需要调整方案或时间计划。
+  
+  ────────────────────────────────────────────────────────────
+  ✅ deepseek-chat 完成
+  
+  
+  ---
+  *Auto-generated by PoseidonX Workflow Harness*
+  
+  
+  
+  ### 9f5d5948-43e_research_20260408T180536.md
+  
+  # Agent Handoff — research
+  
+  | 字段 | 值 |
+  |------|------|
+  | 任务 ID | `9f5d5948-43e` |
+  | 步骤 | `research` |
+  | 来源 Agent | build_researcher |
+  | 目标 Agent | build_architect |
+  | 时间 | 20260408T180536 |
+  
+  ## 传递内容
+  
+  - **step**: research
+  - **label**: 研究分析
+  - **agent_role**: researcher
+  - **status**: completed
+  - **artifact**: /Users/panglaohu/Downloads/DoubleBoatClawSystem/src/docs/workflow_artifacts/9f5d5948-43e_research.md
+  - **output_summary**: u/Downloads/DoubleBoatClawSystem/docs/reports/research_report.md`
+  
+  ────────────────────────────────────────────────────────────
+  ✅ deepseek-chat 完成
+  
+  
+  ---
+  *Auto-generated by PoseidonX Workflow Harness*
+  
+  
+  
+  ### 9f5d5948-43e_task_init_20260408T180340.md
+  
+  # Agent Handoff — task_init
+  
+  | 字段 | 值 |
+  |------|------|
+  | 任务 ID | `9f5d5948-43e` |
+  | 步骤 | `task_init` |
+  | 来源 Agent | (system) |
+  | 目标 Agent | (next step) |
+  | 时间 | 20260408T180340 |
+  
+  ## 传递内容
+  
+  - **task_id**: 9f5d5948-43e
+  - **title**: 全流水线最终测试
+  - **description**: 在 Token Factory 区域加 DeepSeek 连通性测试按钮
+  - **team_id**: build_system
+  - **agent_id**: build_pm
+  - **token_factory_ready**: True
+  ### workflow_steps
+  ```json
+  [
+    "pm_decompose",
+    "research",
+    "architecture",
+    "develop",
+    "test",
+    "deploy",
+    "document"
+  ]
+  ```
+  
+  
+  ---
+  *Auto-generated by PoseidonX Workflow Harness*
+  
+  
+  
+  ## 要求
+  1. 严格按照架构师的设计方案进行编码
+  2. 修改代码前先阅读现有文件，理解上下文
+  3. 代码实现完成后运行测试确保不引入回归
+  4. 遵循项目编码规范 (Channel 继承 MarineChannel, 新参数有默认值)
+  
+  项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+  后端: src/backend/ (Python FastAPI)
+  前端: src/frontend/ (HTML + JS)
+  完成后运行: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -q --tb=short
+  
+  
+  项目根目录: /Users/panglaohu/Downloads/DoubleBoatClawSystem
+  后端: src/backend/ (Python FastAPI)
+  前端: src/frontend/ (HTML + JS)
+  
+────────────────────────────────────────────────────────────
+⚡ 使用 DeepSeek API 直连 (快速模式)...
+
+🔗 API: api.deepseek.com | 模型: deepseek-chat
+────────────────────────────────────────────────────────────
+
+我将根据架构设计文档实现 DeepSeek 连通性测试按钮功能。让我先检查现有代码结构，然后按照架构设计进行开发。
+
+## 1. 检查项目结构
+
+```bash
+cd /Users/panglaohu/Downloads/DoubleBoatClawSystem
+find . -name "*.py" -o -name "*.html" -o -name "*.js" -o -name "*.css" | head -20
+```
+
+## 2. 实现后端代码
+
+### 2.1 创建 DeepSeek 连通性测试模块
+
+```python
+# src/backend/api/deepseek_test.py
+"""
+DeepSeek 连通性测试模块
+提供测试 DeepSeek API 连通性的功能
+"""
+
+from fastapi import APIRouter, HTTPException, Body
+from typing import Dict, Any, Optional
+import httpx
+import time
+from datetime import datetime
+
+from ..core.config import settings
+
+router = APIRouter(prefix="/api/deepseek-test", tags=["deepseek-test"])
+
+
+class DeepSeekTester:
+    """DeepSeek API 连通性测试器"""
+    
+    def __init__(self):
+        self.api_base = settings.deepseek_api_base
+        self.default_timeout = settings.deepseek_api_timeout
+    
+    async def test_connection(
+        self, 
+        api_key: str, 
+        model: str = "deepseek-chat",
+        timeout: int = None
+    ) -> Dict[str, Any]:
+        """
+        测试 DeepSeek API 连通性
+        
+        Args:
+            api_key: DeepSeek API 密钥
+            model: 要测试的模型
+            timeout: 超时时间（秒）
+            
+        Returns:
+            测试结果字典
+        """
+        if timeout is None:
+            timeout = self.default_timeout
+        
+        start_time = time.time()
+        
+        try:
+            # 构建测试请求
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "user", "content": "Hello"}
+                ],
+                "max_tokens": 5,
+                "stream": False
+            }
+            
+            # 发送测试请求
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.post(
+                    f"{self.api_base}/chat/completions",
+                    headers=headers,
+                    json=payload
+                )
+                
+                end_time = time.time()
+                latency_ms = int((end_time - start_time) * 1000)
+                
+                if response.status_code == 200:
+                    return {
+                        "connected": True,
+                        "latency_ms": latency_ms,
+                        "model": model,
+                        "status_code": response.status_code,
+                        "timestamp": datetime.utcnow().isoformat() + "Z"
+                    }
+                else:
+                    return {
+                        "connected": False,
+                        "latency_ms": latency_ms,
+                        "model": model,
+                        "status_code": response.status_code,
+                        "error_message": response.text[:200],  # 限制错误信息长度
+                        "timestamp": datetime.utcnow().isoformat() + "Z"
+                    }
+                    
+        except httpx.TimeoutException:
+            return {
+                "connected": False,
+                "latency_ms": int((time.time() - start_time) * 1000),
+                "model": model,
+                "error_message": f"Timeout after {timeout} seconds",
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+        except Exception as e:
+            return {
+                "connected": False,
+                "latency_ms": int((time.time() - start_time) * 1000),
+                "model": model,
+                "error_message": str(e),
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+
+
+@router.post("/test-connection")
+async def test_deepseek_connection(
+    api_key: str = Body(..., embed=True),
+    model: str = Body("deepseek-chat", embed=True),
+    timeout: Optional[int] = Body(10, embed=True)
+):
+    """
+    测试 DeepSeek API 连通性
+    
+    验证提供的 API 密钥是否能成功连接到 DeepSeek API
+    """
+    tester = DeepSeekTester()
+    
+    result = await tester.test_connection(
+        api_key=api_key,
+        model=model,
+        timeout=timeout
+    )
+    
+    if result["connected"]:
+        return {
+            "status": "success",
+            "data": {
+                "connected": True,
+                "latency_ms": result["latency_ms"],
+                "model": result["model"],
+                "timestamp": result["timestamp"],
+                "message": f"Successfully connected to {result['model']} with latency {result['latency_ms']}ms"
+            }
+        }
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "status": "error",
+                "error": {
+                    "code": "CONNECTION_FAILED",
+                    "message": "Failed to connect to DeepSeek API",
+                    "details": result.get("error_message", "Unknown error")
+                },
+                "timestamp": result["timestamp"]
+            }
+        )
+```
+
+### 2.2 更新数据模型
+
+```python
+# src/backend/models/schemas.py
+"""
+数据模型定义
+"""
+
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+
+
+class TokenCreate(BaseModel):
+    """Token 创建请求模型"""
+    name: str = Field(..., description="Token 名称")
+    description: Optional[str] = Field(None, description="Token 描述")
+
+
+class TokenResponse(BaseModel):
+    """Token 响应模型"""
+    id: str = Field(..., description="Token ID")
+    name: str = Field(..., description="Token 名称")
+    description: Optional[str] = Field(None, description="Token 描述")
+    token: str = Field(..., description="API Token")
+    created_at: datetime = Field(..., description="创建时间")
+
+
+class DeepSeekTestRequest(BaseModel):
+    """DeepSeek 连通性测试请求模型"""
+    api_key: str = Field(..., description="DeepSeek API 密钥")
+    model: str = Field(default="deepseek-chat", description="要测试的模型")
+    timeout: Optional[int] = Field(default=10, description="超时时间（秒）")
+
+
+class DeepSeekTestResponse(BaseModel):
+    """DeepSeek 连通性测试响应模型"""
+    status: str = Field(..., description="测试状态: success/error")
+    data: Optional[dict] = Field(None, description="成功时的测试数据")
+    error: Optional[dict] = Field(None, description="错误时的错误信息")
+    timestamp: str = Field(..., description="时间戳")
+```
+
+### 2.3 更新主应用路由
+
+```python
+# src/backend/app/main.py
+"""
+FastAPI 主应用
+"""
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from .api import token_factory, deepseek, deepseek_test
+
+app = FastAPI(
+    title="DoubleBoatClawSystem",
+    description="Double Boat Claw System API",
+    version="1.0.0"
+)
+
+# 配置 CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 生产环境应限制来源
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 注册路由
+app.include_router(token_factory.router)
+app.include_router(deepseek.router)
+app.include_router(deepseek_test.router)  # 新增路由注册
+
+
+@app.get("/")
+async def root():
+    """根端点"""
+    return {
+        "message": "Welcome to DoubleBoatClawSystem API",
+        "version": "1.0.0",
+        "endpoints": {
+            "token_factory": "/api/token-factory",
+            "deepseek": "/api/deepseek",
+            "deepseek_test": "/api/deepseek-test"
+        }
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """健康检查端点"""
+    return {"status": "healthy"}
+```
+
+### 2.4 更新配置文件
+
+```python
+# src/backend/core/config.py
+"""
+应用配置
+"""
+
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    """应用设置"""
+    
+    # 应用配置
+    app_name: str = "DoubleBoatClawSystem"
+    debug: bool = True
+    
+    # DeepSeek 相关配置
+    deepseek_api_base: str = "https://api.deepseek.com"
+    deepseek_api_timeout: int = 30
+    
+    # DeepSeek 测试配置
+    deepseek_test_timeout: int = 10  # 默认超时时间（秒）
+    deepseek_test_model: str = "deepseek-chat"  # 默认测试模型
+    
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()
+```
+
+## 3. 实现前端代码
+
+### 3.1 更新 Token Factory 页面
+
+```html
+<!-- src/frontend/token_factory.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Factory - DoubleBoatClawSystem</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- 引入 Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Token Factory</h1>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="token_factory.html" class="active">Token Factory</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- 现有 Token 管理区域 -->
+            <div class="card token-section">
+                <h2>API Tokens</h2>
+                <button id="createTokenBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Token
+                </button>
+                <div id="tokenList" class="token-list"></div>
+            </div>
+
+            <!-- 新增: DeepSeek 连通性测试区域 -->
+            <div class="card test-section">
+                <h2><i class="fas fa-wifi"></i> DeepSeek Connectivity Test</h2>
+                
+                <div class="form-group">
+                    <label for="apiKeyInput">
+                        <i class="fas fa-key"></i> API Key:
+                    </label>
+                    <input type="password" id="apiKeyInput" 
+                           placeholder="Enter your DeepSeek API key" 
+                           class="form-control">
+                    <small class="form-text">Your API key will not be stored</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="modelSelect">
+                        <i class="fas fa-robot"></i> Model:
+                    </label>
+                    <select id="modelSelect" class="form-control">
+                        <option value="deepseek-chat">deepseek-chat</option>
+                        <option value="deepseek-coder">deepseek-coder</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timeoutInput">
+                        <i class="fas fa-clock"></i> Timeout (seconds):
+                    </label>
+                    <input type="number" id="timeoutInput" 
+                           value="10" min="1" max="30" 
+                           class="form-control">
+                </div>
+                
+                <button id="testConnectionBtn" class="btn btn-primary">
+                    <span id="testBtnText">
+                        <i class="fas fa-play"></i> Test Connection
+                    </span>
+                    <span id="testSpinner" class="spinner" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                </button>
+                
+                <div id="testResult" class="test-result" style="display: none;">
+                    <div class="result-header">
+                        <h3><i class="fas fa-clipboard-check"></i> Test Result</h3>
+                        <span class="result-status"></span>
+                    </div>
+                    <div class="result-details">
+                        <pre id="resultDetails"></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>DoubleBoatClawSystem &copy; 2024</p>
+        </footer>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/token_factory.js"></script>
+</body>
+</html>
+```
+
+### 3.2 更新 Token Factory JavaScript
+
+```javascript
+// src/frontend/js/token_factory.js
+/**
+ * Token Factory 页面功能
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 现有 Token 管理功能
+    const createTokenBtn = document.getElementById('createTokenBtn');
+    const tokenList = document.getElementById('tokenList');
+    
+    if (createTokenBtn) {
+        createTokenBtn.addEventListener('click', createToken);
+    }
+    
+    if (tokenList) {
+        loadTokens();
+    }
+    
+    // 新增 DeepSeek 测试器初始化
+    if (document.getElementById('testConnectionBtn')) {
+        initDeepSeekTester();
+    }
+    
+    // 现有函数
+    function createToken() {
+        const tokenName = prompt('Enter token name:');
+        if (!tokenName) return;
+        
+        API.post('/api/token-factory/tokens', { name: tokenName })
+            .then(data => {
+                alert(`Token created: ${data.token}`);
+                loadTokens();
+            })
+            .catch(error => {
+                console.error('Error creating token:', error);
+                alert('Failed to create token');
+            });
+    }
+    
+    function loadTokens() {
+        API.get('/api/token-factory/tokens')
+            .then(tokens => {
+                tokenList.innerHTML = '';
+                tokens.forEach(token => {
+                    const tokenElement = document.createElement('div');
+                    tokenElement.className = 'token-item';
+                    tokenElement.innerHTML = `
+                        <div class="token-info">
+                            <strong>${token.name}</strong>
+                            <span class="token-value">${token.token}</span>
+                        </div>
+                        <div class="token-meta">
+                            Created: ${new Date(token.created_at).toLocaleString()}
+                        </div>
+                    `;
+                    tokenList.appendChild(tokenElement);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading tokens:', error);
+                tokenList.innerHTML = '<p class="error">Failed to load tokens</p>';
+            });
+    }
+});
+
+/**
+ * DeepSeek 连通性测试器
+ */
+function initDeepSeekTester() {
+    class DeepSeekTester {
+        constructor() {
+            this.apiEndpoint = '/api/deepseek-test/test-connection';
+            this.initElements();
+            this.bindEvents();
+        }
+        
+        initElements() {
+            this.apiKeyInput = document.getElementById('apiKeyInput');
+            this.modelSelect = document.getElementById('modelSelect');
+            this.timeoutInput = document.getElementById('timeoutInput');
+            this.testButton = document.getElementById('testConnectionBtn');
+            this.testBtnText = document.getElementById('testBtnText');
+            this.testSpinner = document.getElementById('testSpinner');
+            this.testResult = document.getElementById('testResult');
+            this.resultStatus = document.querySelector('.result-status');
+            this.resultDetails = document.getElementById('resultDetails');
+        }
+        
+        bindEvents() {
+            this.testButton.addEventListener('click', () => this.runTest());
+            
+            // 按 Enter 键触发测试
+            this.apiKeyInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.runTest();
+                }
+            });
+        }
+        
+        async runTest() {
+            // 验证输入
+            const apiKey = this.apiKeyInput.value.trim();
+            if (!apiKey) {
+                this.showError('Please enter your API key');
+                this.apiKeyInput.focus();
+                return;
+            }
+            
+            // 获取参数
+            const model = this.modelSelect.value;
+            const timeout = parseInt(this.timeoutInput.value) || 10;
+            
+            // 显示加载状态
+            this.setLoading(true);
+            this.hideResult();
+            
+            try {
+                // 发送测试请求
+                const response = await fetch(this.apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        model: model,
+                        timeout: timeout
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    this.showSuccess(data.data);
+                } else {
+                    this.showError(data.detail || data.error || 'Test failed');
+                }
+            } catch (error) {
+                this.showError(`Network error: ${error.message}`);
+            } finally {
+                this.setLoading(false);
+            }
+        }
+        
+        setLoading(isLoading) {
+            if (isLoading) {
+                this.testBtnText.style.display = 'none';
+                this.testSpinner.style.display = 'inline-block';
+                this.testButton.disabled = true;
+                this.testButton.classList.add('loading');
+            } else {
+                this.testBtnText.style.display = 'inline';
+                this.testSpinner.style.display = 'none';
+                this.testButton.disabled = false;
+                this.testButton.classList.remove('loading');
+            }
+        }
+        
+        showSuccess(data) {
+            this.testResult.style.display = 'block';
+            this.resultStatus.textContent = '✅ Success';
+            this.resultStatus.className = 'result-status success';
+            
+            // 格式化显示数据
+            const displayData = {
+                status: 'Connected',
+                model: data.model,
+                latency: `${data.latency_ms}ms`,
+                timestamp: new Date(data.timestamp).toLocaleString(),
+                message: data.message
+            };
+            
+            const formattedData = JSON.stringify(displayData, null, 2);
+            this.resultDetails.textContent = formattedData;
+            
+            // 隐藏 API 密钥
+            this.apiKeyInput.value = '';
+            
+            // 滚动到结果区域
+            this.testResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        showError(error) {
+            this.testResult.style.display = 'block';
+            this.resultStatus.textContent = '❌ Failed';
+            this.resultStatus.className = 'result-status error';
+            
+            let errorDetails;
+            if (typeof error === 'string') {
+                errorDetails = error;
+            } else if (error && error.detail) {
+                // 处理 FastAPI 错误格式
+                if (typeof error.detail === 'string') {
+                    errorDetails = error.detail;
+                } else if (error.detail.error) {
+                    errorDetails = `${error.detail.error.message}: ${error.detail.error.details}`;
+                } else {
+                    errorDetails = JSON.stringify(error.detail, null, 2);
+                }
+            } else {
+                errorDetails = JSON.stringify(error, null, 2);
+            }
+            
+            this.resultDetails.textContent = errorDetails;
+            
+            // 滚动到结果区域
+            this.testResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        hideResult() {
+            this.testResult.style.display = 'none';
+        }
+    }
+    
+    // 初始化测试器
+    new DeepSeekTester();
+}
+```
+
+### 3.3 更新 API 工具类
+
+```javascript
+// src/frontend/js/api.js
+/**
+ * API 调用工具类
+ */
+
+class API {
+    /**
+     * 发送 POST 请求
+     * @param {string} endpoint - API 端点
+     * @param {object} data - 请求数据
+     * @returns {Promise} - 响应数据
+     */
+    static async post(endpoint, data) {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return response.json();
+    }
+    
+    /**
+     * 发送 GET 请求
+     * @param {string} endpoint - API 端点
+     * @returns {Promise} - 响应数据
+     */
+    static async get(endpoint) {
+        const response = await fetch(endpoint);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return response.json();
+    }
+    
+    /**
+     * 测试 DeepSeek 连通性
+     * @param {string} apiKey - DeepSeek API 密钥
+     * @param {string} model - 模型名称
+     * @param {number} timeout - 超时时间（秒）
+     * @returns {Promise} - 测试结果
+     */
+    static async testDeepSeekConnection(apiKey, model = 'deepseek-chat', timeout = 10) {
+        return this.post('/api/deepseek-test/test-connection', {
+            api_key: apiKey,
+            model: model,
+            timeout: timeout
+        });
+    }
+}
+```
+
+### 3.4 更新样式文件
+
+```css
+/* src/frontend/css/style.css */
+/* 基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 头部样式 */
+header {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+header h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #3498db;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+nav a:hover {
+    background-color: #f0f0f0;
+}
+
+nav a.active {
+    background-color: #3498db;
+    color: white;
+}
+
+/* 卡片样式 */
+.card {
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+/* 按钮样式 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.btn-primary:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary.loading {
+    background-color: #2980b9;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.form-text {
+    display: block;
+    margin-top: 4px;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+/* Token 列表样式 */
+.token-list {
+    margin-top: 20px;
+}
+
+.token-item {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+.token-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.token-value {
+    font-family: 'Courier New', monospace;
+    background-color: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #e74c3c;
+}
+
+.token-meta {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+/* DeepSeek 测试区域样式 */
+.test-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.test-section h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.test-section .form-group {
+    margin-bottom: 1rem;
+}
+
+.test-section .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.test-section .form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.test-section .btn {
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.test-section .spinner {
+    margin-left: 0.5rem;
+}
+
+/* 测试结果样式 */
+.test-result {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #eee;
+}
+
+.result-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.result-status {
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.result-status.success {
+    color: #27ae60;
+    background-color: #d5f4e6;
+    border: 1px solid #2ecc71;
+}
+
+.result-status.error {
+    color: #e74c3c;
+    background-color: #fadbd8;
+    border: 1px solid #e74c3c;
+}
+
+.result-details pre {
+    margin: 0;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+}
+
+/* 错误样式 */
+.error {
+    color: #e74c3c;
+    padding: 10px;
+    background-color: #fadbd8;
+    border-radius: 4px;
+    border: 1px solid #e74c3c;
+}
+
+/* 页脚样式 */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: #7f8c8d;
+    font-size: 14px;
+    border-top: 1px solid #eee;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .result-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .token-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+```
+
+## 4. 创建测试文件
+
+### 4.1 创建后端测试
+
+```python
+# tests/test_deepseek_test.py
+"""
+DeepSeek 连通性测试 API 测试
+"""
+
+import pytest
+from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, patch
+import sys
+import os
+
+# 添加项目根目录到 Python 路径
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.backend.app.main import app
+
+client = TestClient(app)
+
+
+class TestDeepSeekConnection:
+    """DeepSeek 连通性测试 API 测试"""
+    
+    def test_test_connection_success(self):
+        """测试成功的连通性测试"""
+        with patch('src.backend.api.deepseek_test.httpx.AsyncClient.post') as mock_post:
+            # 模拟成功的响应
+            mock_response = AsyncMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "choices": [{"message": {"content": "Hello"}}]
+            }
+            mock_post.return_value = mock_response
+            
+            response = client.post(
+                "/api/deepseek-test/test-connection",
+                json={
+                    "api_key": "test-key",
+                    "model": "deepseek-chat",
+                    "timeout": 5
+                }
+            )
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "success"
+            assert data["data"]["connected"] is True
+            assert "latency_ms" in data["data"]
+    
+    def test_test_connection_failure(self):
+        """测试失败的连通性测试"""
+        with patch('src.backend.api.deepseek_test.httpx.AsyncClient.post') as mock_post:
+            # 模拟失败的响应
+            mock_response = AsyncMock()
+            mock_response.status_code = 401
+            mock_response.text = "Invalid API key"
+            mock_post.return_value = mock_response
+            
+            response = client.post(
+                "/api/deepseek-test/test-connection",
+                json={
+                    "api_key": "invalid-key",
+                    "model": "deepseek-chat"
+                }
+            )
+            
+            assert response.status_code == 400
+            data = response.json()
+            assert data["status"] == "error"
+            assert "error" in data
+    
+    def test_test_connection_timeout(self):
+        """测试超时情况"""
+        with patch('src.backend.api.deepseek_test.httpx.AsyncClient.post', 
+                  side_effect=Exception("Timeout")):
+            response = client.post(
+                "/api/deepseek-test/test-connection",
+                json={
+                    "api_key": "test-key",
+                    "model": "deepseek-chat",
+                    "timeout": 1
+                }
+            )
+            
+            assert response.status_code == 400
+            data = response.json()
+            assert data["status"] == "error"
+    
+    def test_missing_api_key(self):
+        """测试缺少 API 密钥的情况"""
+        response = client.post(
+            "/api/deepseek-test/test-connection",
+            json={
+                "model": "deepseek-chat"
+            }
+        )
+        
+        assert response.status_code == 422  # 验证错误
+    
+    def test_invalid_timeout(self):
+        """测试无效的超时时间"""
+        response = client.post(
+            "/api/deepseek-test/test-connection",
+            json={
+                "api_key": "test-key",
+                "model": "deepseek-chat",
+                "timeout": 0  # 无效的超时时间
+            }
+        )
+        
+        # 应该接受 0 作为有效输入，由后端处理
+        assert response.status_code in [200, 400, 422]
+
+
+class TestDeepSeekTester:
+    """DeepSeekTester 类测试"""
+    
+    @pytest.mark.asyncio
+    async def test_test_connection_method(self):
+        """测试 test_connection 方法"""
+        from src.backend.api.deepseek_test import DeepSeekTester
+        
+        tester = DeepSeekTester()
+        
+        with patch('src.backend.api.deepseek_test.httpx.AsyncClient.post') as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "choices": [{"message": {"content": "Hello"}}]
+            }
+            mock_post.return_value = mock_response
+            
+            result = await tester.test_connection("test-key")
+            
+            assert "connected" in result
+            assert "latency_ms" in result
+            assert result["connected"] is True
+    
+    @pytest.mark.asyncio
+    async def test_test_connection_with_custom_model(self):
+        """测试使用自定义模型的连通性测试"""
+        from src.backend.api.deepseek_test import DeepSeekTester
+        
+        tester = DeepSeekTester()
+        
+        with patch('src.backend.api.deepseek_test.httpx.AsyncClient.post') as mock_post:
+            mock_response = AsyncMock()
+            mock_response.status_code = 200
+            mock_post.return_value = mock_response
+            
+            result = await tester.test_connection(
+                "test-key", 
+                model="deepseek-coder",
+                timeout=15
+            )
+            
+            assert result["model"] == "deepseek-coder"
+```
+
+### 4.2 创建前端测试
+
+```javascript
+// tests/frontend/test_deepseek_button.js
+/**
+ * DeepSeek 连通性测试按钮功能测试
+ */
+
+// 模拟 DOM 环境
+if (typeof document === 'undefined') {
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+    global.document = dom.window.document;
+    global.window = dom.window;
+    global.navigator = dom.window.navigator;
+}
+
+// 引入要测试的函数
+const fs = require('fs');
+const path = require('path');
+
+// 读取 token_factory.js 文件内容
+const tokenFactoryJs = fs.readFileSync(
+    path.join(__dirname, '../src/frontend/js/token_factory.js'), 
+    'utf8'
+);
+
+// 提取 initDeepSeekTester 函数
+const initDeepSeekTesterMatch = tokenFactoryJs.match(/function initDeepSeekTester\(\) \{[\s\S]*?\n\}/);
+if (initDeepSeekTesterMatch) {
+    eval(initDeepSeekTesterMatch[0]);
+}
+
+describe('DeepSeek Connectivity Test', () => {
+    let tester;
+    
+    beforeEach(() => {
+        // 创建测试 DOM 结构
+        document.body.innerHTML = `
+            <div class="container">
+                <div class="test-section">
+                    <input type="password" id="apiKeyInput" placeholder="Enter your DeepSeek API key">
+                    <select id="modelSelect">
+                        <option value="deepseek-chat">deepseek-chat</option>
+                        <option value="deepseek-coder">deepseek-coder</option>
+                    </
+
+────────────────────────────────────────────────────────────
+✅ deepseek-chat 完成

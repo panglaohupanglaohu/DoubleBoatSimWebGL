@@ -9,11 +9,14 @@ max_concurrency workers.
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+
+logger = logging.getLogger("task_engine")
 
 
 class TaskStatus(Enum):
@@ -100,6 +103,17 @@ class TaskEngine:
         self._running = False
         self._callbacks: List[StatusCallback] = []
         self._lock = asyncio.Lock()
+        self._executor: Optional[Callable] = None  # Set externally for auto-execution
+
+    def set_executor(self, executor: Callable) -> None:
+        """Register an external async executor callback.
+
+        The callback signature: ``async def executor(task: AgentTask) -> Any``
+        It will be awaited inside ``_execute``.  If it returns a non-None value
+        that value is stored as ``task.result``.
+        """
+        self._executor = executor
+        logger.info("TaskEngine: executor registered — %s", getattr(executor, "__name__", repr(executor)))
 
     async def start(self) -> None:
         if self._running:
@@ -124,7 +138,10 @@ class TaskEngine:
     async def submit_task(self, task: AgentTask) -> AgentTask:
         async with self._lock:
             self._tasks[task.task_id] = task
-        await self._enqueue_if_ready(task.task_id)
+        # Only auto-execute tasks that have an executor callback registered;
+        # otherwise keep them in PENDING for manual/cross-team workflows.
+        if self._executor:
+            await self._enqueue_if_ready(task.task_id)
         return task
 
     async def submit_batch(self, tasks: List[AgentTask]) -> List[AgentTask]:
@@ -153,6 +170,53 @@ class TaskEngine:
             task.status = TaskStatus.CANCELLED
             task.completed_at = datetime.now(timezone.utc).isoformat()
             self._fire_callbacks(task, old, TaskStatus.CANCELLED)
+        return task
+
+    async def complete_task(self, task_id: str, result: Any = None) -> Optional[AgentTask]:
+        """Manually mark a task as completed (for human/external workflows)."""
+        task = self._tasks.get(task_id)
+        if task is None:
+            return None
+        if task.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
+            old = task.status
+            task.status = TaskStatus.COMPLETED
+            task.completed_at = datetime.now(timezone.utc).isoformat()
+            if result is not None:
+                task.result = result
+            else:
+                task.result = {"message": f"Task '{task.title}' completed"}
+            self._fire_callbacks(task, old, TaskStatus.COMPLETED)
+            self._cascade_dependents()
+        return task
+
+    async def start_task(self, task_id: str) -> Optional[AgentTask]:
+        """Manually mark a task as running."""
+        task = self._tasks.get(task_id)
+        if task is None:
+            return None
+        if task.status == TaskStatus.PENDING:
+            old = task.status
+            task.status = TaskStatus.RUNNING
+            task.started_at = datetime.now(timezone.utc).isoformat()
+            self._fire_callbacks(task, old, TaskStatus.RUNNING)
+        return task
+
+    async def fail_task(self, task_id: str, error: str = "") -> Optional[AgentTask]:
+        """Manually mark a task as failed."""
+        task = self._tasks.get(task_id)
+        if task is None:
+            return None
+        if task.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
+            old = task.status
+            task.status = TaskStatus.FAILED
+            task.error = error
+            task.completed_at = datetime.now(timezone.utc).isoformat()
+            self._fire_callbacks(task, old, TaskStatus.FAILED)
+        return task
+
+    async def delete_task(self, task_id: str) -> Optional[AgentTask]:
+        """Permanently remove a task from the engine."""
+        task = self._tasks.pop(task_id, None)
         return task
 
     def stats(self) -> Dict[str, Any]:
@@ -208,13 +272,26 @@ class TaskEngine:
         task.started_at = datetime.now(timezone.utc).isoformat()
         self._fire_callbacks(task, old_status, TaskStatus.RUNNING)
         try:
-            await asyncio.sleep(0)
+            if self._executor:
+                logger.info("TaskEngine: executing task %s (%s) via registered executor",
+                            task.task_id, task.title)
+                result = await self._executor(task)
+                if result is not None:
+                    task.result = result
+                elif task.result is None:
+                    task.result = {"message": f"Task '{task.title}' executed by executor"}
+            else:
+                logger.warning("TaskEngine: no executor registered for task %s (%s) — "
+                               "marking completed without real work",
+                               task.task_id, task.title)
+                await asyncio.sleep(0)
+                if task.result is None:
+                    task.result = {"message": f"Task '{task.title}' completed (no executor)"}
             task.status = TaskStatus.COMPLETED
             task.completed_at = datetime.now(timezone.utc).isoformat()
-            if task.result is None:
-                task.result = {"message": f"Task '{task.title}' completed"}
             self._fire_callbacks(task, TaskStatus.RUNNING, TaskStatus.COMPLETED)
         except Exception as exc:
+            logger.error("TaskEngine: task %s failed — %s", task.task_id, exc, exc_info=True)
             task.status = TaskStatus.FAILED
             task.error = str(exc)
             task.completed_at = datetime.now(timezone.utc).isoformat()

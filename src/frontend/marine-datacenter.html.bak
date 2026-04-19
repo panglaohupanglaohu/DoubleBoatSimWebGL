@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="ob-title" content="船载数据中心" />
+<meta name="ob-subtitle" content="AI Energy Manager · First-Principles" />
+<title>Marine DataCenter — AI 能耗管理 (第一性原理)</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+  :root {
+    --bg-0: #04070d;
+    --bg-1: #0a1220;
+    --bg-2: #111e34;
+    --grid: rgba(56, 189, 248, 0.10);
+    --line: rgba(125, 211, 252, 0.20);
+    --accent: #38bdf8;
+    --accent-2: #06ffa5;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --text: #e2f2ff;
+    --muted: #6b8cae;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: 'SF Mono', 'Roboto Mono', 'Menlo', monospace; color: var(--text); }
+  body {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(56,189,248,0.10), transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(6,255,165,0.08), transparent 50%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 60%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+  /* Animated grid backdrop */
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at 50% 50%, black 0%, transparent 90%);
+  }
+  .container { position: relative; z-index: 1; max-width: 1680px; margin: 0 auto; padding: 18px 24px; }
+
+  /* HUD topbar */
+  .hud {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px; border: 1px solid var(--line); border-radius: 14px;
+    background: linear-gradient(135deg, rgba(15,32,55,0.7), rgba(8,18,34,0.7));
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px rgba(56,189,248,0.10), inset 0 0 30px rgba(6,255,165,0.04);
+  }
+  .hud .brand { display:flex; align-items:center; gap:14px; }
+  .hud .logo {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent));
+    box-shadow: 0 0 16px var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 22px; font-weight: 700; color: #021018;
+    animation: spin 12s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hud h1 { margin: 0; font-size: 20px; letter-spacing: 1px; font-weight: 600; }
+  .hud .sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; }
+  .hud .pills { display:flex; gap:10px; align-items:center; }
+  .pill {
+    padding: 6px 12px; border-radius: 999px; font-size: 11px; letter-spacing: 1px;
+    border: 1px solid var(--line); background: rgba(56,189,248,0.08);
+    color: var(--accent);
+  }
+  .pill.live { background: rgba(6,255,165,0.10); color: var(--accent-2); border-color: rgba(6,255,165,0.4); }
+  .pill.live::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-2); margin-right:6px; box-shadow:0 0 8px var(--accent-2); animation:blink 1.5s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* KPI strip */
+  .kpi-strip { display:grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin: 18px 0; }
+  .kpi {
+    padding: 14px 18px; border-radius: 12px;
+    border: 1px solid var(--line);
+    background: linear-gradient(135deg, rgba(15,32,55,0.55), rgba(10,22,42,0.55));
+    position: relative; overflow: hidden;
+  }
+  .kpi::after {
+    content: ''; position: absolute; bottom: 0; left: 0; height: 2px; width: 100%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scan 3s infinite;
+  }
+  @keyframes scan { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+  .kpi .label { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .kpi .value { font-size: 28px; font-weight: 700; color: var(--accent); margin: 6px 0 2px; font-feature-settings: 'tnum'; }
+  .kpi .unit { font-size: 12px; color: var(--muted); margin-left: 4px; }
+  .kpi .delta { font-size: 11px; color: var(--accent-2); }
+  .kpi.warn .value { color: var(--warn); }
+  .kpi.danger .value { color: var(--danger); }
+
+  /* Main grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1.6fr 1fr;
+    gap: 16px;
+  }
+  .panel {
+    background: linear-gradient(135deg, rgba(15,32,55,0.55), rgba(10,22,42,0.55));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    backdrop-filter: blur(8px);
+    position: relative;
+  }
+  .panel h2 {
+    margin: 0 0 10px; font-size: 13px; letter-spacing: 2px; color: var(--accent);
+    text-transform: uppercase; display:flex; align-items:center; gap: 8px;
+    border-bottom: 1px dashed var(--line); padding-bottom: 8px;
+  }
+  .panel h2 .badge { font-size: 9px; padding: 2px 8px; background: rgba(6,255,165,0.15); color: var(--accent-2); border-radius: 3px; letter-spacing: 1px; }
+
+  /* Four perspectives */
+  .four-view { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .view-card {
+    padding: 12px 14px; border-radius: 10px;
+    background: linear-gradient(180deg, rgba(56,189,248,0.04), transparent);
+    border-left: 3px solid var(--accent);
+  }
+  .view-card.facility { border-left-color: var(--accent-2); }
+  .view-card.environment { border-left-color: var(--warn); }
+  .view-card.process { border-left-color: #c084fc; }
+  .view-card .vt { font-size: 11px; color: var(--muted); letter-spacing: 2px; }
+  .view-card .vk { font-size: 22px; font-weight: 700; color: var(--text); margin: 4px 0; }
+  .view-card .vi { font-size: 11px; color: var(--accent-2); line-height: 1.5; min-height: 32px; }
+
+  /* PUE Gauge */
+  .pue-stage {
+    text-align: center; padding: 12px 0 4px;
+  }
+  .pue-meter {
+    position: relative; height: 14px; border-radius: 7px;
+    background: linear-gradient(90deg, #06ffa5 0%, #38bdf8 25%, #fbbf24 60%, #f87171 100%);
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+    margin-top: 12px;
+  }
+  .pue-marker { position: absolute; top: -6px; width: 4px; height: 26px; background: white; box-shadow: 0 0 8px white; transition: left .8s ease; }
+  .pue-tick { position: absolute; top: 18px; font-size: 10px; color: var(--muted); transform: translateX(-50%); }
+
+  /* IoT panel */
+  .iot-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 8px 10px; border-radius: 8px;
+    background: rgba(56,189,248,0.04);
+    margin-bottom: 6px; font-size: 12px;
+    border: 1px solid transparent;
+    transition: all .25s;
+  }
+  .iot-row:hover { border-color: var(--line); transform: translateX(4px); }
+  .iot-row .sid { color: var(--muted); font-size: 10px; }
+  .iot-row .v { font-weight: 600; color: var(--accent-2); }
+  .iot-row.hot .v { color: var(--warn); }
+  .iot-row .kind {
+    font-size: 9px; padding: 1px 6px; border-radius: 3px;
+    background: rgba(125,211,252,0.10); color: var(--accent); letter-spacing: 1px;
+  }
+
+  /* Skill cards */
+  .skill { padding: 10px 12px; border-radius: 8px; background: rgba(192,132,252,0.06);
+    border-left: 3px solid #c084fc; margin-bottom: 8px; font-size: 12px; }
+  .skill .st { font-weight: 600; color: var(--text); }
+  .skill .stm { color: var(--muted); font-size: 10px; margin-top: 2px; }
+  .skill .conf { display:inline-block; padding: 1px 8px; border-radius: 999px; background: rgba(6,255,165,0.12); color: var(--accent-2); font-size: 9px; margin-left: 6px; }
+  .skill button { background: transparent; border: 1px solid var(--line); color: var(--accent-2); padding: 2px 8px; border-radius: 4px; font-size: 10px; cursor:pointer; margin-right: 4px; }
+  .skill button:hover { background: rgba(6,255,165,0.10); }
+
+  /* Policies */
+  .policy { padding: 10px 12px; border-radius: 8px; background: rgba(56,189,248,0.04);
+    border: 1px solid var(--line); margin-bottom: 8px; font-size: 12px; }
+  .policy .pt { font-weight: 600; color: var(--text); display:flex; justify-content:space-between; align-items:center; }
+  .policy .pkind {
+    font-size: 9px; padding: 1px 6px; border-radius: 3px;
+    background: rgba(6,255,165,0.12); color: var(--accent-2);
+  }
+  .policy .pkind.save { background: rgba(56,189,248,0.12); color: var(--accent); }
+  .policy .pr { color: var(--muted); font-size: 10px; margin: 4px 0; line-height: 1.5; }
+  .policy .psave { font-size: 11px; color: var(--accent-2); }
+  .policy.applied { border-color: var(--accent-2); background: rgba(6,255,165,0.06); }
+  .policy button { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #021018; border: none; padding: 4px 12px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; letter-spacing: 1px; }
+  .policy button:hover { box-shadow: 0 0 12px var(--accent-2); }
+  .policy button:disabled { background: rgba(255,255,255,0.1); color: var(--muted); cursor:not-allowed; box-shadow:none; }
+
+  /* Loop control */
+  .loop-ctl {
+    display:flex; gap:10px; padding: 10px 0;
+  }
+  .loop-ctl button {
+    flex: 1; padding: 10px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(6,255,165,0.10));
+    border: 1px solid var(--line); color: var(--text);
+    font-size: 12px; letter-spacing: 1px; cursor: pointer;
+    transition: all .25s;
+  }
+  .loop-ctl button:hover { border-color: var(--accent-2); box-shadow: 0 0 12px var(--accent-2); transform: translateY(-2px); }
+
+  /* Heritage Ledger */
+  .heritage { padding: 8px 10px; border-radius: 6px; background: rgba(192,132,252,0.05);
+    border-left: 2px solid #c084fc; margin-bottom: 6px; font-size: 11px; }
+  .heritage .ht { font-weight: 600; color: var(--text); }
+  .heritage .hm { color: var(--muted); font-size: 9px; margin-top: 2px; }
+
+  /* Event log */
+  .events { font-size: 10px; max-height: 200px; overflow-y: auto; padding-right: 4px; }
+  .event { padding: 4px 8px; border-left: 2px solid var(--accent); margin-bottom: 4px; background: rgba(56,189,248,0.04); border-radius: 4px; }
+  .event .ek { color: var(--accent); font-weight: 600; }
+  .event .et { color: var(--muted); margin-left: 6px; }
+
+  /* Section headings */
+  .section-title {
+    font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase;
+    margin: 18px 0 8px; padding-left: 12px; border-left: 3px solid var(--accent);
+  }
+
+  /* Architecture mini diagram */
+  .arch {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+    font-size: 10px; text-align: center;
+  }
+  .arch .layer {
+    padding: 8px 4px; border-radius: 6px;
+    background: rgba(56,189,248,0.06); border: 1px solid var(--line);
+  }
+  .arch .layer .l { color: var(--accent); font-weight: 600; }
+  .arch .layer .d { color: var(--muted); font-size: 9px; margin-top: 2px; }
+
+  /* First Principles banner */
+  .fp-banner {
+    margin: 14px 0; padding: 12px 18px; border-radius: 10px;
+    background: linear-gradient(135deg, rgba(192,132,252,0.10), rgba(56,189,248,0.06));
+    border-left: 4px solid #c084fc;
+    font-size: 12px; line-height: 1.7;
+  }
+  .fp-banner .fpt { color: #c084fc; font-weight: 700; letter-spacing: 2px; font-size: 11px; }
+  .fp-banner .fpe { color: var(--accent-2); font-family: 'SF Mono', monospace; }
+
+  /* Footer */
+  .footer { text-align:center; color: var(--muted); font-size: 10px; margin: 24px 0 12px; letter-spacing: 2px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.5); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HUD Topbar -->
+  <div class="hud">
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>xFirst Principle AI Data Center Energy Ratchet</h1>
+        <div class="sub">AI ENERGY MANAGER · FIRST-PRINCIPLES · DARWIN-RATCHET</div>
+      </div>
+    </div>
+    <div class="pills">
+      <span class="pill">v1.0 · 4-VIEW · IoT-HUB</span>
+      <span class="pill live" id="pill-live">REAL-TIME</span>
+      <a href="/agent-team-config.html" class="pill" style="text-decoration:none">🤖 AGENT-LLM</a>
+      <a href="/system-evolution.html" class="pill" style="text-decoration:none">🧬 EVOLUTION</a>
+    </div>
+  </div>
+
+  <!-- First-Principles -->
+  <div class="fp-banner">
+    <div class="fpt">⚛︎ FIRST PRINCIPLES (MUSK-STYLE)</div>
+    <div>数据中心能耗本质 ≠ <strong>有限电网</strong> · <strong>极端散热</strong></div>
+    <div>解构: <span class="fpe">E = Σ(P_load · η_conv · κ_cool · τ_util)</span> — 必须从 <strong>设备/设施/环境/流程</strong> 4 视角并发优化, 形成 <strong>监控→决策→调整→验证</strong> 闭环, 通过 <strong>Darwin 棘轮</strong> 锁定每一次进化。</div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-strip" id="kpi-strip">
+    <div class="kpi"><div class="label">CURRENT PUE</div><div class="value" id="kpi-pue">—</div><div class="delta" id="kpi-pue-delta">─</div></div>
+    <div class="kpi"><div class="label">TARGET PUE</div><div class="value" id="kpi-target">1.25</div><div class="delta">first-principle limit</div></div>
+    <div class="kpi"><div class="label">DAILY SAVING</div><div class="value" id="kpi-save">—<span class="unit">kWh</span></div><div class="delta" id="kpi-saveyr">─</div></div>
+    <div class="kpi"><div class="label">CO₂ SAVED / YR</div><div class="value" id="kpi-co2">—<span class="unit">t</span></div><div class="delta">factor 0.785 kg/kWh</div></div>
+    <div class="kpi"><div class="label">DARWIN HERITAGE</div><div class="value" id="kpi-heritage">—</div><div class="delta">monotonic ratchet</div></div>
+    <div class="kpi"><div class="label">EVOLUTION ROUND</div><div class="value" id="kpi-round">—</div><div class="delta">closed-loop iter</div></div>
+  </div>
+
+  <!-- Architecture mini -->
+  <div class="section-title">SYSTEM ARCHITECTURE — 5 LAYERS</div>
+  <div class="arch">
+    <div class="layer"><div class="l">L0 IoT EDGE</div><div class="d">LoRa-TH · MC-RFID · PLC-Agent · Power Meter</div></div>
+    <div class="layer"><div class="l">L1 CHANNEL HUB</div><div class="d">marine_datacenter_energy · 信息汇总</div></div>
+    <div class="layer"><div class="l">L2 4-VIEW AI</div><div class="d">device · facility · environment · process</div></div>
+    <div class="layer"><div class="l">L3 CLOSED LOOP</div><div class="d">Skill库 + Policy引擎 + 验证</div></div>
+    <div class="layer"><div class="l">L4 DARWIN</div><div class="d">棘轮遗产 · 自演进 · 永不回退</div></div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="grid" style="margin-top: 18px;">
+    <!-- Column 1: 4-View + PUE -->
+    <div class="panel">
+      <h2>四视角并发分析 <span class="badge">4-PERSPECTIVE</span></h2>
+      <div class="four-view" id="four-view">
+        <div class="view-card"><div class="vt">DEVICE 设备</div><div class="vk">—</div><div class="vi">…</div></div>
+        <div class="view-card facility"><div class="vt">FACILITY 设施</div><div class="vk">—</div><div class="vi">…</div></div>
+        <div class="view-card environment"><div class="vt">ENVIRONMENT 环境</div><div class="vk">—</div><div class="vi">…</div></div>
+        <div class="view-card process"><div class="vt">PROCESS 流程</div><div class="vk">—</div><div class="vi">…</div></div>
+      </div>
+
+      <div class="pue-stage" style="margin-top: 18px;">
+        <div style="font-size:11px; color: var(--muted); letter-spacing: 2px;">PUE GAUGE — BASELINE → CURRENT → TARGET</div>
+        <div class="pue-meter">
+          <div class="pue-marker" id="pue-marker" style="left: 50%;"></div>
+          <div class="pue-tick" style="left: 0%;">1.05</div>
+          <div class="pue-tick" style="left: 33%;">1.25</div>
+          <div class="pue-tick" style="left: 66%;">1.55</div>
+          <div class="pue-tick" style="left: 100%;">2.00</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 24px;">闭环控制 <span class="badge">CLOSED-LOOP</span></h2>
+      <div class="loop-ctl">
+        <button onclick="loopTick()">▶ 监控→决策→调整→验证 (单次闭环)</button>
+        <button onclick="evolveOnce()">🧬 棘轮演进 +1</button>
+      </div>
+      <div class="events" id="events"></div>
+    </div>
+
+    <!-- Column 2: IoT + Policies -->
+    <div class="panel">
+      <h2>IoT 信息汇总 Hub <span class="badge">LoRa · MC-RFID · PLC-AGENT</span></h2>
+      <div id="iot-summary" style="font-size: 11px; color: var(--muted); margin-bottom: 8px;"></div>
+      <div id="iot-list" style="max-height: 200px; overflow-y: auto;"></div>
+
+      <h2 style="margin-top: 18px;">能耗策略库 <span class="badge">OPEN-SOURCE · SAVE-OUTGO</span></h2>
+      <div id="policy-list" style="max-height: 360px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- Column 3: Skills + Heritage -->
+    <div class="panel">
+      <h2>运维技能沉淀 <span class="badge">LOBSTER-STYLE SKILL</span></h2>
+      <div id="skill-list"></div>
+
+      <h2 style="margin-top: 18px;">Darwin 遗产账本 <span class="badge">RATCHET LEDGER</span></h2>
+      <div id="heritage-list" style="max-height: 280px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    POSEIDON-X · MARINE DATACENTER ENERGY MANAGER · 第一性原理 + AI 闭环 + Darwin 棘轮 · NO ROLLBACK
+  </div>
+</div>
+
+<script type="module">
+const BASE = '';
+const $ = (id) => document.getElementById(id);
+
+async function fetchJSON(url, opts = {}) {
+  const r = await fetch(BASE + url, opts);
+  if (!r.ok) throw new Error(url + ' → ' + r.status);
+  return r.json();
+}
+
+function pueX(pue) {
+  // map [1.05 .. 2.00] → 0..100%
+  const x = ((pue - 1.05) / (2.00 - 1.05)) * 100;
+  return Math.max(0, Math.min(100, x));
+}
+
+async function refreshStatus() {
+  try {
+    const s = await fetchJSON('/api/v1/datacenter/status');
+    $('kpi-pue').textContent = s.current_pue.toFixed(3);
+    $('kpi-pue').className = 'value ' + (s.current_pue < 1.4 ? '' : (s.current_pue < 1.7 ? 'warn' : 'danger'));
+    $('kpi-pue-delta').textContent = `Δ ${(s.baseline_pue - s.current_pue).toFixed(3)} · ${s.pue_progress_pct}% to target`;
+    $('kpi-target').textContent = s.target_pue.toFixed(2);
+    $('kpi-save').firstChild.textContent = s.saving_kwh_day.toFixed(1);
+    $('kpi-saveyr').textContent = `≈ ${(s.saving_kwh_year/1000).toFixed(1)} MWh/yr`;
+    $('kpi-co2').firstChild.textContent = s.co2_saved_ton_year.toFixed(2);
+    $('kpi-heritage').textContent = s.heritage_count;
+    $('kpi-round').textContent = s.evolution_round;
+    $('pue-marker').style.left = pueX(s.current_pue) + '%';
+  } catch (e) { console.error(e); }
+}
+
+async function refreshFourView() {
+  try {
+    const v = await fetchJSON('/api/v1/datacenter/four-view');
+    const order = ['device', 'facility', 'environment', 'process'];
+    const cards = document.querySelectorAll('#four-view .view-card');
+    order.forEach((k, i) => {
+      const data = v[k]; if (!data) return;
+      const card = cards[i];
+      let key, val;
+      if (k === 'device') { key = data.total_kw + ' kW'; val = `${data.device_count} devices`; }
+      else if (k === 'facility') { key = 'PUE ' + data.pue; val = `${data.it_kw}kW IT · ${data.crac_kw}kW CRAC`; }
+      else if (k === 'environment') { key = data.temp_max_c + '°C'; val = `${data.hotspot_count} hotspots · ${data.rh_avg_pct}%RH`; }
+      else { key = (data.avg_utilization*100).toFixed(0) + '%'; val = `${data.skill_library_size} skills · ${data.process_maturity_pct}% mature`; }
+      card.querySelector('.vk').textContent = key;
+      card.querySelector('.vi').innerHTML = `<div>${val}</div><div style="margin-top:4px;color:var(--muted);">${data.insight}</div>`;
+    });
+  } catch (e) { console.error(e); }
+}
+
+async function refreshIoT() {
+  try {
+    const hub = await fetchJSON('/api/v1/datacenter/iot/hub');
+    $('iot-summary').innerHTML = `
+      <strong>${hub.total_sensors}</strong> sensors ·
+      LoRa avg RSSI <strong>${hub.lora_avg_rssi_dbm} dBm</strong> ·
+      RFID 盘点 <strong>${hub.rfid_inventory_complete_pct}%</strong> ·
+      PLC-Agent online <strong>${hub.plc_agents_online}</strong>
+    `;
+    const sensors = await fetchJSON('/api/v1/datacenter/iot/sensors');
+    $('iot-list').innerHTML = sensors.sensors.map(s => {
+      const hot = s.unit === '°C' && s.value > 32;
+      return `<div class="iot-row ${hot ? 'hot' : ''}">
+        <div>
+          <div>${s.location}</div>
+          <div class="sid">${s.sensor_id} · <span class="kind">${s.kind}</span></div>
+        </div>
+        <div class="v">${s.value.toFixed(1)} ${s.unit}</div>
+      </div>`;
+    }).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function refreshSkills() {
+  try {
+    const sk = await fetchJSON('/api/v1/datacenter/skills');
+    $('skill-list').innerHTML = sk.skills.map(s => `
+      <div class="skill">
+        <div class="st">${s.title} <span class="conf">conf ${(s.confidence*100).toFixed(0)}%</span></div>
+        <div class="stm">⚡ <strong>触发:</strong> ${s.trigger}</div>
+        <div class="stm">⚙ <strong>动作:</strong> ${s.action}</div>
+        <div style="margin-top:6px;">
+          <button onclick="reinforce('${s.skill_id}', true)">✓ 成功</button>
+          <button onclick="reinforce('${s.skill_id}', false)">✗ 失败</button>
+          <span class="stm">success ${s.success_count} · fail ${s.fail_count}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function refreshPolicies() {
+  try {
+    const pl = await fetchJSON('/api/v1/datacenter/policies');
+    $('policy-list').innerHTML = pl.policies.map(p => `
+      <div class="policy ${p.applied ? 'applied' : ''}">
+        <div class="pt">
+          <span>${p.title}</span>
+          <span class="pkind ${p.kind === 'save_outgo' ? 'save' : ''}">${p.kind === 'open_source' ? '🌱 开源' : '💧 节流'}</span>
+        </div>
+        <div class="pr">${p.rationale}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="psave">≈ ${p.estimated_saving_kwh_day} kWh/day · 实测 fitness ${(p.fitness*100).toFixed(0)}%</span>
+          <button onclick="applyPolicy('${p.policy_id}')" ${p.applied ? 'disabled' : ''}>${p.applied ? '已应用' : '应用'}</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function refreshHeritage() {
+  try {
+    const h = await fetchJSON('/api/v1/datacenter/heritage');
+    $('heritage-list').innerHTML = h.heritage.map(x => `
+      <div class="heritage">
+        <div class="ht">🧬 ${x.title}</div>
+        <div class="hm">${x.category} · Δpue ${x.delta_pue} · Δ ${x.delta_kwh_day} kWh/day · ${new Date(x.locked_at*1000).toLocaleString()}</div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+async function refreshEvents() {
+  try {
+    const ev = await fetchJSON('/api/v1/datacenter/events?limit=12');
+    $('events').innerHTML = ev.events.slice().reverse().map(e => `
+      <div class="event">
+        <span class="ek">${e.kind}</span>
+        <span class="et">${new Date(e.ts*1000).toLocaleTimeString()}</span>
+        <div style="color:var(--muted); margin-top:2px;">${JSON.stringify(e.data).slice(0,120)}</div>
+      </div>
+    `).join('');
+  } catch (e) { console.error(e); }
+}
+
+window.applyPolicy = async (pid) => {
+  await fetchJSON('/api/v1/datacenter/policies/apply', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({policy_id: pid, fitness: 0.88})
+  });
+  await refreshAll();
+};
+
+window.reinforce = async (sid, ok) => {
+  await fetchJSON(`/api/v1/datacenter/skills/${sid}/reinforce`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({success: ok})
+  });
+  await refreshSkills();
+};
+
+window.loopTick = async () => {
+  await fetchJSON('/api/v1/datacenter/loop/tick', {method: 'POST'});
+  await refreshAll();
+};
+
+window.evolveOnce = async () => {
+  const titles = [
+    ['冷热通道封闭强化', 'facility', -0.018, 4.2],
+    ['AI 推理批合并', 'process', -0.012, 3.5],
+    ['LoRa 自适应扩频', 'iot', -0.004, 0.8],
+    ['PLC 边缘自治', 'iot', -0.008, 1.6],
+    ['余热回收回路', 'open_source', -0.020, 5.1],
+    ['Skill 库自学习', 'ai', -0.015, 2.9],
+  ];
+  const t = titles[Math.floor(Math.random() * titles.length)];
+  await fetchJSON('/api/v1/datacenter/evolve', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({title: t[0], category: t[1], delta_pue: t[2], delta_kwh_day: t[3]})
+  });
+  await refreshAll();
+};
+
+async function refreshAll() {
+  await Promise.all([
+    refreshStatus(), refreshFourView(), refreshIoT(),
+    refreshSkills(), refreshPolicies(), refreshHeritage(), refreshEvents(),
+  ]);
+}
+
+// Boot + auto-refresh every 6s
+refreshAll();
+setInterval(refreshAll, 6000);
+
+// Try to register Darwin heritage on the global ratchet (system-evolution page)
+try {
+  if (window.parent && window.parent.darwinRatchet) {
+    window.parent.darwinRatchet.lock({
+      id: 'marine-datacenter-v1',
+      title: '船载数据中心 AI 能耗管理',
+      category: 'energy',
+      description: '4 视角(设备/设施/环境/流程) + IoT Hub(LoRa/MC-RFID/PLC-Agent) + Skill库 + 闭环 + Darwin 棘轮',
+    });
+  }
+} catch (e) {}
+
+console.log('🌊 Marine DataCenter Energy Manager — first-principles + Darwin ratchet activated');
+</script>
+<script src="/js/nav-sidebar.js" data-active="datacenter"></script>
+</body>
+</html>

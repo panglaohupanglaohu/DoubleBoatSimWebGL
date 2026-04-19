@@ -1,101 +1,284 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-obc-theme="dusk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="ob-title" content="动力定位">
-    <meta name="ob-subtitle" content="K-Pos DP — Dynamic Positioning">
-    <title>动力定位 — PoseidonX</title>
-    <link rel="stylesheet" href="/css/openbridge-theme.css">
-    <style>
-        .dp-layout{display:grid;grid-template-rows:auto 1fr auto;gap:12px;height:calc(100vh - var(--ob-topbar-height) - 32px);}
-        .dp-center{display:grid;grid-template-columns:1fr 360px;gap:12px;overflow:hidden;}
-        .dp-canvas-wrap{position:relative;background:var(--ob-bg-section);border-radius:var(--ob-radius-lg);border:1px solid var(--ob-border);overflow:hidden;}
-        #dp-canvas{width:100%;height:100%;display:block;}
-        .dp-mode{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:var(--ob-radius-round);font-weight:670;font-size:14px;}
-        .dp-mode-off{background:var(--ob-border-subtle);color:var(--ob-text-tertiary);}
-        .dp-mode-auto{background:var(--ob-running);color:var(--ob-on-alarm);}
-        .thrust-bar-wrap{display:flex;flex-direction:column;gap:4px;}
-        .thrust-bar-label{display:flex;justify-content:space-between;font-size:12px;}
-        .thrust-bar{height:24px;background:var(--ob-border-subtle);border-radius:var(--ob-radius-sm);overflow:hidden;}
-        .thrust-bar-fill{height:100%;border-radius:inherit;transition:width .5s ease;}
-        .thrust-bar-fill.fwd{background:var(--ob-accent);}
-        .thrust-bar-fill.lat{background:var(--ob-teal);}
-        .dp-sidebar{overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
-        .sp-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ob-border-subtle);font-size:13px;}
-        .sp-row:last-child{border-bottom:none;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="ob-title" content="动力定位">
+<meta name="ob-subtitle" content="K-Pos DP — Dynamic Positioning">
+<title>动力定位 — PoseidonX</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+:root{--dp-cyan:#22d3ee;--dp-teal:#2dd4bf;--dp-blue:#60a5fa;--dp-ok:#4ade80;--dp-warn:#fbbf24;--dp-alarm:#f87171;--dp-glass:rgba(24,28,36,.72);--dp-border:rgba(255,255,255,.08);}
+*{box-sizing:border-box}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow:hidden}
+.dp-layout{display:grid;grid-template-rows:auto 1fr auto;gap:10px;height:calc(100vh - var(--ob-topbar-height) - 28px)}
+/* ── Top Readouts ── */
+.dp-top{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.dp-readout{background:var(--dp-glass);backdrop-filter:blur(14px);border:1px solid var(--dp-border);border-radius:12px;padding:12px 14px;text-align:center;position:relative;overflow:hidden}
+.dp-readout::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--dp-cyan);opacity:.5}
+.dp-readout .label{font-size:10px;color:var(--ob-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.dp-readout .value{font-size:20px;font-weight:700}
+.dp-readout .unit{font-size:11px;color:var(--ob-text-tertiary)}
+.dp-mode-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 16px;border-radius:20px;font-weight:700;font-size:14px;transition:all .3s}
+.dp-mode-off{background:rgba(148,163,184,.15);color:#94a3b8;border:1px solid rgba(148,163,184,.2)}
+.dp-mode-auto{background:rgba(74,222,128,.12);color:var(--dp-ok);border:1px solid rgba(74,222,128,.3);box-shadow:0 0 12px rgba(74,222,128,.15)}
+/* ── Center Row ── */
+.dp-center{display:grid;grid-template-columns:1fr 340px;gap:12px;overflow:hidden}
+.dp-canvas-wrap{position:relative;background:var(--dp-glass);backdrop-filter:blur(18px);border:1px solid var(--dp-border);border-radius:16px;overflow:hidden}
+#dp-canvas{width:100%;height:100%;display:block}
+.canvas-overlay{position:absolute;top:12px;left:14px;font-size:10px;color:rgba(255,255,255,.4);pointer-events:none}
+.canvas-overlay div{margin-bottom:2px}
+.pos-label{position:absolute;bottom:12px;right:14px;font-size:10px;color:rgba(34,211,238,.6);font-family:monospace;pointer-events:none}
+/* ── Sidebar ── */
+.dp-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.dp-card{background:var(--dp-glass);backdrop-filter:blur(14px);border:1px solid var(--dp-border);border-radius:14px;padding:14px}
+.dp-card h5{margin:0 0 10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px}
+.dp-card h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--dp-cyan)}
+.sp-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.sp-row:last-child{border-bottom:none}
+.sp-row .lbl{color:var(--ob-text-tertiary)}
+.sp-row .val{font-weight:600}
+.env-icon{font-size:14px;margin-right:4px}
+/* ── Status Dots ── */
+.st-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.st-ok{background:var(--dp-ok);box-shadow:0 0 6px rgba(74,222,128,.4)}
+.st-warn{background:var(--dp-warn)}
+.st-alarm{background:var(--dp-alarm);box-shadow:0 0 6px rgba(248,113,113,.4)}
+/* ── Capability Plot ── */
+.cap-wrap{position:relative}
+.cap-wrap canvas{width:100%;height:120px;display:block}
+/* ── Bottom: Thrust Allocation ── */
+.dp-bottom{background:var(--dp-glass);backdrop-filter:blur(14px);border:1px solid var(--dp-border);border-radius:14px;padding:14px 18px}
+.dp-bottom h5{margin:0 0 10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px}
+.thrust-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.thruster{text-align:center}
+.thruster .t-label{font-size:11px;color:var(--ob-text-tertiary);margin-bottom:6px}
+.thruster canvas{width:60px;height:60px;display:block;margin:0 auto}
+.thruster .t-pct{font-size:16px;font-weight:700;margin-top:4px}
+.thruster .t-type{font-size:9px;color:var(--ob-text-tertiary);text-transform:uppercase}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.pulse{animation:pulse 2s infinite}
+</style>
 </head>
 <body>
-    <div class="dp-layout">
-        <div class="ob-grid ob-grid-5" style="gap:8px;">
-            <div class="ob-readout"><span class="ob-readout-label">纬度 LAT</span><span class="ob-readout-value" style="font-size:18px;">31° 23.456' N</span></div>
-            <div class="ob-readout"><span class="ob-readout-label">经度 LON</span><span class="ob-readout-value" style="font-size:18px;">121° 29.123' E</span></div>
-            <div class="ob-readout"><span class="ob-readout-label">船首向 HDG</span><span class="ob-readout-value">044.8<span class="ob-readout-unit">°</span></span></div>
-            <div class="ob-readout"><span class="ob-readout-label">位置偏差</span><span class="ob-readout-value ob-status-ok">0.8<span class="ob-readout-unit">m</span></span></div>
-            <div class="ob-readout"><span class="ob-readout-label">DP 模式</span><span class="ob-readout-value"><span class="dp-mode dp-mode-off" id="dp-mode">DP OFF</span></span></div>
+<div class="dp-layout">
+<!-- ═══ TOP: Position Readouts ═══ -->
+<div class="dp-top">
+    <div class="dp-readout"><div class="label">纬度 LAT</div><div class="value" id="rdLat">31° 23.456' N</div></div>
+    <div class="dp-readout"><div class="label">经度 LON</div><div class="value" id="rdLon">121° 29.123' E</div></div>
+    <div class="dp-readout"><div class="label">船首向 HDG</div><div class="value" id="rdHdg">044.8<span class="unit">°</span></div></div>
+    <div class="dp-readout"><div class="label">位置偏差</div><div class="value" style="color:var(--dp-ok)" id="rdDev">0.8<span class="unit">m</span></div></div>
+    <div class="dp-readout"><div class="label">能力利用率</div><div class="value" id="rdCap">62<span class="unit">%</span></div></div>
+    <div class="dp-readout"><div class="label">DP 模式</div><div class="value"><span class="dp-mode-badge dp-mode-off" id="dpMode">DP OFF</span></div></div>
+</div>
+<!-- ═══ CENTER: Canvas + Sidebar ═══ -->
+<div class="dp-center">
+    <div class="dp-canvas-wrap">
+        <canvas id="dp-canvas"></canvas>
+        <div class="canvas-overlay">
+            <div>POSITION PLOT — 30m RANGE</div>
+            <div id="canvasTime" class="pulse">LIVE</div>
         </div>
-        <div class="dp-center">
-            <div class="dp-canvas-wrap"><canvas id="dp-canvas"></canvas></div>
-            <div class="dp-sidebar">
-                <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">DP 设定值</span><span class="ob-badge ob-badge-neutral">SETPOINT</span></div>
-                <div class="ob-card-body">
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">目标纬度</span><span style="font-weight:570">31° 23.450' N</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">目标经度</span><span style="font-weight:570">121° 29.120' E</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">目标船首向</span><span style="font-weight:570">045.0°</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">旋转半径</span><span style="font-weight:570">50 m</span></div>
-                </div></div>
-                <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">系统状态</span></div>
-                <div class="ob-card-body">
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">DP 级别</span><span style="font-weight:570">DP-2</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">位置参考</span><span style="font-weight:570"><span class="ob-dot ob-dot-ok"></span> DGPS + HPR</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">风前馈</span><span style="font-weight:570"><span class="ob-dot ob-dot-ok"></span> Active</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">模型测试</span><span style="font-weight:570"><span class="ob-dot ob-dot-ok"></span> PASS</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">能力分析</span><span style="font-weight:570;color:var(--ob-running)">92%</span></div>
-                </div></div>
-                <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">环境力</span></div>
-                <div class="ob-card-body">
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">风</span><span style="font-weight:570">18.3 kn / 220°</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">流</span><span style="font-weight:570">1.2 kn / 180°</span></div>
-                    <div class="sp-row"><span style="color:var(--ob-text-tertiary)">浪</span><span style="font-weight:570">1.8 m / 210°</span></div>
-                </div></div>
-            </div>
-        </div>
-        <div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">推力分配 Thrust Allocation</span></div>
-        <div class="ob-card-body"><div class="ob-grid ob-grid-4" style="gap:12px;">
-            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>艏侧推 Bow</span><span>45%</span></div><div class="thrust-bar"><div class="thrust-bar-fill lat" style="width:45%"></div></div></div>
-            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>艉侧推 Stern</span><span>30%</span></div><div class="thrust-bar"><div class="thrust-bar-fill lat" style="width:30%"></div></div></div>
-            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>左全回转 Port Az</span><span>62%</span></div><div class="thrust-bar"><div class="thrust-bar-fill fwd" style="width:62%"></div></div></div>
-            <div class="thrust-bar-wrap"><div class="thrust-bar-label"><span>右全回转 Stbd Az</span><span>58%</span></div><div class="thrust-bar"><div class="thrust-bar-fill fwd" style="width:58%"></div></div></div>
-        </div></div></div>
+        <div class="pos-label" id="posLabel">ΔN: 0.0m &nbsp; ΔE: 0.0m</div>
     </div>
-    <script src="/js/nav-sidebar.js" data-active="dp"></script>
-    <script>
-    (function(){
-        const c=document.getElementById('dp-canvas'),ctx=c.getContext('2d');
-        function resize(){c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;}
-        resize();window.addEventListener('resize',resize);
-        const trail=[];let shipX=0,shipY=0,shipHdg=45;
-        function draw(){
-            const w=c.width,h=c.height,cx=w/2,cy=h/2;
-            ctx.clearRect(0,0,w,h);
-            ctx.strokeStyle='rgba(130,130,130,0.12)';ctx.lineWidth=1;
-            for(let i=-10;i<=10;i++){const x=cx+i*30,y=cy+i*30;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
-            ctx.beginPath();ctx.arc(cx,cy,40,0,Math.PI*2);ctx.strokeStyle='rgba(67,103,154,0.5)';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
-            ctx.beginPath();ctx.strokeStyle='rgba(67,103,154,0.3)';ctx.lineWidth=2;
-            trail.forEach((p,i)=>{i===0?ctx.moveTo(cx+p.x,cy+p.y):ctx.lineTo(cx+p.x,cy+p.y);});ctx.stroke();
-            const sx=cx+shipX,sy=cy+shipY,r=Math.PI/180*shipHdg;
-            ctx.save();ctx.translate(sx,sy);ctx.rotate(r);
-            ctx.beginPath();ctx.moveTo(0,-18);ctx.lineTo(8,14);ctx.lineTo(-8,14);ctx.closePath();
-            ctx.fillStyle='rgba(67,103,154,0.9)';ctx.fill();ctx.restore();
-            ctx.strokeStyle='rgba(130,130,130,0.4)';ctx.lineWidth=1;
-            ctx.beginPath();ctx.moveTo(cx-8,cy);ctx.lineTo(cx+8,cy);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,cy-8);ctx.lineTo(cx,cy+8);ctx.stroke();
-            ctx.fillStyle='rgba(130,130,130,0.6)';ctx.font='11px Noto Sans,sans-serif';ctx.fillText('N',cx-4,16);ctx.fillText('30m',cx+44,cy-4);
+    <div class="dp-sidebar">
+        <div class="dp-card"><h5>DP 设定值</h5>
+            <div class="sp-row"><span class="lbl">目标纬度</span><span class="val" id="spLat">31° 23.450' N</span></div>
+            <div class="sp-row"><span class="lbl">目标经度</span><span class="val" id="spLon">121° 29.120' E</span></div>
+            <div class="sp-row"><span class="lbl">目标船首向</span><span class="val" id="spHdg">045.0°</span></div>
+            <div class="sp-row"><span class="lbl">旋转半径</span><span class="val">50 m</span></div>
+            <div class="sp-row"><span class="lbl">保持模式</span><span class="val">Auto Heading</span></div>
+        </div>
+        <div class="dp-card"><h5>系统状态</h5>
+            <div class="sp-row"><span class="lbl">DP 级别</span><span class="val">DP-2</span></div>
+            <div class="sp-row"><span class="lbl">位置参考</span><span class="val"><span class="st-dot st-ok"></span>DGPS + HPR</span></div>
+            <div class="sp-row"><span class="lbl">罗经</span><span class="val"><span class="st-dot st-ok"></span>3× Gyro</span></div>
+            <div class="sp-row"><span class="lbl">风前馈</span><span class="val"><span class="st-dot st-ok"></span>Active</span></div>
+            <div class="sp-row"><span class="lbl">模型测试</span><span class="val"><span class="st-dot st-ok"></span>PASS</span></div>
+            <div class="sp-row"><span class="lbl">WF能力</span><span class="val" style="color:var(--dp-ok)" id="wfCap">92%</span></div>
+        </div>
+        <div class="dp-card"><h5>环境力</h5>
+            <div class="sp-row"><span class="lbl"><span class="env-icon">💨</span>风</span><span class="val" id="envWind">18.3 kn / 220°</span></div>
+            <div class="sp-row"><span class="lbl"><span class="env-icon">🌊</span>流</span><span class="val" id="envCurrent">1.2 kn / 180°</span></div>
+            <div class="sp-row"><span class="lbl"><span class="env-icon">〰️</span>浪</span><span class="val" id="envWave">1.8 m / 210°</span></div>
+            <div class="sp-row"><span class="lbl"><span class="env-icon">📐</span>水深</span><span class="val">42.5 m</span></div>
+        </div>
+        <div class="dp-card"><h5>DP 能力图</h5>
+            <div class="cap-wrap"><canvas id="capPlot" height="120"></canvas></div>
+        </div>
+    </div>
+</div>
+<!-- ═══ BOTTOM: Thrust Allocation ═══ -->
+<div class="dp-bottom">
+    <h5>推力分配 Thrust Allocation <span class="pulse" style="font-size:10px;color:var(--dp-cyan);margin-left:auto">● LIVE</span></h5>
+    <div class="thrust-grid">
+        <div class="thruster"><div class="t-label">艏侧推 #1</div><canvas id="thr0" width="60" height="60"></canvas><div class="t-pct" id="thrP0">45%</div><div class="t-type">Tunnel</div></div>
+        <div class="thruster"><div class="t-label">艏侧推 #2</div><canvas id="thr1" width="60" height="60"></canvas><div class="t-pct" id="thrP1">38%</div><div class="t-type">Tunnel</div></div>
+        <div class="thruster"><div class="t-label">艉侧推</div><canvas id="thr2" width="60" height="60"></canvas><div class="t-pct" id="thrP2">30%</div><div class="t-type">Tunnel</div></div>
+        <div class="thruster"><div class="t-label">左全回转</div><canvas id="thr3" width="60" height="60"></canvas><div class="t-pct" id="thrP3">62%</div><div class="t-type">Azimuth</div></div>
+        <div class="thruster"><div class="t-label">右全回转</div><canvas id="thr4" width="60" height="60"></canvas><div class="t-pct" id="thrP4">58%</div><div class="t-type">Azimuth</div></div>
+        <div class="thruster"><div class="t-label">功率总和</div><canvas id="thr5" width="60" height="60"></canvas><div class="t-pct" id="thrP5">49%</div><div class="t-type">Total</div></div>
+    </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PoseidonX DP Control — Enhanced Visualization
+// ═══════════════════════════════════════════════
+
+// ── Thruster Gauge (radial) ──
+function drawThrGauge(id,pct,color){
+    const cv=document.getElementById(id);if(!cv)return;
+    const ctx=cv.getContext('2d'),w=60,h=60,cx=30,cy=30,r=24;
+    ctx.clearRect(0,0,w,h);
+    const ratio=pct/100,sa=0.75*Math.PI,ea=2.25*Math.PI;
+    ctx.beginPath();ctx.arc(cx,cy,r,sa,ea);ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=6;ctx.lineCap='round';ctx.stroke();
+    const ac=sa+(ea-sa)*ratio;
+    const c=ratio>0.85?'rgba(248,113,113,.9)':ratio>0.65?'rgba(251,191,36,.9)':color;
+    ctx.beginPath();ctx.arc(cx,cy,r,sa,ac);ctx.strokeStyle=c;ctx.lineWidth=6;ctx.lineCap='round';ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,r,sa,ac);ctx.strokeStyle=c.replace('.9)','.15)');ctx.lineWidth=14;ctx.stroke();
+}
+
+// ── Capability Polar Plot ──
+function drawCapPlot(){
+    const cv=document.getElementById('capPlot');if(!cv)return;
+    const ctx=cv.getContext('2d'),W=cv.width=cv.offsetWidth,H=cv.height=120;
+    const cx=W/2,cy=H/2+10,r=Math.min(W,H)/2-20;
+    ctx.clearRect(0,0,W,H);
+    // Background circles
+    for(let g=1;g<=4;g++){ctx.beginPath();ctx.arc(cx,cy,r*g/4,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.stroke();}
+    // Capability envelope
+    const n=36;ctx.beginPath();
+    for(let i=0;i<=n;i++){const a=i/n*Math.PI*2-Math.PI/2;const cap=0.7+0.25*Math.cos(a*2)+0.05*Math.sin(a*3);const x=cx+r*cap*Math.cos(a),y=cy+r*cap*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.closePath();ctx.fillStyle='rgba(34,211,238,.08)';ctx.fill();ctx.strokeStyle='rgba(34,211,238,.6)';ctx.lineWidth=1.5;ctx.stroke();
+    // Current wind direction arrow
+    const wA=220*Math.PI/180-Math.PI/2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*.6*Math.cos(wA),cy+r*.6*Math.sin(wA));ctx.strokeStyle='rgba(251,191,36,.6)';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+    // Labels
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='9px sans-serif';ctx.textAlign='center';
+    ctx.fillText('0°',cx,cy-r-6);ctx.fillText('90°',cx+r+8,cy);ctx.fillText('180°',cx,cy+r+12);ctx.fillText('270°',cx-r-8,cy);
+}
+
+// ── Position Plot ──
+const c=document.getElementById('dp-canvas'),ctx=c.getContext('2d');
+function resize(){c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;}
+resize();window.addEventListener('resize',()=>{resize();drawCapPlot();});
+const trail=[];let shipX=0,shipY=0,shipHdg=45,tgtX=0,tgtY=0;
+
+function draw(){
+    const w=c.width,h=c.height,cx=w/2,cy=h/2;
+    ctx.clearRect(0,0,w,h);
+    // Grid with fade
+    ctx.strokeStyle='rgba(130,130,130,.06)';ctx.lineWidth=1;
+    for(let i=-20;i<=20;i++){const x=cx+i*30,y=cy+i*30;if(x>0&&x<w){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}if(y>0&&y<h){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}}
+    // Range rings
+    [30,60,90].forEach((rr,i)=>{ctx.beginPath();ctx.arc(cx,cy,rr,0,Math.PI*2);ctx.strokeStyle=`rgba(34,211,238,${0.12-i*0.03})`;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);});
+    // Cross hair
+    ctx.strokeStyle='rgba(34,211,238,.12)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx-12,cy);ctx.lineTo(cx+12,cy);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,cy-12);ctx.lineTo(cx,cy+12);ctx.stroke();
+    // Setpoint marker
+    ctx.beginPath();ctx.arc(cx+tgtX,cy+tgtY,5,0,Math.PI*2);ctx.strokeStyle='rgba(74,222,128,.6)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx+tgtX,cy+tgtY,12,0,Math.PI*2);ctx.strokeStyle='rgba(74,222,128,.15)';ctx.lineWidth=1;ctx.stroke();
+    // Alarm circle
+    ctx.beginPath();ctx.arc(cx+tgtX,cy+tgtY,40,0,Math.PI*2);ctx.strokeStyle='rgba(248,113,113,.15)';ctx.lineWidth=1;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+    // Trail
+    if(trail.length>1){ctx.beginPath();ctx.strokeStyle='rgba(34,211,238,.25)';ctx.lineWidth=1.5;
+    trail.forEach((p,i)=>{i===0?ctx.moveTo(cx+p.x,cy+p.y):ctx.lineTo(cx+p.x,cy+p.y);});ctx.stroke();
+    // Trail dots
+    trail.forEach((p,i)=>{if(i%5===0){ctx.beginPath();ctx.arc(cx+p.x,cy+p.y,1.5,0,Math.PI*2);ctx.fillStyle='rgba(34,211,238,.3)';ctx.fill();}});}
+    // Ship
+    const sx=cx+shipX,sy=cy+shipY,r=Math.PI/180*shipHdg;
+    ctx.save();ctx.translate(sx,sy);ctx.rotate(r);
+    // Ship body
+    ctx.beginPath();ctx.moveTo(0,-22);ctx.bezierCurveTo(6,-12,8,8,6,16);ctx.lineTo(-6,16);ctx.bezierCurveTo(-8,8,-6,-12,0,-22);ctx.closePath();
+    ctx.fillStyle='rgba(34,211,238,.85)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1;ctx.stroke();
+    // Heading line
+    ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(0,-35);ctx.strokeStyle='rgba(34,211,238,.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.restore();
+    // Labels
+    ctx.fillStyle='rgba(255,255,255,.25)';ctx.font='10px Noto Sans,sans-serif';ctx.textAlign='center';
+    ctx.fillText('N',cx,18);ctx.fillText('S',cx,h-8);ctx.textAlign='left';ctx.fillText('W',6,cy+4);ctx.textAlign='right';ctx.fillText('E',w-6,cy+4);
+    ctx.textAlign='left';ctx.fillStyle='rgba(255,255,255,.15)';ctx.font='9px monospace';
+    ctx.fillText('30m',cx+32,cy-2);ctx.fillText('60m',cx+62,cy-2);
+    // Update pos label
+    document.getElementById('posLabel').textContent=`ΔN: ${shipY.toFixed(1)}m   ΔE: ${shipX.toFixed(1)}m`;
+}
+
+function simulate(){
+    shipX+=(Math.random()-0.5)*1.2;shipY+=(Math.random()-0.5)*1.2;
+    shipX*=0.97;shipY*=0.97;shipHdg+=((Math.random()-0.5)*0.4);
+    trail.push({x:shipX,y:shipY});if(trail.length>200)trail.shift();
+    draw();requestAnimationFrame(simulate);
+}
+simulate();
+drawCapPlot();
+
+// ── Init Thrust Gauges ──
+const thrPcts=[45,38,30,62,58,49];
+const thrColors=['rgba(45,212,191,.9)','rgba(45,212,191,.9)','rgba(45,212,191,.9)','rgba(96,165,250,.9)','rgba(96,165,250,.9)','rgba(34,211,238,.9)'];
+function updateThrusters(pcts){
+    pcts=pcts||thrPcts;
+    let total=0,count=0;
+    pcts.forEach((p,i)=>{
+        if(i<5){total+=p;count++;}
+        drawThrGauge('thr'+i,p,thrColors[i]||'rgba(34,211,238,.9)');
+        const el=document.getElementById('thrP'+i);if(el)el.textContent=p+'%';
+    });
+    if(count>0){const avg=Math.round(total/count);drawThrGauge('thr5',avg,thrColors[5]);document.getElementById('thrP5').textContent=avg+'%';}
+}
+updateThrusters();
+
+// ── Fetch DP Data ──
+function fetchDP(){
+    Promise.all([
+        fetch('/api/v1/navigation/own-ship').then(r=>r.json()).catch(()=>null),
+        fetch('/api/v1/dp/status').then(r=>r.json()).catch(()=>null),
+        fetch('/api/v1/environment/wind-current').then(r=>r.json()).catch(()=>null),
+        fetch('/api/v1/dp/thrust-allocation').then(r=>r.json()).catch(()=>null)
+    ]).then(([ship,dp,env,thrust])=>{
+        if(ship){
+            document.getElementById('rdLat').innerHTML=ship.lat.toFixed(4)+'° N';
+            document.getElementById('rdLon').innerHTML=ship.lon.toFixed(4)+'° E';
+            document.getElementById('rdHdg').innerHTML=ship.hdg.toFixed(1)+'<span class="unit">°</span>';
+            shipHdg=ship.hdg;
         }
-        function simulate(){shipX+=(Math.random()-0.5)*1.5;shipY+=(Math.random()-0.5)*1.5;shipX*=0.98;shipY*=0.98;shipHdg+=((Math.random()-0.5)*0.5);trail.push({x:shipX,y:shipY});if(trail.length>120)trail.shift();draw();requestAnimationFrame(simulate);}
-        simulate();
-        let ws;function connectWS(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(connectWS,5000);};ws.onerror=function(){ws.close();};}catch(e){setTimeout(connectWS,5000);}}connectWS();
-    })();
-    </script>
+        if(dp&&dp.result){
+            const mode=dp.result.mode||'MANUAL';
+            const badge=document.getElementById('dpMode');
+            badge.textContent=mode==='MANUAL'?'DP OFF':'DP '+mode;
+            badge.className='dp-mode-badge '+(mode==='MANUAL'?'dp-mode-off':'dp-mode-auto');
+            if(dp.result.deviation!=null){
+                const dev=dp.result.deviation;
+                document.getElementById('rdDev').innerHTML=dev.toFixed(1)+'<span class="unit">m</span>';
+                document.getElementById('rdDev').style.color=dev>5?'var(--dp-alarm)':dev>2?'var(--dp-warn)':'var(--dp-ok)';
+            }
+        }
+        if(env){
+            const w=env.wind,cu=env.current,wv=env.wave;
+            document.getElementById('envWind').textContent=w.speed_kn+' kn / '+w.direction_deg+'°';
+            document.getElementById('envCurrent').textContent=cu.speed_kn+' kn / '+cu.direction_deg+'°';
+            document.getElementById('envWave').textContent=wv.height_m+' m / '+wv.direction_deg+'°';
+        }
+        if(thrust&&thrust.allocation){
+            const pcts=thrust.allocation.map(a=>a.load_pct);
+            updateThrusters(pcts);
+        }
+    });
+}
+fetchDP();setInterval(fetchDP,3000);
+
+// ── Simulate thrust drift ──
+setInterval(()=>{
+    const pcts=thrPcts.map(p=>Math.max(0,Math.min(100,p+Math.round((Math.random()-.5)*4))));
+    updateThrusters(pcts);
+},4000);
+
+// Update clock
+setInterval(()=>{document.getElementById('canvasTime').textContent='LIVE  '+new Date().toLocaleTimeString('en-GB');},1000);
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(cn,5000);};ws.onerror=function(){ws.close();};}catch(e){setTimeout(cn,5000);}}cn();})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="dp"></script>
 </body>
 </html>

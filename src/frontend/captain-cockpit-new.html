@@ -166,6 +166,10 @@
     <div class="conning-grid">
         <!-- Header: Key Readouts -->
         <div class="conning-header">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:1px;">CAPTAIN OVERVIEW</span>
+                <a href="/captain-cockpit.html" style="font-size:10px;color:#64748b;text-decoration:none;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-family:monospace;transition:color .2s,border-color .2s;" onmouseover="this.style.color='#00E5FF';this.style.borderColor='#00E5FF'" onmouseout="this.style.color='#64748b';this.style.borderColor='#334155'">跳转 V2</a>
+            </div>
             <div class="ob-grid ob-grid-6" style="gap:8px;">
                 <div class="ob-readout">
                     <span class="ob-readout-label">航速 SOG</span>
@@ -343,6 +347,20 @@
                     <div class="mini-readout"><span class="mini-readout-label">气压</span><span class="mini-readout-value" id="pressure">1013.2 hPa</span></div>
                 </div>
             </div>
+
+            <!-- Evolution Status Widget -->
+            <div class="ob-card">
+                <div class="ob-card-header">
+                    <span class="ob-card-title">🔄 系统演进</span>
+                    <a href="/system-evolution.html" class="ob-badge ob-badge-ok" style="text-decoration:none;cursor:pointer;">查看详情 →</a>
+                </div>
+                <div class="ob-card-body" id="evo-widget">
+                    <div class="mini-readout"><span class="mini-readout-label">审查规则</span><span class="mini-readout-value" id="evo-rules">—</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">演进条目</span><span class="mini-readout-value" id="evo-items">—</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">待处理</span><span class="mini-readout-value" id="evo-pending">—</span></div>
+                    <div class="mini-readout"><span class="mini-readout-label">合规状态</span><span class="mini-readout-value" id="evo-health">—</span></div>
+                </div>
+            </div>
         </div>
 
         <!-- Footer: Alarm Strip -->
@@ -448,6 +466,76 @@
             if (heading >= 360) heading -= 360;
             updateCompass(heading);
         }, 2000);
+
+        // Fetch evolution status for widget
+        function fetchEvoStatus() {
+            fetch('/api/v1/agent-teams/evolution/status')
+                .then(r => r.json())
+                .then(d => {
+                    const rules = document.getElementById('evo-rules');
+                    const items = document.getElementById('evo-items');
+                    const pending = document.getElementById('evo-pending');
+                    const health = document.getElementById('evo-health');
+                    if (rules) rules.textContent = (d.audit_rules_count || 0) + ' 条';
+                    if (items) items.textContent = (d.evolution_items_count || 0) + ' 条';
+                    const bs = d.items_by_status || {};
+                    const pd = (bs.discovered || 0) + (bs.dispatched || 0);
+                    if (pending) {
+                        pending.textContent = pd + ' 条';
+                        pending.style.color = pd > 0 ? 'var(--ob-warning)' : '';
+                    }
+                    if (health) {
+                        if (d.health === 'ok') {
+                            health.innerHTML = '<span class="ob-badge ob-badge-ok">正常</span>';
+                        } else {
+                            health.innerHTML = '<span class="ob-badge ob-badge-warning">' + d.health + '</span>';
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+        fetchEvoStatus();
+        setInterval(fetchEvoStatus, 15000);
+
+        // Fetch dashboard data from backend
+        function fetchDashboard() {
+            fetch('/api/v1/dashboard')
+                .then(r => r.json())
+                .then(d => {
+                    const nav = d.navigation || {};
+                    if (nav.sog !== undefined) {
+                        const el = document.getElementById('sog');
+                        if (el) el.innerHTML = nav.sog.toFixed(1) + '<span class="ob-readout-unit">kn</span>';
+                        const sd = document.getElementById('speed-display');
+                        if (sd) sd.textContent = nav.sog.toFixed(1);
+                    }
+                    if (nav.cog !== undefined) {
+                        const el = document.getElementById('cog');
+                        if (el) el.innerHTML = nav.cog.toFixed(1) + '<span class="ob-readout-unit">°</span>';
+                    }
+                    if (nav.hdg !== undefined) {
+                        updateCompass(nav.hdg);
+                        heading = nav.hdg;
+                    }
+                    if (nav.depth !== undefined) {
+                        const el = document.getElementById('depth');
+                        if (el) el.innerHTML = nav.depth.toFixed(1) + '<span class="ob-readout-unit">m</span>';
+                    }
+                    // Alarms
+                    const alarms = d.active_alarms || [];
+                    const strip = document.getElementById('alarm-strip');
+                    if (strip && alarms.length > 0) {
+                        strip.innerHTML = alarms.map(a =>
+                            '<div class="alarm-chip ob-bg-' + (a.priority === 'alarm' ? 'alarm' : 'warning') + '" style="opacity:0.9;">' +
+                            '<span class="ob-dot" style="background:white;width:6px;height:6px;"></span>' +
+                            a.message + '</div>'
+                        ).join('');
+                    }
+                })
+                .catch(() => {});
+        }
+        fetchDashboard();
+        setInterval(fetchDashboard, 5000);
     })();
     </script>
 </body>

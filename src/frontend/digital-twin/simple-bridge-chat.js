@@ -37,8 +37,9 @@ export class SimpleBridgeChat {
       bottom: 20px;
       right: 20px;
       width: 420px;
+      max-height: calc(100vh - 80px);
       background: rgba(11, 21, 37, 0.95);
-      border: 2px solid ${this.config.apiKey ? '#4caf50' : '#ffb74d'};
+      border: 2px solid #4caf50;
       border-radius: 12px;
       display: flex;
       flex-direction: column;
@@ -55,7 +56,7 @@ export class SimpleBridgeChat {
     header.style.cssText = `
       padding: 12px 16px;
       background: linear-gradient(135deg, #1e3a5f 0%, #0b1525 100%);
-      border-bottom: 1px solid ${this.config.apiKey ? '#4caf50' : '#ffb74d'};
+      border-bottom: 1px solid #4caf50;
       border-radius: 10px 10px 0 0;
       display: flex;
       justify-content: space-between;
@@ -69,11 +70,9 @@ export class SimpleBridgeChat {
         <span style="color: #4fc3f7; font-weight: bold; font-size: 14px;">Poseidon-X Bridge</span>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <a href="/poseidon-config.html" target="_blank" style="padding: 4px 8px; border-radius: 999px; background: rgba(79,195,247,0.16); color: #b3e5fc; text-decoration: none; font-size: 11px;">LLM 配置</a>
+        <a href="/agent-team-config.html" target="_blank" style="padding: 4px 8px; border-radius: 999px; background: rgba(79,195,247,0.16); color: #b3e5fc; text-decoration: none; font-size: 11px;" title="LLM 来自智能体团队配置">🤖 智能体 LLM</a>
         <span style="color: #888; font-size: 10px;">💡 拖动</span>
-        <span style="color: ${this.config.apiKey ? '#81c784' : '#ffb74d'}; font-size: 11px;">
-          ${this.config.apiKey ? '● AI Ready' : '○ 配置 API'}
-        </span>
+        <span id="bridge-llm-status" style="color: #81c784; font-size: 11px;">● AI Ready (Agent)</span>
       </div>
     `;
     
@@ -81,10 +80,14 @@ export class SimpleBridgeChat {
     const messagesContainer = document.createElement('div');
     messagesContainer.id = 'bridge-messages';
     messagesContainer.style.cssText = `
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 16px;
+      flex: 1 1 auto;
+      min-height: 60px;
+      max-height: 280px;
+      overflow-y: scroll;
+      padding: 16px 10px 16px 16px;
       transition: max-height 0.3s ease;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(79,195,247,0.5) rgba(255,255,255,0.06);
     `;
     
     // 输入区域
@@ -112,7 +115,7 @@ export class SimpleBridgeChat {
     const input = document.createElement('input');
     input.type = 'text';
     input.id = 'bridge-input';
-    input.placeholder = this.config.apiKey ? '输入桥楼指令，例如：Bridge视角 / 跟踪高风险目标' : '可直接输入桥楼指令，例如：自由视角 / 停止跟踪';
+    input.placeholder = '输入桥楼指令或自然语言问题 (LLM 来自智能体团队)';
     input.disabled = false;
     input.style.cssText = `flex: 1; padding: 8px 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: #fff; font-size: 13px;`;
     
@@ -155,14 +158,24 @@ export class SimpleBridgeChat {
     
     // 添加欢迎消息
     setTimeout(() => {
-      if (!this.config.apiKey) {
-        this.addMessage('system', '⚠️ 当前未配置外部 LLM，但本地桥楼命令和状态联动仍可使用。可直接输入：自由视角、Bridge视角、跟踪高风险目标、停止跟踪。');
-      } else {
-        this.addMessage('system', `✅ LLM 已配置 (${this.config.llmProvider || 'minimax'})，同时本地桥楼命令也已启用。可直接输入：自由视角、Bridge视角、跟踪高风险目标、停止跟踪。`);
-      }
+      this.addMessage('system', '✅ 桥楼就绪 — LLM 来自<a href="/agent-team-config.html" target="_blank" style="color:#4fc3f7">智能体团队</a>默认模型。可输入：自由视角、Bridge视角、跟踪高风险目标、给 build 团队 PM 分配任务…');
     }, 500);
     
     console.log('🌊 Simple Bridge Chat initialized');
+
+    // Inject scrollbar styles for WebKit browsers
+    if (!document.getElementById('bridge-chat-scrollbar-style')) {
+      const style = document.createElement('style');
+      style.id = 'bridge-chat-scrollbar-style';
+      style.textContent = `
+        #bridge-messages { overflow-y: scroll !important; }
+        #bridge-messages::-webkit-scrollbar { width: 8px !important; display: block !important; }
+        #bridge-messages::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 4px; }
+        #bridge-messages::-webkit-scrollbar-thumb { background: rgba(79,195,247,0.5); border-radius: 4px; min-height: 30px; }
+        #bridge-messages::-webkit-scrollbar-thumb:hover { background: rgba(79,195,247,0.7); }
+      `;
+      document.head.appendChild(style);
+    }
   }
   
   toggle() {
@@ -172,12 +185,14 @@ export class SimpleBridgeChat {
     const input = document.getElementById('bridge-input');
     
     if (this.isExpanded) {
-      messagesContainer.style.maxHeight = '300px';
-      messagesContainer.style.padding = '16px';
+      messagesContainer.style.maxHeight = '280px';
+      messagesContainer.style.minHeight = '60px';
+      messagesContainer.style.padding = '16px 10px 16px 16px';
       inputArea.style.display = 'flex';
       input.disabled = false;
     } else {
       messagesContainer.style.maxHeight = '0';
+      messagesContainer.style.minHeight = '0';
       messagesContainer.style.padding = '0 16px';
       inputArea.style.display = 'none';
     }
@@ -295,9 +310,7 @@ export class SimpleBridgeChat {
     }
     const input = document.getElementById('bridge-input');
     if (input && input.placeholder.includes('聆听')) {
-      input.placeholder = this.config.apiKey 
-        ? '输入桥楼指令，例如：Bridge视角 / 跟踪高风险目标' 
-        : '可直接输入桥楼指令，例如：自由视角 / 停止跟踪';
+      input.placeholder = '输入桥楼指令或自然语言问题 (LLM 来自智能体团队)';
     }
   }
   
@@ -361,8 +374,19 @@ export class SimpleBridgeChat {
     this.addMessage('assistant', '🤔 正在思考...');
     
     try {
+        // ── 🧬 任务派发意图识别 (Darwin Rule: bridge-task-dispatch-v1) ──
+        const taskIntent = this.parseTaskIntent(text);
+        if (taskIntent) {
+          const messagesContainer = document.getElementById('bridge-messages');
+          messagesContainer.lastChild.remove();
+          const taskResult = await this.dispatchTask(taskIntent);
+          this.addMessage('assistant', taskResult);
+          return;
+        }
+
         const commandResult = await this.executeOpenBridgeCommand(text);
-        if (commandResult?.result?.recognized_intent !== 'general_assist' || !this.config.apiKey) {
+        // 仅当识别到明确相机/本地控制意图才走模板; 其他一律走后端 LLM (智能体配置)
+        if (commandResult?.result?.recognized_intent && commandResult.result.recognized_intent !== 'general_assist') {
           const messagesContainer = document.getElementById('bridge-messages');
           messagesContainer.lastChild.remove();
           this.addMessage('assistant', this.formatCommandResponse(commandResult.result));
@@ -396,20 +420,145 @@ export class SimpleBridgeChat {
     }
   }
   
+  // ── 🧬 Darwin Rule: bridge-task-dispatch-v1 (locked, irreversible) ──
+  // 桥楼聊天必须能识别"给X团队的Y设置/分配任务"指令并派发到智能体团队
+  // POST /api/v1/agent-config/teams/{team_id}/tasks
+  parseTaskIntent(text) {
+    if (!text) return null;
+    // 触发词: 任务/task/设置一个任务/分配/派发/给XX设置
+    const taskTrigger = /(任务|task|设置.*任务|分配|派发|给.*?(?:团队|agent|PM|开发|测试|架构))/i;
+    if (!taskTrigger.test(text)) return null;
+    
+    // 团队识别
+    let teamId = 'build_system';  // 默认
+    if (/build|构建|开发团队/i.test(text)) teamId = 'build_system';
+    else if (/exec|运行|执行/i.test(text)) teamId = 'execution_system';
+    
+    // Agent 识别 (按 build_team.py 中定义)
+    let agentId = '';
+    if (/PM|项目经理|产品经理|product\s*manager/i.test(text)) agentId = 'build_pm';
+    else if (/researcher|研究员|调研/i.test(text)) agentId = 'build_researcher';
+    else if (/architect|架构师|架构/i.test(text)) agentId = 'build_architect';
+    else if (/developer|开发者|程序员|码农/i.test(text)) agentId = 'build_developer';
+    else if (/tester|qa|测试/i.test(text)) agentId = 'build_tester';
+    else if (/deployer|devops|部署/i.test(text)) agentId = 'build_deployer';
+    else if (/doc|文档/i.test(text)) agentId = 'build_doc_writer';
+    
+    // 优先级
+    let priority = 2;
+    if (/紧急|urgent|asap|立即/i.test(text)) priority = 0;
+    else if (/高|重要|high/i.test(text)) priority = 1;
+    
+    // 标题: 取触发词后的内容, 或者整句压缩
+    let title = text.replace(/^.*?(?:设置|分配|派发|创建).*?(?:任务|task)[，:：,]?\s*/i, '').trim();
+    if (!title || title.length < 5) title = text.slice(0, 80);
+    if (title.length > 100) title = title.slice(0, 100) + '...';
+    
+    return {
+      teamId,
+      agentId,
+      title,
+      description: text,  // 原始指令作为描述
+      priority,
+    };
+  }
+  
+  async dispatchTask(intent) {
+    try {
+      const url = `/api/v1/agent-config/teams/${intent.teamId}/tasks`;
+      const body = {
+        title: intent.title,
+        description: intent.description,
+        agent_id: intent.agentId || '',
+        priority: intent.priority,
+        dependencies: [],
+        metadata: { source: 'bridge_chat', issued_at: new Date().toISOString() },
+      };
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) {
+        const err = await r.text();
+        // 即使后端不可达, 也记录到 Darwin 作为本地任务
+        this.recordLocalTask(intent, 'pending-backend');
+        return `⚠️ 任务已本地登记 (后端 ${r.status})\n📋 标题: ${intent.title}\n👤 团队: ${intent.teamId} / ${intent.agentId || '自动分配'}\n💡 请前往 <a href="/agent-team-config.html" target="_blank" style="color:#4fc3f7">智能体配置页</a> 查看`;
+      }
+      const data = await r.json();
+      this.recordLocalTask(intent, 'submitted', data.task_id);
+      return `✅ 任务已提交至 <b>${intent.teamId}</b>\n👤 执行者: <b>${intent.agentId || '自动分配'}</b>\n📋 ID: <code>${data.task_id}</code>\n🔥 优先级: ${['紧急','高','普通','低'][intent.priority]}\n\n👉 <a href="/agent-team-config.html?view=tasks" target="_blank" style="color:#4fc3f7">查看任务进度</a>`;
+    } catch (e) {
+      this.recordLocalTask(intent, 'error');
+      return `❌ 任务派发失败: ${e.message}\n（已记录到本地 Darwin 队列）`;
+    }
+  }
+  
+  recordLocalTask(intent, status, backendId = null) {
+    try {
+      const KEY = 'poseidonx.bridge.dispatched_tasks';
+      const list = JSON.parse(localStorage.getItem(KEY) || '[]');
+      list.push({
+        ts: new Date().toISOString(),
+        teamId: intent.teamId,
+        agentId: intent.agentId,
+        title: intent.title,
+        priority: intent.priority,
+        status,
+        backendId,
+      });
+      localStorage.setItem(KEY, JSON.stringify(list.slice(-50)));
+      // 写入 Darwin 演化日志
+      if (window.Darwin && window.Darwin.record) {
+        window.Darwin.record({
+          id: `bridge-task-${Date.now()}`,
+          title: `桥楼派发: ${intent.title.slice(0, 40)}`,
+          category: 'ai',
+          description: `Team=${intent.teamId} Agent=${intent.agentId || 'auto'} | ${status}`,
+          fitness: status === 'submitted' ? 'pass' : 'pending',
+        });
+      }
+    } catch (e) {}
+  }
+  
   async callLLM(userMessage, channelContext = '') {
+    // 🧬 Darwin rule: bridge-uses-agent-llm-v1
+    // 优先走后端 /api/v1/bridge-chat/send (使用智能体页配置的 LLM: default model of build/execution team)
+    // 只有当后端不可达时才回退到 localStorage 的 poseidon_config
+    try {
+      const sessionId = this._sessionId || (this._sessionId = 'twin-' + Date.now().toString(36));
+      const agentId = this.config.bridgeAgentId || 'ship_navigator';
+      const message = channelContext ? `${userMessage}\n\n[上下文]\n${channelContext}` : userMessage;
+      const r = await fetch('/api/v1/bridge-chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, session_id: sessionId, agent_id: agentId }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data && data.reply) {
+          const src = data.source || 'agent-llm';
+          const tag = data.task_id ? ` · 任务 <code>${data.task_id}</code>` : '';
+          return `${data.reply}\n\n<span style="font-size:10px;color:#78909c">⚙️ ${src}${tag}</span>`;
+        }
+      } else {
+        console.warn('[BridgeChat] backend /bridge-chat/send returned', r.status);
+      }
+    } catch (e) {
+      console.warn('[BridgeChat] backend /bridge-chat/send unreachable, falling back to direct API:', e.message);
+    }
+    
+    // ── Fallback: 直接调用 localStorage 配置的外部 LLM ──
+    if (!this.config.apiKey) {
+      throw new Error('智能体后端不可达, 且本地未配置 LLM API Key. 请在智能体页 → LLM 配置或 poseidon-config.html 中配置。');
+    }
     const endpoint = this.config.apiEndpoint || 'https://api.minimax.chat/v1';
     const model = this.config.model || 'MiniMax-M2.5';
     
     const systemContext = `${this.config.systemPrompt || '你是 Poseidon-X 船舶智能助手。'}\n\n当前系统上下文：${JSON.stringify(this.shipContext)}${channelContext}`;
     const messages = [
-      {
-        role: 'system',
-        content: systemContext
-      },
-      {
-        role: 'user',
-        content: userMessage
-      }
+      { role: 'system', content: systemContext },
+      { role: 'user', content: userMessage }
     ];
     
     const response = await fetch(endpoint + '/chat/completions', {
@@ -432,7 +581,7 @@ export class SimpleBridgeChat {
     }
     
     const data = await response.json();
-    return data.choices[0].message.content;
+    return data.choices[0].message.content + '\n\n<span style="font-size:10px;color:#ffb74d">⚙️ fallback: local API</span>';
   }
 
   async queryChannelData(channelName, query) {

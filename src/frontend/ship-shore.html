@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="zh-CN" data-obc-theme="dusk">
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -7,61 +8,160 @@
 <title>船岸协同 — PoseidonX</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-
 <link rel="stylesheet" href="/css/openbridge-theme.css">
 <style>
-.shore-layout{display:grid;grid-template-columns:1fr 360px;gap:0;height:calc(100vh - var(--ob-topbar-height,48px))}
-#fleetMap{width:100%;height:100%;min-height:500px}
-.shore-sidebar{display:flex;flex-direction:column;gap:16px;padding:16px;overflow-y:auto}
-.comm-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--ob-border)}
-.comm-row:last-child{border-bottom:none}
-.comm-label{font-size:13px;color:var(--ob-text-primary)}
-.comm-signal{font-size:12px;color:var(--ob-text-tertiary);margin-left:auto;margin-right:10px}
-.data-flow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.flow-item{text-align:center;padding:12px;background:var(--ob-bg-section);border-radius:var(--ob-radius-sm)}
-.flow-val{font-size:20px;font-weight:700;color:var(--ob-accent)}
-.flow-lbl{font-size:11px;color:var(--ob-text-tertiary);margin-top:4px}
+:root{--sh-glass:rgba(24,28,36,.72);--sh-border:rgba(255,255,255,.08);--sh-cyan:#22d3ee;--sh-ok:#4ade80;--sh-warn:#fbbf24;--sh-alarm:#f87171;--sh-blue:#60a5fa;}
+*{box-sizing:border-box}
+body{margin:0;padding:var(--ob-topbar-height,48px) 0 0 64px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow:hidden}
+.shore-layout{display:grid;grid-template-columns:1fr 380px;gap:0;height:calc(100vh - var(--ob-topbar-height,48px))}
+#fleetMap{width:100%;height:100%;min-height:400px}
+.shore-sidebar{display:flex;flex-direction:column;gap:12px;padding:14px;overflow-y:auto;background:rgba(0,0,0,.2)}
+.sh-card{background:var(--sh-glass);backdrop-filter:blur(14px);border:1px solid var(--sh-border);border-radius:14px;padding:16px}
+.sh-card h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.sh-card h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sh-cyan)}
+/* Comm Links */
+.comm-link{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:rgba(0,0,0,.1);border:1px solid var(--sh-border);margin-bottom:8px;transition:all .15s}
+.comm-link:last-child{margin-bottom:0}
+.comm-link:hover{border-color:rgba(34,211,238,.2)}
+.comm-icon{font-size:20px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,.04)}
+.comm-info{flex:1}
+.comm-info .name{font-size:12px;font-weight:600}
+.comm-info .signal{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
+.comm-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.comm-dot.online{background:var(--sh-ok);box-shadow:0 0 6px rgba(74,222,128,.4)}
+.comm-dot.degraded{background:var(--sh-warn);box-shadow:0 0 6px rgba(251,191,36,.3)}
+.comm-dot.offline{background:var(--sh-alarm)}
+/* Data Flow */
+.flow-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.flow-item{text-align:center;padding:12px;background:rgba(0,0,0,.1);border-radius:10px;border:1px solid var(--sh-border)}
+.flow-item .v{font-size:20px;font-weight:700;color:var(--sh-cyan)}
+.flow-item .l{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
+/* Bandwidth Canvas */
+.bw-canvas{width:100%;height:60px;display:block;margin-top:8px}
+/* Command History */
+.cmd-table{width:100%;border-collapse:collapse;font-size:11px}
+.cmd-table th{text-align:left;padding:6px 8px;color:var(--ob-text-tertiary);font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--sh-border)}
+.cmd-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.03)}
+.cmd-table tr:hover td{background:rgba(255,255,255,.03)}
+.badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:600}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--sh-ok);border:1px solid rgba(74,222,128,.2)}
+.badge-warn{background:rgba(251,191,36,.12);color:var(--sh-warn);border:1px solid rgba(251,191,36,.2)}
+/* Sync Status */
+.sync-items{display:flex;flex-direction:column;gap:8px}
+.sync-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,.08);font-size:12px}
+.sync-item .v{margin-left:auto;font-weight:600;font-size:11px}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}.pulse{animation:pulse 2s infinite}
 </style>
 </head>
 <body>
 <div class="shore-layout">
 <div id="fleetMap"></div>
 <div class="shore-sidebar">
-<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">通信状态</span></div><div class="ob-card-body">
-<div class="comm-row"><span class="comm-label">VSAT Ku-Band</span><span class="comm-signal">-62 dBm</span><span class="ob-dot ob-dot-ok"></span></div>
-<div class="comm-row"><span class="comm-label">4G/LTE (沿海)</span><span class="comm-signal">-78 dBm</span><span class="ob-dot ob-dot-ok"></span></div>
-<div class="comm-row"><span class="comm-label">Iridium NEXT</span><span class="comm-signal">-94 dBm</span><span class="ob-dot ob-dot-warning"></span></div>
-<div class="comm-row"><span class="comm-label">AIS 双频</span><span class="comm-signal">正常</span><span class="ob-dot ob-dot-ok"></span></div>
-</div></div>
-<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">远程数据流</span></div><div class="ob-card-body"><div class="data-flow">
-<div class="flow-item"><div class="flow-val">1.2</div><div class="flow-lbl">上行 Mbps</div></div>
-<div class="flow-item"><div class="flow-val">4.5</div><div class="flow-lbl">下行 Mbps</div></div>
-<div class="flow-item"><div class="flow-val">280</div><div class="flow-lbl">延迟 ms</div></div>
-<div class="flow-item"><div class="flow-val">OK</div><div class="flow-lbl">数据同步</div></div>
-</div></div></div>
-<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">岸基指令历史</span></div><div class="ob-card-body">
-<table class="ob-table"><thead><tr><th>时间</th><th>来源</th><th>指令</th></tr></thead><tbody>
-<tr><td>14:30</td><td>SCC 上海</td><td>航速调整至 12kn</td></tr>
-<tr><td>12:15</td><td>VTS 宁波</td><td>进港航道确认</td></tr>
-<tr><td>09:40</td><td>SCC 上海</td><td>Wx 台风预警转发</td></tr>
-<tr><td>08:00</td><td>总部</td><td>CII 优化建议下发</td></tr>
-</tbody></table></div></div>
-</div></div>
+    <!-- Comm Status -->
+    <div class="sh-card">
+        <h5>📡 通信链路 <span class="pulse" style="font-size:10px;color:var(--sh-cyan);margin-left:auto">● 在线</span></h5>
+        <div class="comm-link"><div class="comm-icon">🛰️</div><div class="comm-info"><div class="name">VSAT Ku-Band</div><div class="signal">-62 dBm | 12 Mbps</div></div><div class="comm-dot online"></div></div>
+        <div class="comm-link"><div class="comm-icon">📶</div><div class="comm-info"><div class="name">4G/LTE (沿海)</div><div class="signal">-78 dBm | 50 Mbps</div></div><div class="comm-dot online"></div></div>
+        <div class="comm-link"><div class="comm-icon">🌐</div><div class="comm-info"><div class="name">Iridium NEXT</div><div class="signal">-94 dBm | 704 kbps</div></div><div class="comm-dot degraded"></div></div>
+        <div class="comm-link"><div class="comm-icon">🚢</div><div class="comm-info"><div class="name">AIS 双频</div><div class="signal">正常 | 2 × VHF</div></div><div class="comm-dot online"></div></div>
+        <div class="comm-link"><div class="comm-icon">📻</div><div class="comm-info"><div class="name">GMDSS / DSC</div><div class="signal">VHF Ch70 | MF/HF</div></div><div class="comm-dot online"></div></div>
+    </div>
+    <!-- Data Flow -->
+    <div class="sh-card">
+        <h5>📊 远程数据流</h5>
+        <div class="flow-grid">
+            <div class="flow-item"><div class="v" id="flowUp">1.2</div><div class="l">上行 Mbps</div></div>
+            <div class="flow-item"><div class="v" id="flowDown">4.5</div><div class="l">下行 Mbps</div></div>
+            <div class="flow-item"><div class="v" id="flowLat">280</div><div class="l">延迟 ms</div></div>
+            <div class="flow-item"><div class="v" style="color:var(--sh-ok)" id="flowSync">OK</div><div class="l">数据同步</div></div>
+        </div>
+        <canvas id="bwChart" class="bw-canvas" height="60"></canvas>
+    </div>
+    <!-- Data Sync -->
+    <div class="sh-card">
+        <h5>🔄 数据同步</h5>
+        <div class="sync-items">
+            <div class="sync-item"><span class="comm-dot online" style="width:8px;height:8px"></span>航行数据 → 岸基<div class="v" style="color:var(--sh-ok)">实时</div></div>
+            <div class="sync-item"><span class="comm-dot online" style="width:8px;height:8px"></span>CMS 传感器 → 云存储<div class="v" style="color:var(--sh-ok)">5s</div></div>
+            <div class="sync-item"><span class="comm-dot degraded" style="width:8px;height:8px"></span>视频监控 → S3<div class="v" style="color:var(--sh-warn)">30s</div></div>
+            <div class="sync-item"><span class="comm-dot online" style="width:8px;height:8px"></span>岸基指令 → 船端<div class="v" style="color:var(--sh-ok)">实时</div></div>
+        </div>
+    </div>
+    <!-- Command History -->
+    <div class="sh-card">
+        <h5>📋 岸基指令历史</h5>
+        <table class="cmd-table">
+            <thead><tr><th>时间</th><th>来源</th><th>指令</th><th>状态</th></tr></thead>
+            <tbody id="cmdBody">
+                <tr><td>14:30</td><td>SCC 上海</td><td>航速调整至 12kn</td><td><span class="badge badge-ok">已执行</span></td></tr>
+                <tr><td>12:15</td><td>VTS 宁波</td><td>进港航道确认</td><td><span class="badge badge-ok">已确认</span></td></tr>
+                <tr><td>09:40</td><td>SCC 上海</td><td>台风预警转发</td><td><span class="badge badge-warn">待确认</span></td></tr>
+                <tr><td>08:00</td><td>总部</td><td>CII 优化建议下发</td><td><span class="badge badge-ok">已接收</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
 <script>
-(function(){
-  var map=new maplibregl.Map({container:'fleetMap',style:{version:8,sources:{'osm':{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'OpenStreetMap'}},layers:[{id:'osm',type:'raster',source:'osm'}]},center:[122,30],zoom:5});
-  map.on('load',function(){
-    map.addSource('fleet',{type:'geojson',data:{type:'FeatureCollection',features:[
-      {type:'Feature',geometry:{type:'Point',coordinates:[122.1,30.6]},properties:{name:'PoseidonX-01'}},
-      {type:'Feature',geometry:{type:'Point',coordinates:[121.5,31.2]},properties:{name:'PoseidonX-02'}},
-      {type:'Feature',geometry:{type:'Point',coordinates:[120.8,29.8]},properties:{name:'PoseidonX-03'}}
-    ]}});
-    map.addLayer({id:'fleet-dots',type:'circle',source:'fleet',paint:{'circle-radius':7,'circle-color':'#00a0ff','circle-stroke-width':2,'circle-stroke-color':'#fff'}});
-    map.addLayer({id:'fleet-labels',type:'symbol',source:'fleet',layout:{'text-field':['get','name'],'text-offset':[0,1.5],'text-size':12},paint:{'text-color':'#ffffff','text-halo-color':'#000','text-halo-width':1}});
-  });
-})();
+// ═══════════════════════════════════════════════
+//  PoseidonX Ship-Shore — Enhanced
+// ═══════════════════════════════════════════════
+
+// ── Map ──
+const map=new maplibregl.Map({container:'fleetMap',style:{version:8,sources:{'osm':{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'OpenStreetMap'}},layers:[{id:'osm',type:'raster',source:'osm'}]},center:[122,30],zoom:5});
+map.on('load',()=>{
+    fetch('/api/v1/fleet/positions').then(r=>r.json()).then(geojson=>{
+        map.addSource('fleet',{type:'geojson',data:geojson});
+        map.addLayer({id:'fleet-dots',type:'circle',source:'fleet',paint:{'circle-radius':8,'circle-color':['case',['get','is_own'],'#ff4444','#22d3ee'],'circle-stroke-width':2,'circle-stroke-color':'#fff','circle-opacity':0.9}});
+        map.addLayer({id:'fleet-labels',type:'symbol',source:'fleet',layout:{'text-field':['get','name'],'text-offset':[0,1.8],'text-size':12},paint:{'text-color':'#ffffff','text-halo-color':'#000','text-halo-width':1}});
+    }).catch(()=>{
+        map.addSource('fleet',{type:'geojson',data:{type:'FeatureCollection',features:[
+            {type:'Feature',geometry:{type:'Point',coordinates:[122.1,30.6]},properties:{name:'PoseidonX-01',is_own:true}},
+            {type:'Feature',geometry:{type:'Point',coordinates:[121.5,31.2]},properties:{name:'PoseidonX-02'}},
+            {type:'Feature',geometry:{type:'Point',coordinates:[120.8,29.8]},properties:{name:'PoseidonX-03'}}
+        ]}});
+        map.addLayer({id:'fleet-dots',type:'circle',source:'fleet',paint:{'circle-radius':8,'circle-color':['case',['get','is_own'],'#ff4444','#22d3ee'],'circle-stroke-width':2,'circle-stroke-color':'#fff'}});
+        map.addLayer({id:'fleet-labels',type:'symbol',source:'fleet',layout:{'text-field':['get','name'],'text-offset':[0,1.8],'text-size':12},paint:{'text-color':'#ffffff','text-halo-color':'#000','text-halo-width':1}});
+    });
+    setInterval(()=>{fetch('/api/v1/fleet/positions').then(r=>r.json()).then(geojson=>{const src=map.getSource('fleet');if(src)src.setData(geojson);}).catch(()=>{});},15000);
+});
+
+// ── Bandwidth History Chart ──
+const bwHistory=[];
+function drawBwChart(){
+    const cv=document.getElementById('bwChart'),ctx=cv.getContext('2d');
+    const W=cv.width=cv.offsetWidth,H=60;
+    ctx.clearRect(0,0,W,H);
+    if(bwHistory.length<2)return;
+    const max=Math.max(...bwHistory.map(b=>b.up+b.down))*1.3||10;
+    // Up area
+    ctx.beginPath();bwHistory.forEach((b,i)=>{const x=i/(bwHistory.length-1)*W,y=H-(b.up/max)*H;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle='rgba(34,211,238,.1)';ctx.fill();
+    ctx.beginPath();bwHistory.forEach((b,i)=>{const x=i/(bwHistory.length-1)*W,y=H-(b.up/max)*H;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle='rgba(34,211,238,.6)';ctx.lineWidth=1.5;ctx.stroke();
+    // Down area
+    ctx.beginPath();bwHistory.forEach((b,i)=>{const x=i/(bwHistory.length-1)*W,y=H-(b.down/max)*H;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle='rgba(96,165,250,.08)';ctx.fill();
+    ctx.beginPath();bwHistory.forEach((b,i)=>{const x=i/(bwHistory.length-1)*W,y=H-(b.down/max)*H;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle='rgba(96,165,250,.5)';ctx.lineWidth=1.5;ctx.stroke();
+}
+// Simulated bandwidth data
+setInterval(()=>{
+    bwHistory.push({up:1.2+(Math.random()-.5)*.6,down:4.5+(Math.random()-.5)*1.5});
+    if(bwHistory.length>60)bwHistory.shift();
+    drawBwChart();
+    if(bwHistory.length>0){const last=bwHistory[bwHistory.length-1];document.getElementById('flowUp').textContent=last.up.toFixed(1);document.getElementById('flowDown').textContent=last.down.toFixed(1);}
+},2000);
+
+// ── Fetch APIs ──
+function fetchComms(){fetch('/api/v1/comms/link-status').then(r=>r.json()).then(d=>{const links=d.links||[];const commLinks=document.querySelectorAll('.comm-link');links.forEach((l,i)=>{if(commLinks[i]){const dot=commLinks[i].querySelector('.comm-dot');if(dot)dot.className='comm-dot '+(l.status==='online'?'online':l.status==='degraded'?'degraded':'offline');}});}).catch(()=>{});}
+function fetchCmds(){fetch('/api/v1/fleet/command-history').then(r=>r.json()).then(d=>{const tbody=document.getElementById('cmdBody');if(!tbody||!d.commands)return;tbody.innerHTML='';d.commands.slice(0,6).forEach(c=>{const time=c.time?new Date(c.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}):'';tbody.innerHTML+=`<tr><td>${time}</td><td>${c.from||''}</td><td>${c.command||''}</td><td><span class="badge badge-ok">已执行</span></td></tr>`;});}).catch(()=>{});}
+fetchComms();fetchCmds();
+setInterval(fetchComms,10000);setInterval(fetchCmds,30000);
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws/shore');ws.onclose=()=>setTimeout(cn,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(cn,5000);}}cn();})();
 </script>
 <script src="/js/nav-sidebar.js" data-active="shore"></script>
-<script>(function(){var P="ws://"+location.host+"/ws/shore";var ws,t;function C(){ws=new WebSocket(P);ws.onclose=function(){clearTimeout(t);t=setTimeout(C,3e3)};ws.onerror=function(){ws.close()}}C()})();</script>
 </body>
 </html>

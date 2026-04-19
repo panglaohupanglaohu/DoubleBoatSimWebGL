@@ -384,6 +384,32 @@ class AutonomyManagerChannel(MarineChannel):
             "constraints_count": len(self._constraints),
         }
 
+    # ── IMO MASS 安全回退机制 ──
+    def fall_back_safe_state(self, reason: str = "system_fault") -> Dict[str, Any]:
+        """触发安全回退到最低自主等级 (IMO MSC.1/Circ.1638 MASS Code).
+        Fail-safe: degrade to manual control when system fault detected."""
+        prev_level = self._current_level
+        self._current_level = "manual"
+        from datetime import datetime
+        self._transition_history.append(type('T', (), {
+            'timestamp': datetime.now().isoformat(),
+            'from_level': prev_level,
+            'to_level': 'manual',
+            'reason': f'safe_state_fallback: {reason}',
+        })())
+        self._set_health(ChannelStatus.WARN, f"Fallback to manual: {reason}")
+        return {
+            "fallback_activated": True,
+            "previous_level": prev_level,
+            "current_level": "manual",
+            "reason": reason,
+            "reference": "IMO MSC.1/Circ.1638 MASS Code",
+        }
+
+    def safe_state_fallback(self, reason: str = "system_fault") -> Dict[str, Any]:
+        """Alias for fall_back_safe_state (degraded mode entry)."""
+        return self.fall_back_safe_state(reason)
+
     def shutdown(self) -> bool:
         self._initialized = False
         self._set_health(ChannelStatus.OFF, "Shut down")

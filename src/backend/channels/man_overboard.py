@@ -16,12 +16,22 @@ from .marine_base import MarineChannel, ChannelStatus, ChannelPriority
 
 logger = logging.getLogger(__name__)
 
-VALID_SEARCH_PATTERNS = ("none", "williamson_turn", "anderson_turn", "scharnow_turn")
+VALID_SEARCH_PATTERNS = (
+    "none",
+    "williamson_turn",
+    "anderson_turn",
+    "scharnow_turn",
+    "expanding_square",
+    "sector_search",
+    "parallel_sweep",
+    "creeping_line",
+)
 
 # Water temperature → survival time mapping (hours, approximate)
+# Ref: IMO MSC/Circ.1046, SOLAS Ch III — conservative (no immersion suit)
 _SURVIVAL_TABLE = [
     (2, 0.75),
-    (5, 1.5),
+    (5, 1.0),     # corrected: IMO 建议 ≤ 1.0h
     (10, 3.0),
     (15, 6.0),
     (20, 12.0),
@@ -103,7 +113,7 @@ class ManOverboardChannel(MarineChannel):
                 from .marine_message_bus import MarineMessage, MessageType, MessagePriority
                 msg = MarineMessage(
                     message_type=MessageType.URGENCY_PAN_PAN,
-                    priority=MessagePriority.DISTRESS,
+                    priority=MessagePriority.URGENCY,
                     sender_channel=self.name,
                     subject="mob.activated",
                     content={"lat": lat, "lon": lon,
@@ -148,12 +158,18 @@ class ManOverboardChannel(MarineChannel):
         return round((time.time() - self._mob_activated_at) / 60.0, 1)
 
     def estimate_drift(self, wind_speed_kn=10.0, wind_dir_deg=0.0,
-                       current_speed_kn=0.5, current_dir_deg=0.0, elapsed_min=0.0):
+                       current_speed_kn=0.5, current_dir_deg=0.0,
+                       elapsed_min=0.0, initial_position_error_nm=0.3):
+        """IAMSAR Vol III 漂移估算 + Total Probable Error 搜索半径。"""
         import math
-        if elapsed_min <= 0: elapsed_min = self._elapsed_minutes()
-        if elapsed_min <= 0: return {"drift_nm": 0.0, "search_radius_nm": 0.5}
+        if elapsed_min <= 0:
+            elapsed_min = self._elapsed_minutes()
+        if elapsed_min <= 0:
+            return {"drift_nm": 0.0, "search_radius_nm": 0.5,
+                    "datum_error": 0.0, "total_error": 0.0}
         hours = elapsed_min / 60.0
-        leeway = wind_speed_kn * 0.035  # IAMSAR 3-4%
+        # Wind leeway: IAMSAR 3-4% for PIW with PFD
+        leeway = wind_speed_kn * 0.035
         lw_dir = (wind_dir_deg + 180.0) % 360.0
         lw_x = leeway * math.sin(math.radians(lw_dir))
         lw_y = leeway * math.cos(math.radians(lw_dir))
@@ -162,9 +178,25 @@ class ManOverboardChannel(MarineChannel):
         dx = (lw_x + cu_x) * hours
         dy = (lw_y + cu_y) * hours
         drift_nm = math.sqrt(dx**2 + dy**2)
-        search_r = drift_nm + 0.5 + hours * 0.1
-        return {"drift_nm": round(drift_nm, 3), "search_radius_nm": round(search_r, 2),
-                "elapsed_min": round(elapsed_min, 1)}
+        # IAMSAR Total Probable Error (TPE)
+        # E = sqrt(X^2 + Y^2 + De^2)
+        # X = initial position error, Y = drift position error, De = datum error
+        datum_error = drift_nm * 0.15  # 15% drift uncertainty
+        drift_position_error = hours * 0.1
+        total_error = math.sqrt(
+            initial_position_error_nm ** 2
+            + drift_position_error ** 2
+            + datum_error ** 2
+        )
+        # Search radius = drift + safety factor * TPE (IAMSAR fs=1.1~1.6)
+        search_r = drift_nm + 1.3 * total_error + 0.5
+        return {
+            "drift_nm": round(drift_nm, 3),
+            "search_radius_nm": round(search_r, 2),
+            "elapsed_min": round(elapsed_min, 1),
+            "datum_error": round(datum_error, 3),
+            "total_error": round(total_error, 3),
+        }
 
     def get_mob_status(self) -> dict:
         """Return comprehensive MOB status."""

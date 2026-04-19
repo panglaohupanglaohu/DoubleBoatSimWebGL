@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="ob-title" content="能效合规">
+<meta name="ob-subtitle" content="K-Chief 700 Energy — EEXI/CII 能效管理">
+<title>能效合规 — PoseidonX</title>
+
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+.energy-wrap{padding:16px;display:flex;flex-direction:column;gap:16px}
+.rating-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.rating-card{text-align:center;padding:24px 16px;border-radius:var(--ob-radius-lg);background:var(--ob-bg-card);border:1px solid var(--ob-border)}
+.rating-letter{font-size:48px;font-weight:800;line-height:1}
+.rating-name{font-size:13px;color:var(--ob-text-tertiary);margin-top:8px}
+.rating-blue .rating-letter{color:#2196f3}
+.rating-yellow .rating-letter{color:#ffc107}
+.rating-green .rating-letter{color:#4caf50}
+.mid-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fuel-canvas{width:100%;height:260px;background:var(--ob-bg-section);border-radius:var(--ob-radius-lg)}
+.emit-item{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.emit-item .ob-readout{flex:0 0 80px}
+.emit-item .ob-progress{flex:1;height:10px}
+</style>
+</head>
+<body>
+<div class="energy-wrap">
+<div class="rating-row">
+<div class="rating-card rating-blue"><div class="rating-letter">B</div><div class="rating-name">EEXI 评级</div></div>
+<div class="rating-card rating-yellow"><div class="rating-letter">C</div><div class="rating-name">CII 年度评级</div></div>
+<div class="rating-card rating-blue"><div class="rating-letter">B</div><div class="rating-name">当前 CII</div></div>
+<div class="rating-card rating-green"><div class="rating-letter">✓</div><div class="rating-name">EEDI 合规</div></div>
+</div>
+<div class="mid-row">
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">月度燃油消耗 (MT)</span></div><div class="ob-card-body"><canvas id="fuelChart" class="fuel-canvas"></canvas></div></div>
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">排放监测</span></div><div class="ob-card-body">
+<div class="emit-item"><div class="ob-readout"><span class="ob-readout-label">CO₂</span><span class="ob-readout-value">3,842</span><span class="ob-readout-unit">t/yr</span></div><div class="ob-progress"><div class="ob-progress-bar" style="width:68%;background:var(--ob-running)"></div></div></div>
+<div class="emit-item"><div class="ob-readout"><span class="ob-readout-label">SOx</span><span class="ob-readout-value">12.4</span><span class="ob-readout-unit">t/yr</span></div><div class="ob-progress"><div class="ob-progress-bar" style="width:32%;background:var(--ob-warning)"></div></div></div>
+<div class="emit-item"><div class="ob-readout"><span class="ob-readout-label">NOx</span><span class="ob-readout-value">78.6</span><span class="ob-readout-unit">t/yr</span></div><div class="ob-progress"><div class="ob-progress-bar" style="width:55%;background:var(--ob-accent)"></div></div></div>
+</div></div></div>
+<div class="ob-card"><div class="ob-card-header"><span class="ob-card-title">合规文档</span></div><div class="ob-card-body">
+<table class="ob-table"><thead><tr><th>文档名称</th><th>状态</th><th>有效期</th><th>更新日期</th></tr></thead><tbody>
+<tr><td>EEXI 技术档案</td><td><span class="ob-badge ob-badge-ok">有效</span></td><td>2027-06-30</td><td>2025-12-01</td></tr>
+<tr><td>CII 改善方案</td><td><span class="ob-badge ob-badge-ok">已批准</span></td><td>2026-12-31</td><td>2026-01-15</td></tr>
+<tr><td>SEEMP III</td><td><span class="ob-badge ob-badge-ok">有效</span></td><td>2027-03-31</td><td>2025-09-20</td></tr>
+<tr><td>国际能效证书 (IEE)</td><td><span class="ob-badge ob-badge-warning">即将到期</span></td><td>2026-06-15</td><td>2024-06-15</td></tr>
+<tr><td>排放合规声明</td><td><span class="ob-badge ob-badge-ok">有效</span></td><td>2027-01-01</td><td>2026-02-28</td></tr>
+</tbody></table></div></div>
+</div>
+<script>
+(function(){
+  var c=document.getElementById('fuelChart'),ctx=c.getContext('2d');
+  var fuelData=null;
+  var ratingCards=document.querySelectorAll('.rating-card .rating-letter');
+  var emitValues=document.querySelectorAll('.emit-item .ob-readout-value');
+  var emitBars=document.querySelectorAll('.emit-item .ob-progress-bar');
+
+  function draw(){
+    var W=c.width=c.offsetWidth,H=c.height=c.offsetHeight;
+    var data=fuelData||[320,285,310,295,340,360,330,315,290,305,335,350];
+    var months=fuelData?fuelData.map(function(m){return m.label||''}):'1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月'.split(',');
+    var vals=fuelData?fuelData.map(function(m){return m.total_tonnes||0}):data;
+    var max=Math.max.apply(null,vals)*1.15,pad=40,bw=(W-pad*2)/vals.length*0.6,gap=(W-pad*2)/vals.length;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.beginPath();ctx.moveTo(pad,10);ctx.lineTo(pad,H-pad);ctx.lineTo(W-10,H-pad);ctx.stroke();
+    vals.forEach(function(v,i){
+      var x=pad+i*gap+(gap-bw)/2,bh=(v/max)*(H-pad-20),y=H-pad-bh;
+      ctx.fillStyle='rgba(0,160,255,0.7)';ctx.fillRect(x,y,bw,bh);
+      ctx.fillStyle='#aaa';ctx.font='10px sans-serif';ctx.textAlign='center';
+      ctx.fillText(months[i],x+bw/2,H-pad+14);ctx.fillText(Math.round(v),x+bw/2,y-5);
+    });
+  }
+
+  function fetchEnergy(){
+    Promise.all([
+      fetch('/api/v1/energy/eexi-rating').then(function(r){return r.json();}).catch(function(){return null;}),
+      fetch('/api/v1/energy/cii-status').then(function(r){return r.json();}).catch(function(){return null;}),
+      fetch('/api/v1/energy/monthly-fuel').then(function(r){return r.json();}).catch(function(){return null;}),
+      fetch('/api/v1/energy/emissions').then(function(r){return r.json();}).catch(function(){return null;})
+    ]).then(function(results){
+      var eexi=results[0],cii=results[1],fuel=results[2],emit=results[3];
+      if(eexi&&eexi.eexi&&ratingCards[0])ratingCards[0].textContent=eexi.eexi.rating||'B';
+      if(cii&&cii.cii){
+        if(ratingCards[1])ratingCards[1].textContent=cii.cii.rating||'C';
+        if(ratingCards[2])ratingCards[2].textContent=cii.cii.rating||'B';
+      }
+      if(fuel&&fuel.monthly){fuelData=fuel.monthly;draw();}
+      if(emit&&emit.emissions){
+        var em=emit.emissions;
+        if(emitValues[0])emitValues[0].textContent=Number(em.co2_ytd_tonnes).toLocaleString();
+        if(emitValues[1])emitValues[1].textContent=em.sox_ytd_tonnes;
+        if(emitValues[2])emitValues[2].textContent=em.nox_ytd_tonnes;
+        if(emitBars[0])emitBars[0].style.width=Math.min(100,em.co2_ytd_tonnes/8000*100).toFixed(0)+'%';
+        if(emitBars[1])emitBars[1].style.width=Math.min(100,em.sox_ytd_tonnes/30*100).toFixed(0)+'%';
+        if(emitBars[2])emitBars[2].style.width=Math.min(100,em.nox_ytd_tonnes/150*100).toFixed(0)+'%';
+      }
+    });
+  }
+  draw();window.addEventListener('resize',draw);
+  fetchEnergy();setInterval(fetchEnergy,30000);
+})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="energy"></script>
+<script>(function(){var P="ws://"+location.host+"/ws/energy";var ws,t;function C(){ws=new WebSocket(P);ws.onclose=function(){clearTimeout(t);t=setTimeout(C,3e3)};ws.onerror=function(){ws.close()}}C()})();</script>
+</body>
+</html>

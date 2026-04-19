@@ -21,14 +21,16 @@ router = APIRouter(prefix="/api/v1/agent-teams", tags=["Agent Teams"])
 _build_team = None
 _execution_team = None
 _scheduler = None
+_evolution_engine = None
 
 
-def set_teams(build_team, execution_team, scheduler):
+def set_teams(build_team, execution_team, scheduler, evolution_engine=None):
     """在应用启动时由 main.py 调用，注入团队实例."""
-    global _build_team, _execution_team, _scheduler
+    global _build_team, _execution_team, _scheduler, _evolution_engine
     _build_team = build_team
     _execution_team = execution_team
     _scheduler = scheduler
+    _evolution_engine = evolution_engine
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +200,233 @@ async def teams_overview():
         }
     if _scheduler:
         result["scheduler"] = _scheduler.get_status()
+    if _evolution_engine:
+        result["evolution"] = _evolution_engine.get_status()
     return result
+
+
+# ---------------------------------------------------------------------------
+# System Evolution (自我演进引擎)
+# ---------------------------------------------------------------------------
+
+@router.get("/evolution/status")
+async def evolution_status():
+    """获取自我演进引擎状态。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_status()
+
+
+@router.get("/evolution/summary")
+async def evolution_summary():
+    """获取演进项汇总。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_evolution_summary()
+
+
+@router.get("/evolution/items")
+async def evolution_items(status: Optional[str] = None):
+    """获取演进项列表，可按状态过滤。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_evolution_items(status=status)
+
+
+@router.get("/evolution/rules")
+async def evolution_rules():
+    """获取审查规则列表。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return [r.to_dict() for r in _evolution_engine.audit_rules]
+
+
+@router.post("/evolution/audit")
+async def evolution_run_audit():
+    """手动触发一次审查。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.run_full_audit()
+
+
+@router.post("/evolution/cycle")
+async def evolution_run_cycle():
+    """运行完整演进周期（审查→派发→验证→关闭）。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.run_evolution_cycle()
+
+
+@router.post("/evolution/dispatch")
+async def evolution_dispatch():
+    """派发所有待处理演进项给 Build 团队。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.dispatch_all_pending()
+
+
+@router.post("/evolution/verify")
+async def evolution_verify():
+    """验证所有待验证项。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.verify_all_pending()
+
+
+@router.get("/evolution/items/{item_id}")
+async def evolution_item_detail(item_id: str):
+    """获取单个演进项详情。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    item = _evolution_engine.evolution_items.get(item_id)
+    if not item:
+        raise HTTPException(404, f"Item '{item_id}' not found")
+    return item.to_dict()
+
+
+@router.post("/evolution/items/{item_id}/progress")
+async def evolution_mark_progress(item_id: str):
+    """标记演进项为进行中。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    ok = _evolution_engine.mark_in_progress(item_id)
+    if not ok:
+        raise HTTPException(404, f"Item '{item_id}' not found")
+    return {"status": "ok", "item_id": item_id, "new_status": "in_progress"}
+
+
+@router.post("/evolution/items/{item_id}/complete")
+async def evolution_mark_complete(item_id: str):
+    """标记演进项构建完成，进入待验证。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    ok = _evolution_engine.mark_build_complete(item_id)
+    if not ok:
+        raise HTTPException(404, f"Item '{item_id}' not found")
+    return {"status": "ok", "item_id": item_id, "new_status": "verify_pending"}
+
+
+@router.post("/evolution/close-verified")
+async def evolution_close_verified():
+    """关闭所有已验证通过的演进项。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    closed = _evolution_engine.close_verified()
+    return {"closed": closed, "count": len(closed)}
+
+
+@router.get("/evolution/history")
+async def evolution_audit_history():
+    """获取审查历史记录。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_audit_history()
+
+
+@router.get("/evolution/analytics")
+async def evolution_analytics():
+    """获取演进分析数据 (域覆盖、严重度分布、趋势)。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    summary = _evolution_engine.get_evolution_summary()
+    history = _evolution_engine.get_audit_history()
+    status = _evolution_engine.get_status()
+
+    return {
+        "summary": summary,
+        "history": history,
+        "stats": status.get("stats", {}),
+        "items_by_status": status.get("items_by_status", {}),
+        "rules_count": status.get("audit_rules_count", 0),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: 业界标准化改进 API
+# ---------------------------------------------------------------------------
+
+@router.get("/evolution/compliance-rating")
+async def evolution_compliance_rating():
+    """获取 DNV CII 风格 A~E 合规评级。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_compliance_rating()
+
+
+@router.post("/evolution/compliance-rating/calculate")
+async def evolution_calculate_rating():
+    """重新计算合规评级 (运行快速审查)。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.calculate_compliance_rating()
+
+
+@router.get("/evolution/checklist")
+async def evolution_checklist(level: Optional[str] = None):
+    """获取 ClassNK 双层自查清单 (company/ship)。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_checklist(level=level)
+
+
+@router.get("/evolution/zones")
+async def evolution_zones():
+    """获取所有合规区域。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_all_zones()
+
+
+@router.get("/evolution/zones/active")
+async def evolution_active_zones():
+    """获取当前激活的合规区域。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return {
+        "active_zones": _evolution_engine.get_active_zones(),
+        "activated_rules": _evolution_engine.get_zone_activated_rules(),
+        "vessel_position": _evolution_engine._vessel_position,
+    }
+
+
+@router.post("/evolution/zones/update-position")
+async def evolution_update_position(lat: float = 0.0, lon: float = 0.0):
+    """更新船舶位置，自动检测合规区域进入/离开。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.update_vessel_position(lat, lon)
+
+
+@router.get("/evolution/escalation")
+async def evolution_escalation():
+    """获取失败升级状态 (DNV SEEMP Part III 风格)。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_escalation_status()
+
+
+@router.get("/evolution/trend")
+async def evolution_trend():
+    """获取合规评级趋势分析。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_trend_analysis()
+
+
+@router.get("/evolution/monitoring")
+async def evolution_monitoring():
+    """获取连续监控状态。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_monitoring_status()
+
+
+@router.get("/evolution/audit-trail")
+async def evolution_audit_trail(event_type: Optional[str] = None, limit: int = 50):
+    """获取审计轨迹日志。"""
+    if not _evolution_engine:
+        raise HTTPException(404, "Evolution engine not registered")
+    return _evolution_engine.get_audit_trail(event_type=event_type, limit=limit)
 
 
 __all__ = ["router", "set_teams"]

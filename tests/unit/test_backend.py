@@ -240,9 +240,9 @@ class TestSimulationEngine:
         """测试创建仿真引擎"""
         engine = SimulationEngine()
         assert engine.running == False
-        assert engine.ship_position["lat"] == 31.2304
-        assert engine.ship_position["lon"] == 121.4737
-        assert len(engine.ais_targets) == 5
+        assert engine.ship_position["lat"] == 30.85
+        assert engine.ship_position["lon"] == 122.35
+        assert len(engine.ais_targets) == 8
 
     def test_engine_start_stop(self):
         """测试引擎启动停止"""

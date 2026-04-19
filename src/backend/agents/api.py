@@ -13,6 +13,7 @@ Tab-based organization:
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 
 from typing import Any, Dict, List, Optional
@@ -42,6 +43,22 @@ from .hermes_research import (
     get_research_distributions,
     get_hermes_toolsets,
 )
+from .chat_harness import (
+    ChatHarness,
+    LLMProvider,
+    ProviderConfig,
+    get_chat_harness,
+)
+from .execution_registry import (
+    ToolPermissionContext,
+    PortRuntime,
+    assemble_tool_pool,
+    build_execution_registry,
+)
+from .session_store import (
+    list_sessions as list_stored_sessions,
+    search_sessions,
+)
 from .skill_registry import SkillRegistry, get_default_skills
 from .team_manager import TeamManager
 from .tool_registry import ToolRegistry, get_default_tools
@@ -54,6 +71,73 @@ _team_manager: Optional[TeamManager] = None
 _tool_registry: Optional[ToolRegistry] = None
 _skill_registry: Optional[SkillRegistry] = None
 
+# ── Model Pool Persistence ──
+import os as _mp_os, json as _mp_json
+
+_MODEL_POOL_PATH = _mp_os.path.join(
+    _mp_os.path.dirname(_mp_os.path.dirname(_mp_os.path.dirname(
+        _mp_os.path.dirname(_mp_os.path.abspath(__file__))))),
+    "config", "model_pool.json"
+)
+
+
+def _save_model_pool() -> None:
+    """Persist all teams' model pool to config/model_pool.json."""
+    if _team_manager is None:
+        return
+    data: Dict[str, Any] = {}
+    for team in _team_manager.list_teams():
+        team_models = {}
+        for m in team.models.values():
+            team_models[m.model_id] = {
+                "model_id": m.model_id,
+                "provider": m.provider,
+                "name": m.name,
+                "max_tokens": m.max_tokens,
+                "temperature": m.temperature,
+                "is_default": m.is_default,
+                "enabled": m.enabled,
+                "api_key": m.api_key,
+                "api_base_url": m.api_base_url,
+            }
+        data[team.team_id] = team_models
+    try:
+        _mp_os.makedirs(_mp_os.path.dirname(_MODEL_POOL_PATH), exist_ok=True)
+        with open(_MODEL_POOL_PATH, "w", encoding="utf-8") as f:
+            _mp_json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def _load_model_pool(tm: TeamManager) -> None:
+    """Load persisted model pool from config/model_pool.json, overriding defaults."""
+    if not _mp_os.path.isfile(_MODEL_POOL_PATH):
+        return
+    try:
+        with open(_MODEL_POOL_PATH, "r", encoding="utf-8") as f:
+            data = _mp_json.load(f)
+    except Exception:
+        return
+    for team in tm.list_teams():
+        team_data = data.get(team.team_id)
+        if not team_data:
+            continue
+        # Replace the entire model pool with persisted version
+        team.models.clear()
+        for mid, mdata in team_data.items():
+            model = ModelConfig(
+                model_id=mdata.get("model_id", mid),
+                provider=mdata.get("provider", "deepseek"),
+                name=mdata.get("name", "deepseek-chat"),
+                max_tokens=mdata.get("max_tokens", 8192),
+                temperature=mdata.get("temperature", 0.7),
+                is_default=mdata.get("is_default", False),
+                enabled=mdata.get("enabled", True),
+                api_key=mdata.get("api_key", ""),
+                api_base_url=mdata.get("api_base_url", ""),
+            )
+            team.add_model(model)
+
 
 def init_agent_config(team_manager: TeamManager) -> None:
     """Inject the TeamManager instance at startup."""
@@ -63,6 +147,49 @@ def init_agent_config(team_manager: TeamManager) -> None:
     _tool_registry.load_defaults()
     _skill_registry = SkillRegistry()
     _skill_registry.load_defaults()
+    # Load persisted model pool (overrides hardcoded defaults)
+    _load_model_pool(team_manager)
+    # Sync any existing default model to the chat harness
+    _init_harness_from_teams(team_manager)
+
+
+def _get_tool_registry() -> ToolRegistry:
+    """Get or create the global ToolRegistry."""
+    global _tool_registry
+    if _tool_registry is None:
+        _tool_registry = ToolRegistry()
+        _tool_registry.load_defaults()
+    return _tool_registry
+
+
+def _get_skill_registry() -> SkillRegistry:
+    """Get or create the global SkillRegistry."""
+    global _skill_registry
+    if _skill_registry is None:
+        _skill_registry = SkillRegistry()
+        _skill_registry.load_defaults()
+    return _skill_registry
+
+
+def _init_harness_from_teams(tm: TeamManager) -> None:
+    """On startup, push the first team's default model into the chat harness."""
+    try:
+        harness = get_chat_harness()
+        for team in tm.list_teams():
+            for m in team.models.values():
+                if m.is_default and m.api_key:
+                    harness.update_default_provider(
+                        provider=m.provider,
+                        api_key=m.api_key,
+                        api_base_url=m.api_base_url,
+                        model=m.name,
+                    )
+                    cfg = harness.get_provider_config()
+                    cfg.max_tokens = m.max_tokens
+                    cfg.temperature = m.temperature
+                    return
+    except Exception:
+        pass  # Non-critical, harness will use env/settings fallback
 
 
 def _tm() -> TeamManager:
@@ -238,7 +365,101 @@ def add_model(team_id: str, req: CreateModelRequest) -> Dict[str, Any]:
         api_base_url=req.api_base_url,
     )
     team.add_model(model)
+    if req.is_default:
+        _set_team_default_model(team, model.model_id)
+        _sync_default_model_to_harness(team)
+    _save_model_pool()
     return model.to_dict()
+
+
+@router.put(
+    "/teams/{team_id}/models/{model_id}",
+    summary="Update a model in the team pool",
+)
+def update_model(team_id: str, model_id: str, req: CreateModelRequest) -> Dict[str, Any]:
+    """Edit an existing model's configuration."""
+    team = _get_team_or_404(team_id)
+    model = team.get_model(model_id)
+    if model is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Model not found")
+    model.provider = req.provider
+    model.name = req.name
+    model.max_tokens = req.max_tokens
+    model.temperature = req.temperature
+    if req.api_key:
+        model.api_key = req.api_key
+    if req.api_base_url:
+        model.api_base_url = req.api_base_url
+    if req.is_default:
+        _set_team_default_model(team, model_id)
+    else:
+        model.is_default = False
+    # Sync to chat harness
+    _sync_default_model_to_harness(team)
+    _save_model_pool()
+    return model.to_dict()
+
+
+@router.put(
+    "/teams/{team_id}/models/{model_id}/default",
+    summary="Set a model as team default",
+)
+def set_default_model(team_id: str, model_id: str) -> Dict[str, Any]:
+    """Set one model as the team default; clears default on all others."""
+    team = _get_team_or_404(team_id)
+    model = team.get_model(model_id)
+    if model is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Model not found")
+    _set_team_default_model(team, model_id)
+    # Sync to chat harness
+    _sync_default_model_to_harness(team)
+    _save_model_pool()
+    return {"model_id": model_id, "is_default": True}
+
+
+def _set_team_default_model(team, model_id: str) -> None:
+    """Clear is_default on all models, then set the specified one.
+
+    Also migrates agents whose model_id was the old default to the new one,
+    so that agent settings pages always reflect the current default model.
+    """
+    # Find old default model_id
+    old_default_id: str | None = None
+    for m in team.models.values():
+        if m.is_default:
+            old_default_id = m.model_id
+            break
+
+    # Toggle is_default flag
+    for m in team.models.values():
+        m.is_default = (m.model_id == model_id)
+
+    # Propagate: agents using old default → new default
+    if old_default_id and old_default_id != model_id:
+        for agent in team.agents.values():
+            if agent.model_id == old_default_id:
+                agent.model_id = model_id
+
+
+def _sync_default_model_to_harness(team) -> None:
+    """Push the team's default model config into the ChatHarness."""
+    harness = get_chat_harness()
+    default_model = None
+    for m in team.models.values():
+        if m.is_default:
+            default_model = m
+            break
+    if default_model is None:
+        return
+    harness.update_default_provider(
+        provider=default_model.provider,
+        api_key=default_model.api_key,
+        api_base_url=default_model.api_base_url,
+        model=default_model.name,
+    )
+    cfg = harness.get_provider_config()
+    cfg.max_tokens = default_model.max_tokens
+    cfg.temperature = default_model.temperature
 
 
 @router.delete(
@@ -249,6 +470,7 @@ def remove_model(team_id: str, model_id: str) -> Dict[str, str]:
     removed = _tm().remove_model_from_team(team_id, model_id)
     if removed is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Model not found")
+    _save_model_pool()
     return {"deleted": model_id}
 
 
@@ -573,7 +795,11 @@ def update_model(team_id: str, model_id: str, req: UpdateModelRequest) -> Dict[s
         model.max_tokens = req.max_tokens
     if req.temperature >= 0:
         model.temperature = req.temperature
-    model.is_default = req.is_default
+    if req.is_default:
+        _set_team_default_model(team, model_id)
+        _sync_default_model_to_harness(team)
+    else:
+        model.is_default = False
     if req.api_key:
         model.api_key = req.api_key
     if req.api_base_url:
@@ -621,6 +847,7 @@ def update_agent(team_id: str, agent_id: str, req: UpdateAgentRequest) -> Dict[s
 def start_agent(team_id: str, agent_id: str) -> Dict[str, Any]:
     agent = _get_agent_or_404(team_id, agent_id)
     agent.state = AgentState.WORKING
+    _log_agent_action(agent_id, "started", "Agent started working")
     return agent.to_dict()
 
 
@@ -628,6 +855,7 @@ def start_agent(team_id: str, agent_id: str) -> Dict[str, Any]:
 def stop_agent(team_id: str, agent_id: str) -> Dict[str, Any]:
     agent = _get_agent_or_404(team_id, agent_id)
     agent.state = AgentState.STOPPED
+    _log_agent_action(agent_id, "stopped", "Agent stopped")
     return agent.to_dict()
 
 
@@ -635,6 +863,7 @@ def stop_agent(team_id: str, agent_id: str) -> Dict[str, Any]:
 def pause_agent(team_id: str, agent_id: str) -> Dict[str, Any]:
     agent = _get_agent_or_404(team_id, agent_id)
     agent.state = AgentState.PAUSED
+    _log_agent_action(agent_id, "paused", "Agent paused")
     return agent.to_dict()
 
 
@@ -651,9 +880,10 @@ def duplicate_agent(team_id: str, agent_id: str) -> Dict[str, Any]:
 
 
 @router.get("/teams/{team_id}/agents/{agent_id}/logs", summary="Get agent activity logs")
-def get_agent_logs(team_id: str, agent_id: str) -> Dict[str, Any]:
+def get_agent_logs(team_id: str, agent_id: str, limit: int = 50) -> Dict[str, Any]:
     _get_agent_or_404(team_id, agent_id)
-    return {"agent_id": agent_id, "logs": []}
+    logs = _agent_logs.get(agent_id, [])
+    return {"agent_id": agent_id, "logs": logs[-limit:]}
 
 
 @router.post("/teams/{team_id}/skills/{skill_id}/enable", summary="Enable skill for team")
@@ -690,6 +920,61 @@ def get_skill_tools(skill_id: str) -> Dict[str, Any]:
                 tool_details.append(t.to_dict())
                 break
     return {"skill_id": skill_id, "skill_name": skill.name, "required_tools": tool_details}
+
+
+@router.get("/skills/{skill_id}/instructions", summary="Get skill instructions")
+def get_skill_instructions(skill_id: str) -> Dict[str, Any]:
+    skill = _sr().get(skill_id)
+    if skill is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Skill not found")
+    return {
+        "skill_id": skill_id,
+        "name": skill.name,
+        "instructions": skill.instructions,
+        "required_tools": skill.required_tools,
+    }
+
+
+@router.post("/tools/{tool_id}/execute", summary="Execute a tool directly")
+async def execute_tool(tool_id: str, body: Dict[str, Any] = {}) -> Dict[str, Any]:
+    """Execute a tool with given arguments. Returns the execution result."""
+    from .tool_executor import get_tool_executor
+    tool = _tr().get(tool_id)
+    if tool is None:
+        # Try by name
+        for t in _tr().list_all():
+            if t.name == tool_id:
+                tool = t
+                break
+    if tool is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tool not found")
+    executor = get_tool_executor()
+    arguments = body.get("arguments", body)
+    result = await executor.execute(
+        tool.name, arguments,
+        requires_approval=tool.requires_approval,
+    )
+    return result.to_dict()
+
+
+@router.get("/tools/execution-history", summary="Get tool execution history")
+def get_tool_execution_history(limit: int = 50) -> List[Dict[str, Any]]:
+    from .tool_executor import get_tool_executor
+    return get_tool_executor().get_history(limit)
+
+
+@router.put(
+    "/tools/{tool_id}/config",
+    summary="Save tool configuration",
+)
+def save_tool_config(tool_id: str, body: Dict[str, Any] = {}) -> Dict[str, Any]:
+    """Save configuration for a tool."""
+    tool = _tr().get(tool_id)
+    if tool is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Tool not found")
+    config = body.get("config", body)
+    tool.config = config
+    return {"tool_id": tool_id, "config": tool.config}
 
 
 @router.get("/search", summary="Search across all entities")
@@ -772,6 +1057,10 @@ def delegate_task(team_id: str, agent_id: str, req: DelegateTaskRequest) -> Dict
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     _delegated_tasks.append(result)
+    _log_agent_action(agent_id, "delegated_task",
+                      f"to={req.target_agent_id} task={result['task_id']}")
+    _log_agent_action(req.target_agent_id, "received_delegation",
+                      f"from={agent_id} task={result['task_id']}")
     return result
 
 
@@ -817,6 +1106,8 @@ def create_session(team_id: str, agent_id: str, req: SessionCreateRequest) -> Di
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     _sessions[sid] = session
+    _bump_metric(agent_id, "sessions_created")
+    _log_agent_action(agent_id, "session_created", f"session={sid}")
     return session
 
 
@@ -831,54 +1122,110 @@ def get_session_messages(team_id: str, agent_id: str, session_id: str) -> Dict[s
     return {"session_id": session_id, "messages": session.get("messages", [])}
 
 
-def _generate_agent_response(agent, content):
-    content_lower = content.lower()
-    skill_names_lower = [s.lower() for s in agent.skills] if agent.skills else []
-    if "dt_camera_control" in skill_names_lower or any("camera" in s for s in skill_names_lower):
-        view_map = {
-            "top": ("top", {"x": 0, "y": 100, "z": 0}, "俯视图"),
-            "俯视": ("top", {"x": 0, "y": 100, "z": 0}, "俯视图"),
-            "front": ("front", {"x": 0, "y": 10, "z": 100}, "正视图"),
-            "正视": ("front", {"x": 0, "y": 10, "z": 100}, "正视图"),
-            "side": ("side", {"x": 100, "y": 10, "z": 0}, "侧视图"),
-            "侧视": ("side", {"x": 100, "y": 10, "z": 0}, "侧视图"),
-            "back": ("back", {"x": 0, "y": 10, "z": -100}, "后视图"),
-            "后视": ("back", {"x": 0, "y": 10, "z": -100}, "后视图"),
-            "iso": ("iso", {"x": 80, "y": 60, "z": 80}, "等轴测视图"),
-            "isometric": ("iso", {"x": 80, "y": 60, "z": 80}, "等轴测视图"),
-            "3d": ("iso", {"x": 80, "y": 60, "z": 80}, "3D视图"),
-        }
-        for keyword, (preset, pos, label) in view_map.items():
-            if keyword in content_lower:
-                import json as _json
-                params = {"position": pos, "target": {"x": 0, "y": 0, "z": 0}, "view_preset": preset, "duration": 1.0}
-                return (
-                    f"相机已切换到{label} ({preset.title()} View)\n\n"
-                    f"执行工具: dt_camera_move\n"
-                    f"参数: {_json.dumps(params, ensure_ascii=False)}\n\n"
-                    f"可用视角命令: top view / front view / side view / back view / iso"
-                )
-    if "navigation_assessment" in skill_names_lower or any("nav" in s for s in skill_names_lower):
-        nav_keywords = ["航线", "route", "导航", "navigate", "航向", "heading", "waypoint"]
-        if any(kw in content_lower for kw in nav_keywords):
-            return (
-                "航线分析中...\n\n"
-                "当前可用工具:\n"
-                "- ais_query: 查询周边AIS船舶\n"
-                "- weather_fetch: 获取海况数据\n"
-                "- route_calculate: 计算最优航线\n\n"
-                "请提供更多信息: 1.起始港口/坐标 2.目的港口/坐标 3.是否有避开区域"
-            )
-    if "colregs_compliance" in skill_names_lower or any("colreg" in s for s in skill_names_lower):
-        colreg_keywords = ["避碰", "collision", "colreg", "规则", "会遇", "交叉"]
-        if any(kw in content_lower for kw in colreg_keywords):
-            return "COLREGs 合规检查\n\n可用工具: colregs_check, ais_query\n请提供本船和目标船的航行信息"
-    if "engine_diagnostics" in skill_names_lower:
-        engine_keywords = ["发动机", "engine", "机舱", "引擎", "功率", "rpm", "转速"]
-        if any(kw in content_lower for kw in engine_keywords):
-            return "机舱诊断报告\n\n主机状态: 正常运行\n- RPM: 750\n- 功率: 85%\n- 温度: 正常\n- 油压: 正常\n\n可用工具: engine_status"
-    skills_str = ", ".join(agent.skills) if agent.skills else "暂无"
-    return f"我是 {agent.name}（{agent.role}）。收到你的消息:\n「{content}」\n\n我的技能: {skills_str}"
+async def _generate_agent_response(agent, content, session_id="", team_id=""):
+    """Generate agent response via the unified ChatHarness.
+
+    Routes through the real LLM when configured, falls back to
+    domain-aware offline responses when LLM is unavailable.
+    Uses the team's default model if available.
+    Injects bound tool schemas as function calling definitions.
+    Injects bound skill instructions into system prompt.
+    """
+    harness = get_chat_harness()
+
+    # If team has a default model, ensure harness uses it
+    if team_id:
+        team = _tm().get_team(team_id)
+        if team:
+            _sync_default_model_to_harness(team)
+
+    # Build tool schemas for function calling from agent's bound tools
+    tools_for_llm = None
+    tool_names_bound = set(agent.tools) if agent.tools else set()
+    if tool_names_bound:
+        all_tools = _tr().list_all()
+        tools_for_llm = []
+        for t in all_tools:
+            if t.name in tool_names_bound or t.tool_id in tool_names_bound:
+                # Build OpenAI function calling schema
+                props = {}
+                required_params = []
+                for pname, pdef in (t.parameters or {}).items():
+                    ptype = pdef.get("type", "string")
+                    if ptype == "integer":
+                        ptype = "number"
+                    if ptype == "object":
+                        ptype = "string"
+                    if ptype == "array":
+                        ptype = "string"
+                    props[pname] = {
+                        "type": ptype,
+                        "description": pdef.get("description", ""),
+                    }
+                    if pdef.get("required"):
+                        required_params.append(pname)
+                fn_schema = {
+                    "type": "function",
+                    "function": {
+                        "name": t.name,
+                        "description": t.description,
+                        "parameters": {
+                            "type": "object",
+                            "properties": props,
+                            "required": required_params,
+                        },
+                    },
+                }
+                tools_for_llm.append(fn_schema)
+
+    # Build system prompt from agent metadata + skill instructions
+    skills_str = ", ".join(agent.skills) if agent.skills else "通用"
+    system_prompt = (
+        f"你是 {agent.name}，角色: {agent.role}。\n"
+        f"技能: {skills_str}\n"
+        f"你是 PoseidonX 深海远洋双体船舶智能综合信息系统的核心智能体之一。\n"
+        f"请用中文回答，专业但易懂。"
+    )
+
+    # Inject bound skill instructions into system prompt
+    skill_names_bound = set(agent.skills) if agent.skills else set()
+    if skill_names_bound:
+        all_skills = _sr().list_all()
+        skill_instructions = []
+        for s in all_skills:
+            if (s.name in skill_names_bound or s.skill_id in skill_names_bound) and s.instructions:
+                skill_instructions.append(f"### {s.name}\n{s.instructions}")
+        if skill_instructions:
+            system_prompt += "\n\n## 已启用技能指令\n\n" + "\n\n".join(skill_instructions)
+
+    result = await harness.chat(
+        content,
+        agent_id=agent.agent_id,
+        session_id=session_id,
+        system_prompt=system_prompt,
+        tools=tools_for_llm,
+    )
+
+    # If LLM returned tool calls, execute them and feed results back
+    if result.tool_invocations:
+        from .tool_executor import get_tool_executor
+        executor = get_tool_executor()
+        tool_outputs = []
+        for inv in result.tool_invocations:
+            tr = await executor.execute(inv.tool_name, inv.arguments, agent_id=agent.agent_id)
+            inv.result = tr.output if tr.success else f"Error: {tr.error}"
+            tool_outputs.append(f"[{inv.tool_name}] {'✅' if tr.success else '❌'}: {inv.result[:500]}")
+        # Append tool results and get a follow-up response
+        tool_summary = "\n\n".join(tool_outputs)
+        followup = await harness.chat(
+            f"工具执行结果:\n\n{tool_summary}\n\n请基于以上工具返回结果，回答用户的问题。",
+            agent_id=agent.agent_id,
+            session_id=session_id,
+            system_prompt=system_prompt,
+        )
+        return followup.response, followup
+
+    return result.response, result
 
 
 @router.post(
@@ -886,7 +1233,7 @@ def _generate_agent_response(agent, content):
     summary="Send message to session",
     status_code=status.HTTP_201_CREATED,
 )
-def send_session_message(
+async def send_session_message(
     team_id: str, agent_id: str, session_id: str, req: SessionMessageRequest
 ) -> Dict[str, Any]:
     import uuid
@@ -901,15 +1248,45 @@ def send_session_message(
     }
     session["messages"].append(msg)
     agent = _get_agent_or_404(team_id, agent_id)
-    reply_text = _generate_agent_response(agent, req.content)
+    _bump_metric(agent_id, "messages_sent")
+    _log_agent_action(agent_id, "message_received", f"session={session_id}")
+    reply_text, turn_result = await _generate_agent_response(agent, req.content, session_id, team_id)
     if reply_text:
         reply_msg = {
             "message_id": str(uuid.uuid4())[:8],
             "role": "assistant",
             "content": reply_text,
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "model": turn_result.model if turn_result else "",
+            "provider": turn_result.provider if turn_result else "",
+            "latency_ms": turn_result.latency_ms if turn_result else 0,
         }
         session["messages"].append(reply_msg)
+        # Track real token usage from harness
+        real_usage = turn_result.usage if turn_result else None
+        if real_usage and real_usage.total_tokens > 0:
+            _bump_metric(agent_id, "today_llm_calls")
+            _bump_metric(agent_id, "today_tokens", real_usage.total_tokens)
+            _bump_metric(agent_id, "month_tokens", real_usage.total_tokens)
+            _bump_metric(agent_id, "total_tokens", real_usage.total_tokens)
+        else:
+            _bump_metric(agent_id, "today_llm_calls")
+            estimated_tokens = len(req.content) + len(reply_text)
+            _bump_metric(agent_id, "today_tokens", estimated_tokens)
+            _bump_metric(agent_id, "month_tokens", estimated_tokens)
+            _bump_metric(agent_id, "total_tokens", estimated_tokens)
+        # Check for tool invocations from harness or text
+        if turn_result and turn_result.tool_invocations:
+            _bump_metric(agent_id, "tools_invoked", len(turn_result.tool_invocations))
+            _log_agent_action(agent_id, "tools_invoked",
+                              ", ".join(t.tool_name for t in turn_result.tool_invocations))
+        else:
+            tool_invocations = _parse_tool_invocations(reply_text)
+            if tool_invocations:
+                _bump_metric(agent_id, "tools_invoked", len(tool_invocations))
+                _log_agent_action(agent_id, "tools_invoked",
+                                  ", ".join(t["tool"] for t in tool_invocations))
+
     return msg
 
 
@@ -1011,14 +1388,19 @@ def _parse_tool_invocations(response_text: str) -> List[Dict[str, Any]]:
 
 
 @router.post("/bridge/command", summary="Route bridge command to best agent")
-def bridge_command(req: BridgeCommandRequest) -> Dict[str, Any]:
+async def bridge_command(req: BridgeCommandRequest) -> Dict[str, Any]:
     """Classify a bridge command, find the best agent, return structured response."""
     intent = _classify_bridge_intent(req.command)
     team, agent = _find_agent_for_skill(intent)
 
     if agent is not None:
-        response_text = _generate_agent_response(agent, req.command)
-        tool_invocations = _parse_tool_invocations(response_text)
+        bridge_team_id = team.team_id if team else ""
+        response_text, turn_result = await _generate_agent_response(agent, req.command, team_id=bridge_team_id)
+        tool_invocations = (
+            [t.to_dict() for t in turn_result.tool_invocations]
+            if turn_result and turn_result.tool_invocations
+            else _parse_tool_invocations(response_text)
+        )
         return {
             "handled": True,
             "intent": intent,
@@ -1031,6 +1413,8 @@ def bridge_command(req: BridgeCommandRequest) -> Dict[str, Any]:
             },
             "response": response_text,
             "tool_invocations": tool_invocations,
+            "model": turn_result.model if turn_result else "",
+            "provider": turn_result.provider if turn_result else "",
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -1066,9 +1450,92 @@ class SubmitBatchRequest(BaseModel):
 
 
 def _te():
-    """Return the TaskEngine singleton, starting it if needed."""
+    """Return the TaskEngine singleton, registering the real executor on first call."""
     engine = get_task_engine()
+    if engine._executor is None:
+        engine.set_executor(_real_task_executor)
     return engine
+
+
+async def _real_task_executor(task) -> Any:
+    """Real executor callback — invoked by TaskEngine._execute() for queued tasks.
+
+    This bridges the TaskEngine's internal queue with the Claude Code workflow
+    pipeline.  When a task is submitted via submit_batch() or directly enqueued,
+    the executor generates a workflow, starts a Claude session for step 1, and
+    launches the harness monitor for auto-advancement.
+
+    For tasks submitted via the REST API, the submit_task endpoint handles this
+    directly (so the executor won't be triggered for those).
+    """
+    import uuid as _uuid
+
+    # Skip if workflow already started (e.g., via the REST endpoint)
+    if task.metadata.get("workflow") and any(
+        s.get("session_id") for s in task.metadata["workflow"]
+    ):
+        return {"message": "Workflow already running via REST endpoint"}
+
+    # Token Factory preflight — but if direct DeepSeek API is available, skip
+    api_key, _, _ = _get_deepseek_credentials()
+    if api_key:
+        _harness_log.info("[Executor] Direct DeepSeek API available — skipping Token Factory check")
+    else:
+        from token_factory import TokenFactory as _TF
+        tf = _TF.instance()
+        tf_status = await tf.ensure_ready()
+        if not tf_status.get("ready", False):
+            _harness_log.error("[Executor] Token Factory not ready for task %s — aborting", task.task_id)
+            raise RuntimeError("Token Factory (LLM 推理后端) 不可用，无法执行任务。"
+                               "请确保 Ollama 或其他 LLM 端点已启动。")
+
+    # Generate workflow if none exists
+    wf = task.metadata.get("workflow")
+    if not wf:
+        wf = _generate_workflow(task, task.team_id)
+        task.metadata["workflow"] = wf
+
+    if not wf:
+        return {"message": "No workflow generated"}
+
+    # Pre-seed pipeline workspace with project context
+    try:
+        _seed_project_context(task.task_id, task.title, task.description or "")
+        task.metadata["pipeline_dir"] = _pipeline_dir(task.task_id)
+    except Exception as _ctx_err:
+        _harness_log.warning("[Executor] Context seeding failed: %s", _ctx_err)
+
+    # Start first step
+    first_step = wf[0]
+    if first_step.get("status") != "active":
+        first_step["status"] = "active"
+
+    if first_step.get("agent_id"):
+        sr = _sr()
+        skill = sr.get_by_slug("code_implementation")
+        cfg = dict(skill.config or {}) if skill else {}
+        tm = _tm()
+        agent = tm.get_agent(task.team_id, first_step["agent_id"])
+        if agent:
+            sid = str(_uuid.uuid4())[:12]
+            step_prompt = _build_step_prompt(task, first_step, wf)
+            _harness_log.info("[Executor] Starting Claude session %s for task %s step '%s'",
+                              sid, task.task_id, first_step["key"])
+            _start_claude_session(sid, step_prompt, cfg, agent, task.task_id)
+            first_step["session_id"] = sid
+            task.metadata["workflow"] = wf
+
+    # Start harness monitor
+    _start_harness_monitor(task.task_id, task.team_id)
+
+    _write_handoff(task.task_id, "executor_started", {
+        "task_id": task.task_id,
+        "title": task.title,
+        "first_step": first_step.get("key", ""),
+        "executor": "real_task_executor",
+    })
+
+    return {"message": f"Workflow started with {len(wf)} steps", "first_session": first_step.get("session_id")}
 
 
 @router.post(
@@ -1083,6 +1550,16 @@ async def submit_task(team_id: str, req: SubmitTaskRequest) -> Dict[str, Any]:
     engine = _te()
     if not engine._running:
         await engine.start()
+
+    # ── Token Factory 预检: 确保 LLM 推理后端可用 ──
+    from token_factory import TokenFactory as _TF
+    tf = _TF.instance()
+    tf_status = await tf.ensure_ready()
+    token_ready = tf_status.get("ready", False)
+    _harness_log.info("[submit_task] Token Factory ready=%s, providers=%s",
+                      token_ready,
+                      [n for n, p in tf._provider_health.items() if p.reachable])
+
     task = AgentTask(
         agent_id=req.agent_id,
         team_id=team_id,
@@ -1092,7 +1569,63 @@ async def submit_task(team_id: str, req: SubmitTaskRequest) -> Dict[str, Any]:
         dependencies=list(req.dependencies),
         metadata=dict(req.metadata),
     )
+    # Auto-generate workflow steps
+    wf = _generate_workflow(task, team_id)
+    if wf:
+        task.metadata["workflow"] = wf
+
+    # Pre-seed pipeline workspace with project context
+    try:
+        _seed_project_context(task.task_id, req.title, req.description or "")
+        task.metadata["pipeline_dir"] = _pipeline_dir(task.task_id)
+    except Exception as _ctx_err:
+        _harness_log.warning("[submit_task] Context seeding failed: %s", _ctx_err)
+
+    # 写入任务启动 handoff 文件
+    _write_handoff(task.task_id, "task_init", {
+        "task_id": task.task_id,
+        "title": task.title,
+        "description": task.description,
+        "team_id": team_id,
+        "agent_id": req.agent_id,
+        "token_factory_ready": token_ready,
+        "workflow_steps": [s["key"] for s in wf] if wf else [],
+    })
+
     await engine.submit_task(task)
+
+    # ── Token Factory 不就绪时检查是否有直连 API 可用 ──
+    if not token_ready:
+        api_key, _, _ = _get_deepseek_credentials()
+        if api_key:
+            _harness_log.info("[submit_task] Token Factory not ready but direct DeepSeek API available — proceeding")
+            token_ready = True  # Override: direct API works
+        else:
+            _harness_log.warning("[submit_task] Token Factory NOT ready — task %s queued but NOT started. "
+                                 "请先确保 Ollama / LLM 推理后端可用。", task.task_id)
+            task.metadata["token_factory_error"] = "LLM 推理后端不可用，任务已创建但未启动执行"
+            return task.to_dict()
+
+    # Auto-start Claude Code for the first active step
+    if wf:
+        first_step = wf[0]
+        if first_step.get("status") == "active" and first_step.get("agent_id"):
+            import uuid as _uuid
+            sr = _sr()
+            skill = sr.get_by_slug("code_implementation")
+            cfg = dict(skill.config or {}) if skill else {}
+            agent = _tm().get_agent(team_id, first_step["agent_id"])
+            if agent:
+                sid = str(_uuid.uuid4())[:12]
+                step_prompt = _build_step_prompt(task, first_step, wf)
+                _harness_log.info("[submit_task] Starting Claude session %s for step '%s' (agent: %s)",
+                                  sid, first_step["key"], agent.name)
+                _start_claude_session(sid, step_prompt, cfg, agent, task.task_id)
+                first_step["session_id"] = sid
+                task.metadata["workflow"] = wf
+        # Mark task as running and start harness monitor
+        await engine.start_task(task.task_id)
+        _start_harness_monitor(task.task_id, team_id)
     return task.to_dict()
 
 
@@ -1156,6 +1689,2749 @@ async def cancel_task(team_id: str, task_id: str) -> Dict[str, Any]:
     return task.to_dict()
 
 
+@router.delete(
+    "/teams/{team_id}/tasks/{task_id}/remove",
+    summary="Permanently delete a task",
+)
+async def remove_task(team_id: str, task_id: str) -> Dict[str, Any]:
+    _get_team_or_404(team_id)
+    task = await _te().delete_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return {"deleted": True, "task_id": task_id}
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/start",
+    summary="Start a pending task (mark as running)",
+)
+async def start_task_endpoint(team_id: str, task_id: str) -> Dict[str, Any]:
+    _get_team_or_404(team_id)
+    task = await _te().start_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return task.to_dict()
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/complete",
+    summary="Mark a task as completed",
+)
+async def complete_task_endpoint(team_id: str, task_id: str) -> Dict[str, Any]:
+    _get_team_or_404(team_id)
+    task = await _te().complete_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return task.to_dict()
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/fail",
+    summary="Mark a task as failed",
+)
+async def fail_task_endpoint(team_id: str, task_id: str) -> Dict[str, Any]:
+    _get_team_or_404(team_id)
+    task = await _te().fail_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    return task.to_dict()
+
+
+# ── Workflow Steps (per-task execution pipeline visualization) ──────
+
+
+# Role → workflow step definitions
+_ROLE_WORKFLOW_MAP: Dict[str, list] = {
+    "project_manager": [
+        {"key": "pm_decompose", "label": "PM分解", "agent_role": "project_manager"},
+        {"key": "research", "label": "研究分析", "agent_role": "researcher"},
+        {"key": "architecture", "label": "架构设计", "agent_role": "architect"},
+        {"key": "develop", "label": "代码开发", "agent_role": "developer"},
+        {"key": "test", "label": "测试验证", "agent_role": "qa_engineer"},
+        {"key": "deploy", "label": "部署上线", "agent_role": "devops"},
+        {"key": "document", "label": "文档更新", "agent_role": "documentation"},
+    ],
+    "researcher": [
+        {"key": "research", "label": "研究分析", "agent_role": "researcher"},
+        {"key": "architecture", "label": "架构设计", "agent_role": "architect"},
+        {"key": "develop", "label": "代码开发", "agent_role": "developer"},
+        {"key": "test", "label": "测试验证", "agent_role": "qa_engineer"},
+    ],
+    "architect": [
+        {"key": "architecture", "label": "架构设计", "agent_role": "architect"},
+        {"key": "develop", "label": "代码开发", "agent_role": "developer"},
+        {"key": "test", "label": "测试验证", "agent_role": "qa_engineer"},
+    ],
+    "developer": [
+        {"key": "develop", "label": "代码开发", "agent_role": "developer"},
+        {"key": "test", "label": "测试验证", "agent_role": "qa_engineer"},
+    ],
+    "qa_engineer": [
+        {"key": "test", "label": "测试验证", "agent_role": "qa_engineer"},
+    ],
+    "devops": [
+        {"key": "develop", "label": "代码开发", "agent_role": "developer"},
+        {"key": "test", "label": "测试验证", "agent_role": "qa_engineer"},
+        {"key": "deploy", "label": "部署上线", "agent_role": "devops"},
+    ],
+    "documentation": [
+        {"key": "document", "label": "文档更新", "agent_role": "documentation"},
+    ],
+}
+
+# Default full pipeline (used for cross-team tasks assigned to PM)
+_FULL_PIPELINE = _ROLE_WORKFLOW_MAP["project_manager"]
+
+
+def _generate_workflow(task: "AgentTask", team_id: str) -> list:
+    """Generate workflow steps for a task based on its agent role."""
+    tm = _tm()
+    agent = tm.get_agent(team_id, task.agent_id) if task.agent_id else None
+
+    # Determine role
+    role = ""
+    if agent:
+        role = getattr(agent, "role", "")
+    # Cross-team tasks default to full pipeline
+    is_cross = task.metadata.get("cross_team", False)
+    if is_cross and not role:
+        role = "project_manager"
+
+    steps_template = _ROLE_WORKFLOW_MAP.get(role, [])
+    if not steps_template:
+        # Default to full pipeline for build_system team, single step otherwise
+        if team_id == "build_system" or is_cross:
+            steps_template = _FULL_PIPELINE
+        else:
+            label = (agent.name if agent else task.agent_id) or "执行"
+            steps_template = [{"key": "execute", "label": label, "agent_role": role or "unknown"}]
+
+    # Resolve agent_id for each role in this team
+    role_to_agent: Dict[str, str] = {}
+    team = tm.get_team(team_id)
+    if team:
+        agents_list = team.get("agents", []) if isinstance(team, dict) else getattr(team, "agents", [])
+        if isinstance(agents_list, dict):
+            agents_list = list(agents_list.values())
+        for a in agents_list:
+            a_role = a.get("role", "") if isinstance(a, dict) else getattr(a, "role", "")
+            a_id = a.get("agent_id", "") if isinstance(a, dict) else getattr(a, "agent_id", "")
+            a_name = a.get("name", "") if isinstance(a, dict) else getattr(a, "name", "")
+            if a_role and a_id:
+                role_to_agent[a_role] = a_id
+
+    steps = []
+    for i, tmpl in enumerate(steps_template):
+        resolved_agent = role_to_agent.get(tmpl["agent_role"], "")
+        steps.append({
+            "index": i,
+            "key": tmpl["key"],
+            "label": tmpl["label"],
+            "agent_id": resolved_agent,
+            "agent_role": tmpl["agent_role"],
+            "status": "pending",  # pending | active | completed | skipped
+        })
+    # First step is active if task is pending/running
+    if steps and task.status.value in ("pending", "running"):
+        steps[0]["status"] = "active"
+    return steps
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/workflow/advance",
+    summary="Advance task workflow to next step",
+)
+async def advance_workflow(team_id: str, task_id: str) -> Dict[str, Any]:
+    """Mark current active step as completed, activate and auto-start Claude Code on next step."""
+    _get_team_or_404(team_id)
+    task = _te().get_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    wf = task.metadata.get("workflow", [])
+    if not wf:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No workflow steps")
+    # Find active step
+    active_idx = -1
+    for s in wf:
+        if s["status"] == "active":
+            active_idx = s["index"]
+            break
+    if active_idx < 0:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No active step")
+
+    # Collect artifact from completed step's Claude session (if any)
+    completed_step = wf[active_idx]
+    _collect_step_artifact(task, completed_step)
+
+    # Complete current, activate next
+    wf[active_idx]["status"] = "completed"
+    if active_idx + 1 < len(wf):
+        wf[active_idx + 1]["status"] = "active"
+        next_step = wf[active_idx + 1]
+        # Auto-start Claude Code for EVERY step
+        if next_step.get("agent_id"):
+            import uuid as _uuid
+            sr = _sr()
+            skill = sr.get_by_slug("code_implementation")
+            cfg = dict(skill.config or {}) if skill else {}
+            agent = _tm().get_agent(team_id, next_step["agent_id"])
+            if agent:
+                sid = str(_uuid.uuid4())[:12]
+                step_prompt = _build_step_prompt(task, next_step, wf)
+                _start_claude_session(sid, step_prompt, cfg, agent, task_id)
+                next_step["session_id"] = sid
+    task.metadata["workflow"] = wf
+    # Ensure harness monitor is running
+    _start_harness_monitor(task_id, team_id)
+    # Check if all completed
+    all_done = all(s["status"] in ("completed", "skipped") for s in wf)
+    # Auto-complete the task when all workflow steps are done
+    if all_done and task.status.value in ("pending", "running"):
+        await _te().complete_task(task_id)
+    return {"workflow": wf, "all_completed": all_done, "task_id": task_id}
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/workflow/{step_index}/status",
+    summary="Set a specific workflow step status",
+)
+async def set_workflow_step_status(
+    team_id: str, task_id: str, step_index: int, req: Dict[str, str]
+) -> Dict[str, Any]:
+    """Set status of a specific workflow step (completed/active/skipped/pending)."""
+    _get_team_or_404(team_id)
+    task = _te().get_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    wf = task.metadata.get("workflow", [])
+    new_status = req.get("status", "")
+    if new_status not in ("pending", "active", "completed", "skipped"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid status")
+    if step_index < 0 or step_index >= len(wf):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid step index")
+    wf[step_index]["status"] = new_status
+    task.metadata["workflow"] = wf
+    return {"workflow": wf, "task_id": task_id}
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/workflow/run-claude",
+    summary="Start Claude Code for the current active step",
+)
+async def run_claude_for_task(team_id: str, task_id: str) -> Dict[str, Any]:
+    """Manually start a Claude Code session for the current active step."""
+    _get_team_or_404(team_id)
+    task = _te().get_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    wf = task.metadata.get("workflow", [])
+    # Find any active step
+    active_step = None
+    for s in wf:
+        if s.get("status") == "active":
+            active_step = s
+            break
+    if not active_step:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No active step")
+    if active_step.get("session_id"):
+        return {"session_id": active_step["session_id"], "status": "already_running"}
+
+    import uuid as _uuid
+    sr = _sr()
+    skill = sr.get_by_slug("code_implementation")
+    cfg = dict(skill.config or {}) if skill else {}
+    agent = _tm().get_agent(team_id, active_step.get("agent_id", ""))
+    if not agent:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Agent not found for this step")
+
+    sid = str(_uuid.uuid4())[:12]
+    step_prompt = _build_step_prompt(task, active_step, wf)
+    _start_claude_session(sid, step_prompt, cfg, agent, task_id)
+    active_step["session_id"] = sid
+    task.metadata["workflow"] = wf
+    # Ensure harness monitor is running
+    _start_harness_monitor(task_id, team_id)
+    return {"session_id": sid, "status": "started"}
+
+
+@router.post(
+    "/teams/{team_id}/tasks/{task_id}/workflow/resume",
+    summary="Resume a blocked task after Token Factory becomes ready",
+)
+async def resume_blocked_task(team_id: str, task_id: str) -> Dict[str, Any]:
+    """Resume a task pipeline that was blocked due to Token Factory unavailability.
+
+    Re-checks Token Factory, then starts the first pending/blocked step.
+    """
+    _get_team_or_404(team_id)
+    task = _te().get_task(task_id)
+    if task is None or task.team_id != team_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    # Token Factory preflight
+    from token_factory import TokenFactory as _TF
+    tf = _TF.instance()
+    tf_status = await tf.ensure_ready()
+    if not tf_status.get("ready", False):
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Token Factory (LLM 推理后端) 仍不可用，请先确保 Ollama 或 LLM 端点已启动。"
+        )
+
+    wf = task.metadata.get("workflow", [])
+    if not wf:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No workflow")
+
+    # Find first pending or blocked step
+    resume_step = None
+    for s in wf:
+        if s.get("status") in ("pending", "active") or s.get("_blocked_reason"):
+            resume_step = s
+            break
+    if not resume_step:
+        return {"status": "all_done", "task_id": task_id}
+
+    resume_step["status"] = "active"
+    resume_step.pop("_blocked_reason", None)
+
+    # Clear token factory error
+    task.metadata.pop("token_factory_error", None)
+
+    import uuid as _uuid
+    sr = _sr()
+    skill = sr.get_by_slug("code_implementation")
+    cfg = dict(skill.config or {}) if skill else {}
+    agent = _tm().get_agent(team_id, resume_step.get("agent_id", ""))
+    if agent:
+        sid = str(_uuid.uuid4())[:12]
+        step_prompt = _build_step_prompt(task, resume_step, wf)
+        _harness_log.info("[Resume] Resuming task %s at step '%s' (session %s)",
+                          task_id, resume_step["key"], sid)
+        _start_claude_session(sid, step_prompt, cfg, agent, task_id)
+        resume_step["session_id"] = sid
+    task.metadata["workflow"] = wf
+
+    # Ensure running state
+    if task.status.value == "pending":
+        await _te().start_task(task_id)
+    _start_harness_monitor(task_id, team_id)
+
+    _write_handoff(task_id, "pipeline_resumed", {
+        "step": resume_step["key"],
+        "agent": resume_step.get("agent_id", ""),
+        "reason": "Token Factory now available, pipeline resumed",
+    })
+
+    return {"status": "resumed", "step": resume_step["key"], "session_id": resume_step.get("session_id")}
+
+
+class ExecuteSkillRequest(BaseModel):
+    """Execute a skill on a task, optionally with a specific executor."""
+    task_id: str = ""
+    prompt: str = ""
+    config_overrides: Dict[str, Any] = Field(default_factory=dict)
+
+
+# ── Claude Code streaming session store ──
+import subprocess
+import threading
+import time as _time
+import os as _os
+import logging as _logging
+from collections import deque
+
+_harness_log = _logging.getLogger("workflow_harness")
+
+_claude_sessions: Dict[str, Dict[str, Any]] = {}  # session_id -> {proc, lines, status, ...}
+
+# ── Harness config ──
+_HARNESS_POLL_SEC = 5        # Check session status every N seconds
+_HARNESS_MAX_RETRIES = 2     # Retry failed steps up to N times
+_HARNESS_RETRY_DELAY = 3     # Seconds between retries
+_HARNESS_STALL_SEC = 300     # Mark stalled if no output for N seconds (large models need time)
+_HARNESS_AUTO_ADVANCE = True # Auto-advance on step completion
+
+# ── Workflow harness: monitors sessions and auto-advances steps ──
+_harness_threads: Dict[str, threading.Thread] = {}  # task_id -> monitor thread
+
+
+def _harness_monitor(task_id: str, team_id: str) -> None:
+    """Background thread that monitors a task's active step and auto-advances on completion.
+    Inspired by Claude Code's stall watchdog and task notification flow."""
+    _harness_log.info(f"[Harness] Monitoring task {task_id}")
+    while True:
+        _time.sleep(_HARNESS_POLL_SEC)
+        try:
+            engine = _te()
+            task = engine.get_task(task_id)
+            if task is None:
+                _harness_log.info(f"[Harness] Task {task_id} not found, stopping monitor")
+                break
+
+            # Check if task is terminal
+            if task.status.value in ("completed", "failed", "cancelled"):
+                _harness_log.info(f"[Harness] Task {task_id} is {task.status.value}, stopping monitor")
+                break
+
+            wf = task.metadata.get("workflow", [])
+            if not wf:
+                break
+
+            # Find active step
+            active_step = None
+            for s in wf:
+                if s.get("status") == "active":
+                    active_step = s
+                    break
+
+            if not active_step:
+                # Check if all done (completed, failed, or skipped — no pending/active left)
+                if all(s["status"] in ("completed", "skipped", "failed") for s in wf):
+                    _harness_log.info(f"[Harness] All steps done for task {task_id}")
+                    # Trigger pipeline completion
+                    completed_count = sum(1 for s in wf if s["status"] == "completed")
+                    failed_count = sum(1 for s in wf if s["status"] == "failed")
+                    task.metadata["workflow"] = wf
+                    _write_handoff(task_id, "pipeline_complete", {
+                        "total_steps": len(wf),
+                        "completed": completed_count,
+                        "failed": failed_count,
+                        "steps": [{"key": s["key"], "status": s["status"]} for s in wf],
+                    })
+                    _harness_log.info(
+                        f"[Harness] Pipeline complete for task {task_id}: "
+                        f"{completed_count}/{len(wf)} succeeded, {failed_count} failed"
+                    )
+                    try:
+                        import http.client
+                        hconn = http.client.HTTPConnection("127.0.0.1", 8080, timeout=10)
+                        hconn.request("POST",
+                            f"/api/v1/agent-config/teams/{team_id}/tasks/{task_id}/complete")
+                        hresp = hconn.getresponse()
+                        hresp.read()
+                        hconn.close()
+                        _harness_log.info(f"[Harness] Task {task_id} auto-completed via HTTP ({hresp.status})")
+                    except Exception as ex:
+                        _harness_log.warning(f"[Harness] Could not auto-complete task: {ex}")
+                        task.status = task.status.__class__("completed")
+                break
+
+            sid = active_step.get("session_id")
+            if not sid:
+                # Step is active but no session was ever started
+                # Check how long it's been waiting
+                wait_start = active_step.get("_active_since", 0)
+                if not wait_start:
+                    active_step["_active_since"] = _time.time()
+                    continue
+                elif _time.time() - wait_start > 30:
+                    # Been waiting 30s with no session — try to start one, or skip
+                    _harness_log.warning(
+                        "[Harness] Step %s has no session after 30s — attempting to start",
+                        active_step["key"])
+                    aid = active_step.get("agent_id")
+                    if aid:
+                        try:
+                            import uuid as _uuid
+                            tm = _tm()
+                            agent = tm.get_agent(team_id, aid)
+                            if agent:
+                                new_sid = str(_uuid.uuid4())[:12]
+                                sr = _sr()
+                                skill = sr.get_by_slug("code_implementation")
+                                cfg = dict(skill.config or {}) if skill else {}
+                                step_prompt = _build_step_prompt(task, active_step, wf)
+                                _start_claude_session(new_sid, step_prompt, cfg, agent, task_id)
+                                active_step["session_id"] = new_sid
+                                task.metadata["workflow"] = wf
+                                _harness_log.info("[Harness] Late-started session %s for step %s",
+                                                  new_sid, active_step["key"])
+                            else:
+                                _harness_log.warning("[Harness] Agent %s not found — skipping step %s",
+                                                     aid, active_step["key"])
+                                active_step["status"] = "failed"
+                                active_step["error"] = f"Agent {aid} not found"
+                                task.metadata["workflow"] = wf
+                        except Exception as ex:
+                            _harness_log.error("[Harness] Failed to late-start step %s: %s",
+                                               active_step["key"], ex)
+                            active_step["status"] = "failed"
+                            task.metadata["workflow"] = wf
+                    else:
+                        _harness_log.warning("[Harness] Step %s has no agent_id — skipping",
+                                             active_step["key"])
+                        active_step["status"] = "skipped"
+                        task.metadata["workflow"] = wf
+                continue
+
+            session = _claude_sessions.get(sid)
+            if not session:
+                continue
+
+            # Check session status
+            sess_status = session.get("status", "running")
+
+            if sess_status == "running":
+                # Stall detection: check if output stopped growing
+                # Skip stall detection if Ollama is loading the model (waiting for first token)
+                if session.get("_ollama_waiting"):
+                    # Keep session alive — Ollama model loading can take minutes
+                    session["_last_activity"] = _time.time()
+                    continue
+
+                last_activity = session.get("_last_activity", session.get("started_at", 0))
+                now = _time.time()
+                lines = session.get("lines")
+                current_count = len(lines) if lines else 0
+                prev_count = session.get("_prev_line_count", 0)
+
+                if current_count > prev_count:
+                    session["_last_activity"] = now
+                    session["_prev_line_count"] = current_count
+                elif now - last_activity > _HARNESS_STALL_SEC:
+                    _harness_log.warning(f"[Harness] Session {sid} stalled ({_HARNESS_STALL_SEC}s no output)")
+                    session["lines"].append(f"\n⚠️ 会话停滞 ({_HARNESS_STALL_SEC}s 无输出)\n")
+                    session["status"] = "failed"
+                    session["exit_code"] = -1
+                    sess_status = "failed"  # Fall through to retry/advance
+
+                if sess_status == "running":
+                    continue
+
+            # Session completed or failed — handle it
+            retry_count = active_step.get("_retries", 0)
+
+            if sess_status == "failed" and retry_count < _HARNESS_MAX_RETRIES:
+                # RETRY: restart the session
+                active_step["_retries"] = retry_count + 1
+                _harness_log.info(
+                    f"[Harness] Retry {retry_count + 1}/{_HARNESS_MAX_RETRIES} "
+                    f"for step {active_step['key']} of task {task_id}"
+                )
+                session["lines"].append(
+                    f"\n🔄 自动重试 ({retry_count + 1}/{_HARNESS_MAX_RETRIES})...\n\n"
+                )
+                _time.sleep(_HARNESS_RETRY_DELAY)
+
+                # Create new session for retry
+                import uuid as _uuid
+                new_sid = str(_uuid.uuid4())[:12]
+                sr = _sr()
+                skill = sr.get_by_slug("code_implementation")
+                cfg = dict(skill.config or {}) if skill else {}
+                tm = _tm()
+                agent = tm.get_agent(team_id, active_step["agent_id"]) if active_step.get("agent_id") else None
+                if agent:
+                    step_prompt = _build_step_prompt(task, active_step, wf)
+                    _start_claude_session(new_sid, step_prompt, cfg, agent, task_id)
+                    active_step["session_id"] = new_sid
+                    task.metadata["workflow"] = wf
+                    _harness_log.info(f"[Harness] Retry started with session {new_sid}")
+                continue
+
+            if sess_status in ("completed", "failed"):
+                # Validate that session produced real output
+                has_content = _validate_session_output(session)
+
+                # Collect artifact (legacy: docs/workflow_artifacts/)
+                _collect_step_artifact(task, active_step)
+
+                # ── Save step output to pipeline workspace (shared) ──
+                step_key = active_step.get("key", "")
+                if has_content:
+                    try:
+                        art_path = active_step.get("artifact", "")
+                        art_text = ""
+                        if art_path and _os.path.isfile(art_path):
+                            with open(art_path, "r", encoding="utf-8") as _af:
+                                art_text = _af.read()
+                        else:
+                            art_text = "".join(list(session.get("lines", [])))
+
+                        # Extract code deliverables for code-producing steps
+                        deliverables = []
+                        if step_key in _CODE_STEPS:
+                            deliverables = _extract_code_deliverables(art_text)
+
+                        # Save to pipeline workspace
+                        _save_step_to_pipeline(
+                            task_id, step_key, art_text, deliverables or None,
+                        )
+
+                        if deliverables:
+                            active_step["deliverable_count"] = len(deliverables)
+                            active_step["deliverable_paths"] = [d["path"] for d in deliverables]
+                            _harness_log.info(
+                                f"[Harness] Step {step_key}: {len(deliverables)} code deliverables saved"
+                            )
+                    except Exception as pipe_err:
+                        _harness_log.error(f"[Harness] Pipeline save error: {pipe_err}")
+
+                # ── Deploy step: apply code from developer's pipeline output ──
+                if step_key == "deploy":
+                    try:
+                        # Apply developer step's code to project
+                        dev_result = _apply_code_from_pipeline(task_id, "develop")
+                        dev_applied = len(dev_result.get("applied", []))
+
+                        # Also apply deployer's own code (blue-green new files)
+                        deploy_result = _apply_code_from_pipeline(task_id, "deploy")
+                        deploy_applied = len(deploy_result.get("applied", []))
+
+                        total_applied = dev_applied + deploy_applied
+                        total_skipped = (len(dev_result.get("skipped", []))
+                                        + len(deploy_result.get("skipped", [])))
+                        total_failed = (len(dev_result.get("failed", []))
+                                       + len(deploy_result.get("failed", [])))
+
+                        active_step["files_applied"] = total_applied
+                        active_step["deploy_result"] = {
+                            "developer": dev_result,
+                            "deployer": deploy_result,
+                        }
+                        session["lines"].append(
+                            f"\n📦 部署结果: {total_applied} 文件已应用 "
+                            f"(开发: {dev_applied}, 蓝绿: {deploy_applied}), "
+                            f"{total_skipped} 跳过, {total_failed} 失败\n"
+                        )
+                        _harness_log.info(
+                            f"[Harness] Deploy: {total_applied} applied "
+                            f"(dev={dev_applied}, deploy={deploy_applied})"
+                        )
+                    except Exception as dpex:
+                        _harness_log.error(f"[Harness] Deploy apply error: {dpex}")
+
+                task.metadata["workflow"] = wf
+
+                if sess_status == "completed" and not has_content:
+                    # Session "completed" but produced no real output — treat as failed
+                    _harness_log.warning(
+                        f"[Harness] Step {active_step['key']} session completed but has NO meaningful output — "
+                        f"treating as failed (LLM may have returned empty/error response)"
+                    )
+                    sess_status = "failed"
+                    session["status"] = "failed"
+
+                if sess_status == "failed":
+                    active_step["status"] = "failed"
+                    _harness_log.warning(
+                        f"[Harness] Step {active_step['key']} failed after "
+                        f"{retry_count + 1} attempts, skipping to next"
+                    )
+                    # Write failure handoff
+                    _write_handoff(task_id, f"{active_step['key']}_FAILED", {
+                        "step": active_step["key"],
+                        "retries": retry_count + 1,
+                        "error": session.get("error", "unknown"),
+                        "output_lines": len(list(session.get("lines", []))),
+                    }, from_agent=active_step.get("agent_id", ""),
+                       to_agent="(next step)")
+
+                if sess_status == "completed":
+                    active_step["status"] = "completed"
+                    # Write success handoff MD for next agent
+                    _write_handoff(task_id, active_step["key"], {
+                        "step": active_step["key"],
+                        "label": active_step.get("label", ""),
+                        "agent_role": active_step.get("agent_role", ""),
+                        "status": "completed",
+                        "artifact": active_step.get("artifact", ""),
+                        "output_summary": "".join(list(session.get("lines", []))[-20:])[:2000],
+                    }, from_agent=active_step.get("agent_id", ""),
+                       to_agent=wf[active_step["index"] + 1]["agent_id"] if active_step["index"] + 1 < len(wf) else "(end)")
+
+                # Auto-advance to next step
+                active_idx = active_step["index"]
+                if active_idx + 1 < len(wf):
+                    next_step = wf[active_idx + 1]
+                    next_step["status"] = "active"
+
+                    # Token Factory check before starting next Claude session
+                    # If direct DeepSeek API is available, skip TF entirely
+                    _ds_key, _, _ = _get_deepseek_credentials()
+                    if _ds_key:
+                        tf_ok = True
+                        _harness_log.info("[Harness] Direct DeepSeek API available — skipping Token Factory check")
+                    else:
+                        tf_ok = False
+                        try:
+                            import http.client
+                            hconn = http.client.HTTPConnection("127.0.0.1", 8080, timeout=10)
+                            hconn.request("GET", "/api/v1/token-factory/health")
+                            hresp = hconn.getresponse()
+                            import json as _jj
+                            hdata = _jj.loads(hresp.read().decode())
+                            hconn.close()
+                            tf_ok = hdata.get("ready", False)
+                        except Exception as e:
+                            _harness_log.warning(f"[Harness] Token Factory check failed: {e}")
+                            tf_ok = True  # Optimistic fallback
+                            _harness_log.info("[Harness] Proceeding optimistically")
+
+                    if not tf_ok:
+                        _harness_log.warning(
+                            f"[Harness] Token Factory NOT ready for step "
+                            f"{next_step['key']} — will retry next poll cycle"
+                        )
+                        next_step["status"] = "pending"
+                        next_step["_blocked_reason"] = "Token Factory not ready"
+                        task.metadata["workflow"] = wf
+                        continue  # Retry on next poll instead of killing the monitor
+
+                    # Start Claude for next step
+                    if next_step.get("agent_id"):
+                        import uuid as _uuid
+                        sr = _sr()
+                        skill = sr.get_by_slug("code_implementation")
+                        cfg = dict(skill.config or {}) if skill else {}
+                        tm = _tm()
+                        agent = tm.get_agent(team_id, next_step["agent_id"])
+                        if agent:
+                            new_sid = str(_uuid.uuid4())[:12]
+                            step_prompt = _build_step_prompt(task, next_step, wf)
+                            _harness_log.info(
+                                f"[Harness] Auto-advancing: step {active_step['key']} → "
+                                f"{next_step['key']} (agent: {agent.name}, session: {new_sid})"
+                            )
+                            _start_claude_session(new_sid, step_prompt, cfg, agent, task_id)
+                            next_step["session_id"] = new_sid
+                        else:
+                            _harness_log.warning(
+                                f"[Harness] Agent '{next_step['agent_id']}' not found in team "
+                                f"'{team_id}' — skipping step {next_step['key']}"
+                            )
+                            next_step["status"] = "failed"
+                            next_step["error"] = f"Agent {next_step['agent_id']} not found"
+                    else:
+                        _harness_log.warning(
+                            f"[Harness] Step {next_step['key']} has no agent_id — skipping"
+                        )
+                        next_step["status"] = "skipped"
+
+                    task.metadata["workflow"] = wf
+                else:
+                    # All steps done — validate before marking task complete
+                    completed_count = sum(1 for s in wf if s["status"] == "completed")
+                    failed_count = sum(1 for s in wf if s["status"] == "failed")
+                    task.metadata["workflow"] = wf
+
+                    # Write final summary handoff
+                    _write_handoff(task_id, "pipeline_complete", {
+                        "total_steps": len(wf),
+                        "completed": completed_count,
+                        "failed": failed_count,
+                        "steps": [{
+                            "key": s["key"],
+                            "status": s["status"],
+                            "artifact": s.get("artifact", ""),
+                        } for s in wf],
+                    })
+
+                    _harness_log.info(
+                        f"[Harness] Pipeline complete for task {task_id}: "
+                        f"{completed_count}/{len(wf)} succeeded, {failed_count} failed"
+                    )
+                    # Auto-complete the task (from sync thread, schedule on event loop)
+                    try:
+                        import asyncio
+                        engine = _te()
+                        # Try to find a running event loop for async completion
+                        try:
+                            loop = asyncio.get_running_loop()
+                        except RuntimeError:
+                            loop = None
+                        if loop and loop.is_running():
+                            future = asyncio.run_coroutine_threadsafe(
+                                engine.complete_task(task_id), loop
+                            )
+                            future.result(timeout=5)
+                            _harness_log.info(f"[Harness] Task {task_id} auto-completed")
+                        else:
+                            # Background thread — try HTTP self-call as fallback
+                            import http.client
+                            hconn = http.client.HTTPConnection("127.0.0.1", 8080, timeout=10)
+                            hconn.request("POST",
+                                f"/api/v1/agent-config/teams/{team_id}/tasks/{task_id}/complete")
+                            hresp = hconn.getresponse()
+                            hresp.read()
+                            hconn.close()
+                            _harness_log.info(f"[Harness] Task {task_id} auto-completed via HTTP ({hresp.status})")
+                    except Exception as ex:
+                        _harness_log.warning(f"[Harness] Could not auto-complete task: {ex}")
+                        # Fallback: directly set status
+                        task.status = task.status.__class__("completed")
+                    break
+
+        except Exception as ex:
+            _harness_log.error(f"[Harness] Error monitoring task {task_id}: {ex}")
+            continue
+
+    # Cleanup
+    _harness_threads.pop(task_id, None)
+    _harness_log.info(f"[Harness] Monitor stopped for task {task_id}")
+
+
+def _start_harness_monitor(task_id: str, team_id: str) -> None:
+    """Start a harness monitor thread for a task (if not already running)."""
+    if task_id in _harness_threads:
+        return
+    t = threading.Thread(target=_harness_monitor, args=(task_id, team_id), daemon=True)
+    _harness_threads[task_id] = t
+    t.start()
+
+# ── Artifact directory for inter-step .md handoffs ──
+_ARTIFACT_DIR = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))),
+    "docs", "workflow_artifacts"
+)
+_os.makedirs(_ARTIFACT_DIR, exist_ok=True)
+
+# ── Handoff directory for inter-agent communication ──
+_HANDOFF_DIR = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))),
+    "docs", "agent_handoffs"
+)
+_os.makedirs(_HANDOFF_DIR, exist_ok=True)
+
+# ══════════════════════════════════════════════════════════════════
+# Pipeline Workspace — Shared directory for inter-agent deliverables
+# ══════════════════════════════════════════════════════════════════
+#
+# Architecture: FULL-TEAM SHARED per pipeline run
+#
+#   storage/pipeline_runs/{task_id}/
+#   ├── _context/                    # Pre-seeded project context
+#   │   ├── file_tree.txt           # `find src/ -type f` listing
+#   │   └── target_files/           # Actual file contents matching task
+#   ├── 01_pm_decompose.md          # Step artifacts (numbered for order)
+#   ├── 02_research.md
+#   ├── ...
+#   ├── 04_develop/
+#   │   ├── summary.md              # LLM prose output
+#   │   └── code/                   # Extracted code files
+#   │       └── src/frontend/...    # Mirrors project tree
+#   └── 06_deploy/
+#       ├── summary.md
+#       └── code/                   # Blue-green new files
+#
+# Why full-team shared (not upstream-only):
+#   - Deployer needs Developer's code + PM's plan
+#   - Tester needs Architecture spec + Developer code
+#   - Simpler, fewer failure modes
+#   - _context/ pre-seeds project knowledge for text-only LLMs
+
+_PIPELINE_RUNS_DIR = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.dirname(
+        _os.path.dirname(_os.path.abspath(__file__))))),
+    "storage", "pipeline_runs"
+)
+_os.makedirs(_PIPELINE_RUNS_DIR, exist_ok=True)
+
+_STEP_INDEX = {
+    "pm_decompose": "01", "research": "02", "architecture": "03",
+    "develop": "04", "test": "05", "deploy": "06", "document": "07",
+}
+
+# Steps whose output may contain code deliverables
+_CODE_STEPS = frozenset({"develop", "deploy"})
+
+
+def _pipeline_dir(task_id: str) -> str:
+    """Return (and create) the shared pipeline workspace directory for a task."""
+    safe_tid = task_id.replace("/", "_")[:60]
+    d = _os.path.join(_PIPELINE_RUNS_DIR, safe_tid)
+    _os.makedirs(d, exist_ok=True)
+    return d
+
+
+def _pipeline_context_dir(task_id: str) -> str:
+    """Return _context/ subdir inside the pipeline workspace."""
+    d = _os.path.join(_pipeline_dir(task_id), "_context")
+    _os.makedirs(d, exist_ok=True)
+    return d
+
+
+def _seed_project_context(task_id: str, task_title: str, task_description: str) -> str:
+    """Pre-seed the pipeline workspace with project context.
+
+    Since DeepSeek text-only agents CANNOT read the filesystem, we proactively
+    scan the project for files relevant to the task and include their contents.
+
+    Returns the path to the context directory.
+    """
+    ctx_dir = _pipeline_context_dir(task_id)
+    project_root = _os.path.dirname(_os.path.dirname(_os.path.dirname(
+        _os.path.dirname(_os.path.abspath(__file__)))))
+
+    # ── 1. Generate file tree ──
+    tree_path = _os.path.join(ctx_dir, "file_tree.txt")
+    if not _os.path.exists(tree_path):
+        tree_lines = []
+        for dirpath, dirnames, filenames in _os.walk(project_root):
+            # Skip non-source directories
+            rel_dir = _os.path.relpath(dirpath, project_root)
+            skip_prefixes = ("venv", "node_modules", ".git", "__pycache__",
+                             "storage", ".pytest_cache", "logs", "reports")
+            if any(rel_dir == s or rel_dir.startswith(s + _os.sep) for s in skip_prefixes):
+                dirnames.clear()
+                continue
+            for fn in sorted(filenames):
+                if fn.startswith(".") or fn.endswith((".pyc", ".pyo")):
+                    continue
+                rel = _os.path.join(rel_dir, fn) if rel_dir != "." else fn
+                tree_lines.append(rel)
+        with open(tree_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(tree_lines[:5000]) + "\n")
+        _harness_log.info("[Pipeline] File tree: %d entries → %s", len(tree_lines), tree_path)
+
+    # ── 2. Search for task-relevant files ──
+    target_dir = _os.path.join(ctx_dir, "target_files")
+    _os.makedirs(target_dir, exist_ok=True)
+
+    # Extract keywords from task title + description
+    search_text = f"{task_title} {task_description or ''}"
+    # Common keyword extraction (Chinese + English significant words)
+    import re as _re
+    # Chinese: extract meaningful 2+ char segments between punctuation
+    cn_words = _re.findall(r'[\u4e00-\u9fff]{2,6}', search_text)
+    # English: extract words 3+ chars
+    en_words = _re.findall(r'[a-zA-Z][a-zA-Z0-9_-]{2,}', search_text)
+    keywords = set(w.lower() for w in en_words if w.lower() not in {
+        "the", "and", "for", "from", "with", "that", "this", "html", "page",
+        "system", "build", "team", "task", "please", "file",
+    })
+    keywords.update(cn_words)
+
+    # Also look for file path hints in the task text
+    path_hints = _re.findall(r'[a-zA-Z0-9_/-]+\.\w{1,6}', search_text)
+    for ph in path_hints:
+        keywords.add(ph)
+
+    # Chinese concept → filename mapping (common domain-specific translations)
+    _CN_FILE_MAP = {
+        "健康": ["health", "cms-health", "cms"],
+        "设备": ["device", "cms", "equipment"],
+        "推进": ["thruster", "propulsion", "tcs"],
+        "导航": ["navigation", "nav"],
+        "舵": ["rudder", "steering"],
+        "数字孪生": ["digital-twin", "twin"],
+        "驾驶台": ["bridge", "hmi", "openbridge"],
+        "报警": ["alarm", "alert"],
+        "机舱": ["engine", "intelligent-engine", "machinery"],
+        "避碰": ["colreg", "collision"],
+        "海图": ["chart", "map", "worldmonitor"],
+        "货物": ["cargo"],
+        "消防": ["fire"],
+        "压载": ["ballast"],
+        "通信": ["comm", "vdes"],
+        "气象": ["weather", "meteo"],
+        "状态": ["status", "health", "monitor"],
+        "控制": ["control"],
+    }
+    for cn_kw in cn_words:
+        for cn_key, en_vals in _CN_FILE_MAP.items():
+            if cn_key in cn_kw:
+                keywords.update(en_vals)
+
+    _harness_log.info("[Pipeline] Context seeding keywords: %s", keywords)
+
+    # Search source files for keyword matches
+    _SEARCH_DIRS = ["src/frontend", "src/backend/channels", "src/backend"]
+    _MAX_FILES = 10  # Don't overload the prompt
+    _MAX_FILE_SIZE = 30_000  # chars per file
+    _CONTENT_SCAN_SIZE = 15_000  # chars to scan for content matching
+
+    matched_files: list = []
+    for search_dir in _SEARCH_DIRS:
+        abs_dir = _os.path.join(project_root, search_dir)
+        if not _os.path.isdir(abs_dir):
+            continue
+        for dirpath, _, filenames in _os.walk(abs_dir):
+            for fn in filenames:
+                if not fn.endswith((".html", ".py", ".js", ".css", ".json", ".mjs")):
+                    continue
+                rel = _os.path.relpath(_os.path.join(dirpath, fn), project_root)
+                abs_path = _os.path.join(dirpath, fn)
+
+                # Score: how many keywords match the filename or path?
+                score = 0
+                lower_rel = rel.lower().replace("-", " ").replace("_", " ")
+                lower_fn = fn.lower().replace("-", " ").replace("_", " ")
+                for kw in keywords:
+                    kw_lower = kw.lower().replace("-", " ").replace("_", " ")
+                    if kw_lower in lower_rel or kw_lower in lower_fn:
+                        score += 3  # Path match is strong signal
+                # Also check file content for keyword matches
+                try:
+                    with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
+                        head = f.read(_CONTENT_SCAN_SIZE)
+                    for kw in keywords:
+                        if kw in head or kw.lower() in head.lower():
+                            score += 1
+                except Exception:
+                    pass
+
+                if score > 0:
+                    matched_files.append((score, rel, abs_path))
+
+    # Sort by relevance, take top N
+    matched_files.sort(key=lambda x: -x[0])
+    seeded_files = []
+    for score, rel, abs_path in matched_files[:_MAX_FILES]:
+        try:
+            with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read(_MAX_FILE_SIZE)
+            # Save to target_files/ preserving relative path
+            dest = _os.path.join(target_dir, rel)
+            _os.makedirs(_os.path.dirname(dest), exist_ok=True)
+            with open(dest, "w", encoding="utf-8") as f:
+                f.write(content)
+            seeded_files.append(rel)
+            _harness_log.info("[Pipeline] Seeded: %s (score=%d, %d chars)", rel, score, len(content))
+        except Exception as e:
+            _harness_log.warning("[Pipeline] Failed to seed %s: %s", rel, e)
+
+    # Write a manifest
+    manifest_path = _os.path.join(ctx_dir, "_manifest.md")
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        f.write(f"# Pipeline Context — {task_title}\n\n")
+        f.write(f"Task ID: {task_id}\n")
+        f.write(f"Keywords: {', '.join(sorted(keywords))}\n")
+        f.write(f"Seeded files: {len(seeded_files)}\n\n")
+        for sf in seeded_files:
+            f.write(f"- `{sf}`\n")
+
+    _harness_log.info("[Pipeline] Context seeded: %d files for task %s", len(seeded_files), task_id)
+    return ctx_dir
+
+
+def _get_pipeline_context_for_prompt(task_id: str) -> str:
+    """Build a context string from the pipeline's _context/ dir for inclusion in prompts.
+
+    Returns a formatted string with file tree + relevant file contents.
+    Budget: ~60K chars max to leave room for task prompt + prior steps.
+    """
+    _MAX_CONTEXT_CHARS = 60_000
+    _MAX_PER_FILE = 15_000
+
+    ctx_dir = _pipeline_context_dir(task_id)
+    parts = []
+    total = 0
+
+    # File tree (truncated)
+    tree_path = _os.path.join(ctx_dir, "file_tree.txt")
+    if _os.path.isfile(tree_path):
+        with open(tree_path, "r", encoding="utf-8") as f:
+            tree = f.read()
+        lines = tree.strip().split("\n")
+        # Filter to src/ only for relevance
+        src_lines = [l for l in lines if l.startswith("src/")]
+        if len(src_lines) > 150:
+            tree = "\n".join(src_lines[:150]) + f"\n... (共 {len(src_lines)} 个 src/ 文件)\n"
+        else:
+            tree = "\n".join(src_lines)
+        chunk = f"### 项目文件结构 (src/ 目录)\n```\n{tree}\n```\n"
+        parts.append(chunk)
+        total += len(chunk)
+
+    # Target files
+    target_dir = _os.path.join(ctx_dir, "target_files")
+    if _os.path.isdir(target_dir):
+        for dirpath, _, filenames in _os.walk(target_dir):
+            if total >= _MAX_CONTEXT_CHARS:
+                parts.append("(后续文件因 token 预算已省略)\n")
+                break
+            for fn in sorted(filenames):
+                if total >= _MAX_CONTEXT_CHARS:
+                    break
+                abs_path = _os.path.join(dirpath, fn)
+                rel = _os.path.relpath(abs_path, target_dir)
+                try:
+                    remaining = _MAX_CONTEXT_CHARS - total
+                    read_limit = min(_MAX_PER_FILE, remaining - 200)
+                    if read_limit < 500:
+                        parts.append("(后续文件因 token 预算已省略)\n")
+                        break
+                    with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.read(read_limit)
+                    ext = _os.path.splitext(fn)[1].lstrip(".")
+                    chunk = f"### 文件: `{rel}`\n```{ext}\n{content}\n```\n"
+                    parts.append(chunk)
+                    total += len(chunk)
+                except Exception:
+                    pass
+
+    if not parts:
+        return ""
+    return "## 📂 项目上下文 (系统自动预加载)\n\n" + "\n".join(parts) + "\n"
+
+
+def _save_step_to_pipeline(task_id: str, step_key: str, content: str,
+                            deliverables: list = None) -> str:
+    """Save a step's output to the shared pipeline workspace.
+
+    For regular steps: saves as NN_stepkey.md
+    For code steps: also saves extracted code under NN_stepkey/code/
+
+    Returns the path of the saved summary file.
+    """
+    pdir = _pipeline_dir(task_id)
+    idx = _STEP_INDEX.get(step_key, "99")
+
+    if step_key in _CODE_STEPS and deliverables:
+        # Code step: create subdirectory with summary + code files
+        step_dir = _os.path.join(pdir, f"{idx}_{step_key}")
+        _os.makedirs(step_dir, exist_ok=True)
+
+        summary_path = _os.path.join(step_dir, "summary.md")
+        with open(summary_path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        # Save extracted code files
+        code_dir = _os.path.join(step_dir, "code")
+        _os.makedirs(code_dir, exist_ok=True)
+        for d in deliverables:
+            file_path = _os.path.join(code_dir, d["path"])
+            _os.makedirs(_os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(d["content"])
+            _harness_log.info("[Pipeline] Code saved: %s (%d chars)", d["path"], len(d["content"]))
+
+        return summary_path
+    else:
+        # Text-only step: save as single .md file
+        out_path = _os.path.join(pdir, f"{idx}_{step_key}.md")
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        _harness_log.info("[Pipeline] Step artifact: %s (%d chars)", out_path, len(content))
+        return out_path
+
+
+def _get_prior_steps_from_pipeline(task_id: str, current_step_key: str) -> str:
+    """Read all prior step outputs from the pipeline workspace for prompt inclusion.
+
+    Returns formatted string of all completed prior steps' artifacts.
+    """
+    pdir = _pipeline_dir(task_id)
+    current_idx = _STEP_INDEX.get(current_step_key, "99")
+
+    parts = []
+    _MAX_PER_STEP = 50_000
+    _MAX_TOTAL = 150_000
+    total_chars = 0
+
+    # Scan pipeline dir for numbered step files/dirs
+    entries = sorted(_os.listdir(pdir))
+    for entry in entries:
+        if entry.startswith("_"):
+            continue
+        # Get step index from name (e.g., "01_pm_decompose" → "01")
+        entry_idx = entry[:2] if len(entry) > 2 and entry[2] == "_" else ""
+        if not entry_idx or entry_idx >= current_idx:
+            continue  # Skip current and future steps
+
+        abs_entry = _os.path.join(pdir, entry)
+        step_name = entry[3:] if len(entry) > 3 else entry
+
+        if _os.path.isfile(abs_entry) and entry.endswith(".md"):
+            # Simple text step
+            try:
+                with open(abs_entry, "r", encoding="utf-8") as f:
+                    content = f.read(_MAX_PER_STEP)
+                remaining = _MAX_TOTAL - total_chars
+                if remaining <= 0:
+                    parts.append("(后续步骤产出因 token 预算已省略)\n")
+                    break
+                if len(content) > remaining:
+                    content = content[:remaining] + "\n...(截断)\n"
+                total_chars += len(content)
+                parts.append(f"### 步骤 {entry_idx}: {step_name}\n\n{content}\n")
+            except Exception:
+                pass
+
+        elif _os.path.isdir(abs_entry):
+            # Code step with subdirectory
+            summary_path = _os.path.join(abs_entry, "summary.md")
+            if _os.path.isfile(summary_path):
+                try:
+                    with open(summary_path, "r", encoding="utf-8") as f:
+                        summary = f.read(min(_MAX_PER_STEP, _MAX_TOTAL - total_chars))
+                    total_chars += len(summary)
+                    parts.append(f"### 步骤 {entry_idx}: {step_name} (摘要)\n\n{summary}\n")
+                except Exception:
+                    pass
+
+            # List code deliverables
+            code_dir = _os.path.join(abs_entry, "code")
+            if _os.path.isdir(code_dir):
+                code_files = []
+                for dp, _, fns in _os.walk(code_dir):
+                    for fn in fns:
+                        rel = _os.path.relpath(_os.path.join(dp, fn), code_dir)
+                        code_files.append(rel)
+                if code_files:
+                    parts.append(f"📦 代码交付物 ({len(code_files)} 文件):\n")
+                    for cf in code_files:
+                        parts.append(f"  - `{cf}`\n")
+                    parts.append("\n")
+
+    if not parts:
+        return ""
+    return "## 前序步骤的产出 (管线共享工作区)\n\n" + "".join(parts)
+
+
+def _apply_code_from_pipeline(task_id: str, step_key: str) -> Dict[str, Any]:
+    """Apply code deliverables from a pipeline step to the actual project.
+
+    Reads from: storage/pipeline_runs/{task_id}/{idx}_{step_key}/code/
+    Writes to:  project root (with backup + safety checks)
+
+    Returns summary dict.
+    """
+    pdir = _pipeline_dir(task_id)
+    idx = _STEP_INDEX.get(step_key, "99")
+    code_dir = _os.path.join(pdir, f"{idx}_{step_key}", "code")
+    project_root = _os.path.dirname(_os.path.dirname(_os.path.dirname(
+        _os.path.dirname(_os.path.abspath(__file__)))))
+
+    result = {"applied": [], "skipped": [], "failed": [], "backup": []}
+
+    if not _os.path.isdir(code_dir):
+        _harness_log.info("[Pipeline] No code dir for %s step %s", task_id, step_key)
+        return result
+
+    _ALLOWED_PREFIXES = ("src/", "tests/", "docs/", "config/", "public/")
+
+    for dirpath, _, filenames in _os.walk(code_dir):
+        for fn in filenames:
+            abs_src = _os.path.join(dirpath, fn)
+            rel = _os.path.relpath(abs_src, code_dir)
+
+            # Safety check
+            if not any(rel.startswith(p) for p in _ALLOWED_PREFIXES):
+                result["skipped"].append({"path": rel, "reason": "Outside allowed dirs"})
+                continue
+            if ".." in rel:
+                result["skipped"].append({"path": rel, "reason": "Path traversal"})
+                continue
+
+            target = _os.path.join(project_root, rel)
+            try:
+                new_content = open(abs_src, "r", encoding="utf-8").read()
+
+                # Backup existing file
+                if _os.path.isfile(target):
+                    import shutil
+                    backup = target + ".bak"
+                    shutil.copy2(target, backup)
+                    result["backup"].append({"path": rel, "backup": backup})
+
+                _os.makedirs(_os.path.dirname(target), exist_ok=True)
+                with open(target, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                result["applied"].append({"path": rel, "size": len(new_content)})
+                _harness_log.info("[Pipeline] Applied: %s (%d chars)", rel, len(new_content))
+
+            except Exception as e:
+                result["failed"].append({"path": rel, "error": str(e)[:200]})
+                _harness_log.error("[Pipeline] Failed: %s — %s", rel, e)
+
+    _harness_log.info(
+        "[Pipeline] Apply result: %d applied, %d skipped, %d failed",
+        len(result["applied"]), len(result["skipped"]), len(result["failed"]),
+    )
+    return result
+
+
+def _write_handoff(task_id: str, step_key: str, payload: Dict[str, Any],
+                    *, from_agent: str = "", to_agent: str = "") -> str:
+    """Write a structured handoff Markdown file for inter-agent communication.
+
+    Each pipeline step writes a handoff file when it completes, which the next
+    agent reads as context.  The file is stored in docs/agent_handoffs/.
+
+    Returns the path of the written file.
+    """
+    import json as _json
+    safe_tid = task_id.replace("/", "_")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+    fname = f"{safe_tid}_{step_key}_{ts}.md"
+    fpath = _os.path.join(_HANDOFF_DIR, fname)
+
+    lines = [
+        f"# Agent Handoff — {step_key}",
+        f"",
+        f"| 字段 | 值 |",
+        f"|------|------|",
+        f"| 任务 ID | `{task_id}` |",
+        f"| 步骤 | `{step_key}` |",
+        f"| 来源 Agent | {from_agent or '(system)'} |",
+        f"| 目标 Agent | {to_agent or '(next step)'} |",
+        f"| 时间 | {ts} |",
+        f"",
+        f"## 传递内容",
+        f"",
+    ]
+    for k, v in payload.items():
+        if isinstance(v, (dict, list)):
+            lines.append(f"### {k}")
+            lines.append(f"```json")
+            lines.append(_json.dumps(v, ensure_ascii=False, indent=2))
+            lines.append(f"```")
+            lines.append(f"")
+        else:
+            lines.append(f"- **{k}**: {v}")
+    lines.append(f"")
+    lines.append(f"---")
+    lines.append(f"*Auto-generated by PoseidonX Workflow Harness*")
+
+    with open(fpath, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    _harness_log.info(f"[Handoff] Written: {fpath} ({from_agent} → {to_agent})")
+    return fpath
+
+
+def _validate_session_output(session: Dict[str, Any]) -> bool:
+    """Check if a completed session produced meaningful output (not just errors).
+
+    Returns True if the session has real content, False if it's empty/error-only.
+    """
+    lines = list(session.get("lines", []))
+    if not lines:
+        return False
+    # Filter out framework lines (headers, status markers)
+    _NOISE = ("─", "📋", "🤖", "📂", "⏱️", "📝", "⏳", "🔄", "⚠️", "❌", "🔗", "✅")
+    content_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if any(stripped.startswith(m) for m in _NOISE):
+            continue
+        if stripped.startswith("  "):  # Prompt echo
+            continue
+        content_lines.append(stripped)
+    # Need at least a few lines of real content
+    min_content_lines = 3
+    min_content_chars = 50
+    total_chars = sum(len(l) for l in content_lines)
+    if len(content_lines) < min_content_lines or total_chars < min_content_chars:
+        _harness_log.warning("[Validate] Session %s has insufficient output: %d lines, %d chars",
+                             session.get("session_id"), len(content_lines), total_chars)
+        return False
+    return True
+
+
+def _artifact_path(task_id: str, step_key: str) -> str:
+    """Return the .md artifact file path for a given task step."""
+    safe_tid = task_id.replace("/", "_")
+    return _os.path.join(_ARTIFACT_DIR, f"{safe_tid}_{step_key}.md")
+
+
+def _collect_step_artifact(task, completed_step: Dict) -> None:
+    """Extract output from a completed step's Claude session and save as .md artifact.
+    Works for both CLI mode and Ollama direct mode."""
+    sid = completed_step.get("session_id")
+    if not sid or sid not in _claude_sessions:
+        return
+    session = _claude_sessions[sid]
+    lines = list(session.get("lines", []))
+    # Skip header lines (the prompt echo), find actual model output
+    # Support multiple header markers:
+    #   CLI mode:   "正在启动 Claude Code CLI..."
+    #   Ollama:     "使用 Ollama 直连模式" / "Ollama 直连"
+    #   Separator:  "─" repeated
+    _HEADER_MARKERS = ("正在启动 Claude Code CLI", "使用 Ollama 直连模式",
+                       "Ollama 直连", "─" * 10)
+    output_lines = []
+    past_header = False
+    for line in lines:
+        if not past_header:
+            if any(m in line for m in _HEADER_MARKERS):
+                past_header = True
+            continue
+        output_lines.append(line)
+    # Fallback: if no header marker found, take everything after first 3 lines
+    if not output_lines and len(lines) > 3:
+        output_lines = lines[3:]
+    if not output_lines:
+        return
+    content = "".join(output_lines).strip()
+    if not content:
+        return
+    # Save as .md artifact
+    art_path = _artifact_path(task.task_id, completed_step["key"])
+    header = (
+        f"# {completed_step['label']} — {completed_step.get('agent_role', '')}\n\n"
+        f"任务: {task.title}\n"
+        f"步骤: {completed_step['key']}\n"
+        f"Agent: {completed_step.get('agent_id', '')}\n\n---\n\n"
+    )
+    with open(art_path, "w", encoding="utf-8") as f:
+        f.write(header + content + "\n")
+    # Store the artifact path in step metadata
+    completed_step["artifact"] = art_path
+    _harness_log.info(f"[Harness] Artifact saved: {art_path} ({len(content)} chars)")
+
+
+# ── Code Deliverable Extraction ──────────────────────────────────
+import re as _re_mod
+
+# Pattern: ```lang  // filepath: <path>  OR  ```lang filename=<path>
+# Also matches: <!-- file: path --> or # File: path before code blocks
+_FILE_PATH_PATTERNS = [
+    # Inline in fence: ```python  // src/backend/foo.py
+    _re_mod.compile(r"```\w*\s+//\s*(?:filepath:\s*)?(.+)"),
+    # Inline in fence: ```python filename=src/backend/foo.py
+    _re_mod.compile(r"```\w*\s+filename=(.+)"),
+    # Comment above fence: <!-- file: src/frontend/bar.html -->
+    _re_mod.compile(r"<!--\s*file:\s*(.+?)\s*-->"),
+    # Header above fence: # File: src/frontend/bar.html  OR  ## `src/backend/foo.py`
+    _re_mod.compile(r"^#+\s+(?:File:\s*)?`?([^\s`]+\.\w+)`?\s*$", _re_mod.MULTILINE),
+    # Bold path: **src/frontend/cms-health.html**
+    _re_mod.compile(r"\*\*([^\s*]+\.\w{1,10})\*\*"),
+    # Path in backticks on its own line: `src/frontend/foo.html`
+    _re_mod.compile(r"^`([^\s`]+\.\w{1,10})`\s*$", _re_mod.MULTILINE),
+]
+
+# Valid source file extensions we care about
+_CODE_EXTENSIONS = frozenset({
+    ".py", ".js", ".mjs", ".ts", ".tsx", ".jsx",
+    ".html", ".htm", ".css", ".scss",
+    ".json", ".yaml", ".yml", ".toml",
+    ".md", ".sql", ".sh",
+})
+
+
+def _extract_code_deliverables(text: str) -> List[Dict[str, str]]:
+    """Extract code blocks with file paths from LLM output.
+
+    Returns a list of {path: str, content: str, language: str} dicts.
+    Handles various formats LLMs use to indicate file paths.
+    """
+    deliverables: List[Dict[str, str]] = []
+
+    # Split into segments around fenced code blocks
+    # Match: ```lang ... ``` with content
+    fence_pattern = _re_mod.compile(
+        r"```(\w*)([ \t]+[^\n]*)?\n"     # Opening fence with optional lang + metadata
+        r"(.*?)"                          # Code content (non-greedy)
+        r"\n```",                         # Closing fence
+        _re_mod.DOTALL,
+    )
+
+    for m in fence_pattern.finditer(text):
+        lang = (m.group(1) or "").strip()
+        fence_meta = (m.group(2) or "").strip()
+        code = m.group(3) or ""
+
+        # Get pre-context: up to 3 lines before the opening fence
+        pre_start = max(0, m.start() - 500)
+        pre_text = text[pre_start:m.start()]
+        pre_lines = pre_text.split("\n")
+        pre_context = "\n".join(pre_lines[-4:]) if len(pre_lines) > 4 else pre_text
+
+        if not code.strip():
+            continue
+        # Skip shell/terminal output blocks
+        if lang in ("bash", "sh", "shell", "console", "terminal", "zsh", "log", "text", "output"):
+            # But allow if explicitly marked with a file path
+            if not fence_meta:
+                continue
+
+        # Try to find file path
+        filepath = ""
+
+        # 1. Check fence metadata: ```python // src/backend/foo.py
+        if fence_meta:
+            for pat in _FILE_PATH_PATTERNS[:2]:
+                pm = pat.match(f"```{lang} {fence_meta}")
+                if pm:
+                    filepath = pm.group(1).strip()
+                    break
+            if not filepath:
+                # Plain path after language: ```python src/backend/foo.py
+                candidate = fence_meta.strip().strip("`").strip("'").strip('"')
+                if "/" in candidate and _os.path.splitext(candidate)[1] in _CODE_EXTENSIONS:
+                    filepath = candidate
+
+        # 2. Check pre-context (lines before the code block)
+        if not filepath:
+            for line in reversed(pre_context.strip().split("\n")):
+                line = line.strip()
+                if not line:
+                    continue
+                for pat in _FILE_PATH_PATTERNS:
+                    pm = pat.search(line)
+                    if pm:
+                        candidate = pm.group(1).strip().strip("`").strip("'").strip('"')
+                        if _os.path.splitext(candidate)[1] in _CODE_EXTENSIONS:
+                            filepath = candidate
+                            break
+                if filepath:
+                    break
+
+        # 3. Infer from code content (first line comment: # src/backend/foo.py)
+        if not filepath:
+            first_lines = code.strip().split("\n")[:3]
+            for fl in first_lines:
+                fl = fl.strip()
+                # # file: src/backend/foo.py  or  // src/frontend/bar.js
+                fm = _re_mod.match(r"(?:#|//|/\*|<!--)\s*(?:file:\s*)?(\S+\.\w+)", fl)
+                if fm:
+                    candidate = fm.group(1).strip()
+                    if _os.path.splitext(candidate)[1] in _CODE_EXTENSIONS:
+                        filepath = candidate
+                        break
+
+        if not filepath:
+            continue
+
+        # Normalize: strip leading project root prefixes
+        for prefix in ("/Users/panglaohu/Downloads/DoubleBoatClawSystem/", "./"):
+            if filepath.startswith(prefix):
+                filepath = filepath[len(prefix):]
+
+        # Validate: must look like a real project path
+        if filepath.startswith("/") or ".." in filepath:
+            continue
+
+        deliverables.append({
+            "path": filepath,
+            "content": code,
+            "language": lang or _os.path.splitext(filepath)[1].lstrip("."),
+        })
+
+    return deliverables
+
+
+def _save_deliverables_to_workspace(
+    task_id: str, team_id: str, agent_id: str,
+    deliverables: List[Dict[str, str]],
+) -> List[str]:
+    """Save extracted code deliverables to agent workspace.
+
+    Files are saved under: storage/agent_workspaces/{team_id}/{agent_id}/deliverables/{task_id}/
+    Returns list of saved file paths (relative to workspace root).
+    """
+    if not deliverables:
+        return []
+
+    safe_tid = task_id.replace("/", "_")[:50]
+    root = _agent_ws_root(team_id, agent_id)
+    deliverable_dir = root / "deliverables" / safe_tid
+    deliverable_dir.mkdir(parents=True, exist_ok=True)
+
+    saved = []
+    # Also write a manifest
+    manifest_lines = [
+        f"# Deliverables for task {task_id}",
+        f"",
+        f"Agent: {agent_id}",
+        f"Time: {datetime.now(timezone.utc).isoformat()}",
+        f"Files: {len(deliverables)}",
+        f"",
+    ]
+
+    for i, d in enumerate(deliverables):
+        rel_path = d["path"]
+        content = d["content"]
+
+        # Preserve directory structure from the path
+        file_target = deliverable_dir / rel_path
+        file_target.parent.mkdir(parents=True, exist_ok=True)
+        file_target.write_text(content, encoding="utf-8")
+        saved.append(str(file_target.relative_to(root)))
+        manifest_lines.append(f"- `{rel_path}` ({len(content)} chars, {d.get('language', '')})")
+        _harness_log.info(
+            f"[Deliverable] Saved: {file_target} ({len(content)} chars)"
+        )
+
+    # Write manifest
+    manifest_path = deliverable_dir / "_manifest.md"
+    manifest_path.write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
+
+    _harness_log.info(
+        f"[Deliverable] {len(saved)} files saved to workspace for agent {agent_id}, task {task_id}"
+    )
+    return saved
+
+
+def _apply_deliverables_to_codebase(
+    task_id: str, team_id: str, developer_agent_id: str,
+) -> Dict[str, Any]:
+    """Read deliverables from developer's workspace and apply them to the project codebase.
+
+    This is called by the deploy step. It reads files from the developer's
+    deliverables directory and copies them to the actual project locations.
+
+    Returns a summary dict with applied/skipped/failed counts.
+    """
+    safe_tid = task_id.replace("/", "_")[:50]
+    root = _agent_ws_root(team_id, developer_agent_id)
+    deliverable_dir = root / "deliverables" / safe_tid
+    project_root = _os.path.dirname(_os.path.dirname(_os.path.dirname(
+        _os.path.dirname(_os.path.abspath(__file__)))))
+
+    result = {"applied": [], "skipped": [], "failed": [], "backup": []}
+
+    if not deliverable_dir.exists():
+        _harness_log.warning(f"[Deploy] No deliverables dir: {deliverable_dir}")
+        return result
+
+    # Read manifest to get file list
+    for fpath in deliverable_dir.rglob("*"):
+        if fpath.is_dir() or fpath.name.startswith("_"):
+            continue
+
+        # The relative path inside deliverables mirrors the project structure
+        rel_in_deliverable = fpath.relative_to(deliverable_dir)
+        target_path = _os.path.join(project_root, str(rel_in_deliverable))
+
+        # Safety: only allow writes within src/, tests/, docs/, config/
+        _ALLOWED_PREFIXES = ("src/", "tests/", "docs/", "config/", "public/")
+        rel_str = str(rel_in_deliverable)
+        if not any(rel_str.startswith(p) for p in _ALLOWED_PREFIXES):
+            result["skipped"].append({
+                "path": rel_str,
+                "reason": f"Outside allowed directories: {_ALLOWED_PREFIXES}",
+            })
+            _harness_log.warning(f"[Deploy] Skipped (outside allowed dirs): {rel_str}")
+            continue
+
+        try:
+            new_content = fpath.read_text(encoding="utf-8")
+
+            # Backup existing file if it exists
+            if _os.path.isfile(target_path):
+                backup_path = target_path + ".bak"
+                import shutil
+                shutil.copy2(target_path, backup_path)
+                result["backup"].append({"path": rel_str, "backup": backup_path})
+
+            # Create parent directories
+            _os.makedirs(_os.path.dirname(target_path), exist_ok=True)
+
+            # Write the file
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.write(new_content)
+
+            result["applied"].append({"path": rel_str, "size": len(new_content)})
+            _harness_log.info(f"[Deploy] Applied: {target_path} ({len(new_content)} chars)")
+
+        except Exception as e:
+            result["failed"].append({"path": rel_str, "error": str(e)[:200]})
+            _harness_log.error(f"[Deploy] Failed to apply {rel_str}: {e}")
+
+    _harness_log.info(
+        f"[Deploy] Summary: {len(result['applied'])} applied, "
+        f"{len(result['skipped'])} skipped, {len(result['failed'])} failed"
+    )
+    return result
+
+
+def _find_developer_agent(team_id: str, workflow: list) -> str:
+    """Find the developer agent_id from a workflow's develop step."""
+    for s in workflow:
+        if s.get("key") == "develop" and s.get("agent_id"):
+            return s["agent_id"]
+    return ""
+
+
+# ── Per-step prompt templates ──
+_STEP_PROMPTS: Dict[str, str] = {
+    "pm_decompose": (
+        "你是项目经理 (PM)。请对以下任务进行分解和规划:\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## 要求\n"
+        "1. 分析任务需求，拆解为可执行的子步骤\n"
+        "2. 识别技术风险和依赖关系\n"
+        "3. 为后续研究人员、架构师、开发者提供清晰的指导\n"
+        "4. 输出一份结构化的任务分解文档 (Markdown 格式)\n\n"
+        "## ⚠️ 重要提示\n"
+        "系统已自动预加载项目文件结构和相关源文件（见下方 📂 项目上下文）。\n"
+        "请基于**实际存在的文件**进行分析，不要猜测文件名。\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+    "research": (
+        "你是技术研究员。请对以下任务进行技术调研:\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## ⚠️ 最重要的规则\n"
+        "系统已自动预加载项目文件结构和相关源文件（见上方 📂 项目上下文）。\n"
+        "**你必须只引用上方提供的实际文件**，严禁凭想象编造文件名或路径。\n"
+        "如果上下文中没有某个文件，说明该文件不存在。\n\n"
+        "## 要求\n"
+        "1. 仔细阅读上方提供的项目文件结构和源文件内容\n"
+        "2. 根据**实际存在的文件**分析哪些需要修改\n"
+        "3. 列出需要修改的文件的**完整路径** (必须是项目上下文中出现的路径)\n"
+        "4. 分析实现方案的可行性\n"
+        "5. 引用具体代码行号说明修改点\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+    "architecture": (
+        "你是系统架构师。请为以下任务设计技术方案:\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## ⚠️ 重要提示\n"
+        "上方 📂 项目上下文 包含了任务相关的实际源文件。\n"
+        "请基于这些文件设计方案，不要引用不存在的文件。\n\n"
+        "## 要求\n"
+        "1. 基于调研结果和实际源码，设计详细技术方案\n"
+        "2. 明确指出需要修改的文件和具体修改内容\n"
+        "3. 定义接口规范（如有新增 API）\n"
+        "4. 为开发工程师提供逐步实施指南\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+    "develop": (
+        "你是开发工程师。请根据架构设计实现以下任务:\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## 要求\n"
+        "1. 严格按照架构师的设计方案进行编码\n"
+        "2. 参考上方 📂 项目上下文 中的原始文件内容，在其基础上修改\n"
+        "3. 遵循项目编码规范 (Channel 继承 MarineChannel, 新参数有默认值)\n\n"
+        "## ⚠️ 代码输出格式 (必须严格遵守)\n"
+        "你的代码将被自动提取，保存到管线共享工作区，最终自动应用到项目代码库。\n"
+        "**每个代码块必须在 fence 行标注目标文件路径**，格式如下:\n\n"
+        "```python // src/backend/channels/foo.py\n"
+        "# 完整的文件内容\n"
+        "```\n\n"
+        "```html // src/frontend/bar.html\n"
+        "<!-- 完整的文件内容 -->\n"
+        "```\n\n"
+        "**规则**:\n"
+        "- 路径必须是 📂 项目上下文 中列出的**实际文件路径**\n"
+        "- 每个代码块输出该文件的**完整内容** (不要省略未修改的部分)\n"
+        "- 不要使用 `...existing code...` 或 `// 省略`\n"
+        "- 如果修改多个文件，每个文件用独立的代码块\n"
+        "- 只输出需要变更的文件，不变的文件不要输出\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+    "test": (
+        "你是 QA 测试工程师。请验证以下任务的实现:\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## 要求\n"
+        "1. 审查开发步骤的代码交付物(列在前序步骤产出中)\n"
+        "2. 检查代码逻辑正确性、边界条件、异常处理\n"
+        "3. 如果发现问题，清晰描述问题和修复建议\n"
+        "4. 输出测试报告 (Markdown 格式)\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+    "document": (
+        "你是文档工程师。请更新以下任务的相关文档:\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## 要求\n"
+        "1. 根据开发和部署步骤产出，总结变更内容\n"
+        "2. 更新相关文档说明\n"
+        "3. 输出文档变更清单 (Markdown 格式)\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+    "deploy": (
+        "你是 DevOps 部署工程师。\n"
+        "开发者的代码交付物已自动保存到管线共享工作区。\n"
+        "部署步骤完成后，系统会自动将代码文件应用到项目代码库。\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "## 自动部署机制\n"
+        "- 开发步骤的代码块已提取到: `storage/pipeline_runs/<task_id>/04_develop/code/`\n"
+        "- 本步骤完成时系统自动执行: 开发文件 → 项目代码库 (含 .bak 备份)\n"
+        "- 你只需审查变更合理性并输出部署报告\n\n"
+        "## 部署策略要求\n"
+        "1. **变更分析**: 分析代码变更的范围和影响\n"
+        "   - 小改动 (hotfix/patch): 就地更新\n"
+        "   - 较大功能变更: 蓝绿部署\n"
+        "2. **蓝绿部署判断**: 新增/大幅修改 HTML 页面、API 签名变更、核心 Channel 逻辑变更\n"
+        "3. **⚠️ Captain 安全拒绝规则**:\n"
+        "   如果 Captain/PM 在前序步骤中拒绝了删除/移除操作:\n"
+        "   - **不得直接修改原始页面**\n"
+        "   - **创建新版本**: `<文件名>-v2.<ext>` (如 cms-health-v2.html)\n"
+        "   - 新版本包含所请求的修改内容，用代码块格式输出:\n"
+        "     ```html // src/frontend/cms-health-v2.html\n"
+        "     <!-- 完整文件内容 -->\n"
+        "     ```\n"
+        "4. **产出**: 输出部署清单 (Markdown 格式) 包含: 部署类型, 影响文件, 回滚方案\n\n"
+        "项目根目录: {working_dir}\n"
+        "后端: src/backend/ (Python FastAPI)\n"
+        "前端: src/frontend/ (HTML + JS)\n"
+    ),
+}
+
+
+def _build_step_prompt(task, step: Dict, workflow: list) -> str:
+    """Build a role-specific prompt for a workflow step.
+
+    Includes:
+    1. Pre-seeded project context (_context/ from pipeline workspace)
+    2. All prior step outputs from pipeline workspace (full-team shared)
+    3. Handoff files for inter-agent state
+    """
+    working_dir = "/Users/panglaohu/Downloads/DoubleBoatClawSystem"
+    key = step.get("key", "execute")
+    template = _STEP_PROMPTS.get(key, (
+        "请执行以下任务步骤 ({label}):\n\n"
+        "## 任务\n{title}\n{description}\n\n"
+        "{prev_artifacts}"
+        "项目根目录: {working_dir}\n"
+    ))
+
+    prev_parts = []
+
+    # ── 1. Project context (pre-seeded file tree + relevant source files) ──
+    try:
+        project_ctx = _get_pipeline_context_for_prompt(task.task_id)
+        if project_ctx:
+            prev_parts.append(project_ctx)
+    except Exception:
+        pass
+
+    # ── 2. Prior step outputs from pipeline workspace ──
+    try:
+        prior_steps = _get_prior_steps_from_pipeline(task.task_id, key)
+        if prior_steps:
+            prev_parts.append(prior_steps)
+    except Exception:
+        pass
+
+    # ── 3. Fallback: old artifact system (for in-flight tasks without pipeline dir) ──
+    if not prev_parts:
+        _MAX_TOTAL_CHARS = 200_000
+        _MAX_PER_ARTIFACT = 60_000
+        prior_completed = [s for s in workflow
+                          if s["index"] < step["index"] and s.get("status") == "completed"]
+        for s in prior_completed[-3:]:
+            art_path = s.get("artifact")
+            if not art_path or not _os.path.isfile(art_path):
+                if s.get("session_id") and s["session_id"] in _claude_sessions:
+                    _collect_step_artifact(task, s)
+                    art_path = s.get("artifact")
+            if art_path and _os.path.isfile(art_path):
+                try:
+                    with open(art_path, "r", encoding="utf-8") as f:
+                        content = f.read(_MAX_PER_ARTIFACT)
+                    prev_parts.append(
+                        f"## 上一步产出 — {s['label']} ({s.get('agent_role', '')})\n\n"
+                        f"{content}\n\n"
+                    )
+                except Exception:
+                    pass
+
+    prev_artifacts = "\n".join(prev_parts) if prev_parts else ""
+
+    return template.format(
+        title=task.title,
+        description=task.description or "(无详细描述)",
+        working_dir=working_dir,
+        prev_artifacts=prev_artifacts,
+        label=step.get("label", key),
+    )
+
+
+def _resolve_claude_path(configured: str) -> str:
+    """Resolve Claude CLI path, checking common locations."""
+    import shutil
+    if configured and configured != "claude":
+        return configured
+    # Try PATH first
+    found = shutil.which("claude")
+    if found:
+        return found
+    # Common install locations
+    for p in [
+        _os.path.expanduser("~/.local/bin/claude"),
+        "/usr/local/bin/claude",
+        _os.path.expanduser("~/.npm-global/bin/claude"),
+    ]:
+        if _os.path.isfile(p) and _os.access(p, _os.X_OK):
+            return p
+    return configured  # fallback
+
+
+def _is_ollama_backend() -> bool:
+    """Check if Claude settings point to Ollama (not official Anthropic API)."""
+    import json as _json
+    try:
+        settings_path = _os.path.expanduser("~/.claude/settings.json")
+        if _os.path.isfile(settings_path):
+            with open(settings_path, "r") as f:
+                settings = _json.load(f)
+            base_url = settings.get("env", {}).get("ANTHROPIC_BASE_URL", "")
+            # Ollama typically uses non-Anthropic URLs
+            if base_url and "anthropic.com" not in base_url:
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def _get_deepseek_credentials() -> tuple:
+    """Get DeepSeek API key and base URL from ~/.claude/settings.json.
+
+    Returns (api_key, base_url, model) or (None, None, None) if unavailable.
+    """
+    import json as _json
+    try:
+        settings_path = _os.path.expanduser("~/.claude/settings.json")
+        if _os.path.isfile(settings_path):
+            with open(settings_path, "r") as f:
+                settings = _json.load(f)
+            env = settings.get("env", {})
+            api_key = env.get("ANTHROPIC_AUTH_TOKEN", "")
+            model = env.get("ANTHROPIC_MODEL", "") or settings.get("defaultModel", "deepseek-chat")
+            # Map Anthropic model names to DeepSeek model names
+            _MODEL_MAP = {
+                "claude-sonnet-4-20250514": "deepseek-chat",
+                "claude-3-5-sonnet-20241022": "deepseek-chat",
+                "claude-3-5-haiku-20241022": "deepseek-chat",
+            }
+            model = _MODEL_MAP.get(model, model)
+            if api_key:
+                # Use OpenAI-compatible endpoint for direct API calls
+                return api_key, "https://api.deepseek.com/v1", model
+    except Exception:
+        pass
+    return None, None, None
+
+
+# When using DeepSeek as backend, Claude CLI has NO tool access (no file
+# editing, no shell), so direct API is always faster and equally capable.
+# Claude CLI is only beneficial with real Anthropic API (tool use support).
+# Check at runtime whether we're on DeepSeek → always use direct API.
+_TEXT_ONLY_ROLES = frozenset({
+    "project_manager", "researcher", "documentation", "architect",
+})
+
+def _should_use_direct_api(role: str) -> bool:
+    """Decide whether to use direct DeepSeek API vs Claude CLI.
+
+    When backend is DeepSeek (not anthropic.com), CLI has no tool access
+    so direct API is always better — 10x faster with streaming.
+    """
+    # If role is text-only, always use direct API
+    if role in _TEXT_ONLY_ROLES:
+        return True
+    # Check if backend is DeepSeek (non-Anthropic) → CLI has no tools
+    try:
+        import json as _json
+        settings_path = _os.path.expanduser("~/.claude/settings.json")
+        if _os.path.isfile(settings_path):
+            with open(settings_path, "r") as f:
+                settings = _json.load(f)
+            base_url = settings.get("env", {}).get("ANTHROPIC_BASE_URL", "")
+            if base_url and "anthropic.com" not in base_url:
+                return True  # Non-Anthropic backend → no tool use → direct API
+    except Exception:
+        pass
+    return False
+
+
+def _start_claude_session(session_id: str, prompt: str, cfg: Dict, agent, task_id: str) -> None:
+    """Start a session for build team tasks.
+
+    Text-only roles (PM, researcher, docs) use DeepSeek API directly for
+    fast streaming responses. Code-editing roles (developer, QA, architect)
+    use Claude Code CLI which provides tool access.
+    """
+    _harness_log.info(
+        "[Claude] Starting session %s — task: %s, agent: %s (%s)",
+        session_id, task_id, agent.name, agent.role,
+    )
+    working_dir = cfg.get("working_directory", "") or "/Users/panglaohu/Downloads/DoubleBoatClawSystem"
+    auto_test = cfg.get("auto_test", True)
+    use_direct_api = _should_use_direct_api(agent.role)
+    # Direct API is fast (streaming); CLI needs more time for tool use
+    default_timeout = 300 if use_direct_api else 600
+    timeout_sec = cfg.get("session_timeout", default_timeout)
+
+    full_prompt = (
+        f"你是 PoseidonX 系统的 {agent.name} ({agent.role})。\n"
+        f"请执行以下开发任务:\n\n{prompt}\n\n"
+        f"项目根目录: {working_dir}\n"
+        f"后端: src/backend/ (Python FastAPI)\n"
+        f"前端: src/frontend/ (HTML + JS)\n"
+    )
+    # Only add test instruction for code-editing roles
+    if auto_test and not use_direct_api:
+        full_prompt += "完成后运行: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -q --tb=short\n"
+
+    session: Dict[str, Any] = {
+        "session_id": session_id,
+        "task_id": task_id,
+        "status": "running",
+        "lines": deque(maxlen=20000),
+        "started_at": _time.time(),
+        "exit_code": None,
+        "error": "",
+        "proc": None,
+    }
+    _claude_sessions[session_id] = session
+
+    # Echo the prompt to the terminal buffer so users can see what was sent
+    method_label = "DeepSeek API (直连)" if use_direct_api else "Claude Code CLI"
+    session["lines"].append(f"{'─'*60}\n")
+    session["lines"].append(f"📋 任务: {task_id}\n")
+    session["lines"].append(f"🤖 Agent: {agent.name} ({agent.role})\n")
+    session["lines"].append(f"📂 工作目录: {working_dir}\n")
+    session["lines"].append(f"🔧 执行方式: {method_label}\n")
+    session["lines"].append(f"⏱️ 超时: {timeout_sec}s\n")
+    session["lines"].append(f"{'─'*60}\n")
+    session["lines"].append(f"📝 提示词:\n")
+    for pline in full_prompt.split("\n"):
+        session["lines"].append(f"  {pline}\n")
+    session["lines"].append(f"{'─'*60}\n")
+
+    def _run():
+        if use_direct_api:
+            # Text-only roles → fast streaming via DeepSeek OpenAI-compatible API
+            api_key, api_base_url, model = _get_deepseek_credentials()
+            if api_key:
+                session["lines"].append(f"⚡ 使用 DeepSeek API 直连 (快速模式)...\n\n")
+                _run_openai_compatible(
+                    session, full_prompt, timeout_sec,
+                    api_key=api_key, api_base_url=api_base_url, model=model,
+                )
+            else:
+                session["lines"].append(f"⚠️ DeepSeek 凭据未找到，回退到 Claude CLI...\n\n")
+                _run_claude_cli_direct(session, full_prompt, working_dir, timeout_sec, cfg)
+        else:
+            # Code-editing roles → Claude Code CLI (tool access)
+            session["lines"].append(f"⏳ 正在启动 Claude Code CLI...\n\n")
+            _run_claude_cli_direct(session, full_prompt, working_dir, timeout_sec, cfg)
+
+        # Final validation: ensure session is properly marked
+        final_status = session.get("status", "running")
+        if final_status == "running":
+            session["status"] = "failed"
+            session["exit_code"] = 1
+            session["error"] = "Session ended without producing a result"
+            session["lines"].append(f"\n❌ 会话结束但未产生结果\n")
+            _harness_log.error("[Session] %s ended in 'running' state — forced to failed", session_id)
+        elif final_status == "failed":
+            _harness_log.warning("[Session] %s ended as FAILED: %s", session_id, session.get("error", ""))
+        else:
+            _harness_log.info("[Session] %s completed successfully", session_id)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+
+
+_CLI_INITIAL_TIMEOUT = 120  # seconds to wait for first output from Claude CLI
+
+
+def _build_claude_env() -> dict:
+    """Build env for Claude CLI subprocess from ~/.claude/settings.json.
+
+    The settings.json env block is authoritative — it overrides any
+    inherited ANTHROPIC_* vars from the parent process.
+    """
+    cli_env = _os.environ.copy()
+    # Remove stale ANTHROPIC_* vars that may point to Ollama proxy
+    for k in list(cli_env.keys()):
+        if k.startswith("ANTHROPIC_"):
+            del cli_env[k]
+    # Load from settings.json (authoritative source)
+    try:
+        import json as _json
+        settings_path = _os.path.expanduser("~/.claude/settings.json")
+        if _os.path.isfile(settings_path):
+            with open(settings_path, "r") as f:
+                settings = _json.load(f)
+            for k, v in settings.get("env", {}).items():
+                cli_env[k] = v
+    except Exception:
+        pass
+    return cli_env
+
+
+def _run_claude_cli_direct(session: Dict[str, Any], prompt: str, working_dir: str,
+                            timeout_sec: int, cfg: Dict) -> None:
+    """Run Claude Code CLI directly via ``communicate()``.
+
+    Claude CLI buffers its entire response and writes it on exit,
+    so line-by-line ``readline()`` with ``select()`` will appear to hang.
+    We use ``communicate(timeout=...)`` instead and stream a progress
+    indicator so the UI knows the session is alive.
+    """
+    claude_path = _resolve_claude_path(cfg.get("claude_code_path", "claude"))
+    cli_env = _build_claude_env()
+
+    model = cli_env.get("ANTHROPIC_MODEL", "deepseek-chat")
+    base_url = cli_env.get("ANTHROPIC_BASE_URL", "")
+    session["lines"].append(f"🔗 Claude Code → {base_url or 'default'} | 模型: {model}\n")
+    session["lines"].append(f"⏳ DeepSeek 正在思考中...\n\n")
+
+    try:
+        proc = subprocess.Popen(
+            [claude_path, "-p", prompt, "--bare"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, cwd=working_dir, env=cli_env,
+        )
+        session["proc"] = proc
+
+        # Progress heartbeat: periodically append a dot so the UI
+        # knows the session is alive while Claude/DeepSeek is thinking.
+        import threading
+        stop_heartbeat = threading.Event()
+
+        def _heartbeat():
+            tick = 0
+            while not stop_heartbeat.wait(10):
+                tick += 1
+                session["lines"].append(f"⏳ 等待 DeepSeek 响应... ({tick * 10}s)\n")
+
+        hb = threading.Thread(target=_heartbeat, daemon=True)
+        hb.start()
+
+        try:
+            stdout, stderr = proc.communicate(timeout=timeout_sec)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            stdout, stderr = proc.communicate()
+            session["lines"].append(f"\n⏱️ 会话超时 ({timeout_sec}s)，已自动终止\n")
+            session["status"] = "failed"
+            session["exit_code"] = 1
+            session["error"] = f"Timeout after {timeout_sec}s"
+            stop_heartbeat.set()
+            hb.join(timeout=2)
+            return
+        finally:
+            stop_heartbeat.set()
+            hb.join(timeout=2)
+
+        session["exit_code"] = proc.returncode
+
+        # Append output to session lines
+        if stdout:
+            for line in stdout.split("\n"):
+                session["lines"].append(line + "\n")
+
+        if stderr:
+            for line in stderr.strip().split("\n"):
+                if line.strip():
+                    session["lines"].append(f"⚠️ {line}\n")
+
+        # Validate output
+        real_lines_count = 0
+        for sline in (stdout or "").split("\n"):
+            stripped = sline.strip()
+            if stripped:
+                real_lines_count += 1
+
+        if real_lines_count < 1:
+            session["lines"].append(f"\n❌ Claude 未返回任何内容\n")
+            session["status"] = "failed"
+            session["exit_code"] = 1
+            session["error"] = "Empty response from Claude CLI"
+        elif proc.returncode == 0:
+            session["status"] = "completed"
+        else:
+            session["status"] = "failed"
+
+        if proc.returncode != 0 and proc.returncode is not None:
+            session["lines"].append(f"\n⚠️ Claude Code 退出码: {proc.returncode}\n")
+
+    except FileNotFoundError:
+        session["lines"].append(f"❌ Claude Code CLI not found: {claude_path}\n")
+        session["status"] = "failed"
+        session["exit_code"] = 1
+        session["error"] = "Claude CLI not found"
+    except Exception as e:
+        session["lines"].append(f"❌ Claude CLI error: {e}\n")
+        session["status"] = "failed"
+        session["exit_code"] = 1
+        session["error"] = str(e)[:200]
+
+
+def _run_claude_cli(session: Dict[str, Any], prompt: str, working_dir: str,
+                     timeout_sec: int, cfg: Dict) -> None:
+    """Run via Claude Code CLI (delegates to _run_claude_cli_direct)."""
+    _run_claude_cli_direct(session, prompt, working_dir, timeout_sec, cfg)
+
+
+def _run_openai_compatible(
+    session: Dict[str, Any], prompt: str, timeout_sec: int,
+    *, api_key: str, api_base_url: str, model: str,
+    max_tokens: int = 8192, temperature: float = 0.2,
+) -> None:
+    """Call any OpenAI-compatible API (DeepSeek, OpenAI, etc.) with streaming + retry."""
+    import json as _json
+    import http.client
+    import ssl
+    from urllib.parse import urlparse
+
+    parsed = urlparse(api_base_url)
+    host = parsed.hostname or "api.deepseek.com"
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    use_ssl = parsed.scheme == "https"
+    base_path = (parsed.path or "").rstrip("/")
+
+    session["lines"].append(f"🔗 API: {host} | 模型: {model}\n")
+    session["lines"].append(f"{'─'*60}\n\n")
+
+    last_error = None
+    for attempt in range(_HARNESS_MAX_RETRIES + 1):
+        if attempt > 0:
+            session["lines"].append(
+                f"\n🔄 连接重试 ({attempt}/{_HARNESS_MAX_RETRIES})...\n\n")
+            _time.sleep(_HARNESS_RETRY_DELAY * attempt)
+
+        try:
+            body = _json.dumps({
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "stream": True,
+            })
+            if use_ssl:
+                ctx = ssl.create_default_context()
+                conn = http.client.HTTPSConnection(host, port, timeout=timeout_sec, context=ctx)
+            else:
+                conn = http.client.HTTPConnection(host, port, timeout=timeout_sec)
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            }
+            conn.request("POST", f"{base_path}/chat/completions", body=body, headers=headers)
+            resp = conn.getresponse()
+
+            if resp.status != 200:
+                err_body = resp.read().decode("utf-8", errors="replace")[:500]
+                last_error = f"API 错误: {resp.status} {resp.reason}\n{err_body}"
+                session["lines"].append(f"⚠️ {last_error}\n")
+                conn.close()
+                continue
+
+            # Stream SSE response
+            deadline = _time.time() + timeout_sec
+            buffer = ""
+            chunk_count = 0
+            last_chunk_time = _time.time()
+            done = False
+            while True:
+                now = _time.time()
+                if now > deadline:
+                    session["lines"].append(f"\n\n⏱️ 超时 ({timeout_sec}s)\n")
+                    break
+                if chunk_count > 0 and (now - last_chunk_time) > _HARNESS_STALL_SEC:
+                    session["lines"].append(
+                        f"\n\n⚠️ 流式响应停滞 ({_HARNESS_STALL_SEC}s)\n")
+                    break
+                chunk = resp.read(4096)
+                if not chunk:
+                    break
+                last_chunk_time = _time.time()
+                chunk_count += 1
+                buffer += chunk.decode("utf-8", errors="replace")
+                while "\n" in buffer:
+                    line, buffer = buffer.split("\n", 1)
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line == "data: [DONE]":
+                        done = True
+                        break
+                    if line.startswith("data: "):
+                        try:
+                            obj = _json.loads(line[6:])
+                            delta = obj.get("choices", [{}])[0].get("delta", {})
+                            content = delta.get("content", "")
+                            if content:
+                                session["lines"].append(content)
+                        except _json.JSONDecodeError:
+                            pass
+                if done:
+                    break
+
+            session["status"] = "completed"
+            session["exit_code"] = 0
+            session["lines"].append(f"\n\n{'─'*60}\n")
+            session["lines"].append(f"✅ {model} 完成\n")
+            conn.close()
+            return
+
+        except (ConnectionError, OSError, http.client.HTTPException) as e:
+            last_error = str(e)
+            session["lines"].append(f"⚠️ 连接错误: {e}\n")
+            continue
+        except Exception as e:
+            session["status"] = "failed"
+            session["exit_code"] = 1
+            session["error"] = str(e)
+            session["lines"].append(f"\n❌ API 错误: {e}\n")
+            return
+
+    session["status"] = "failed"
+    session["exit_code"] = 1
+    session["error"] = last_error or "All retries exhausted"
+    session["lines"].append(f"\n❌ 所有重试已耗尽: {last_error}\n")
+
+
+def _run_ollama_direct(session: Dict[str, Any], prompt: str, timeout_sec: int) -> None:
+    """Call Ollama API directly with streaming, retry on transient failures."""
+    import json as _json
+    import http.client
+
+    # Read config from Claude settings (same source Claude CLI uses)
+    ollama_url = "localhost"
+    ollama_port = 11434
+    model = "qwen3.5-35b-claude"
+    try:
+        settings_path = _os.path.expanduser("~/.claude/settings.json")
+        if _os.path.isfile(settings_path):
+            with open(settings_path, "r") as f:
+                settings = _json.load(f)
+            env = settings.get("env", {})
+            base_url = env.get("ANTHROPIC_BASE_URL", "")
+            if base_url:
+                from urllib.parse import urlparse
+                parsed = urlparse(base_url)
+                ollama_url = parsed.hostname or "localhost"
+                ollama_port = parsed.port or 11434
+            model = env.get("ANTHROPIC_MODEL", "") or settings.get("defaultModel", "") or model
+    except Exception:
+        pass
+
+    session["lines"].append(f"🔗 Ollama 直连: {ollama_url}:{ollama_port} | 模型: {model}\n")
+    session["lines"].append(f"{'─'*60}\n\n")
+
+    # Mark waiting state so harness stall detector knows we're alive
+    session["_ollama_waiting"] = True
+
+    last_error = None
+    for attempt in range(_HARNESS_MAX_RETRIES + 1):
+        if attempt > 0:
+            session["lines"].append(
+                f"\n🔄 连接重试 ({attempt}/{_HARNESS_MAX_RETRIES})...\n\n")
+            _time.sleep(_HARNESS_RETRY_DELAY * attempt)  # Exponential-ish backoff
+
+        try:
+            body = _json.dumps({
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": True,
+            })
+            conn = http.client.HTTPConnection(ollama_url, ollama_port, timeout=timeout_sec)
+            conn.request("POST", "/v1/chat/completions", body=body,
+                          headers={"Content-Type": "application/json"})
+            resp = conn.getresponse()
+
+            if resp.status != 200:
+                err_body = resp.read().decode("utf-8", errors="replace")[:500]
+                # Detect model runner crash specifically
+                if "model runner has unexpectedly stopped" in err_body:
+                    last_error = f"Ollama model runner 崩溃 — 远程 GPU 服务器需要重启 Ollama"
+                    session["lines"].append(f"❌ {last_error}\n")
+                    session["lines"].append(f"⚠️ 可能原因: GPU 内存不足或远程服务器资源耗尽\n")
+                    # Don't retry — model runner crash won't self-heal
+                    session["status"] = "failed"
+                    session["exit_code"] = 1
+                    session["error"] = last_error
+                    conn.close()
+                    return
+                last_error = f"Ollama API 错误: {resp.status} {resp.reason}\n{err_body}"
+                session["lines"].append(f"⚠️ {last_error}\n")
+                conn.close()
+                continue  # Retry
+
+            # First chunk received — harness stall detector should not kill us
+            session.pop("_ollama_waiting", None)
+
+            # Stream SSE response
+            deadline = _time.time() + timeout_sec
+            buffer = ""
+            chunk_count = 0
+            last_chunk_time = _time.time()
+            done = False
+            while True:
+                now = _time.time()
+                if now > deadline:
+                    session["lines"].append(f"\n\n⏱️ 超时 ({timeout_sec}s)\n")
+                    break
+                # Stall detection within stream (only after first real content chunk)
+                if chunk_count > 0 and (now - last_chunk_time) > _HARNESS_STALL_SEC:
+                    session["lines"].append(
+                        f"\n\n⚠️ 流式响应停滞 ({_HARNESS_STALL_SEC}s)\n")
+                    break
+                chunk = resp.read(4096)
+                if not chunk:
+                    break
+                last_chunk_time = _time.time()
+                chunk_count += 1
+                buffer += chunk.decode("utf-8", errors="replace")
+                while "\n" in buffer:
+                    line, buffer = buffer.split("\n", 1)
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line == "data: [DONE]":
+                        done = True
+                        break
+                    if line.startswith("data: "):
+                        try:
+                            obj = _json.loads(line[6:])
+                            delta = obj.get("choices", [{}])[0].get("delta", {})
+                            content = delta.get("content", "")
+                            if content:
+                                session["lines"].append(content)
+                        except _json.JSONDecodeError:
+                            pass
+                if done:
+                    break
+
+            # Validate: check if stream produced real content
+            all_content = "".join(list(session.get("lines", [])))
+            _OLLAMA_ERROR_MARKERS = (
+                "model runner has unexpectedly stopped",
+                "no_proxy",
+                "connection refused",
+            )
+            for marker in _OLLAMA_ERROR_MARKERS:
+                if marker in all_content.lower():
+                    session["status"] = "failed"
+                    session["exit_code"] = 1
+                    session["error"] = f"Ollama error detected: {marker}"
+                    session["lines"].append(f"\n\n{'─'*60}\n")
+                    session["lines"].append(f"❌ Ollama 响应包含错误: {marker}\n")
+                    _harness_log.error("[Ollama] Error in response: %s", marker)
+                    conn.close()
+                    return
+
+            # Count real content characters (exclude framework noise)
+            content_chars = sum(len(l) for l in session["lines"]
+                                if not any(l.strip().startswith(m) for m in
+                                           ("─", "📋", "🤖", "📂", "⏱️", "📝", "⏳", "🔗", "✅", "❌", "⚠️", "🔄")))
+            if content_chars < 50:
+                session["status"] = "failed"
+                session["exit_code"] = 1
+                session["error"] = f"Ollama returned insufficient content ({content_chars} chars)"
+                session["lines"].append(f"\n\n{'─'*60}\n")
+                session["lines"].append(f"❌ Ollama 响应内容不足 ({content_chars} 字符)\n")
+                _harness_log.warning("[Ollama] Insufficient content: %d chars", content_chars)
+                conn.close()
+                return
+
+            session["status"] = "completed"
+            session["exit_code"] = 0
+            session["lines"].append(f"\n\n{'─'*60}\n")
+            session["lines"].append(f"✅ Ollama 直连完成 ({content_chars} 字符)\n")
+            conn.close()
+            return  # Success — exit retry loop
+
+        except (ConnectionError, OSError, http.client.HTTPException) as e:
+            last_error = str(e)
+            session["lines"].append(f"⚠️ 连接错误: {e}\n")
+            continue  # Retry
+        except Exception as e:
+            # Non-retryable error
+            session["status"] = "failed"
+            session["exit_code"] = 1
+            session["error"] = str(e)
+            session["lines"].append(f"\n❌ Ollama 直连错误: {e}\n")
+            return
+
+    # All retries exhausted
+    session["status"] = "failed"
+    session["exit_code"] = 1
+    session["error"] = last_error or "All retries exhausted"
+    session["lines"].append(f"\n❌ 所有重试已耗尽: {last_error}\n")
+
+
+@router.post(
+    "/teams/{team_id}/agents/{agent_id}/skills/{skill_name}/execute",
+    summary="Execute a skill (e.g. code_implementation via Claude Code)",
+)
+async def execute_skill(
+    team_id: str, agent_id: str, skill_name: str, req: ExecuteSkillRequest
+) -> Dict[str, Any]:
+    """Invoke a skill execution. For code_implementation, can call Claude Code CLI."""
+    agent = _get_agent_or_404(team_id, agent_id)
+    sr = _sr()
+    skill = sr.get_by_slug(skill_name)
+    if skill is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"Skill '{skill_name}' not found")
+
+    # Merge config
+    cfg = dict(skill.config or {})
+    cfg.update(req.config_overrides)
+
+    result: Dict[str, Any] = {
+        "skill": skill_name,
+        "agent_id": agent_id,
+        "task_id": req.task_id,
+        "executor": cfg.get("executor", "manual"),
+        "status": "pending",
+    }
+
+    if skill_name == "code_implementation":
+        executor = cfg.get("executor", "claude_code")
+        if executor == "claude_code":
+            # Start streaming session instead of blocking
+            import uuid
+            session_id = str(uuid.uuid4())[:12]
+            _start_claude_session(session_id, req.prompt, cfg, agent, req.task_id)
+            result["status"] = "streaming"
+            result["session_id"] = session_id
+            result["stream_url"] = f"/api/v1/agent-config/claude-sessions/{session_id}/stream"
+        elif executor == "llm_chat":
+            result = await _execute_llm_chat(req.prompt, agent, req.task_id)
+        else:
+            result["status"] = "manual"
+            result["instructions"] = skill.instructions
+            result["prompt"] = req.prompt
+    elif skill_name == "task_decomposition":
+        result = await _execute_task_decomposition(req.prompt, agent, team_id, req.task_id)
+    else:
+        # Generic skill: return instructions for LLM-based execution
+        result["status"] = "ready"
+        result["instructions"] = skill.instructions
+        result["prompt"] = req.prompt
+
+    return result
+
+
+from starlette.responses import StreamingResponse
+
+
+@router.get(
+    "/claude-sessions/{session_id}/stream",
+    summary="SSE stream of Claude Code CLI output",
+)
+async def stream_claude_session(session_id: str):
+    """Server-Sent Events endpoint for live Claude Code output."""
+    if session_id not in _claude_sessions:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    async def event_gen():
+        session = _claude_sessions[session_id]
+        sent = 0
+        while True:
+            lines = list(session["lines"])
+            if sent < len(lines):
+                for line in lines[sent:]:
+                    # SSE format: each line prefixed with "data: "
+                    escaped = line.replace("\n", "")
+                    yield f"data: {escaped}\n\n"
+                sent = len(lines)
+            if session["status"] in ("completed", "failed", "error"):
+                yield f"event: done\ndata: {{\"status\":\"{session['status']}\",\"exit_code\":{session.get('exit_code', -1)}}}\n\n"
+                break
+            await asyncio.sleep(0.3)
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",
+    })
+
+
+@router.get(
+    "/claude-sessions/{session_id}",
+    summary="Get Claude Code session status and output",
+)
+async def get_claude_session(session_id: str) -> Dict[str, Any]:
+    """Get current session status + all buffered output."""
+    if session_id not in _claude_sessions:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Session not found")
+    s = _claude_sessions[session_id]
+    # Check if process died but status wasn't updated
+    if s["status"] == "running" and s["proc"] is not None:
+        rc = s["proc"].poll()
+        if rc is not None:
+            s["exit_code"] = rc
+            s["status"] = "completed" if rc == 0 else "failed"
+            if rc != 0:
+                s["lines"].append(f"\n⚠️ Claude Code 退出码: {rc}\n")
+    # Sanitize output: strip control chars (keep \n, \t)
+    import re
+    _ctrl_re = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f]')
+    clean_lines = [_ctrl_re.sub('', l) for l in s["lines"]]
+    return {
+        "session_id": session_id,
+        "status": s["status"],
+        "task_id": s["task_id"],
+        "exit_code": s["exit_code"],
+        "error": s["error"],
+        "output": clean_lines,
+        "line_count": len(clean_lines),
+        "elapsed": round(_time.time() - s["started_at"], 1),
+    }
+
+
+@router.post(
+    "/claude-sessions/{session_id}/stop",
+    summary="Stop a running Claude Code session",
+)
+async def stop_claude_session(session_id: str) -> Dict[str, Any]:
+    """Kill the Claude Code subprocess."""
+    if session_id not in _claude_sessions:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Session not found")
+    s = _claude_sessions[session_id]
+    if s["proc"] and s["status"] == "running":
+        try:
+            s["proc"].kill()
+        except Exception:
+            pass
+        s["status"] = "stopped"
+        s["lines"].append("\n⛔ 会话已手动停止\n")
+    return {"session_id": session_id, "status": s["status"]}
+
+
+@router.get(
+    "/harness/status",
+    summary="Get workflow harness status",
+)
+async def harness_status() -> Dict[str, Any]:
+    """Show active harness monitors and session summary."""
+    monitors = {}
+    for tid, thr in _harness_threads.items():
+        monitors[tid] = {"alive": thr.is_alive()}
+    sessions = {}
+    for sid, s in _claude_sessions.items():
+        sessions[sid] = {
+            "status": s["status"],
+            "task_id": s["task_id"],
+            "line_count": len(s["lines"]),
+            "elapsed": round(_time.time() - s["started_at"], 1),
+        }
+    return {
+        "monitors": monitors,
+        "sessions": sessions,
+        "config": {
+            "poll_sec": _HARNESS_POLL_SEC,
+            "max_retries": _HARNESS_MAX_RETRIES,
+            "stall_sec": _HARNESS_STALL_SEC,
+            "auto_advance": _HARNESS_AUTO_ADVANCE,
+        },
+    }
+
+
+async def _execute_llm_chat(prompt: str, agent, task_id: str) -> Dict[str, Any]:
+    """Execute code_implementation via LLM chat."""
+    from .chat_harness import get_chat_harness
+    harness = get_chat_harness()
+    try:
+        result = await harness.chat(
+            prompt,
+            agent_id=agent.agent_id,
+            session_id=f"skill_code_{task_id}",
+            system_prompt=f"你是 {agent.name}，负责代码实现。根据需求编写代码，给出文件路径和完整代码。",
+        )
+        return {
+            "skill": "code_implementation",
+            "executor": "llm_chat",
+            "task_id": task_id,
+            "status": "completed" if not result.error else "failed",
+            "output": result.response[:3000] if result.response else "",
+            "error": result.error or "",
+            "model": result.model,
+        }
+    except Exception as e:
+        return {"skill": "code_implementation", "executor": "llm_chat", "task_id": task_id, "status": "error", "error": str(e)}
+
+
+async def _execute_task_decomposition(prompt: str, agent, team_id: str, parent_task_id: str) -> Dict[str, Any]:
+    """PM decomposes a task into subtasks and submits them to TaskEngine."""
+    from .chat_harness import get_chat_harness
+    harness = get_chat_harness()
+
+    decompose_prompt = (
+        f"你是项目经理 {agent.name}。请将以下任务分解为可执行的子任务。\n\n"
+        f"任务: {prompt}\n\n"
+        f"请以 JSON 数组格式返回子任务，每个子任务包含:\n"
+        f'  {{"title": "子任务标题", "agent_id": "目标agent_id", "priority": 2, "description": "描述"}}\n\n'
+        f"可用 Agent: build_pm, build_researcher, build_architect, build_developer, build_tester, build_deployer, build_doc_writer\n"
+        f"只返回 JSON 数组，不要其他内容。"
+    )
+
+    subtasks_created = []
+    try:
+        result = await harness.chat(
+            decompose_prompt,
+            agent_id=agent.agent_id,
+            session_id=f"skill_decompose_{parent_task_id}",
+            system_prompt="你是任务分解专家。只返回 JSON 数组。",
+        )
+        if result.response:
+            import json, re
+            # Extract JSON array from response
+            match = re.search(r'\[.*\]', result.response, re.DOTALL)
+            if match:
+                items = json.loads(match.group())
+                engine = _te()
+                if not engine._running:
+                    await engine.start()
+                for item in items[:10]:
+                    task = AgentTask(
+                        agent_id=item.get("agent_id", ""),
+                        team_id=team_id,
+                        title=item.get("title", "子任务"),
+                        description=item.get("description", ""),
+                        priority=item.get("priority", 2),
+                        metadata={"parent_task": parent_task_id, "auto_decomposed": True},
+                    )
+                    await engine.submit_task(task)
+                    subtasks_created.append(task.to_dict())
+    except Exception:
+        pass
+
+    return {
+        "skill": "task_decomposition",
+        "task_id": parent_task_id,
+        "status": "completed" if subtasks_created else "no_subtasks",
+        "subtasks": subtasks_created,
+        "count": len(subtasks_created),
+    }
+
+
+@router.get(
+    "/skills/{skill_name}/config-schema",
+    summary="Get skill config schema for UI rendering",
+)
+def get_skill_config_schema(skill_name: str) -> Dict[str, Any]:
+    """Return the config schema and current config for a skill."""
+    sr = _sr()
+    skill = sr.get_by_slug(skill_name)
+    if skill is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Skill not found")
+    return {
+        "skill_name": skill.name,
+        "config_schema": skill.config_schema,
+        "config": skill.config,
+        "instructions": skill.instructions,
+    }
+
+
+@router.put(
+    "/skills/{skill_name}/config",
+    summary="Update skill configuration",
+)
+def update_skill_config(skill_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    """Update a skill's runtime configuration."""
+    sr = _sr()
+    skill = sr.get_by_slug(skill_name)
+    if skill is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Skill not found")
+    skill.config.update(config)
+    return {"skill_name": skill.name, "config": skill.config}
+
+
 @router.get(
     "/teams/{team_id}/agents/{agent_id}/tasks",
     summary="List tasks assigned to an agent",
@@ -1173,6 +4449,56 @@ def list_agent_tasks(team_id: str, agent_id: str) -> List[Dict[str, Any]]:
 @router.get("/tasks/stats", summary="Task engine statistics")
 def task_engine_stats() -> Dict[str, Any]:
     return _te().stats()
+
+
+class CrossTeamTaskRequest(BaseModel):
+    """Submit a task from one team to another."""
+    target_team_id: str = Field(..., min_length=1)
+    target_agent_id: str = ""
+    source_team_id: str = ""
+    source_agent_id: str = ""
+    title: str = Field(..., min_length=1, max_length=256)
+    description: str = ""
+    priority: int = Field(default=2, ge=0, le=3)
+    original_message: str = ""
+
+
+@router.post(
+    "/cross-team/tasks",
+    summary="Submit a cross-team task (e.g. execution→build)",
+    status_code=status.HTTP_201_CREATED,
+)
+async def submit_cross_team_task(req: CrossTeamTaskRequest) -> Dict[str, Any]:
+    """Create a task in the target team, recording the source team/agent."""
+    _get_team_or_404(req.target_team_id)
+    if req.target_agent_id:
+        target = _tm().get_agent(req.target_team_id, req.target_agent_id)
+        if target is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Target agent not found")
+
+    engine = _te()
+    if not engine._running:
+        await engine.start()
+
+    task = AgentTask(
+        agent_id=req.target_agent_id or "",
+        team_id=req.target_team_id,
+        title=req.title,
+        description=req.description or f"[跨团队任务] 来源: {req.source_agent_id or req.source_team_id}\n原始消息: {req.original_message}",
+        priority=req.priority,
+        metadata={
+            "cross_team": True,
+            "source_team": req.source_team_id,
+            "source_agent": req.source_agent_id,
+            "original_message": req.original_message,
+        },
+    )
+    # Auto-generate workflow steps for cross-team tasks
+    wf = _generate_workflow(task, req.target_team_id)
+    if wf:
+        task.metadata["workflow"] = wf
+    await engine.submit_task(task)
+    return task.to_dict()
 
 
 # =========================================================================
@@ -1555,3 +4881,1132 @@ def convert_to_hermes(team_id: str, agent_id: str) -> Dict[str, Any]:
     agent.tools = resolve_tools(active_toolsets)
 
     return {"status": "converted", "agent_id": agent_id, "distribution": dist}
+
+
+# ══════════════════════════════════════════════════════════════
+# P3 — Agent Visibility, Activity Logging, Metrics
+# ══════════════════════════════════════════════════════════════
+
+
+class UpdateVisibilityRequest(BaseModel):
+    visibility: str = "public"
+    default_access: str = "use"
+
+
+class AgentLogEntry(BaseModel):
+    action: str = ""
+    detail: str = ""
+
+
+# In-memory activity logs (per agent_id)
+_agent_logs: Dict[str, List[Dict[str, Any]]] = {}
+# In-memory agent metrics (per agent_id)
+_agent_metrics: Dict[str, Dict[str, Any]] = {}
+
+
+def _log_agent_action(agent_id: str, action: str, detail: str = "") -> Dict[str, Any]:
+    """Record an activity log entry for an agent."""
+    if agent_id not in _agent_logs:
+        _agent_logs[agent_id] = []
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "action": action,
+        "detail": detail,
+    }
+    _agent_logs[agent_id].append(entry)
+    # Keep last 200 entries per agent
+    if len(_agent_logs[agent_id]) > 200:
+        _agent_logs[agent_id] = _agent_logs[agent_id][-200:]
+    return entry
+
+
+def _get_agent_metrics(agent_id: str) -> Dict[str, Any]:
+    """Get or create metrics for an agent."""
+    if agent_id not in _agent_metrics:
+        _agent_metrics[agent_id] = {
+            "total_tokens": 0,
+            "today_tokens": 0,
+            "month_tokens": 0,
+            "today_llm_calls": 0,
+            "tasks_completed": 0,
+            "tasks_failed": 0,
+            "sessions_created": 0,
+            "messages_sent": 0,
+            "tools_invoked": 0,
+            "last_active": None,
+        }
+    return _agent_metrics[agent_id]
+
+
+def _bump_metric(agent_id: str, key: str, amount: int = 1) -> None:
+    """Increment a specific metric counter."""
+    m = _get_agent_metrics(agent_id)
+    m[key] = m.get(key, 0) + amount
+    m["last_active"] = datetime.now(timezone.utc).isoformat()
+
+
+@router.put(
+    "/teams/{team_id}/agents/{agent_id}/visibility",
+    summary="Update agent visibility and default access level",
+)
+def update_agent_visibility(
+    team_id: str, agent_id: str, req: UpdateVisibilityRequest
+) -> Dict[str, Any]:
+    agent = _get_agent_or_404(team_id, agent_id)
+    agent.metadata["visibility"] = req.visibility
+    agent.metadata["default_access"] = req.default_access
+    _log_agent_action(agent_id, "visibility_changed",
+                      f"visibility={req.visibility}, access={req.default_access}")
+    return {
+        "agent_id": agent_id,
+        "visibility": req.visibility,
+        "default_access": req.default_access,
+    }
+
+
+@router.get(
+    "/teams/{team_id}/agents/{agent_id}/metrics",
+    summary="Get agent usage metrics",
+)
+def get_agent_metrics(team_id: str, agent_id: str) -> Dict[str, Any]:
+    _get_agent_or_404(team_id, agent_id)
+    metrics = _get_agent_metrics(agent_id)
+    # Enrich with task engine data
+    engine_tasks = _te().get_agent_tasks(agent_id)
+    from collections import Counter
+    task_counts = Counter(t.status.value for t in engine_tasks)
+    metrics["task_engine"] = {
+        "total": len(engine_tasks),
+        "by_status": dict(task_counts),
+    }
+    return {"agent_id": agent_id, **metrics}
+
+
+@router.post(
+    "/teams/{team_id}/agents/{agent_id}/logs",
+    summary="Add agent activity log entry",
+    status_code=status.HTTP_201_CREATED,
+)
+def add_agent_log(team_id: str, agent_id: str, req: AgentLogEntry) -> Dict[str, Any]:
+    _get_agent_or_404(team_id, agent_id)
+    entry = _log_agent_action(agent_id, req.action, req.detail)
+    return entry
+
+
+@router.get(
+    "/teams/{team_id}/agents/{agent_id}/activity",
+    summary="Get agent activity summary (24h)",
+)
+def get_agent_activity(team_id: str, agent_id: str) -> Dict[str, Any]:
+    _get_agent_or_404(team_id, agent_id)
+    logs = _agent_logs.get(agent_id, [])
+    metrics = _get_agent_metrics(agent_id)
+    # Filter to last 24h
+    from datetime import timedelta
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    recent = [l for l in logs if l.get("timestamp", "") >= cutoff]
+    from collections import Counter
+    action_counts = Counter(l["action"] for l in recent)
+    return {
+        "agent_id": agent_id,
+        "period": "24h",
+        "total_actions": len(recent),
+        "action_breakdown": dict(action_counts),
+        "recent_logs": recent[-20:],
+        "metrics": metrics,
+    }
+
+
+# ══════════════════════════════════════════════════════════════
+# P4 — Enhanced Team Dashboard API
+# ══════════════════════════════════════════════════════════════
+
+
+@router.get(
+    "/teams/{team_id}/dashboard",
+    summary="Get team dashboard data for overview panel",
+)
+def get_team_dashboard(team_id: str) -> Dict[str, Any]:
+    team = _get_team_or_404(team_id)
+    agents_data = []
+    for a in team.agents.values():
+        m = _get_agent_metrics(a.agent_id)
+        agents_data.append({
+            "agent_id": a.agent_id,
+            "name": a.name,
+            "role": a.role,
+            "state": a.state.value,
+            "template_type": a.template_type.value,
+            "skills_count": len(a.skills),
+            "tools_count": len(a.tools),
+            "is_hermes": a.is_hermes_agent,
+            "metrics": {
+                "today_tokens": m.get("today_tokens", 0),
+                "today_llm_calls": m.get("today_llm_calls", 0),
+                "tasks_completed": m.get("tasks_completed", 0),
+                "last_active": m.get("last_active"),
+            },
+        })
+
+    # Task summary
+    all_tasks = _te().get_team_tasks(team_id)
+    from collections import Counter
+    task_status = Counter(t.status.value for t in all_tasks)
+
+    return {
+        "team_id": team_id,
+        "name": team.name,
+        "agent_count": len(team.agents),
+        "model_count": len(team.models),
+        "tool_count": len(team.tools),
+        "skill_count": len(team.skills),
+        "agents": agents_data,
+        "tasks": {
+            "total": len(all_tasks),
+            "by_status": dict(task_status),
+        },
+        "recent_activity": [],
+    }
+
+
+# ══════════════════════════════════════════════════════════════
+# P5 — LLM Provider Configuration & Chat Harness API
+# ══════════════════════════════════════════════════════════════
+
+
+class LLMProviderConfigRequest(BaseModel):
+    """Request to configure LLM provider."""
+    provider: str = Field(default="deepseek", description="Provider: openai, deepseek, anthropic, local, openrouter, github, qwen")
+    api_key: str = Field(default="", description="API key")
+    api_base_url: str = Field(default="", description="Custom base URL (optional)")
+    model: str = Field(default="deepseek-chat", description="Model name")
+    max_tokens: int = Field(default=4096, ge=100, le=128000)
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+
+
+@router.get("/llm/status", summary="Get current LLM provider status")
+def get_llm_status() -> Dict[str, Any]:
+    """Return current LLM provider configuration and health."""
+    harness = get_chat_harness()
+    return harness.get_status()
+
+
+@router.get("/llm/provider", summary="Get LLM provider details")
+def get_llm_provider() -> Dict[str, Any]:
+    """Return the current provider configuration (api_key masked)."""
+    harness = get_chat_harness()
+    return harness.get_provider_info()
+
+
+@router.put("/llm/provider", summary="Update LLM provider configuration")
+def update_llm_provider(req: LLMProviderConfigRequest) -> Dict[str, Any]:
+    """Update the default LLM provider at runtime."""
+    harness = get_chat_harness()
+    config = harness.update_default_provider(
+        provider=req.provider,
+        api_key=req.api_key,
+        api_base_url=req.api_base_url,
+        model=req.model,
+    )
+    if req.max_tokens:
+        config.max_tokens = req.max_tokens
+    if req.temperature >= 0:
+        config.temperature = req.temperature
+    return {
+        "status": "updated",
+        "provider": harness.get_provider_info(),
+    }
+
+
+@router.put(
+    "/llm/agent/{agent_id}/provider",
+    summary="Set per-agent LLM provider override",
+)
+def set_agent_llm_provider(agent_id: str, req: LLMProviderConfigRequest) -> Dict[str, Any]:
+    """Override the LLM provider for a specific agent."""
+    harness = get_chat_harness()
+    try:
+        provider = LLMProvider(req.provider)
+    except ValueError:
+        provider = LLMProvider.DEEPSEEK
+    config = ProviderConfig(
+        provider=provider,
+        api_key=req.api_key,
+        api_base_url=req.api_base_url,
+        model=req.model,
+        max_tokens=req.max_tokens,
+        temperature=req.temperature,
+    )
+    harness.set_agent_provider(agent_id, config)
+    return {"status": "set", "agent_id": agent_id, "provider": req.provider, "model": req.model}
+
+
+@router.get("/llm/sessions", summary="List active chat sessions")
+def list_llm_sessions() -> List[Dict[str, Any]]:
+    """List all active chat sessions managed by the harness."""
+    harness = get_chat_harness()
+    return [s.to_dict() for s in harness.list_sessions()]
+
+
+@router.get("/agents/{agent_id}/model-status", summary="Get agent model name and LLM availability")
+def agent_model_status(agent_id: str) -> Dict[str, Any]:
+    """Return resolved model name, provider, and whether LLM is reachable for the agent."""
+    tm = _tm()
+    agent = None
+    team_models: Dict[str, Any] = {}
+    for team in tm.list_teams():
+        a = team.get_agent(agent_id)
+        if a:
+            agent = a
+            team_models = team.models
+            break
+    if agent is None:
+        return {"agent_id": agent_id, "model_name": "unknown", "provider": "unknown", "active": False}
+
+    model_id = agent.model_id or ""
+    model = team_models.get(model_id)
+    if model:
+        model_name = model.name
+        provider = model.provider
+        has_key = bool(model.api_key)
+    else:
+        model_name = model_id or "default"
+        provider = "unknown"
+        has_key = False
+
+    # Check harness default as fallback
+    if not has_key:
+        harness = get_chat_harness()
+        cfg = harness.get_provider_config()
+        if cfg and cfg.api_key:
+            has_key = True
+            if not model:
+                model_name = cfg.model or model_name
+                provider = cfg.provider.value if hasattr(cfg.provider, 'value') else str(cfg.provider)
+
+    return {
+        "agent_id": agent_id,
+        "model_id": model_id,
+        "model_name": model_name,
+        "provider": provider,
+        "active": has_key,
+    }
+
+
+@router.post("/llm/test", summary="Test LLM connection")
+async def test_llm_connection() -> Dict[str, Any]:
+    """Send a test message to verify the LLM provider is working."""
+    harness = get_chat_harness()
+    result = await harness.chat(
+        "用一句话介绍你自己。",
+        agent_id="__test__",
+        system_prompt="你是 PoseidonX 系统的 AI 助手。",
+    )
+    return {
+        "success": not bool(result.error),
+        "response": result.response[:200],
+        "model": result.model,
+        "provider": result.provider,
+        "latency_ms": result.latency_ms,
+        "error": result.error,
+    }
+
+
+class TestModelRequest(BaseModel):
+    """Test a specific model configuration without changing global settings."""
+    provider: str = "deepseek"
+    name: str = "deepseek-chat"
+    api_key: str = ""
+    api_base_url: str = ""
+    max_tokens: int = 4096
+    temperature: float = 0.7
+
+
+@router.post("/llm/test-model", summary="Test a specific model config")
+async def test_model_config(req: TestModelRequest) -> Dict[str, Any]:
+    """Test a specific provider/model/key combo without altering global config."""
+    from .chat_harness import ChatHarness, ProviderConfig, LLMProvider
+
+    try:
+        provider = LLMProvider(req.provider)
+    except ValueError:
+        provider = LLMProvider.DEEPSEEK
+
+    config = ProviderConfig(
+        provider=provider,
+        api_key=req.api_key,
+        api_base_url=req.api_base_url,
+        model=req.name,
+        max_tokens=req.max_tokens,
+        temperature=req.temperature,
+    )
+    temp_harness = ChatHarness(default_config=config)
+    result = await temp_harness.chat(
+        "用一句话介绍你自己。",
+        agent_id="__model_test__",
+        system_prompt="你是 PoseidonX 系统的 AI 助手。请用中文回答。",
+    )
+    return {
+        "success": not bool(result.error),
+        "response": result.response[:200],
+        "model": result.model,
+        "provider": result.provider,
+        "latency_ms": result.latency_ms,
+        "error": result.error,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
+# UltraPlan Agentic Loop Endpoints
+# ═══════════════════════════════════════════════════════════════
+
+
+class AgentLoopRequest(BaseModel):
+    """Run a full agentic loop: plan → act → observe → respond."""
+    prompt: str
+    agent_id: str = ""
+    session_id: str = ""
+    system_prompt: str = ""
+    max_iterations: int = Field(default=10, ge=1, le=50)
+
+
+@router.post("/agent-loop", summary="Agentic loop with tool execution")
+async def run_agent_loop(req: AgentLoopRequest) -> Dict[str, Any]:
+    """Execute a full plan→act→observe→reflect agentic loop."""
+    harness = get_chat_harness()
+    result = await harness.agent_loop(
+        req.prompt,
+        agent_id=req.agent_id,
+        session_id=req.session_id,
+        system_prompt=req.system_prompt,
+        max_iterations=req.max_iterations,
+    )
+    return result.to_dict()
+
+
+class PlanPreviewRequest(BaseModel):
+    """Preview an execution plan without executing it."""
+    prompt: str
+
+
+@router.post("/agent-loop/plan-preview", summary="Preview execution plan")
+async def preview_plan(req: PlanPreviewRequest) -> Dict[str, Any]:
+    """Generate a plan without executing it — for UI display."""
+    from .chat_harness import build_plan_from_prompt
+    plan = build_plan_from_prompt(req.prompt)
+    return plan.to_dict()
+
+
+# ═══════════════════════════════════════════════════════════════
+# Skill Execution Endpoints (Clawith-style)
+# ═══════════════════════════════════════════════════════════════
+
+
+class SkillCreateRequest(BaseModel):
+    """Create a new skill at runtime."""
+    name: str
+    description: str = ""
+    category: str = "general"
+    instructions: str = ""
+    required_tools: List[str] = []
+
+
+@router.post("/skills/create", summary="Create a skill at runtime")
+async def create_runtime_skill(req: SkillCreateRequest) -> Dict[str, Any]:
+    """Clawith-style runtime skill creation."""
+    from .skill_registry import SkillRegistry
+    from .models import SkillCategory
+    registry = SkillRegistry()
+    registry.load_defaults()
+    try:
+        cat = SkillCategory(req.category)
+    except ValueError:
+        cat = SkillCategory.GENERAL
+    skill = registry.create_skill(
+        name=req.name,
+        description=req.description,
+        category=cat,
+        instructions=req.instructions,
+        required_tools=req.required_tools,
+    )
+    return skill.to_dict()
+
+
+@router.get("/skills/search", summary="Search skills")
+async def search_skills_endpoint(q: str = "") -> List[Dict[str, Any]]:
+    """Search skills by name or description."""
+    from .skill_registry import SkillRegistry
+    registry = SkillRegistry()
+    registry.load_defaults()
+    if q:
+        results = registry.search(q)
+    else:
+        results = registry.list_all()
+    return [s.to_dict() for s in results[:50]]
+
+
+# ═══════════════════════════════════════════════════════════════
+# Tool Binding & Discovery Endpoints
+# ═══════════════════════════════════════════════════════════════
+
+
+@router.get("/tools/openai-schema", summary="Get OpenAI-format tools schema")
+async def get_openai_tools_schema(agent_id: str = "") -> List[Dict[str, Any]]:
+    """Return tool definitions in OpenAI function-calling format."""
+    from .tool_registry import ToolRegistry
+    registry = ToolRegistry()
+    registry.load_defaults()
+    return registry.get_openai_tools_schema(agent_id)
+
+
+@router.get("/tools/search", summary="Search tools")
+async def search_tools_endpoint(q: str = "") -> List[Dict[str, Any]]:
+    """Search tools by name or description."""
+    from .tool_registry import ToolRegistry
+    registry = ToolRegistry()
+    registry.load_defaults()
+    if q:
+        results = registry.search(q)
+    else:
+        results = registry.list_all()
+    return [t.to_dict() for t in results[:50]]
+
+
+# ═══════════════════════════════════════════════════════════════
+# System Health & Diagnostics
+# ═══════════════════════════════════════════════════════════════
+
+
+@router.get("/health", summary="System health check")
+async def agent_health_check() -> Dict[str, Any]:
+    """Comprehensive health check for the agent subsystem."""
+    harness = get_chat_harness()
+    harness_status = harness.get_status()
+
+    from .tool_registry import ToolRegistry
+    from .skill_registry import SkillRegistry
+    tool_reg = ToolRegistry()
+    tool_reg.load_defaults()
+    skill_reg = SkillRegistry()
+    skill_reg.load_defaults()
+
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "llm": {
+            "provider": harness_status["provider"],
+            "model": harness_status["model"],
+            "has_api_key": harness_status["has_api_key"],
+            "total_calls": harness_status["total_calls"],
+        },
+        "tools": {
+            "registered": len(tool_reg.list_all()),
+            "enabled": len(tool_reg.list_enabled()),
+        },
+        "skills": {
+            "registered": len(skill_reg.list_all()),
+            "required": len(skill_reg.list_required()),
+        },
+        "sessions": harness_status["active_sessions"],
+    }
+
+
+@router.get("/diagnostics", summary="Full diagnostics dump")
+async def agent_diagnostics() -> Dict[str, Any]:
+    """Full diagnostics dump for debugging."""
+    harness = get_chat_harness()
+
+    from .tool_registry import ToolRegistry
+    from .skill_registry import SkillRegistry
+    tool_reg = ToolRegistry()
+    tool_reg.load_defaults()
+    skill_reg = SkillRegistry()
+    skill_reg.load_defaults()
+
+    from .tool_executor import get_tool_executor
+    executor = get_tool_executor()
+
+    return {
+        "harness": harness.get_status(),
+        "provider_info": harness.get_provider_info(),
+        "tool_categories": {
+            cat.value: len(tool_reg.list_by_category(cat))
+            for cat in set(t.category for t in tool_reg.list_all())
+        },
+        "skill_categories": {
+            cat.value: len(skill_reg.list_by_category(cat))
+            for cat in set(s.category for s in skill_reg.list_all())
+        },
+        "tool_execution_history": executor.get_history(limit=20),
+        "sessions": [s.to_dict() for s in harness.list_sessions()],
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
+# Session Persistence & Cross-Session Search (claw-code-parity)
+# ═══════════════════════════════════════════════════════════════
+
+
+@router.post("/sessions/{session_id}/persist", summary="Persist session to disk")
+async def persist_session(session_id: str) -> Dict[str, Any]:
+    """Save a session to disk for later replay/search."""
+    harness = get_chat_harness()
+    path = harness.persist_session(session_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"ok": True, "path": path}
+
+
+@router.get("/sessions/persisted", summary="List persisted sessions")
+async def list_persisted_sessions() -> Dict[str, Any]:
+    """List all session IDs saved to disk."""
+    harness = get_chat_harness()
+    session_ids = harness.list_persisted_sessions()
+    return {"sessions": session_ids, "count": len(session_ids)}
+
+
+@router.post("/sessions/persisted/{session_id}/load", summary="Load persisted session")
+async def load_persisted_session(session_id: str) -> Dict[str, Any]:
+    """Load a previously persisted session into memory."""
+    harness = get_chat_harness()
+    session = harness.load_persisted_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Persisted session not found")
+    return session.to_dict()
+
+
+class SessionSearchRequest(BaseModel):
+    query: str
+    max_results: int = 10
+
+
+@router.post("/sessions/search", summary="Cross-session search")
+async def search_sessions_endpoint(body: SessionSearchRequest) -> Dict[str, Any]:
+    """Search across all persisted sessions — mirrors claw-code session_search."""
+    harness = get_chat_harness()
+    results = harness.search_persisted_sessions(body.query, body.max_results)
+    return {"results": results, "count": len(results)}
+
+
+# ═══════════════════════════════════════════════════════════════
+# Prompt Routing & Runtime (claw-code-parity PortRuntime)
+# ═══════════════════════════════════════════════════════════════
+
+
+class RoutePromptRequest(BaseModel):
+    prompt: str
+    limit: int = 5
+    deny_tools: List[str] = []
+    deny_prefixes: List[str] = []
+
+
+@router.post("/runtime/route", summary="Route prompt to tools/commands")
+async def route_prompt(body: RoutePromptRequest) -> Dict[str, Any]:
+    """Route a prompt to matching tools and commands by keyword scoring.
+
+    Mirrors claw-code-parity PortRuntime.route_prompt.
+    """
+    perm = ToolPermissionContext.from_lists(body.deny_tools, body.deny_prefixes)
+    runtime = PortRuntime(permission_context=perm)
+    matches = runtime.route_prompt(body.prompt, limit=body.limit)
+    return {
+        "matches": [
+            {"kind": m.kind, "name": m.name, "source_hint": m.source_hint, "score": m.score}
+            for m in matches
+        ],
+        "count": len(matches),
+    }
+
+
+class BootstrapRequest(BaseModel):
+    prompt: str
+    limit: int = 5
+    deny_tools: List[str] = []
+    deny_prefixes: List[str] = []
+
+
+@router.post("/runtime/bootstrap", summary="Bootstrap a runtime session")
+async def bootstrap_session(body: BootstrapRequest) -> Dict[str, Any]:
+    """Bootstrap a full session: route → assemble tools → execute.
+
+    Mirrors claw-code-parity PortRuntime.bootstrap_session.
+    """
+    perm = ToolPermissionContext.from_lists(body.deny_tools, body.deny_prefixes)
+    runtime = PortRuntime(permission_context=perm)
+    session = await runtime.bootstrap_session(body.prompt, limit=body.limit)
+    return {
+        "prompt": session.prompt,
+        "matches": [
+            {"kind": m.kind, "name": m.name, "score": m.score}
+            for m in session.routed_matches
+        ],
+        "tool_results": [
+            {"name": r.name, "handled": r.handled, "output": r.output[:500]}
+            for r in session.tool_results
+        ],
+        "command_results": [
+            {"name": r.name, "output": r.output[:500]}
+            for r in session.command_results
+        ],
+        "denials": [
+            {"tool_name": d.tool_name, "reason": d.reason}
+            for d in session.permission_denials
+        ],
+        "history": session.history.to_list(),
+    }
+
+
+@router.post("/runtime/route-and-chat", summary="Route prompt then chat with LLM")
+async def route_and_chat(body: RoutePromptRequest) -> Dict[str, Any]:
+    """Integrated routing + LLM chat — best of both worlds."""
+    harness = get_chat_harness()
+    perm = ToolPermissionContext.from_lists(body.deny_tools, body.deny_prefixes)
+    result = await harness.route_and_chat(
+        body.prompt,
+        permission_context=perm,
+        route_limit=body.limit,
+    )
+    return result.to_dict()
+
+
+# ═══════════════════════════════════════════════════════════════
+# Tool Pool & Permission (Clawith + claw-code-parity)
+# ═══════════════════════════════════════════════════════════════
+
+
+class ToolPoolRequest(BaseModel):
+    simple_mode: bool = False
+    include_mcp: bool = True
+    deny_tools: List[str] = []
+    deny_prefixes: List[str] = []
+
+
+@router.post("/tool-pool", summary="Assemble filtered tool pool")
+async def get_tool_pool(body: ToolPoolRequest) -> Dict[str, Any]:
+    """Assemble a ToolPool with permission filtering — mirrors claw-code tool_pool."""
+    perm = ToolPermissionContext.from_lists(body.deny_tools, body.deny_prefixes)
+    pool = assemble_tool_pool(
+        simple_mode=body.simple_mode,
+        include_mcp=body.include_mcp,
+        permission_context=perm,
+    )
+    return {
+        "tools": pool.tool_names,
+        "count": pool.tool_count,
+        "simple_mode": pool.simple_mode,
+        "include_mcp": pool.include_mcp,
+    }
+
+
+# ── Tool Bulk Operations (Clawith-style) ────────────────────
+
+
+class BulkToolUpdate(BaseModel):
+    tool_id: str
+    enabled: bool
+
+
+@router.put("/tools/bulk", summary="Bulk update tool enabled status")
+async def bulk_update_tools(updates: List[BulkToolUpdate]) -> Dict[str, Any]:
+    """Bulk update enabled status for multiple tools — mirrors Clawith bulk update."""
+    reg = _get_tool_registry()
+    count = reg.bulk_update_enabled([u.model_dump() for u in updates])
+    return {"ok": True, "updated": count}
+
+
+class MCPToolRegister(BaseModel):
+    name: str
+    description: str = ""
+    mcp_server_url: str = ""
+    mcp_server_name: str = ""
+    parameters: Dict[str, Any] = {}
+
+
+@router.post("/tools/mcp/register", summary="Register MCP tool at runtime")
+async def register_mcp_tool(body: MCPToolRegister) -> Dict[str, Any]:
+    """Register an MCP tool at runtime — mirrors Clawith MCP tool creation."""
+    reg = _get_tool_registry()
+    tool = reg.register_mcp_tool(
+        name=body.name,
+        description=body.description,
+        parameters=body.parameters,
+        mcp_server_url=body.mcp_server_url,
+        mcp_server_name=body.mcp_server_name,
+    )
+    return {"ok": True, "tool_id": tool.tool_id, "name": tool.name}
+
+
+class ToolConfigUpdate(BaseModel):
+    config: Dict[str, Any]
+
+
+@router.put("/tools/{tool_id}/config", summary="Update tool runtime config")
+async def update_tool_config(tool_id: str, body: ToolConfigUpdate) -> Dict[str, Any]:
+    """Update a tool's runtime configuration — mirrors Clawith per-tool config."""
+    reg = _get_tool_registry()
+    tool = reg.update_tool_config(tool_id, body.config)
+    if tool is None:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    return {"ok": True, "tool_id": tool.tool_id}
+
+
+@router.get("/tools/{tool_id}/config", summary="Get tool config")
+async def get_tool_config(tool_id: str) -> Dict[str, Any]:
+    """Get merged runtime config for a tool."""
+    reg = _get_tool_registry()
+    config = reg.get_tool_config(tool_id)
+    return {"tool_id": tool_id, "config": config}
+
+
+# ── Skill Browse & Import (Clawith-style) ───────────────────
+
+
+@router.get("/skills/{skill_id}/folder", summary="Get skill file structure")
+async def get_skill_folder(skill_id: str) -> Dict[str, Any]:
+    """Get a skill's file structure — mirrors Clawith skill browse."""
+    reg = _get_skill_registry()
+    return reg.get_skill_folder(skill_id)
+
+
+class SkillImportRequest(BaseModel):
+    name: str
+    content: str
+    category: str = "general"
+
+
+@router.post("/skills/import", summary="Import skill from SKILL.md content")
+async def import_skill(body: SkillImportRequest) -> Dict[str, Any]:
+    """Import a skill from SKILL.md markdown content — mirrors Clawith URL import."""
+    from .models import SkillCategory
+    reg = _get_skill_registry()
+    try:
+        cat = SkillCategory(body.category)
+    except ValueError:
+        cat = SkillCategory.GENERAL
+    skill = reg.import_from_instructions(body.name, body.content, category=cat)
+    return {"ok": True, "skill_id": skill.skill_id, "name": skill.name}
+
+
+@router.get("/skills/{skill_id}/portability", summary="Classify skill portability")
+async def classify_skill_portability(skill_id: str) -> Dict[str, Any]:
+    """Classify skill portability tier (1=prompt, 2=CLI, 3=platform)."""
+    reg = _get_skill_registry()
+    tier = reg.classify_portability(skill_id)
+    tier_labels = {1: "pure-prompt", 2: "cli-api", 3: "platform-native"}
+    return {"skill_id": skill_id, "tier": tier, "label": tier_labels.get(tier, "unknown")}
+
+
+@router.get("/skills/export/markdown", summary="Export all skills as markdown")
+async def export_skills_markdown() -> Dict[str, Any]:
+    """Export all skills as a single markdown document."""
+    reg = _get_skill_registry()
+    md = reg.export_all_as_markdown()
+    return {"markdown": md, "length": len(md)}
+
+
+# ── Execution Registry Info ─────────────────────────────────
+
+
+@router.get("/execution-registry", summary="Get execution registry info")
+async def get_execution_registry_info() -> Dict[str, Any]:
+    """List all registered tools and commands in the execution registry."""
+    reg = build_execution_registry()
+    return {
+        "tools": reg._tool_names,
+        "commands": reg._command_names,
+        "tool_count": len(reg._tool_names),
+        "command_count": len(reg._command_names),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════
+# Agent Workspace — File/Folder CRUD with filesystem persistence
+# ═══════════════════════════════════════════════════════════════
+
+import pathlib as _ws_pathlib
+
+_WS_BASE: Optional[_ws_pathlib.Path] = None
+
+
+def _get_ws_base() -> _ws_pathlib.Path:
+    global _WS_BASE
+    if _WS_BASE is None:
+        _WS_BASE = _ws_pathlib.Path(
+            _mp_os.path.dirname(_mp_os.path.dirname(_mp_os.path.dirname(
+                _mp_os.path.dirname(_mp_os.path.abspath(__file__))))),
+        ) / "storage" / "agent_workspaces"
+        _WS_BASE.mkdir(parents=True, exist_ok=True)
+    return _WS_BASE
+
+
+def _agent_ws_root(team_id: str, agent_id: str) -> _ws_pathlib.Path:
+    """Return agent workspace root, creating default folders if new."""
+    root = _get_ws_base() / team_id / agent_id
+    if not root.exists():
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "archived").mkdir(exist_ok=True)
+        (root / "knowledge_base").mkdir(exist_ok=True)
+        (root / "team_structure").mkdir(exist_ok=True)
+    return root
+
+
+def _safe_subpath(root: _ws_pathlib.Path, rel: str) -> _ws_pathlib.Path:
+    """Resolve a relative path safely within root (prevent traversal)."""
+    resolved = (root / rel).resolve()
+    if not str(resolved).startswith(str(root.resolve())):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Path traversal denied")
+    return resolved
+
+
+def _dir_listing(dirp: _ws_pathlib.Path) -> List[Dict[str, Any]]:
+    items = []
+    if not dirp.is_dir():
+        return items
+    for child in sorted(dirp.iterdir()):
+        if child.name.startswith("."):
+            continue
+        if child.is_dir():
+            size = sum(f.stat().st_size for f in child.rglob("*") if f.is_file())
+            items.append({"name": child.name, "type": "folder",
+                          "size": size, "size_display": _fmt_size(size)})
+        else:
+            sz = child.stat().st_size
+            items.append({"name": child.name, "type": "file",
+                          "size": sz, "size_display": _fmt_size(sz)})
+    return items
+
+
+@router.get(
+    "/teams/{team_id}/agents/{agent_id}/workspace",
+    summary="List workspace root",
+)
+def list_workspace(team_id: str, agent_id: str, path: str = "") -> Dict[str, Any]:
+    _get_agent_or_404(team_id, agent_id)
+    root = _agent_ws_root(team_id, agent_id)
+    target = _safe_subpath(root, path) if path else root
+    if not target.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Path not found")
+    if target.is_file():
+        return {"type": "file", "name": target.name, "path": path,
+                "content": target.read_text(encoding="utf-8", errors="replace"),
+                "size": target.stat().st_size}
+    return {"type": "folder", "path": path or "/",
+            "items": _dir_listing(target)}
+
+
+class WorkspaceCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    type: str = Field(default="file", pattern=r"^(file|folder)$")
+    content: str = ""
+
+
+@router.post(
+    "/teams/{team_id}/agents/{agent_id}/workspace",
+    summary="Create file or folder in workspace",
+    status_code=status.HTTP_201_CREATED,
+)
+def create_workspace_item(
+    team_id: str, agent_id: str, req: WorkspaceCreateRequest, path: str = ""
+) -> Dict[str, Any]:
+    _get_agent_or_404(team_id, agent_id)
+    root = _agent_ws_root(team_id, agent_id)
+    parent = _safe_subpath(root, path) if path else root
+    parent.mkdir(parents=True, exist_ok=True)
+    target = _safe_subpath(root, _mp_os.path.join(path, req.name) if path else req.name)
+    if req.type == "folder":
+        target.mkdir(parents=True, exist_ok=True)
+        return {"type": "folder", "name": req.name, "path": str(target.relative_to(root))}
+    else:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(req.content, encoding="utf-8")
+        return {"type": "file", "name": req.name,
+                "path": str(target.relative_to(root)),
+                "size": len(req.content.encode("utf-8"))}
+
+
+class WorkspaceUpdateRequest(BaseModel):
+    content: str = ""
+
+
+@router.put(
+    "/teams/{team_id}/agents/{agent_id}/workspace/{filepath:path}",
+    summary="Update file content",
+)
+def update_workspace_file(
+    team_id: str, agent_id: str, filepath: str, req: WorkspaceUpdateRequest
+) -> Dict[str, Any]:
+    _get_agent_or_404(team_id, agent_id)
+    root = _agent_ws_root(team_id, agent_id)
+    target = _safe_subpath(root, filepath)
+    if not target.exists() or target.is_dir():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="File not found")
+    target.write_text(req.content, encoding="utf-8")
+    return {"status": "updated", "path": filepath, "size": len(req.content.encode("utf-8"))}
+
+
+@router.delete(
+    "/teams/{team_id}/agents/{agent_id}/workspace/{filepath:path}",
+    summary="Delete file or folder",
+)
+def delete_workspace_item(team_id: str, agent_id: str, filepath: str) -> Dict[str, str]:
+    _get_agent_or_404(team_id, agent_id)
+    root = _agent_ws_root(team_id, agent_id)
+    target = _safe_subpath(root, filepath)
+    if not target.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Not found")
+    if target.is_dir():
+        import shutil
+        shutil.rmtree(target)
+    else:
+        target.unlink()
+    return {"status": "deleted", "path": filepath}
+
+
+# ═══════════════════════════════════════════════════════════════
+# Knowledge Base RAG API — Store, search, retrieve agent deliverables
+# ═══════════════════════════════════════════════════════════════
+
+from .knowledge_base import KBDocument, get_knowledge_base
+
+
+class KBAddRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=256)
+    content: str = Field(..., min_length=1)
+    source_agent: str = ""
+    source_team: str = ""
+    category: str = "deliverable"
+    tags: List[str] = []
+    path: str = ""
+    metadata: Dict[str, Any] = {}
+
+
+class KBSearchRequest(BaseModel):
+    query: str = Field(..., min_length=1)
+    max_results: int = Field(default=10, ge=1, le=100)
+    category: str = ""
+    agent_id: str = ""
+
+
+class KBUpdateRequest(BaseModel):
+    title: str = ""
+    content: str = ""
+    category: str = ""
+    tags: List[str] = []
+
+
+@router.post("/knowledge-base/documents", summary="Add document to knowledge base",
+             status_code=status.HTTP_201_CREATED)
+def kb_add_document(req: KBAddRequest) -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    doc = KBDocument(
+        title=req.title,
+        content=req.content,
+        source_agent=req.source_agent,
+        source_team=req.source_team,
+        category=req.category,
+        tags=req.tags,
+        path=req.path,
+        metadata=req.metadata,
+    )
+    kb.add(doc)
+    return doc.to_dict()
+
+
+@router.get("/knowledge-base/documents", summary="List documents")
+def kb_list_documents(category: str = "", agent_id: str = "",
+                      team_id: str = "") -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    docs = kb.list_all(category=category, agent_id=agent_id, team_id=team_id)
+    return {"documents": [d.to_summary() for d in docs], "total": len(docs)}
+
+
+@router.get("/knowledge-base/documents/{doc_id}", summary="Get document by ID")
+def kb_get_document(doc_id: str) -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    doc = kb.get(doc_id)
+    if not doc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Document not found")
+    return doc.to_dict()
+
+
+@router.put("/knowledge-base/documents/{doc_id}", summary="Update document")
+def kb_update_document(doc_id: str, req: KBUpdateRequest) -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    kwargs = {}
+    if req.title:
+        kwargs["title"] = req.title
+    if req.content:
+        kwargs["content"] = req.content
+    if req.category:
+        kwargs["category"] = req.category
+    if req.tags:
+        kwargs["tags"] = req.tags
+    doc = kb.update(doc_id, **kwargs)
+    if not doc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Document not found")
+    return doc.to_dict()
+
+
+@router.delete("/knowledge-base/documents/{doc_id}", summary="Delete document")
+def kb_delete_document(doc_id: str) -> Dict[str, str]:
+    kb = get_knowledge_base()
+    if not kb.delete(doc_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Document not found")
+    return {"status": "deleted", "doc_id": doc_id}
+
+
+@router.post("/knowledge-base/search", summary="RAG search in knowledge base")
+def kb_search(req: KBSearchRequest) -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    results = kb.search(
+        query=req.query,
+        max_results=req.max_results,
+        category=req.category,
+        agent_id=req.agent_id,
+    )
+    return {"query": req.query, "results": results, "total": len(results)}
+
+
+@router.get("/knowledge-base/stats", summary="Knowledge base statistics")
+def kb_stats() -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    return kb.stats()
+
+
+@router.post(
+    "/teams/{team_id}/agents/{agent_id}/workspace/ingest-to-kb",
+    summary="Ingest workspace files into knowledge base",
+)
+def ingest_workspace_to_kb(team_id: str, agent_id: str, path: str = "") -> Dict[str, Any]:
+    """Ingest all files in a workspace folder into the knowledge base."""
+    agent = _get_agent_or_404(team_id, agent_id)
+    root = _agent_ws_root(team_id, agent_id)
+    target = _safe_subpath(root, path) if path else root
+    if not target.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Path not found")
+
+    kb = get_knowledge_base()
+    ingested = 0
+    files = [target] if target.is_file() else list(target.rglob("*"))
+    for f in files:
+        if not f.is_file() or f.name.startswith("."):
+            continue
+        try:
+            content = f.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        rel_path = str(f.relative_to(root))
+        doc = KBDocument(
+            title=f.name,
+            content=content,
+            source_agent=agent_id,
+            source_team=team_id,
+            category="workspace",
+            tags=[agent.name, team_id, f.suffix.lstrip(".")],
+            path=rel_path,
+        )
+        kb.add(doc)
+        ingested += 1
+
+    return {"status": "ingested", "files": ingested, "agent_id": agent_id}
+

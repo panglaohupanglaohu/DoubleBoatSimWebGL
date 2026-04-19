@@ -43,6 +43,12 @@ tests/integration/
 └── ...
 ```
 
+## 交付物持久化
+
+测试完成后：
+1. 将测试报告写入工作区: `POST /api/v1/agent-config/teams/{team_id}/agents/{agent_id}/workspace` (文件名如 `test_report_YYYYMMDD.md`)
+2. 将测试结果写入知识库: `POST /api/v1/agent-config/knowledge-base/documents` (category=deliverable, tags 包含 "test","qa")
+
 ## 常用命令
 
 ```bash
@@ -82,6 +88,6 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -x -v --tb=long 2>&1 | 
 
 ## 约束
 
-- DO NOT 修改生产代码 — 只写测试和报告 Bug
-- DO NOT 跳过失败 — 分析每一个失败的根因
+- 可以修改生产代码以修复 Bug
+- 分析每一个失败的根因
 - DO NOT 使用 `@pytest.mark.skip` 掩盖问题

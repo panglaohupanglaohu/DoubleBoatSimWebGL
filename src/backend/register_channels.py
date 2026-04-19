@@ -37,6 +37,7 @@ from channels.wpc_attitude_control import WPCAttitudeControlChannel
 from channels.openbridge_hmi import OpenBridgeHMIChannel
 from channels.build_team_manager import BuildTeamManagerChannel
 from channels.execution_team_manager import ExecutionTeamManagerChannel
+from channels.system_evolution import SystemEvolutionChannel
 from channels.weather_routing_channel import WeatherRoutingChannel
 from channels.crew_fatigue_monitor import CrewFatigueMonitorChannel
 from channels.ballast_water_monitor import BallastWaterMonitorChannel
@@ -66,6 +67,7 @@ from channels.lrit_reporter import LRITReporterChannel
 from channels.navigational_lights import NavigationalLightsChannel
 from channels.voyage_data_analyzer import VoyageDataAnalyzerChannel
 from channels.maintenance_planner import MaintenancePlannerChannel
+from channels.bridge_chat import BridgeChatChannel
 from datetime import datetime
 from channels.agent_set_protocol import create_coordination_bus
 from channels.agent_set_coordinator import AgentSetCoordinator
@@ -383,6 +385,18 @@ def register_build_team_manager():
 def register_execution_team_manager():
     """注册执行智能体团队管理器 Channel."""
     channel = ExecutionTeamManagerChannel(config={"llm_backend": "deepseek"})
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
+
+
+def register_system_evolution():
+    """注册系统自我演进引擎 Channel."""
+    channel = SystemEvolutionChannel()
     result = register_channel(channel)
     if result:
         print(f"✅ 已注册 Channel: {channel.name}")
@@ -742,6 +756,27 @@ def register_maintenance_planner():
 
 
 
+
+
+def register_bridge_chat():
+    """Register Bridge Chat Channel."""
+    from channels.marine_base import get_default_registry
+    registry = get_default_registry()
+    channel_registry = {}
+    for ch_name in registry.list_channels():
+        ch = registry.get(ch_name)
+        if ch:
+            channel_registry[ch_name] = ch
+    channel = BridgeChatChannel(channel_registry=channel_registry)
+    result = register_channel(channel)
+    if result:
+        print(f"✅ Channel: {channel.name}")
+        channel.initialize()
+    else:
+        print(f"❌ Failed: {channel.name}")
+    return channel
+
+
 def register_visual_presentation():
     """Register the Visual Presentation channel."""
     from channels.visual_presentation import VisualPresentationChannel
@@ -802,6 +837,21 @@ def register_agent_sets():
     print(f"  Registered: {coordinator.name}")
 
     return coordinator
+
+
+def register_marine_datacenter_energy():
+    """注册船载数据中心 AI 能耗管理 Channel."""
+    from channels.marine_datacenter_energy import MarineDataCenterEnergyChannel
+    channel = MarineDataCenterEnergyChannel()
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+        status = channel.get_status()
+        print(f"   状态：{status['health']}, PUE: {status['current_pue']} → 目标 {status['target_pue']}")
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
 
 
 def list_registered_channels():
@@ -867,7 +917,10 @@ if __name__ == "__main__":
     register_navigational_lights()
     register_voyage_data_analyzer()
     register_maintenance_planner()
+    register_bridge_chat()
     register_visual_presentation()
     register_agent_sets()
+    register_system_evolution()
+    register_marine_datacenter_energy()
     list_registered_channels()
     print("\n✅ Channel 注册完成")

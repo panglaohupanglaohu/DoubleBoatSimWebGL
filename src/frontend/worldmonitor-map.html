@@ -307,6 +307,35 @@
         .maplibregl-ctrl-bottom-right {
             display: none;
         }
+
+        /* ═══ Chat Panel ═══ */
+        .chat-panel { display: flex; flex-direction: column; min-height: 200px; }
+        .chat-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .chat-model-tag { font-size: 10px; color: #4fc3f7; background: rgba(79,195,247,.08); border: 1px solid rgba(79,195,247,.25); border-radius: 4px; padding: 2px 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-family: monospace; }
+        .chat-model-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #4a5568; transition: background .3s, box-shadow .3s; }
+        .chat-model-dot.active { background: #48bb78; box-shadow: 0 0 8px rgba(72,187,120,.6); }
+        .chat-model-dot.inactive { background: #4a5568; }
+        .chat-agent-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .chat-agent-select {
+            flex: 1; font-size: 11px; font-family: monospace; padding: 4px 6px;
+            background: rgba(0,0,0,.3); color: #a0aec0; border: 1px solid rgba(79,195,247,.2);
+            border-radius: 4px; outline: none; cursor: pointer;
+        }
+        .chat-agent-select:focus { border-color: #4fc3f7; }
+        .chat-agent-select option.model-active { color: #48bb78; font-weight: 600; }
+        .chat-agent-select option.model-inactive { color: #718096; }
+        .chat-messages { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; flex: 1; padding-right: 2px; margin-bottom: 8px; }
+        .chat-messages::-webkit-scrollbar { width: 3px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(79,195,247,.3); border-radius: 2px; }
+        .chat-msg { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; border-left: 3px solid #4fc3f7; background: rgba(79,195,247,.05); word-break: break-word; }
+        .chat-msg.user { border-left-color: #f6ad55; background: rgba(246,173,85,.06); }
+        .chat-msg.danger { border-left-color: #f56565; background: rgba(245,101,101,.06); }
+        .chat-msg .chat-time { font-size: 9px; color: #4a5568; margin-top: 4px; text-align: right; }
+        .chat-input-row { display: flex; gap: 6px; }
+        .chat-input-row input { flex: 1; background: rgba(0,0,0,.3); border: 1px solid rgba(79,195,247,.2); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; outline: none; }
+        .chat-input-row input:focus { border-color: #4fc3f7; }
+        .chat-input-row button { background: rgba(79,195,247,.15); border: 1px solid rgba(79,195,247,.3); border-radius: 4px; color: #4fc3f7; padding: 6px 14px; cursor: pointer; font-size: 14px; font-weight: 700; }
+        .chat-input-row button:hover { background: rgba(79,195,247,.25); }
     </style>
 <meta name="ob-title" content="全船监控">
 <meta name="ob-subtitle" content="WorldMonitor — 全船态势感知">
@@ -462,6 +491,27 @@
                         <div class="route-dot" style="background: #48bb78;"></div>
                         <div class="route-label">终点：深圳港</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- AI Chat 智能助手 -->
+            <div class="panel chat-panel">
+                <div class="chat-title-row">
+                    <h3 style="margin:0;">💬 AI ASSISTANT</h3>
+                    <span class="chat-model-tag">
+                        <span class="chat-model-dot" id="chatModelDot"></span>
+                        <span id="chatModelName">—</span>
+                    </span>
+                </div>
+                <div class="chat-agent-row">
+                    <select id="chatAgentSelect" class="chat-agent-select" title="选择对话智能体">
+                        <option value="ship_navigator">Navigator (OOW)</option>
+                    </select>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="输入指令或问题...">
+                    <button id="chatSend">↵</button>
                 </div>
             </div>
         </div>
@@ -622,6 +672,123 @@
         // 每 15 秒刷新数据
         setInterval(loadAISData, 15000);
         setInterval(loadWeatherData, 15000);
+
+        // ═══════════════════════════════════════
+        // CHAT — AI Assistant
+        // ═══════════════════════════════════════
+        var chatSessionId = localStorage.getItem('wm_chatSessionId') || 'wm_' + Date.now().toString(36);
+        localStorage.setItem('wm_chatSessionId', chatSessionId);
+        var selectedChatAgentId = localStorage.getItem('wm_chatAgentId') || 'ship_navigator';
+
+        // Agent model status cache: { agentId: { model_name, active } }
+        var agentModelCache = {};
+
+        // Load agents into selector, check model availability for each
+        async function loadChatAgents() {
+            var sel = document.getElementById('chatAgentSelect');
+            var teams = ['execution_system', 'build_system'];
+            var opts = '';
+            for (var i = 0; i < teams.length; i++) {
+                try {
+                    var r = await fetch('/api/v1/agent-config/teams/' + teams[i] + '/agents');
+                    if (!r.ok) continue;
+                    var agents = await r.json();
+                    for (var j = 0; j < agents.length; j++) {
+                        var a = agents[j];
+                        var aid = a.agent_id || a.id;
+                        var selected = aid === selectedChatAgentId ? ' selected' : '';
+                        // Fetch model status for this agent
+                        var modelInfo = await fetchAgentModelInfo(aid);
+                        var cls = modelInfo.active ? 'model-active' : 'model-inactive';
+                        var label = a.name + ' (' + a.role + ')';
+                        if (modelInfo.active && modelInfo.model_name) {
+                            label += ' ✦ ' + modelInfo.model_name;
+                        }
+                        opts += '<option value="' + aid + '" class="' + cls + '"' + selected + '>' + label + '</option>';
+                    }
+                } catch (_) {}
+            }
+            if (opts) sel.innerHTML = opts;
+            // Set initial model display
+            updateModelDisplay(selectedChatAgentId);
+        }
+
+        async function fetchAgentModelInfo(agentId) {
+            if (agentModelCache[agentId]) return agentModelCache[agentId];
+            try {
+                var r = await fetch('/api/v1/agent-config/agents/' + agentId + '/model-status');
+                if (!r.ok) { agentModelCache[agentId] = { model_name: '', active: false }; return agentModelCache[agentId]; }
+                var d = await r.json();
+                agentModelCache[agentId] = { model_name: d.model_name || d.model_id || '', active: !!d.active };
+                return agentModelCache[agentId];
+            } catch (_) {
+                agentModelCache[agentId] = { model_name: '', active: false };
+                return agentModelCache[agentId];
+            }
+        }
+
+        function updateModelDisplay(agentId) {
+            var dot = document.getElementById('chatModelDot');
+            var name = document.getElementById('chatModelName');
+            var info = agentModelCache[agentId] || { model_name: '—', active: false };
+            name.textContent = info.model_name || '—';
+            dot.className = 'chat-model-dot ' + (info.active ? 'active' : 'inactive');
+            dot.title = info.active ? 'LLM 可用' : 'LLM 不可用';
+        }
+
+        loadChatAgents();
+
+        document.getElementById('chatAgentSelect').addEventListener('change', function() {
+            selectedChatAgentId = this.value;
+            localStorage.setItem('wm_chatAgentId', selectedChatAgentId);
+            updateModelDisplay(selectedChatAgentId);
+        });
+
+        function addChatMessage(text, cls) {
+            var ts = new Date().toISOString().slice(11, 19);
+            var msgs = document.getElementById('chatMessages');
+            var div = document.createElement('div');
+            div.className = 'chat-msg' + (cls ? ' ' + cls : '');
+            div.innerHTML = escapeHtml(text).replace(/\n/g, '<br>') + '<div class="chat-time">' + ts + '</div>';
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+            while (msgs.children.length > 50) msgs.removeChild(msgs.firstChild);
+        }
+
+        function sendChat() {
+            var input = document.getElementById('chatInput');
+            var msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+            addChatMessage(msg, 'user');
+
+            fetch('/api/v1/bridge-chat/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg, session_id: chatSessionId, agent_id: selectedChatAgentId })
+            }).then(function(r) { return r.json(); }).then(function(d) {
+                addChatMessage(d.reply || '无应答', d.urgency === 'critical' ? 'danger' : '');
+                if (d.source === 'agent_llm') {
+                    document.getElementById('chatModelName').textContent = d.model || 'LLM';
+                    document.getElementById('chatModelDot').className = 'chat-model-dot active';
+                }
+                if (d.task_id) {
+                    addChatMessage('✅ 任务已创建 (ID: ' + d.task_id + ')', '');
+                }
+            }).catch(function() {
+                addChatMessage('通信错误', 'danger');
+            });
+        }
+
+        document.getElementById('chatSend').addEventListener('click', sendChat);
+        document.getElementById('chatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendChat(); });
+
+        // Utility
+        function escapeHtml(s) {
+            var d = document.createElement('div');
+            d.appendChild(document.createTextNode(s));
+            return d.innerHTML;
+        }
     </script>
 <script src="/js/nav-sidebar.js" data-active="monitor"></script>
 </body>
