@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="ob-title" content="船员管理">
+<meta name="ob-subtitle" content="Crew Resource Management — MLC 2006">
+<title>船员管理 — PoseidonX</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+:root{--cr-glass:rgba(24,28,36,.72);--cr-border:oklch(1 0 0 / .08);--cr-blue:oklch(0.52 0.04 160);--cr-cyan:oklch(0.52 0.04 160);--cr-ok:oklch(0.52 0.04 160);--cr-warn:oklch(0.56 0.05 70);--cr-alarm:oklch(0.48 0.07 22);--cr-purple:oklch(0.55 0.005 110);--cr-orange:oklch(0.56 0.05 70);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow-x:hidden}
+.cr-layout{display:grid;grid-template-columns:1fr 1fr 300px;grid-template-rows:auto 1fr;gap:14px;min-height:calc(100vh - 80px)}
+.glass{background:var(--cr-glass);backdrop-filter:blur(18px);border:1px solid var(--cr-border);border-radius:0;padding:16px;overflow:hidden}
+.glass h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.glass h5 .dot{width:3px;height:12px;border-radius:2px}
+/* Stats Bar */
+.stats-bar{grid-column:1/4;display:flex;gap:12px}
+.stat-chip{flex:1;background:var(--cr-glass);backdrop-filter:blur(14px);border:1px solid var(--cr-border);border-radius:0;padding:14px 18px;display:flex;align-items:center;gap:14px}
+.stat-icon{width:44px;height:44px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.stat-info .v{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.stat-info .l{font-size:11px;color:var(--ob-text-tertiary);margin-top:2px}
+/* Crew List */
+.crew-panel h5 .dot{background:var(--cr-blue)}
+.crew-search{width:100%;padding:8px 14px;background:rgba(0,0,0,.2);border:1px solid var(--cr-border);border-radius:0;color:var(--ob-text-primary);font-size:13px;outline:none;margin-bottom:12px}
+.crew-search:focus{border-color:var(--cr-blue)}
+.crew-search::placeholder{color:var(--ob-text-tertiary)}
+.crew-list{max-height:calc(100vh - 260px);overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.crew-row{display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(0,0,0,.1);border:1px solid transparent;border-radius:0;cursor:pointer;transition:all .2s}
+.crew-row:hover,.crew-row.active{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2)}
+.crew-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.crew-info{flex:1;min-width:0}
+.crew-info .name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-info .role{font-size:10px;color:var(--ob-text-tertiary)}
+.crew-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.crew-status.on{background:var(--cr-ok);box-shadow:0 0 6px rgba(74,222,128,.4)}
+.crew-status.off{background:var(--cr-warn);box-shadow:0 0 6px oklch(0.56 0.05 70 / .3)}
+.crew-status.rest{background:var(--cr-purple);box-shadow:0 0 6px oklch(0.55 0.005 110 / .3)}
+.crew-status.alert{background:var(--cr-alarm);box-shadow:0 0 6px oklch(0.48 0.07 22 / .4)}
+/* Rest Hours Chart */
+.rest-panel h5 .dot{background:var(--cr-ok)}
+.rest-canvas{width:100%;height:calc(100% - 36px)}
+/* Right sidebar */
+.right-stack{grid-row:2/3;display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-right:4px}
+.sm-card{padding:14px}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid oklch(1 0 0 / .04);font-size:12px}
+.row:last-child{border-bottom:none}
+.row .lbl{color:var(--ob-text-tertiary)}
+.row .val{font-weight:600}
+.badge{display:inline-flex;padding:3px 10px;border-radius:0;font-size:10px;font-weight:600}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--cr-ok);border:1px solid rgba(74,222,128,.2)}
+.badge-warn{background:oklch(0.56 0.05 70 / .12);color:var(--cr-warn);border:1px solid oklch(0.56 0.05 70 / .2)}
+.badge-alarm{background:oklch(0.48 0.07 22 / .12);color:var(--cr-alarm);border:1px solid oklch(0.48 0.07 22 / .2)}
+/* Cert list */
+.cert-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid oklch(1 0 0 / .04);font-size:12px}
+.cert-item:last-child{border-bottom:none}
+.cert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cert-dot.valid{background:var(--cr-ok)}
+.cert-dot.expiring{background:var(--cr-warn)}
+.cert-dot.expired{background:var(--cr-alarm)}
+.cert-info{flex:1}
+.cert-info .cn{font-weight:600}
+.cert-info .cd{font-size:10px;color:var(--ob-text-tertiary)}
+/* Drill Log */
+.drill-item{padding:8px 0;border-bottom:1px solid oklch(1 0 0 / .04);font-size:12px}
+.drill-item:last-child{border-bottom:none}
+.drill-item .dt{display:flex;justify-content:space-between}
+.drill-item .dt .type{font-weight:600}
+.drill-item .dt .date{color:var(--ob-text-tertiary);font-size:10px}
+.drill-item .score{margin-top:4px;display:flex;align-items:center;gap:8px}
+.drill-bar{flex:1;height:6px;border-radius:3px;background:oklch(1 0 0 / .06);overflow:hidden}
+.drill-fill{height:100%;border-radius:3px}
+.drill-pct{font-size:10px;font-weight:600;width:32px;text-align:right}
+/* Fatigue gauge */
+.fatigue-gauge{text-align:center;padding:8px 0}
+.fatigue-arc{margin:0 auto;display:block}
+</style>
+</head>
+<body>
+<div class="cr-layout">
+<!-- ═══ Stats Bar ═══ -->
+<div class="stats-bar">
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(96,165,250,.12);color:var(--cr-blue)">👥</div>
+        <div class="stat-info"><div class="v" id="totalCrew">28</div><div class="l">总船员</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(74,222,128,.12);color:var(--cr-ok)">✅</div>
+        <div class="stat-info"><div class="v" id="onDuty">12</div><div class="l">当值</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:oklch(0.55 0.005 110 / .12);color:var(--cr-purple)">😴</div>
+        <div class="stat-info"><div class="v" id="resting">14</div><div class="l">休息</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:oklch(0.48 0.07 22 / .12);color:var(--cr-alarm)">⚠️</div>
+        <div class="stat-info"><div class="v" id="alertCount">2</div><div class="l">疲劳预警</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:oklch(0.56 0.05 70 / .12);color:var(--cr-warn)">📋</div>
+        <div class="stat-info"><div class="v" id="certAlert">3</div><div class="l">证书到期</div></div>
+    </div>
+</div>
+<!-- ═══ Crew List ═══ -->
+<div class="glass crew-panel">
+    <h5><span class="dot"></span>船员花名册</h5>
+    <input class="crew-search" id="crewSearch" placeholder="搜索船员 / 职务...">
+    <div class="crew-list" id="crewList"></div>
+</div>
+<!-- ═══ Rest Hours ═══ -->
+<div class="glass rest-panel">
+    <h5><span class="dot"></span>休息时间合规 MLC Work/Rest</h5>
+    <canvas id="restChart" class="rest-canvas"></canvas>
+</div>
+<!-- ═══ Right Side Cards ═══ -->
+<div class="right-stack">
+    <!-- Fatigue Risk -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--cr-orange)"></span>疲劳风险 CRI</h5>
+        <div class="fatigue-gauge"><canvas id="fatigueArc" class="fatigue-arc" width="200" height="110"></canvas></div>
+        <div class="row"><span class="lbl">船舶 CRI 评分</span><span class="val" id="criScore">72 / 100</span></div>
+        <div class="row"><span class="lbl">高风险人员</span><span class="val"><span class="badge badge-warn" id="criHigh">2 人</span></span></div>
+        <div class="row"><span class="lbl">MLC 合规</span><span class="val"><span class="badge badge-ok" id="mlcStatus">达标</span></span></div>
+    </div>
+    <!-- Certificates -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--cr-warn)"></span>STCW 证书监控</h5>
+        <div id="certList"></div>
+    </div>
+    <!-- Drill Log -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--cr-cyan)"></span>应急演练记录</h5>
+        <div id="drillLog"></div>
+    </div>
+    <!-- Watch Schedule -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--cr-blue)"></span>值班安排</h5>
+        <div class="row"><span class="lbl">当前班次</span><span class="val" id="curWatch">0800-1200 甲班</span></div>
+        <div class="row"><span class="lbl">驾驶台</span><span class="val">大副 / 水手长</span></div>
+        <div class="row"><span class="lbl">机舱</span><span class="val">大管轮 / 机工</span></div>
+        <div class="row"><span class="lbl">下次换班</span><span class="val" id="nextWatch">12:00</span></div>
+    </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  PoseidonX Crew Resource Management
+// ═══════════════════════════════════════════════════
+
+const CREW=[
+{name:'张伟',role:'船长 Master',dept:'deck',status:'on',restH:7.5,cert:'STCW-II/2',certExp:'2027-03'},
+{name:'李明',role:'大副 Chief Officer',dept:'deck',status:'on',restH:6.8,cert:'STCW-II/2',certExp:'2026-08'},
+{name:'王强',role:'二副 2/O',dept:'deck',status:'rest',restH:9.2,cert:'STCW-II/1',certExp:'2026-12'},
+{name:'赵刚',role:'三副 3/O',dept:'deck',status:'on',restH:7.0,cert:'STCW-II/1',certExp:'2027-06'},
+{name:'陈海',role:'轮机长 C/E',dept:'engine',status:'on',restH:6.5,cert:'STCW-III/2',certExp:'2027-01'},
+{name:'刘洋',role:'大管轮 1/E',dept:'engine',status:'on',restH:7.2,cert:'STCW-III/2',certExp:'2026-05'},
+{name:'杨帆',role:'二管轮 2/E',dept:'engine',status:'rest',restH:10.1,cert:'STCW-III/1',certExp:'2027-09'},
+{name:'黄河',role:'三管轮 3/E',dept:'engine',status:'rest',restH:8.5,cert:'STCW-III/1',certExp:'2026-11'},
+{name:'周航',role:'水手长 Bosun',dept:'deck',status:'on',restH:6.9,cert:'STCW-II/4',certExp:'2026-07'},
+{name:'吴波',role:'一等水手 AB',dept:'deck',status:'rest',restH:9.8,cert:'STCW-II/5',certExp:'2027-02'},
+{name:'郑风',role:'一等水手 AB',dept:'deck',status:'rest',restH:11.0,cert:'STCW-II/5',certExp:'2027-04'},
+{name:'孙涛',role:'一等水手 AB',dept:'deck',status:'on',restH:7.3,cert:'STCW-II/5',certExp:'2026-10'},
+{name:'马力',role:'机工长 No.1 Oiler',dept:'engine',status:'on',restH:6.2,cert:'STCW-III/5',certExp:'2026-06'},
+{name:'胡锚',role:'机工 Oiler',dept:'engine',status:'rest',restH:9.0,cert:'STCW-III/5',certExp:'2027-05'},
+{name:'林远',role:'电机员 Electrician',dept:'engine',status:'on',restH:7.8,cert:'STCW-III/6',certExp:'2027-07'},
+{name:'何深',role:'厨师 Cook',dept:'service',status:'rest',restH:10.5,cert:'STCW-VI/3',certExp:'2027-01'},
+{name:'罗晨',role:'服务员 Steward',dept:'service',status:'rest',restH:12.0,cert:'STCW-VI/1',certExp:'2026-09'},
+{name:'谢安',role:'实习驾驶员 Cadet',dept:'deck',status:'rest',restH:10.0,cert:'STCW-II/1',certExp:'2028-01'},
+{name:'韩冰',role:'实习轮机员 Cadet',dept:'engine',status:'rest',restH:10.2,cert:'STCW-III/1',certExp:'2028-03'},
+{name:'唐风',role:'一等水手 AB',dept:'deck',status:'on',restH:6.0,cert:'STCW-II/5',certExp:'2026-04'},
+];
+
+const COLORS={deck:'rgba(96,165,250,.25)',engine:'rgba(251,146,60,.25)',service:'oklch(0.55 0.005 110 / .25)'};
+const INITIALS_BG={deck:'oklch(0.52 0.04 160)',engine:'oklch(0.48 0.07 22)',service:'oklch(0.55 0.005 110)'};
+
+// ── Crew List ──
+function renderCrew(filter=''){
+    const el=document.getElementById('crewList');
+    const f=filter.toLowerCase();
+    el.innerHTML=CREW.filter(c=>!f||c.name.includes(f)||c.role.toLowerCase().includes(f)).map((c,i)=>`
+        <div class="crew-row" data-i="${i}">
+            <div class="crew-avatar" style="background:${INITIALS_BG[c.dept]}">${c.name[0]}</div>
+            <div class="crew-info"><div class="name">${c.name}</div><div class="role">${c.role}</div></div>
+            <div class="crew-status ${c.status}" title="${c.status==='on'?'当值':c.status==='rest'?'休息':c.status==='off'?'下班':'预警'}"></div>
+        </div>
+    `).join('');
+}
+renderCrew();
+document.getElementById('crewSearch').addEventListener('input',e=>renderCrew(e.target.value));
+
+// ── Rest Hours Chart (MLC bar chart) ──
+(function(){
+const cv=document.getElementById('restChart'),ctx=cv.getContext('2d');
+function resize(){cv.width=cv.parentElement.clientWidth;cv.height=cv.parentElement.clientHeight-36;}
+resize();window.addEventListener('resize',resize);
+
+function draw(){
+    const W=cv.width,H=cv.height,n=CREW.length;
+    const pad={top:20,bottom:30,left:50,right:20};
+    const cw=Math.min(24,(W-pad.left-pad.right)/n-4);
+    ctx.clearRect(0,0,W,H);
+    // MLC limits
+    const maxH=14,minRest=10; // MLC: max 14h work, min 10h rest in 24h
+    const scale=(H-pad.top-pad.bottom)/maxH;
+    // Grid
+    ctx.strokeStyle='oklch(1 0 0 / .04)';ctx.lineWidth=1;
+    for(let h=0;h<=maxH;h+=2){const y=H-pad.bottom-h*scale;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.fillStyle='oklch(1 0 0 / .25)';ctx.font='10px system-ui';ctx.textAlign='right';ctx.fillText(h+'h',pad.left-6,y+3);}
+    // Min rest line (10h)
+    const ry=H-pad.bottom-minRest*scale;
+    ctx.strokeStyle='rgba(74,222,128,.3)';ctx.lineWidth=1;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(pad.left,ry);ctx.lineTo(W-pad.right,ry);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='rgba(74,222,128,.5)';ctx.font='10px system-ui';ctx.textAlign='left';ctx.fillText('MLC Min Rest 10h',pad.left+4,ry-4);
+    // Bars
+    CREW.forEach((c,i)=>{
+        const x=pad.left+i*(cw+4)+2;
+        const h=c.restH;
+        const barH=h*scale;
+        const y=H-pad.bottom-barH;
+        const ok=h>=minRest;
+        const warn=h>=7&&h<minRest;
+        const color=ok?'rgba(74,222,128,.7)':warn?'oklch(0.56 0.05 70 / .7)':'oklch(0.48 0.07 22 / .7)';
+        const glow=ok?'rgba(74,222,128,.15)':warn?'oklch(0.56 0.05 70 / .15)':'oklch(0.48 0.07 22 / .15)';
+        // Bar glow
+        ctx.fillStyle=glow;ctx.beginPath();ctx.roundRect(x-2,y-2,cw+4,barH+4,4);ctx.fill();
+        // Bar
+        ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,cw,barH,3);ctx.fill();
+        // Name label (rotated)
+        ctx.save();ctx.translate(x+cw/2,H-pad.bottom+6);ctx.rotate(Math.PI/4);ctx.fillStyle='oklch(1 0 0 / .4)';ctx.font='9px system-ui';ctx.textAlign='left';ctx.fillText(c.name.slice(0,3),0,0);ctx.restore();
+        // Value on top
+        if(cw>12){ctx.fillStyle='oklch(1 0 0 / .6)';ctx.font='9px system-ui';ctx.textAlign='center';ctx.fillText(h.toFixed(1),x+cw/2,y-4);}
+    });
+    // Y axis label
+    ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='oklch(1 0 0 / .3)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText('休息时间 (h)',0,0);ctx.restore();
+}
+draw();
+setInterval(()=>{CREW.forEach(c=>{c.restH=Math.max(4,Math.min(13,c.restH+(Math.random()-.5)*0.3));});draw();},5000);
+})();
+
+// ── Fatigue Arc Gauge ──
+(function(){
+const cv=document.getElementById('fatigueArc'),ctx=cv.getContext('2d');
+let score=72;
+function draw(){
+    const W=cv.width,H=cv.height,cx=W/2,cy=H-10,R=80;
+    ctx.clearRect(0,0,W,H);
+    // Background arc
+    ctx.beginPath();ctx.arc(cx,cy,R,Math.PI,0);ctx.strokeStyle='oklch(1 0 0 / .06)';ctx.lineWidth=14;ctx.lineCap='round';ctx.stroke();
+    // Score arc
+    const ratio=score/100;
+    const color=score>=70?'oklch(0.52 0.04 160)':score>=40?'oklch(0.56 0.05 70)':'oklch(0.48 0.07 22)';
+    ctx.beginPath();ctx.arc(cx,cy,R,Math.PI,Math.PI+Math.PI*ratio);ctx.strokeStyle=color;ctx.lineWidth=14;ctx.lineCap='round';ctx.stroke();
+    // Glow
+    ctx.beginPath();ctx.arc(cx,cy,R,Math.PI,Math.PI+Math.PI*ratio);ctx.strokeStyle=color.replace(')',',0.2)').replace('rgb','rgba');ctx.lineWidth=22;ctx.stroke();
+    // Score text
+    ctx.fillStyle='oklch(0.96 0.003 110)';ctx.font='bold 28px system-ui';ctx.textAlign='center';ctx.fillText(score,cx,cy-20);
+    ctx.fillStyle='oklch(1 0 0 / .4)';ctx.font='11px system-ui';ctx.fillText('CRI Score',cx,cy-2);
+    // Labels
+    ctx.fillStyle='oklch(1 0 0 / .3)';ctx.font='9px system-ui';ctx.textAlign='left';ctx.fillText('高风险',cx-R-10,cy+10);ctx.textAlign='right';ctx.fillText('低风险',cx+R+10,cy+10);
+}
+draw();
+setInterval(()=>{score=Math.max(30,Math.min(95,score+Math.round((Math.random()-.5)*3)));document.getElementById('criScore').textContent=score+' / 100';draw();},4000);
+})();
+
+// ── Certificates ──
+(function(){
+const el=document.getElementById('certList');
+const now=new Date();
+const certs=[
+{name:'唐风',cert:'STCW-II/5',exp:'2026-04-15',status:'expired'},
+{name:'刘洋',cert:'STCW-III/2',exp:'2026-05-20',status:'expiring'},
+{name:'马力',cert:'STCW-III/5',exp:'2026-06-10',status:'expiring'},
+{name:'周航',cert:'STCW-II/4',exp:'2026-07-01',status:'expiring'},
+{name:'李明',cert:'STCW-II/2',exp:'2026-08-15',status:'valid'},
+];
+el.innerHTML=certs.map(c=>`
+<div class="cert-item">
+    <span class="cert-dot ${c.status}"></span>
+    <div class="cert-info"><div class="cn">${c.name} — ${c.cert}</div><div class="cd">到期: ${c.exp}</div></div>
+</div>`).join('');
+})();
+
+// ── Drill Log ──
+(function(){
+const el=document.getElementById('drillLog');
+const drills=[
+{type:'弃船演习',date:'2026-03-15',score:92},
+{type:'消防演习',date:'2026-03-01',score:88},
+{type:'落水救援',date:'2026-02-20',score:95},
+{type:'堵漏演习',date:'2026-02-05',score:79},
+{type:'GMDSS 遇险',date:'2026-01-18',score:91},
+];
+el.innerHTML=drills.map(d=>{
+const c=d.score>=90?'var(--cr-ok)':d.score>=80?'var(--cr-cyan)':'var(--cr-warn)';
+return `<div class="drill-item"><div class="dt"><span class="type">${d.type}</span><span class="date">${d.date}</span></div><div class="score"><div class="drill-bar"><div class="drill-fill" style="width:${d.score}%;background:${c}"></div></div><div class="drill-pct" style="color:${c}">${d.score}%</div></div></div>`;
+}).join('');
+})();
+
+// ── Watch time ──
+(function(){
+const hr=new Date().getHours();
+const watches=[{s:0,e:4,n:'0000-0400 丙班'},{s:4,e:8,n:'0400-0800 甲班'},{s:8,e:12,n:'0800-1200 甲班'},{s:12,e:16,n:'1200-1600 乙班'},{s:16,e:20,n:'1600-2000 乙班'},{s:20,e:24,n:'2000-0000 丙班'}];
+const w=watches.find(w=>hr>=w.s&&hr<w.e)||watches[0];
+document.getElementById('curWatch').textContent=w.n;
+document.getElementById('nextWatch').textContent=String(w.e%24).padStart(2,'0')+':00';
+})();
+
+// ── API Fetch ──
+function fetchCrew(){
+    fetch('/api/v1/crew/roster').then(r=>r.json()).then(d=>{
+        if(d.total)document.getElementById('totalCrew').textContent=d.total;
+        if(d.on_duty)document.getElementById('onDuty').textContent=d.on_duty;
+    }).catch(()=>{});
+}
+function fetchFatigue(){
+    fetch('/api/v1/crew/fatigue-risk').then(r=>r.json()).then(d=>{
+        if(d.alert_count)document.getElementById('alertCount').textContent=d.alert_count;
+    }).catch(()=>{});
+}
+fetchCrew();fetchFatigue();
+setInterval(fetchCrew,30000);setInterval(fetchFatigue,30000);
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=()=>setTimeout(cn,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(cn,5000);}}cn();})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="crew"></script>
+</body>
+</html>

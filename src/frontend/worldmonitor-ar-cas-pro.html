@@ -4,23 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WorldMonitor AR-CAS Pro - 船舶避免碰撞增强现实系统（专业版）</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0e1a;
-            color: #ffffff;
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: oklch(0.96 0.003 110);
+            color: oklch(0.18 0.008 110);
             overflow: hidden;
             height: 100vh;
+            position: relative;
         }
+        /* Wabi-Sabi Rubber tokens */
+        :root{--shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.005 110);--sumi:oklch(0.18 0.008 110);--sumi-3:oklch(0.55 0.005 110);--koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);--groove:oklch(0.82 0.004 110);--font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace}
+        body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(oklch(0 0 0/.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/.008) 1px,transparent 1px);background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+        .seal{display:inline-block;font-size:10px;font-weight:900;color:var(--shironeri);background:var(--sumi);padding:1px 5px;line-height:1.3;font-family:var(--font-serif);vertical-align:middle;margin-right:4px}.seal-koke{background:var(--koke)}.seal-shu{background:var(--shu)}.seal-kitsune{background:var(--kitsune)}
+        .header{background:var(--ishi) !important;border-bottom:1px solid var(--groove) !important}
+        .header h1{background:none !important;-webkit-text-fill-color:var(--koke) !important;color:var(--koke) !important;font-family:var(--font-serif);font-size:16px !important}
+        .sidebar{background:var(--ishi) !important;border-color:var(--groove) !important}
+        .panel{background:var(--shironeri) !important;border-color:var(--groove) !important}
+        .action-button,.action-link{background:oklch(0.52 0.04 160 / 0.06) !important;border-color:oklch(0.52 0.04 160 / 0.15) !important}
         .header {
             position: fixed;
             top: 0; left: 0; right: 0;
             height: 60px;
-            background: linear-gradient(180deg, rgba(10,14,26,0.95) 0%, rgba(10,14,26,0.8) 100%);
-            border-bottom: 2px solid rgba(79,195,247,0.4);
+            background: oklch(0.91 0.004 110);
+            border-bottom: 2px solid oklch(0.82 0.004 110);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -30,7 +41,7 @@
         .header h1 {
             font-size: 20px;
             font-weight: 700;
-            background: linear-gradient(90deg, #4fc3f7 0%, #29b6f6 100%);
+            background: linear-gradient(90deg, oklch(0.52 0.04 160) 0%, oklch(0.52 0.04 160) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -45,10 +56,10 @@
             align-items: center;
             gap: 10px;
         }
-        .status-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #a0aec0; }
+        .status-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: oklch(0.55 0.005 110); }
         .status-dot {
             width: 8px; height: 8px; border-radius: 50%;
-            background: #48bb78;
+            background: oklch(0.52 0.04 160);
             animation: pulse 2s infinite;
         }
         .action-button,
@@ -59,10 +70,10 @@
             gap: 6px;
             min-height: 36px;
             padding: 0 14px;
-            border-radius: 999px;
+            border-radius:0;
             border: 1px solid rgba(79,195,247,0.28);
             background: rgba(79,195,247,0.12);
-            color: #d9f6ff;
+            color: oklch(0.25 0.006 110);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -77,7 +88,7 @@
         }
         .action-button.active {
             background: linear-gradient(135deg, rgba(79,195,247,0.34) 0%, rgba(41,182,246,0.16) 100%);
-            color: #ffffff;
+            color: oklch(0.18 0.008 110);
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .main-container { display: flex; height: 100vh; padding-top: 60px; }
@@ -92,25 +103,25 @@
         .panel {
             background: rgba(16,24,48,0.8);
             border: 1px solid rgba(79,195,247,0.25);
-            border-radius: 12px;
+            border-radius:0;
             padding: 16px;
             margin-bottom: 16px;
         }
         .panel h3 {
             font-size: 14px;
             font-weight: 600;
-            color: #4fc3f7;
+            color: oklch(0.52 0.04 160);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .ais-target {
-            background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
-            border-radius: 10px;
+            background: linear-gradient(135deg, oklch(0 0 0 / 0.4) 0%, oklch(0 0 0 / 0.2) 100%);
+            border-radius:0;
             padding: 14px;
             margin-bottom: 10px;
-            border-left: 4px solid #48bb78;
+            border-left: 4px solid oklch(0.52 0.04 160);
             cursor: pointer;
             transition: all 0.3s;
         }
@@ -119,22 +130,22 @@
             transform: translateX(6px);
             box-shadow: 0 4px 12px rgba(79,195,247,0.2);
         }
-        .ais-target.high-risk { border-left-color: #f56565; background: linear-gradient(135deg, rgba(245,101,101,0.15) 0%, rgba(0,0,0,0.3) 100%); }
-        .ais-target.medium-risk { border-left-color: #f6ad55; }
+        .ais-target.high-risk { border-left-color: oklch(0.48 0.07 22); background: linear-gradient(135deg, rgba(245,101,101,0.15) 0%, oklch(0 0 0 / 0.3) 100%); }
+        .ais-target.medium-risk { border-left-color: oklch(0.56 0.05 70); }
         .ais-target-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
-        .ais-target-type { font-weight: 700; color: #4fc3f7; font-size: 14px; }
-        .ais-target-mmsi { color: #718096; font-size: 11px; }
+        .ais-target-type { font-weight: 700; color: oklch(0.52 0.04 160); font-size: 14px; }
+        .ais-target-mmsi { color: oklch(0.55 0.005 110); font-size: 11px; }
         .ais-target-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             font-size: 11px;
-            color: #a0aec0;
+            color: oklch(0.55 0.005 110);
         }
         .risk-badge {
             display: inline-block;
@@ -145,30 +156,30 @@
             margin-left: 8px;
             text-transform: uppercase;
         }
-        .risk-badge.low { background: rgba(72,187,120,0.25); color: #48bb78; }
-        .risk-badge.medium { background: rgba(246,173,85,0.25); color: #f6ad55; }
-        .risk-badge.high { background: rgba(245,101,101,0.25); color: #f56565; }
-        .colregs-badge { background: rgba(139,92,246,0.25); color: #9f7aea; }
+        .risk-badge.low { background: rgba(72,187,120,0.25); color: oklch(0.52 0.04 160); }
+        .risk-badge.medium { background: rgba(246,173,85,0.25); color: oklch(0.56 0.05 70); }
+        .risk-badge.high { background: rgba(245,101,101,0.25); color: oklch(0.48 0.07 22); }
+        .colregs-badge { background: rgba(139,92,246,0.25); color: oklch(0.55 0.005 110); }
         .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .weather-item {
-            background: rgba(0,0,0,0.35);
+            background: oklch(0 0 0 / 0.35);
             padding: 14px;
-            border-radius: 10px;
+            border-radius:0;
             text-align: center;
         }
-        .weather-label { font-size: 11px; color: #718096; margin-bottom: 6px; }
-        .weather-value { font-size: 18px; font-weight: 700; color: #48bb78; }
+        .weather-label { font-size: 11px; color: oklch(0.55 0.005 110); margin-bottom: 6px; }
+        .weather-value { font-size: 18px; font-weight: 700; color: oklch(0.52 0.04 160); }
         .port-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
+            background: oklch(0 0 0 / 0.3);
+            border-radius:0;
             margin-bottom: 8px;
         }
-        .port-name { font-weight: 600; color: #f6ad55; }
-        .port-distance { font-size: 11px; color: #718096; }
+        .port-name { font-weight: 600; color: oklch(0.56 0.05 70); }
+        .port-distance { font-size: 11px; color: oklch(0.55 0.005 110); }
         .right-panel {
             width: 360px;
             background: rgba(10,14,26,0.95);
@@ -177,18 +188,39 @@
             padding: 16px;
         }
         .camera-feed {
-            background: rgba(0,0,0,0.6);
-            border-radius: 10px;
+            background: var(--shironeri, oklch(0.96 0.003 110));
+            border: 1px solid var(--kabe, oklch(0.85 0.005 110));
+            box-shadow: 0 1px 0 var(--kabe, oklch(0.85 0.005 110)), inset 0 0 0 1px rgba(255,255,255,0.4);
             overflow: hidden;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
             position: relative;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
+        .camera-feed.active {
+            border-color: var(--shu, oklch(0.55 0.18 35));
+            box-shadow: 0 0 0 2px var(--shu, oklch(0.55 0.18 35)), 0 1px 6px rgba(0,0,0,0.18);
+        }
+        .camera-feed:not(.active) iframe { pointer-events: none; }
+        .camera-feed iframe { width: 100%; height: 200px; display: block; border: 0; background: oklch(0.91 0.004 110); }
         .camera-feed img { width: 100%; height: 200px; object-fit: cover; }
-        .ar-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+        .camera-feed .corner-stamp {
+            position: absolute; top: 8px; right: 8px;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 11px; letter-spacing: 2px;
+            color: var(--shironeri, #fff);
+            background: var(--sumi, #2a2a2a);
+            padding: 2px 8px; writing-mode: vertical-rl;
+            opacity: 0.85; z-index: 3; pointer-events: none;
+        }
+        .camera-feed.cctv-top   .corner-stamp { background: var(--sumi, #2a2a2a); }
+        .camera-feed.cctv-bow   .corner-stamp { background: var(--koke, oklch(0.52 0.04 160)); }
+        .camera-feed.cctv-stern .corner-stamp { background: var(--kitsune, oklch(0.56 0.05 70)); }
+        .ar-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 2; }
         .ar-target {
             position: absolute;
             width: 28px; height: 28px;
-            border: 3px solid #4fc3f7;
+            border: 3px solid oklch(0.52 0.04 160);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 0 20px rgba(79,195,247,0.6);
@@ -199,19 +231,19 @@
             position: absolute;
             top: -24px; left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
+            background: oklch(0 0 0 / 0.85);
             padding: 4px 8px;
             border-radius: 6px;
             font-size: 10px;
             white-space: nowrap;
-            color: #fff;
+            color: oklch(0.18 0.008 110);
             border: 1px solid rgba(79,195,247,0.4);
         }
         .ar-iceberg {
             position: absolute;
             width: 40px; height: 40px;
             background: linear-gradient(180deg, rgba(135,206,250,0.8) 0%, rgba(135,206,250,0.3) 100%);
-            border: 2px solid #87cefa;
+            border: 2px solid oklch(0.52 0.04 160);
             clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
             transform: translate(-50%, -50%);
             animation: iceberg-pulse 3s infinite;
@@ -222,8 +254,8 @@
             height: 100%;
             width: 80px;
             background: linear-gradient(90deg, rgba(139,69,19,0.5) 0%, rgba(139,69,19,0.2) 50%, rgba(139,69,19,0.5) 100%);
-            border-left: 3px dashed #8b4513;
-            border-right: 3px dashed #8b4513;
+            border-left: 3px dashed oklch(0.56 0.05 70);
+            border-right: 3px dashed oklch(0.56 0.05 70);
         }
         .ar-canyon-warning {
             position: absolute;
@@ -231,10 +263,10 @@
             transform: translateX(-50%);
             background: linear-gradient(135deg, rgba(245,101,101,0.95) 0%, rgba(245,101,101,0.8) 100%);
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius:0;
             font-size: 13px;
             font-weight: 700;
-            color: #fff;
+            color: oklch(0.18 0.008 110);
             white-space: nowrap;
             box-shadow: 0 4px 20px rgba(245,101,101,0.5);
         }
@@ -244,33 +276,33 @@
             transform: translateX(-50%);
             background: linear-gradient(135deg, rgba(135,206,250,0.95) 0%, rgba(135,206,250,0.8) 100%);
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius:0;
             font-size: 13px;
             font-weight: 700;
-            color: #fff;
+            color: oklch(0.18 0.008 110);
             white-space: nowrap;
             box-shadow: 0 4px 20px rgba(135,206,250,0.5);
         }
         .camera-info { padding: 14px; }
-        .camera-name { font-weight: 700; color: #fff; margin-bottom: 6px; font-size: 13px; }
-        .camera-status { font-size: 11px; color: #48bb78; }
+        .camera-name { font-weight: 700; color: oklch(0.18 0.008 110); margin-bottom: 6px; font-size: 13px; }
+        .camera-status { font-size: 11px; color: oklch(0.52 0.04 160); }
         .alarm-feed {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
         .alarm-card {
-            background: rgba(0,0,0,0.35);
-            border-radius: 10px;
+            background: oklch(0 0 0 / 0.35);
+            border-radius:0;
             padding: 12px;
-            border-left: 4px solid #48bb78;
+            border-left: 4px solid oklch(0.52 0.04 160);
         }
         .alarm-card.level-WARNING {
-            border-left-color: #f6ad55;
+            border-left-color: oklch(0.56 0.05 70);
         }
         .alarm-card.level-CRITICAL,
         .alarm-card.level-EMERGENCY {
-            border-left-color: #f56565;
+            border-left-color: oklch(0.48 0.07 22);
         }
         .alarm-card-header {
             display: flex;
@@ -285,38 +317,38 @@
             justify-content: center;
             min-width: 72px;
             padding: 4px 8px;
-            border-radius: 999px;
+            border-radius:0;
             font-size: 10px;
             font-weight: 700;
             background: rgba(72,187,120,0.2);
-            color: #9ae6b4;
+            color: oklch(0.52 0.04 160);
         }
         .alarm-card-level.WARNING {
             background: rgba(246,173,85,0.2);
-            color: #fbd38d;
+            color: oklch(0.56 0.05 70);
         }
         .alarm-card-level.CRITICAL,
         .alarm-card-level.EMERGENCY {
             background: rgba(245,101,101,0.2);
-            color: #feb2b2;
+            color: oklch(0.48 0.07 22);
         }
         .alarm-card-time {
             font-size: 11px;
-            color: #718096;
+            color: oklch(0.55 0.005 110);
         }
         .alarm-card-message {
             font-size: 12px;
-            color: #e2e8f0;
+            color: oklch(0.18 0.008 110);
             line-height: 1.5;
         }
         .alarm-card-source {
             margin-top: 8px;
             font-size: 10px;
-            color: #90cdf4;
+            color: oklch(0.52 0.04 160);
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
-        .route-info { background: rgba(0,0,0,0.35); border-radius: 10px; padding: 16px; }
+        .route-info { background: oklch(0 0 0 / 0.35); border-radius:0; padding: 16px; }
         .route-point {
             display: flex;
             align-items: center;
@@ -325,50 +357,50 @@
             border-bottom: 1px solid rgba(79,195,247,0.2);
         }
         .route-point:last-child { border-bottom: none; }
-        .route-dot { width: 14px; height: 14px; border-radius: 50%; background: #4fc3f7; }
-        .route-dot.waypoint { background: #f6ad55; }
-        .route-label { font-size: 12px; color: #a0aec0; }
+        .route-dot { width: 14px; height: 14px; border-radius: 50%; background: oklch(0.52 0.04 160); }
+        .route-dot.waypoint { background: oklch(0.56 0.05 70); }
+        .route-label { font-size: 12px; color: oklch(0.55 0.005 110); }
         .colregs-alert {
-            background: linear-gradient(135deg, rgba(245,101,101,0.15) 0%, rgba(0,0,0,0.3) 100%);
-            border: 1px solid #f56565;
-            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(245,101,101,0.15) 0%, oklch(0 0 0 / 0.3) 100%);
+            border: 1px solid oklch(0.48 0.07 22);
+            border-radius:0;
             padding: 14px;
             margin-bottom: 14px;
         }
         .colregs-alert-title {
             font-weight: 700;
-            color: #f56565;
+            color: oklch(0.48 0.07 22);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
         }
-        .colregs-rule { font-size: 12px; color: #feb2b2; line-height: 1.6; }
+        .colregs-rule { font-size: 12px; color: oklch(0.48 0.07 22); line-height: 1.6; }
         .cpa-tcpa { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
         .cpa-item {
-            background: rgba(0,0,0,0.4);
+            background: oklch(0 0 0 / 0.4);
             padding: 12px;
-            border-radius: 8px;
+            border-radius:0;
             text-align: center;
         }
-        .cpa-label { font-size: 10px; color: #718096; margin-bottom: 6px; text-transform: uppercase; }
-        .cpa-value { font-size: 16px; font-weight: 700; color: #fff; }
-        .cpa-value.danger { color: #f56565; }
-        .cpa-value.warning { color: #f6ad55; }
-        .cpa-value.safe { color: #48bb78; }
-        .maplibregl-map { background: #0a0e1a; }
+        .cpa-label { font-size: 10px; color: oklch(0.55 0.005 110); margin-bottom: 6px; text-transform: uppercase; }
+        .cpa-value { font-size: 16px; font-weight: 700; color: oklch(0.18 0.008 110); }
+        .cpa-value.danger { color: oklch(0.48 0.07 22); }
+        .cpa-value.warning { color: oklch(0.56 0.05 70); }
+        .cpa-value.safe { color: oklch(0.52 0.04 160); }
+        .maplibregl-map { background: oklch(0.96 0.003 110); }
         .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { display: none; }
         .special-alert {
-            background: linear-gradient(135deg, rgba(245,101,101,0.2) 0%, rgba(0,0,0,0.4) 100%);
-            border: 2px solid #f56565;
-            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(245,101,101,0.2) 0%, oklch(0 0 0 / 0.4) 100%);
+            border: 2px solid oklch(0.48 0.07 22);
+            border-radius:0;
             padding: 16px;
             margin-bottom: 16px;
         }
         .special-alert-title {
             font-weight: 700;
-            color: #f56565;
+            color: oklch(0.48 0.07 22);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -385,10 +417,10 @@
             min-height: 280px;
             background: linear-gradient(180deg, rgba(8,16,30,0.96) 0%, rgba(6,10,20,0.94) 100%);
             border: 1px solid rgba(79,195,247,0.3);
-            border-radius: 16px;
+            border-radius:0;
             overflow: hidden;
             z-index: 990;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            box-shadow: 0 20px 60px oklch(0 0 0 / 0.4);
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(14px);
@@ -415,19 +447,19 @@
             gap: 3px;
         }
         .vr-toolbar-title strong {
-            color: #dff7ff;
+            color: oklch(0.25 0.006 110);
             font-size: 13px;
             letter-spacing: 0.04em;
         }
         .vr-toolbar-title span {
-            color: #7fa0b5;
+            color: oklch(0.55 0.005 110);
             font-size: 11px;
         }
         .vr-toolbar-meta {
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #9ec7d9;
+            color: oklch(0.82 0.004 110);
             font-size: 11px;
             flex-wrap: wrap;
             justify-content: flex-end;
@@ -437,12 +469,12 @@
             align-items: center;
             gap: 6px;
             padding: 5px 10px;
-            border-radius: 999px;
+            border-radius:0;
             background: rgba(79,195,247,0.1);
             border: 1px solid rgba(79,195,247,0.2);
         }
         .vr-badge strong {
-            color: #e9fbff;
+            color: oklch(0.18 0.008 110);
             font-size: 11px;
         }
         .vr-toolbar-controls {
@@ -463,7 +495,7 @@
         .vr-canvas {
             width: 100%;
             height: 100%;
-            background: #08101b;
+            background: oklch(0.96 0.003 110);
             display: block;
         }
         .vr-overlay-note {
@@ -471,9 +503,9 @@
             left: 14px;
             bottom: 12px;
             padding: 8px 10px;
-            border-radius: 10px;
+            border-radius:0;
             background: rgba(5,10,18,0.72);
-            color: #9cb8c7;
+            color: oklch(0.82 0.004 110);
             font-size: 11px;
             border: 1px solid rgba(79,195,247,0.14);
             backdrop-filter: blur(8px);
@@ -489,7 +521,7 @@
         }
         .vr-control-group {
             padding: 10px 12px;
-            border-radius: 12px;
+            border-radius:0;
             background: rgba(5,10,18,0.7);
             border: 1px solid rgba(79,195,247,0.14);
             display: grid;
@@ -498,7 +530,7 @@
             backdrop-filter: blur(8px);
         }
         .vr-control-group small {
-            color: #7fa0b5;
+            color: oklch(0.55 0.005 110);
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
@@ -511,8 +543,8 @@
         .vr-chip {
             border: 1px solid rgba(79,195,247,0.2);
             background: rgba(79,195,247,0.08);
-            color: #d7f7ff;
-            border-radius: 999px;
+            color: oklch(0.25 0.006 110);
+            border-radius:0;
             padding: 6px 10px;
             font-size: 11px;
             cursor: pointer;
@@ -527,7 +559,7 @@
             top: 14px;
             width: 220px;
             padding: 12px;
-            border-radius: 12px;
+            border-radius:0;
             background: rgba(5,10,18,0.72);
             border: 1px solid rgba(79,195,247,0.14);
             display: grid;
@@ -540,10 +572,10 @@
             justify-content: space-between;
             gap: 8px;
             font-size: 11px;
-            color: #9ec7d9;
+            color: oklch(0.82 0.004 110);
         }
         .vr-hud-item strong {
-            color: #ffffff;
+            color: oklch(0.18 0.008 110);
         }
         .vr-semantic-menu {
             position: absolute;
@@ -551,7 +583,7 @@
             right: 248px;
             bottom: 52px;
             padding: 12px;
-            border-radius: 12px;
+            border-radius:0;
             background: rgba(5,10,18,0.72);
             border: 1px solid rgba(79,195,247,0.14);
             display: grid;
@@ -564,13 +596,13 @@
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            color: #dff7ff;
+            color: oklch(0.25 0.006 110);
             font-size: 11px;
             letter-spacing: 0.06em;
             text-transform: uppercase;
         }
         .vr-semantic-header span {
-            color: #7fa0b5;
+            color: oklch(0.55 0.005 110);
             font-size: 10px;
             text-transform: none;
             letter-spacing: 0;
@@ -582,20 +614,20 @@
         }
         .vr-semantic-card {
             padding: 10px;
-            border-radius: 10px;
+            border-radius:0;
             background: rgba(79,195,247,0.08);
             border: 1px solid rgba(79,195,247,0.12);
             display: grid;
             gap: 6px;
         }
         .vr-semantic-label {
-            color: #7fa0b5;
+            color: oklch(0.55 0.005 110);
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }
         .vr-semantic-value {
-            color: #ffffff;
+            color: oklch(0.18 0.008 110);
             font-size: 13px;
             font-weight: 700;
         }
@@ -609,28 +641,28 @@
             align-items: center;
             gap: 6px;
             padding: 5px 8px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.06);
-            color: #d7f7ff;
+            border-radius:0;
+            background: oklch(1 0 0 / 0.06);
+            color: oklch(0.25 0.006 110);
             font-size: 10px;
         }
         .vr-focus-pill strong {
-            color: #ffffff;
+            color: oklch(0.18 0.008 110);
         }
         .vr-target-tooltip {
             position: absolute;
             min-width: 160px;
             max-width: 220px;
             padding: 10px 12px;
-            border-radius: 10px;
+            border-radius:0;
             background: rgba(3, 8, 16, 0.9);
             border: 1px solid rgba(79,195,247,0.22);
-            color: #dff7ff;
+            color: oklch(0.25 0.006 110);
             font-size: 11px;
             line-height: 1.45;
             pointer-events: none;
             transform: translate(-50%, calc(-100% - 14px));
-            box-shadow: 0 14px 34px rgba(0,0,0,0.3);
+            box-shadow: 0 14px 34px oklch(0 0 0 / 0.3);
             backdrop-filter: blur(8px);
             z-index: 3;
             display: none;
@@ -640,7 +672,7 @@
         }
         .vr-target-tooltip strong {
             display: block;
-            color: #ffffff;
+            color: oklch(0.18 0.008 110);
             margin-bottom: 4px;
             font-size: 12px;
         }
@@ -649,7 +681,7 @@
             right: 14px;
             bottom: 52px;
             padding: 10px 12px;
-            border-radius: 12px;
+            border-radius:0;
             background: rgba(5,10,18,0.7);
             border: 1px solid rgba(79,195,247,0.14);
             display: grid;
@@ -661,7 +693,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #a6c3d3;
+            color: oklch(0.82 0.004 110);
             font-size: 10px;
         }
         .vr-swatch {
@@ -714,11 +746,12 @@
             }
         }
     </style>
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
     <div class="header">
         <div class="header-title">
-            <h1>🌍 WorldMonitor AR-CAS Pro - 船舶避免碰撞增强现实系统（专业版）</h1>
+            <h1><span class="seal">球</span> WorldMonitor AR-CAS Pro - 船舶避免碰撞增强现实系统（专业版）</h1>
         </div>
         <div class="header-status">
             <div class="status-item">
@@ -727,21 +760,21 @@
             </div>
             <div class="status-item">
                 <span>本船：</span>
-                <span style="color: #4fc3f7;" id="own-ship-position">三亚附近 (18.25°N, 109.50°E)</span>
+                <span style="color: oklch(0.52 0.04 160);" id="own-ship-position">三亚附近 (18.25°N, 109.50°E)</span>
             </div>
             <div class="status-item">
                 <span>AIS 目标：</span>
-                <span style="color: #48bb78;" id="ais-count">0</span>
+                <span style="color: oklch(0.52 0.04 160);" id="ais-count">0</span>
             </div>
             <div class="status-item">
                 <span>碰撞风险：</span>
-                <span style="color: #48bb78;" id="collision-risk">低</span>
+                <span style="color: oklch(0.52 0.04 160);" id="collision-risk">低</span>
             </div>
         </div>
         <div class="header-actions">
             <div class="status-item">
                 <span>VR 菜单：</span>
-                <span style="color: #81c784;" id="vr-status-label">已生成</span>
+                <span style="color: oklch(0.52 0.04 160);" id="vr-status-label">已生成</span>
             </div>
             <a class="action-link" href="/captain-cockpit.html" target="_blank" rel="noopener noreferrer">返回船长智能中控台</a>
             <button type="button" class="action-button active" id="toggle-vr-panel">隐藏 VR 菜单</button>
@@ -752,7 +785,7 @@
     <div class="main-container">
         <div class="sidebar">
             <div class="panel">
-                <h3>⚠️ 特殊场景预警</h3>
+                <h3><span class="seal seal-shu">警</span> 特殊场景预警</h3>
                 <div id="special-alerts">
                     <div class="special-alert" id="canyon-alert" style="display: none;">
                         <div class="special-alert-title">🏔️ 峡谷航行警告</div>
@@ -762,19 +795,19 @@
                         <div class="special-alert-title">🧊 冰山预警</div>
                         <div class="colregs-rule">检测到冰山 - 保持安全距离，减速航行。根据 COLREGs 规则 6 条（安全航速），在冰山区域应使用安全航速。</div>
                     </div>
-                    <div style="color: #718096; text-align: center; padding: 20px;" id="no-special-alerts">无特殊警告</div>
+                    <div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;" id="no-special-alerts">无特殊警告</div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3>⚠️ COLREGs 合规警告</h3>
+                <h3><span class="seal seal-shu">规</span> COLREGs 合规警告</h3>
                 <div id="colregs-alerts">
-                    <div style="color: #718096; text-align: center; padding: 20px;">无警告</div>
+                    <div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;">无警告</div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3>🚢 AIS 目标列表 (AR-CAS Pro)</h3>
+                <h3><span class="seal">舶</span> AIS 目标列表 (AR-CAS Pro)</h3>
                 <div class="cpa-tcpa">
                     <div class="cpa-item">
                         <div class="cpa-label">最小 CPA</div>
@@ -790,7 +823,7 @@
                     </div>
                 </div>
                 <div id="ais-targets-list">
-                    <div style="color: #718096; text-align: center; padding: 20px;">加载中...</div>
+                    <div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;">加载中...</div>
                 </div>
             </div>
 
@@ -825,7 +858,7 @@
             </div>
 
             <div class="panel">
-                <h3>⚓ 附近港口</h3>
+                <h3><span class="seal seal-kitsune">港</span> 附近港口</h3>
                 <div id="ports-list">
                     <div class="port-item">
                         <span class="port-name">三亚港</span>
@@ -849,12 +882,12 @@
             <div class="panel">
                 <h3>🚨 驾驶台报警菜单</h3>
                 <div class="alarm-feed" id="worldmonitor-alarm-list">
-                    <div style="color: #718096; text-align: center; padding: 20px;">暂无报警</div>
+                    <div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;">暂无报警</div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3>🚢 本船信息</h3>
+                <h3><span class="seal">舶</span> 本船信息</h3>
                 <div class="route-info">
                     <div class="route-point">
                         <div class="route-dot"></div>
@@ -872,27 +905,38 @@
             </div>
 
             <div class="panel">
-                <h3>📹 AR 监控摄像头（增强现实叠加）</h3>
-                <div class="camera-feed">
-                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=200&fit=crop" alt="前视摄像头" />
-                    <div class="ar-overlay" id="ar-overlay-front"></div>
+                <h3>📹 AR 监控摄像头（数字孪生实时画面 + AR 叠加）</h3>
+                <div class="camera-feed cctv-top">
+                    <span class="corner-stamp">頂視</span>
+                    <iframe src="/digital-twin.html?embed=1&cam=top" loading="lazy" title="顶视摄像头" allow="autoplay"></iframe>
+                    <div class="ar-overlay" id="ar-overlay-top"></div>
                     <div class="camera-info">
-                        <div class="camera-name">前视摄像头 (AR 叠加)</div>
+                        <div class="camera-name">顶视摄像头 · 双体船俯视 (AR 叠加)</div>
                         <div class="camera-status">🟢 实时直播 + AR 目标 + 轨迹预测</div>
                     </div>
                 </div>
-                <div class="camera-feed">
-                    <img src="https://images.unsplash.com/photo-1544644171-1c107c7c29e4?w=400&h=200&fit=crop" alt="后视摄像头" />
+                <div class="camera-feed cctv-bow">
+                    <span class="corner-stamp">船首</span>
+                    <iframe src="/digital-twin.html?embed=1&cam=bow" loading="lazy" title="船头前视" allow="autoplay"></iframe>
+                    <div class="ar-overlay" id="ar-overlay-front"></div>
+                    <div class="camera-info">
+                        <div class="camera-name">前视摄像头 · 船头视角 (AR 叠加)</div>
+                        <div class="camera-status">🟢 实时直播 + AR 目标 + 轨迹预测</div>
+                    </div>
+                </div>
+                <div class="camera-feed cctv-stern">
+                    <span class="corner-stamp">船尾</span>
+                    <iframe src="/digital-twin.html?embed=1&cam=stern" loading="lazy" title="船尾回视" allow="autoplay"></iframe>
                     <div class="ar-overlay" id="ar-overlay-rear"></div>
                     <div class="camera-info">
-                        <div class="camera-name">后视摄像头 (AR 叠加)</div>
+                        <div class="camera-name">后视摄像头 · 船尾视角 (AR 叠加)</div>
                         <div class="camera-status">🟢 实时直播 + AR 目标</div>
                     </div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3>🗺️ 航线规划</h3>
+                <h3><span class="seal seal-koke">航</span> 航线规划</h3>
                 <div class="route-info">
                     <div class="route-point">
                         <div class="route-dot"></div>
@@ -907,29 +951,29 @@
                         <div class="route-label">航点 2: 19.00°N, 110.50°E</div>
                     </div>
                     <div class="route-point">
-                        <div class="route-dot" style="background: #48bb78;"></div>
+                        <div class="route-dot" style="background: oklch(0.52 0.04 160);"></div>
                         <div class="route-label">终点：深圳港</div>
                     </div>
                 </div>
             </div>
         </div>
             <div class="panel" id="agent-insight-panel">
-                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none">🤖 AI Agent 洞察 <span id="agent-panel-arrow">▼</span></h3>
+                <h3 onclick="toggleAgentPanel()" style="cursor:pointer;user-select:none"><span class="seal">腦</span> AI Agent 洞察 <span id="agent-panel-arrow">▼</span></h3>
                 <div id="agent-insight-body">
                 <div id="agent-team-status" style="margin-bottom:12px">
-                        <div style="color:#718096;font-size:12px">加载中...</div>
+                        <div style="color:oklch(0.55 0.005 110);font-size:12px">加载中...</div>
                     </div>
                     <div id="agent-decision-summary" style="margin-bottom:12px;display:none">
-                        <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">决策摘要</div>
-                        <div id="agent-decision-content" style="font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5"></div>
+                        <div style="font-size:11px;color:oklch(0.55 0.005 110);text-transform:uppercase;margin-bottom:6px">决策摘要</div>
+                        <div id="agent-decision-content" style="font-size:12px;color:oklch(0.18 0.008 110);background:oklch(0 0 0 / 0.3);border-radius:6px;padding:10px;line-height:1.5"></div>
                     </div>
-                    <div style="font-size:11px;color:#718096;text-transform:uppercase;margin-bottom:6px">快捷命令</div>
+                    <div style="font-size:11px;color:oklch(0.55 0.005 110);text-transform:uppercase;margin-bottom:6px">快捷命令</div>
                     <div style="display:flex;flex-wrap:wrap;gap:6px">
-                        <button onclick="sendAgentCommand('分析当前AIS态势')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">分析 AIS 态势</button>
-                        <button onclick="sendAgentCommand('评估当前碰撞风险')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">评估碰撞风险</button>
-                        <button onclick="sendAgentCommand('提供航线优化建议')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer;font-family:inherit">航线建议</button>
+                        <button onclick="sendAgentCommand('分析当前AIS态势')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:oklch(0.52 0.04 160);font-size:11px;cursor:pointer;font-family:inherit">分析 AIS 态势</button>
+                        <button onclick="sendAgentCommand('评估当前碰撞风险')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:oklch(0.52 0.04 160);font-size:11px;cursor:pointer;font-family:inherit">评估碰撞风险</button>
+                        <button onclick="sendAgentCommand('提供航线优化建议')" style="padding:5px 10px;background:rgba(79,195,247,0.12);border:1px solid rgba(79,195,247,0.25);border-radius:6px;color:oklch(0.52 0.04 160);font-size:11px;cursor:pointer;font-family:inherit">航线建议</button>
                     </div>
-                    <div id="agent-cmd-result" style="display:none;margin-top:10px;font-size:12px;color:#e2e8f0;background:rgba(0,0,0,0.3);border-radius:6px;padding:10px;line-height:1.5;max-height:200px;overflow-y:auto"></div>
+                    <div id="agent-cmd-result" style="display:none;margin-top:10px;font-size:12px;color:oklch(0.18 0.008 110);background:oklch(0 0 0 / 0.3);border-radius:6px;padding:10px;line-height:1.5;max-height:200px;overflow-y:auto"></div>
                 </div>
             </div>
 
@@ -1077,10 +1121,10 @@
             </div>
             <div class="vr-target-tooltip" id="vr-target-tooltip"></div>
             <div class="vr-legend">
-                <div class="vr-legend-row"><span class="vr-swatch" style="color:#48bb78; background:#48bb78;"></span><span>安全目标</span></div>
-                <div class="vr-legend-row"><span class="vr-swatch" style="color:#f6ad55; background:#f6ad55;"></span><span>中风险目标</span></div>
-                <div class="vr-legend-row"><span class="vr-swatch" style="color:#f56565; background:#f56565;"></span><span>高风险目标 / 冰山</span></div>
-                <div class="vr-legend-row"><span class="vr-swatch" style="color:#4fc3f7; background:#4fc3f7;"></span><span>船体 / 环境流场</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:oklch(0.52 0.04 160); background:oklch(0.52 0.04 160);"></span><span>安全目标</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:oklch(0.56 0.05 70); background:oklch(0.56 0.05 70);"></span><span>中风险目标</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:oklch(0.48 0.07 22); background:oklch(0.48 0.07 22);"></span><span>高风险目标 / 冰山</span></div>
+                <div class="vr-legend-row"><span class="vr-swatch" style="color:oklch(0.52 0.04 160); background:oklch(0.52 0.04 160);"></span><span>船体 / 环境流场</span></div>
             </div>
             <div class="vr-overlay-note">当前场景通过高斯泼溅式语义粒子绘制周边环境，并以本船为中心生成可切换的 VR 观察菜单。</div>
         </div>
@@ -1155,14 +1199,14 @@
                 toggleVrButton.textContent = '显示 VR 菜单';
                 toggleVrButton.classList.remove('active');
                 vrStatusLabel.textContent = '已隐藏';
-                vrStatusLabel.style.color = '#f6ad55';
+                vrStatusLabel.style.color = 'oklch(0.56 0.05 70)';
                 return;
             }
 
             toggleVrButton.textContent = '隐藏 VR 菜单';
             toggleVrButton.classList.add('active');
             vrStatusLabel.textContent = isCollapsed ? '已折叠' : '已生成';
-            vrStatusLabel.style.color = isCollapsed ? '#f6ad55' : '#81c784';
+            vrStatusLabel.style.color = isCollapsed ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
             collapseVrButton.textContent = isCollapsed ? '展开' : '折叠';
         }
 
@@ -1196,7 +1240,7 @@
             }
 
             if (!Array.isArray(alarms) || alarms.length === 0) {
-                listEl.innerHTML = '<div style="color: #718096; text-align: center; padding: 20px;">暂无报警</div>';
+                listEl.innerHTML = '<div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;">暂无报警</div>';
                 return;
             }
 
@@ -1344,9 +1388,9 @@
 
         function drawVrBackground(width, height) {
             const sky = vrContext.createLinearGradient(0, 0, 0, height);
-            sky.addColorStop(0, '#06121f');
-            sky.addColorStop(0.5, '#0a1f34');
-            sky.addColorStop(1, '#07131e');
+            sky.addColorStop(0, 'oklch(0.96 0.003 110)');
+            sky.addColorStop(0.5, 'oklch(0.93 0.003 110)');
+            sky.addColorStop(1, 'oklch(0.96 0.003 110)');
             vrContext.fillStyle = sky;
             vrContext.fillRect(0, 0, width, height);
 
@@ -1374,7 +1418,7 @@
                 vrContext.scale(1.15, 0.88);
                 vrContext.translate(-centerX, -(centerY + 10));
             }
-            vrContext.fillStyle = '#dff7ff';
+            vrContext.fillStyle = 'oklch(0.91 0.004 110)';
             vrContext.strokeStyle = 'rgba(79,195,247,0.9)';
             vrContext.lineWidth = 2;
             vrContext.beginPath();
@@ -1385,7 +1429,7 @@
             vrContext.closePath();
             vrContext.fill();
             vrContext.stroke();
-            vrContext.fillStyle = '#0a2438';
+            vrContext.fillStyle = 'oklch(0.91 0.004 110)';
             vrContext.fillRect(centerX - 18, centerY - 18, 36, 28);
             vrContext.restore();
         }
@@ -1425,7 +1469,7 @@
                     const y = centerY - 120 - deltaLat * 580 * perspectiveFactor;
                     const radius = result.risk === 'high' ? 38 : result.risk === 'medium' ? 28 : 22;
                     drawGaussianSplat(x, y, radius, getVrPalette(result.risk), result.risk === 'high' ? 0.34 : 0.22);
-                    vrContext.fillStyle = '#ffffff';
+                    vrContext.fillStyle = 'oklch(0.96 0.003 110)';
                     vrContext.font = '11px sans-serif';
                     vrContext.fillText(target.vessel_type || `AIS ${index + 1}`, x - 16, y - radius - 8);
                     splatCount += 1;
@@ -1446,7 +1490,7 @@
                     }
 
                     if (bridgeState.selectedTarget && isSameTarget(target, bridgeState.selectedTarget)) {
-                        vrContext.strokeStyle = 'rgba(255,255,255,0.85)';
+                        vrContext.strokeStyle = 'oklch(1 0 0 / 0.85)';
                         vrContext.lineWidth = 2;
                         vrContext.beginPath();
                         vrContext.arc(x, y, radius + 10, 0, Math.PI * 2);
@@ -1469,7 +1513,7 @@
                     const x = centerX + (iceberg.lng - Number(ownShip.longitude || 109.5)) * 720;
                     const y = centerY - 150 - (iceberg.lat - Number(ownShip.latitude || 18.25)) * 620 * perspectiveFactor;
                     drawGaussianSplat(x, y, 42, 'rgba(135,206,250,ALPHA)', 0.32);
-                    vrContext.fillStyle = '#dff7ff';
+                    vrContext.fillStyle = 'oklch(0.91 0.004 110)';
                     vrContext.fillText(`ICE-${index + 1}`, x - 12, y - 48);
                     splatCount += 1;
                 });
@@ -1645,7 +1689,7 @@
                                     <span>航速：${target.speed?.toFixed(1) || '--'} kn</span>
                                     <span>CPA: ${cpaResult.cpa.toFixed(2)} NM | TCPA: ${cpaResult.tcpa.toFixed(0)} min</span>
                                 </div>
-                                <div style="margin-top: 8px; font-size: 10px; color: #9f7aea;">
+                                <div style="margin-top: 8px; font-size: 10px; color: oklch(0.55 0.005 110);">
                                     DCPA: ${cpaResult.dcpa.toFixed(2)} NM | ${escapeHtml(cpaResult.colregsRule || '无 COLREGs 冲突')}
                                 </div>
                             </div>
@@ -1655,14 +1699,14 @@
                     targets.forEach((target, index) => {
                         if (target.latitude && target.longitude) {
                             const cpaResult = cpaResults[index];
-                            const color = cpaResult.risk === 'high' ? '#f56565' : cpaResult.risk === 'medium' ? '#f6ad55' : '#48bb78';
+                            const color = cpaResult.risk === 'high' ? 'oklch(0.48 0.07 22)' : cpaResult.risk === 'medium' ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
                             
                             const el = document.createElement('div');
                             el.className = 'ar-target';
                             el.style.cssText = `
                                 width: 24px; height: 24px;
                                 background: ${color};
-                                border: 3px solid #fff;
+                                border: 3px solid oklch(0.96 0.003 110);
                                 border-radius: 50%;
                                 cursor: pointer;
                                 box-shadow: 0 0 20px ${color};
@@ -1672,13 +1716,13 @@
                                 .setLngLat([target.longitude, target.latitude])
                                 .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
                                     <div style="padding: 8px;">
-                                        <div style="font-weight: 700; color: #4fc3f7;">${escapeHtml(target.vessel_type || 'Unknown')}</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">MMSI: ${escapeHtml(target.mmsi)}</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">CPA: ${cpaResult.cpa.toFixed(2)} NM</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">TCPA: ${cpaResult.tcpa.toFixed(0)} min</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">DCPA: ${cpaResult.dcpa.toFixed(2)} NM</div>
-                                        <div style="font-size: 11px; color: #f56565;">风险：${escapeHtml(cpaResult.risk.toUpperCase())}</div>
-                                        ${cpaResult.colregsRule ? `<div style="font-size: 10px; color: #9f7aea; margin-top: 4px;">${escapeHtml(cpaResult.colregsRule)}</div>` : ''}
+                                        <div style="font-weight: 700; color: oklch(0.52 0.04 160);">${escapeHtml(target.vessel_type || 'Unknown')}</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">MMSI: ${escapeHtml(target.mmsi)}</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">CPA: ${cpaResult.cpa.toFixed(2)} NM</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">TCPA: ${cpaResult.tcpa.toFixed(0)} min</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">DCPA: ${cpaResult.dcpa.toFixed(2)} NM</div>
+                                        <div style="font-size: 11px; color: oklch(0.48 0.07 22);">风险：${escapeHtml(cpaResult.risk.toUpperCase())}</div>
+                                        ${cpaResult.colregsRule ? `<div style="font-size: 10px; color: oklch(0.55 0.005 110); margin-top: 4px;">${escapeHtml(cpaResult.colregsRule)}</div>` : ''}
                                     </div>
                                 `))
                                 .addTo(map);
@@ -1775,13 +1819,13 @@
             
             if (minCPA < 0.5 && minTCPA < 30) {
                 riskEl.textContent = '高';
-                riskEl.style.color = '#f56565';
+                riskEl.style.color = 'oklch(0.48 0.07 22)';
             } else if (minCPA < 1.0 && minTCPA < 60) {
                 riskEl.textContent = '中';
-                riskEl.style.color = '#f6ad55';
+                riskEl.style.color = 'oklch(0.56 0.05 70)';
             } else {
                 riskEl.textContent = '低';
-                riskEl.style.color = '#48bb78';
+                riskEl.style.color = 'oklch(0.52 0.04 160)';
             }
         }
 
@@ -1792,7 +1836,7 @@
                 .filter(({ result }) => result.colregsRule && result.risk !== 'low');
             
             if (alerts.length === 0) {
-                alertsDiv.innerHTML = '<div style="color: #718096; text-align: center; padding: 20px;">无警告</div>';
+                alertsDiv.innerHTML = '<div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;">无警告</div>';
                 return;
             }
             
@@ -1815,11 +1859,11 @@
             targets.slice(0, 3).forEach((target, i) => {
                 const x = 20 + i * 30;
                 const y = 30 + i * 20;
-                const color = cpaResults[i].risk === 'high' ? '#f56565' : cpaResults[i].risk === 'medium' ? '#f6ad55' : '#48bb78';
+                const color = cpaResults[i].risk === 'high' ? 'oklch(0.48 0.07 22)' : cpaResults[i].risk === 'medium' ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
                 
                 html += `
-                    <div class="ar-target" style="left: ${x}%; top: ${y}%; background: ${color}; border-color: #fff;">
-                        <div class="ar-target-label" style="color: #fff;">${escapeHtml(target.vessel_type || 'Unknown')}</div>
+                    <div class="ar-target" style="left: ${x}%; top: ${y}%; background: ${color}; border-color: oklch(0.18 0.008 110);">
+                        <div class="ar-target-label" style="color: oklch(0.18 0.008 110);">${escapeHtml(target.vessel_type || 'Unknown')}</div>
                     </div>
                 `;
             });
@@ -1830,7 +1874,7 @@
                     const y = 40 + i * 15;
                     html += `
                         <div class="ar-iceberg" style="left: ${x}%; top: ${y}%;"></div>
-                        <div class="ar-target-label" style="left: ${x}%; top: ${y - 25}%; color: #87cefa; background: rgba(0,0,0,0.85);">🧊 冰山</div>
+                        <div class="ar-target-label" style="left: ${x}%; top: ${y - 25}%; color: oklch(0.52 0.04 160); background: oklch(0 0 0 / 0.85);">🧊 冰山</div>
                     `;
                 });
                 html += '<div class="ar-iceberg-warning">🧊 冰山预警 - 保持安全距离</div>';
@@ -1846,8 +1890,8 @@
             
             frontOverlay.innerHTML = html;
             rearOverlay.innerHTML = scenario.hasIceberg ? 
-                '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #f56565; font-size: 12px; font-weight: 700;">⚠️ 后方冰山接近</div>' :
-                '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #48bb78; font-size: 12px;">后方无目标</div>';
+                '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: oklch(0.48 0.07 22); font-size: 12px; font-weight: 700;">⚠️ 后方冰山接近</div>' :
+                '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: oklch(0.52 0.04 160); font-size: 12px;">后方无目标</div>';
         }
 
         function getSpecialScenario() {
@@ -1957,20 +2001,20 @@
                     var bt = ov.build_team || {};
                     var et = ov.execution_team || {};
                     var sch = ov.scheduler || {};
-                    var schColor = sch.running ? '#48bb78' : '#fc8181';
+                    var schColor = sch.running ? 'oklch(0.52 0.04 160)' : 'oklch(0.48 0.07 22)';
                     var schText = sch.running ? '运行中' : '已停止';
                     statusEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-                        '<span style="font-size:12px;color:#e2e8f0">Agent 团队</span>' +
+                        '<span style="font-size:12px;color:oklch(0.18 0.008 110)">Agent 团队</span>' +
                         '<span style="font-size:11px;color:' + schColor + '">● ' + escapeHtml(schText) + '</span></div>' +
-                        '<div style="display:flex;gap:12px;font-size:11px;color:#a0aec0">' +
+                        '<div style="display:flex;gap:12px;font-size:11px;color:oklch(0.55 0.005 110)">' +
                         '<span>构建: ' + (bt.agent_count || 0) + ' 位</span>' +
                         '<span>执行: ' + (et.agent_count || 0) + ' 位</span>' +
                         '<span>Tick: ' + (sch.tick_count || 0) + '</span></div>';
                 } else {
-                    statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+                    statusEl.innerHTML = '<div style="font-size:12px;color:oklch(0.55 0.005 110)">Agent 服务离线</div>';
                 }
             } catch(e) {
-                statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+                statusEl.innerHTML = '<div style="font-size:12px;color:oklch(0.55 0.005 110)">Agent 服务离线</div>';
             }
             try {
                 var r2 = await fetch('/api/v1/ai-native/decision/package');
@@ -1979,14 +2023,14 @@
                     decEl.style.display = 'block';
                     var rs = dp.risk_summary || {};
                     var level = rs.overall_risk || 'unknown';
-                    var levelColor = level === 'high' ? '#fc8181' : level === 'medium' ? '#f6ad55' : '#48bb78';
+                    var levelColor = level === 'high' ? 'oklch(0.48 0.07 22)' : level === 'medium' ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
                     var html = '<div style="margin-bottom:6px"><span style="color:' + levelColor + ';font-weight:600">风险: ' + escapeHtml(level.toUpperCase()) + '</span></div>';
                     if (rs.factors && rs.factors.length) {
-                        html += rs.factors.slice(0, 3).map(function(f){ return '<div style="font-size:11px;color:#a0aec0">• ' + escapeHtml(String(f)) + '</div>'; }).join('');
+                        html += rs.factors.slice(0, 3).map(function(f){ return '<div style="font-size:11px;color:oklch(0.55 0.005 110)">• ' + escapeHtml(String(f)) + '</div>'; }).join('');
                     }
                     if (dp.action_plan && dp.action_plan.length) {
-                        html += '<div style="margin-top:6px;font-size:11px;color:#718096">建议动作:</div>';
-                        html += dp.action_plan.slice(0, 2).map(function(a){ return '<div style="font-size:11px;color:#a0aec0">→ ' + escapeHtml(String(a.action || a)) + '</div>'; }).join('');
+                        html += '<div style="margin-top:6px;font-size:11px;color:oklch(0.55 0.005 110)">建议动作:</div>';
+                        html += dp.action_plan.slice(0, 2).map(function(a){ return '<div style="font-size:11px;color:oklch(0.55 0.005 110)">→ ' + escapeHtml(String(a.action || a)) + '</div>'; }).join('');
                     }
                     decContent.innerHTML = html;
                 } else {
@@ -2000,7 +2044,7 @@
         async function sendAgentCommand(cmd) {
             var resultEl = document.getElementById('agent-cmd-result');
             resultEl.style.display = 'block';
-            resultEl.innerHTML = '<span style="color:#718096">处理中...</span>';
+            resultEl.innerHTML = '<span style="color:oklch(0.55 0.005 110)">处理中...</span>';
             try {
                 var resp = await fetch('/api/v1/agent-config/bridge/command', {
                     method: 'POST',
@@ -2011,7 +2055,7 @@
                 var data = await resp.json();
                 var html = '';
                 if (data.agent) {
-                    html += '<div style="font-size:11px;color:#4fc3f7;margin-bottom:4px">Agent: ' + escapeHtml(data.agent) + '</div>';
+                    html += '<div style="font-size:11px;color:oklch(0.52 0.04 160);margin-bottom:4px">Agent: ' + escapeHtml(data.agent) + '</div>';
                 }
                 if (data.response) {
                     html += '<div>' + escapeHtml(String(data.response)).replace(/\n/g, '<br>') + '</div>';
@@ -2022,7 +2066,7 @@
                 }
                 resultEl.innerHTML = html;
             } catch(e) {
-                resultEl.innerHTML = '<span style="color:#fc8181">请求失败: ' + escapeHtml(e.message) + '</span>';
+                resultEl.innerHTML = '<span style="color:oklch(0.48 0.07 22)">请求失败: ' + escapeHtml(e.message) + '</span>';
             }
         }
 
@@ -2054,20 +2098,20 @@
                     var bt = ov.build_team || {};
                     var et = ov.execution_team || {};
                     var sch = ov.scheduler || {};
-                    var schColor = sch.running ? '#48bb78' : '#fc8181';
+                    var schColor = sch.running ? 'oklch(0.52 0.04 160)' : 'oklch(0.48 0.07 22)';
                     var schText = sch.running ? '运行中' : '已停止';
                     statusEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-                        '<span style="font-size:12px;color:#e2e8f0">Agent 团队</span>' +
+                        '<span style="font-size:12px;color:oklch(0.18 0.008 110)">Agent 团队</span>' +
                         '<span style="font-size:11px;color:' + schColor + '">● ' + escapeHtml(schText) + '</span></div>' +
-                        '<div style="display:flex;gap:12px;font-size:11px;color:#a0aec0">' +
+                        '<div style="display:flex;gap:12px;font-size:11px;color:oklch(0.55 0.005 110)">' +
                         '<span>构建: ' + (bt.agent_count || 0) + ' 位</span>' +
                         '<span>执行: ' + (et.agent_count || 0) + ' 位</span>' +
                         '<span>Tick: ' + (sch.tick_count || 0) + '</span></div>';
                 } else {
-                    statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+                    statusEl.innerHTML = '<div style="font-size:12px;color:oklch(0.55 0.005 110)">Agent 服务离线</div>';
                 }
             } catch(e) {
-                statusEl.innerHTML = '<div style="font-size:12px;color:#718096">Agent 服务离线</div>';
+                statusEl.innerHTML = '<div style="font-size:12px;color:oklch(0.55 0.005 110)">Agent 服务离线</div>';
             }
             try {
                 var r2 = await fetch('/api/v1/ai-native/decision/package');
@@ -2076,14 +2120,14 @@
                     decEl.style.display = 'block';
                     var rs = dp.risk_summary || {};
                     var level = rs.overall_risk || 'unknown';
-                    var levelColor = level === 'high' ? '#fc8181' : level === 'medium' ? '#f6ad55' : '#48bb78';
+                    var levelColor = level === 'high' ? 'oklch(0.48 0.07 22)' : level === 'medium' ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
                     var html = '<div style="margin-bottom:6px"><span style="color:' + levelColor + ';font-weight:600">风险: ' + escapeHtml(level.toUpperCase()) + '</span></div>';
                     if (rs.factors && rs.factors.length) {
-                        html += rs.factors.slice(0, 3).map(function(f){ return '<div style="font-size:11px;color:#a0aec0">• ' + escapeHtml(String(f)) + '</div>'; }).join('');
+                        html += rs.factors.slice(0, 3).map(function(f){ return '<div style="font-size:11px;color:oklch(0.55 0.005 110)">• ' + escapeHtml(String(f)) + '</div>'; }).join('');
                     }
                     if (dp.action_plan && dp.action_plan.length) {
-                        html += '<div style="margin-top:6px;font-size:11px;color:#718096">建议动作:</div>';
-                        html += dp.action_plan.slice(0, 2).map(function(a){ return '<div style="font-size:11px;color:#a0aec0">→ ' + escapeHtml(String(a.action || a)) + '</div>'; }).join('');
+                        html += '<div style="margin-top:6px;font-size:11px;color:oklch(0.55 0.005 110)">建议动作:</div>';
+                        html += dp.action_plan.slice(0, 2).map(function(a){ return '<div style="font-size:11px;color:oklch(0.55 0.005 110)">→ ' + escapeHtml(String(a.action || a)) + '</div>'; }).join('');
                     }
                     decContent.innerHTML = html;
                 } else {
@@ -2097,7 +2141,7 @@
         async function sendAgentCommand(cmd) {
             var resultEl = document.getElementById('agent-cmd-result');
             resultEl.style.display = 'block';
-            resultEl.innerHTML = '<span style="color:#718096">处理中...</span>';
+            resultEl.innerHTML = '<span style="color:oklch(0.55 0.005 110)">处理中...</span>';
             try {
                 var resp = await fetch('/api/v1/agent-config/bridge/command', {
                     method: 'POST',
@@ -2108,7 +2152,7 @@
                 var data = await resp.json();
                 var html = '';
                 if (data.agent) {
-                    html += '<div style="font-size:11px;color:#4fc3f7;margin-bottom:4px">Agent: ' + escapeHtml(data.agent) + '</div>';
+                    html += '<div style="font-size:11px;color:oklch(0.52 0.04 160);margin-bottom:4px">Agent: ' + escapeHtml(data.agent) + '</div>';
                 }
                 if (data.response) {
                     html += '<div>' + escapeHtml(String(data.response)).replace(/\n/g, '<br>') + '</div>';
@@ -2119,7 +2163,7 @@
                 }
                 resultEl.innerHTML = html;
             } catch(e) {
-                resultEl.innerHTML = '<span style="color:#fc8181">请求失败: ' + escapeHtml(e.message) + '</span>';
+                resultEl.innerHTML = '<span style="color:oklch(0.48 0.07 22)">请求失败: ' + escapeHtml(e.message) + '</span>';
             }
         }
 
@@ -2181,5 +2225,19 @@
         window.applyVrTransform = applyVrTransform;
     });
     </script>
+    <script>
+        // 摄像头点击高亮 (wabi-sabi 朱印边框)
+        document.addEventListener('DOMContentLoaded', function() {
+            var feeds = document.querySelectorAll('.camera-feed');
+            feeds.forEach(function(f) {
+                f.addEventListener('click', function() {
+                    feeds.forEach(function(x) { x.classList.remove('active'); });
+                    f.classList.add('active');
+                });
+            });
+            if (feeds.length > 0) feeds[0].classList.add('active');
+        });
+    </script>
+<script src="/js/i18n.js"></script>
 </body>
 </html>

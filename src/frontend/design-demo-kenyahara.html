@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Demo C · Kenya Hara 东方极简</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   Kenya Hara — 东方极简 · 空的设计
+   哲学：设计不是填充，是清空
+   色彩：白的层次（暖白/冷白/米白）+ 墨色 + 赤土一点点
+   排版：衬线 display + 无衬线 body，80%+ 留白
+   特征：纸张质感、触觉可视化、禅意的呼吸感
+   ═══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+:root {
+  --warm-white: #f8f6f1;
+  --cool-white: #f0f1f3;
+  --off-white: #eceae4;
+  --paper: #f5f3ee;
+  --ink: #2a2a28;
+  --ink-light: #6b6b65;
+  --ink-faint: #b0ada6;
+  --line: #ddd9d1;
+  --line-faint: #eae7e0;
+  --sumi: #3d3d3a;         /* 墨色 */
+  --aka: #C04A1A;           /* 赤土 — 只用于最重要的一处 */
+  --aka-faint: rgba(192,74,26,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Noto Sans SC', 'Hiragino Sans GB', 'PingFang SC', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+/* Paper texture — subtle noise via SVG */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+.frame {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 60px;
+  position: relative; z-index: 1;
+}
+
+/* ── Masthead — 谦逊的存在 ── */
+.masthead {
+  padding: 48px 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.masthead .mark {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 3px; color: var(--ink-light);
+}
+.masthead .mark .aka { color: var(--aka); }
+.masthead .time {
+  font-size: 11px; color: var(--ink-faint);
+  letter-spacing: 1px;
+}
+
+/* ── Divider — 水墨一笔 ── */
+.sumi-line {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line), var(--line), transparent);
+}
+.sumi-line.bold {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 5%, var(--sumi) 30%, var(--sumi) 70%, transparent 95%);
+}
+
+/* ── Hero — 极致留白 ── */
+.hero {
+  padding: 120px 0 100px;
+  text-align: center;
+}
+.hero h1 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 48px;
+  font-weight: 300;
+  letter-spacing: 12px;
+  color: var(--sumi);
+  line-height: 1.4;
+}
+.hero h1 .emphasis {
+  font-weight: 700;
+  letter-spacing: 8px;
+}
+.hero .en {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 24px;
+}
+.hero .philo {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--ink-light);
+  margin-top: 48px;
+  max-width: 560px;
+  margin-left: auto; margin-right: auto;
+  line-height: 2;
+}
+
+/* ── KPI — 竖排，像牌位 ── */
+.kpi-row {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  padding: 60px 0;
+}
+.kpi-cell {
+  width: 140px;
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--warm-white);
+  border: 1px solid var(--line-faint);
+  position: relative;
+}
+.kpi-cell:first-child { border-radius: 4px 0 0 4px; }
+.kpi-cell:last-child { border-radius: 0 4px 4px 0; }
+.kpi-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+}
+.kpi-val {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 36px;
+  font-weight: 300;
+  color: var(--sumi);
+  font-feature-settings: 'tnum';
+}
+.kpi-val .unit {
+  font-size: 12px; font-weight: 400; color: var(--ink-faint);
+}
+.kpi-delta {
+  font-size: 10px; color: var(--ink-faint); margin-top: 6px;
+}
+.kpi-delta.good { color: #5a8a5e; }
+.kpi-delta.warn { color: var(--aka); }
+
+/* ── 3D Viewport — 白中有黑 ── */
+.viewport {
+  position: relative;
+  aspect-ratio: 16/7;
+  background: var(--sumi);
+  margin: 0 -60px;
+  overflow: hidden;
+}
+.viewport .breath {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.06), transparent 70%);
+}
+.viewport .center-text {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.12);
+}
+.viewport .center-text .kanji {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 120px; font-weight: 900;
+  letter-spacing: 20px;
+  line-height: 1;
+}
+.viewport .center-text .sub {
+  font-size: 11px; letter-spacing: 6px;
+  text-transform: uppercase;
+  margin-top: 16px;
+  color: rgba(255,255,255,0.2);
+}
+.viewport .corner-label {
+  position: absolute;
+  font-size: 9px; letter-spacing: 2px;
+  color: rgba(255,255,255,0.25);
+}
+.viewport .corner-label.tl { top: 20px; left: 20px; }
+.viewport .corner-label.br { bottom: 20px; right: 20px; text-align: right; }
+
+/* ── Two Columns — 呼吸间距 ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 80px 0;
+}
+.col-head {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  color: var(--sumi);
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Device List — 简约表格 ── */
+.dev-table { width: 100%; border-collapse: collapse; }
+.dev-table th {
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--ink-faint);
+  text-align: left; padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+}
+.dev-table td {
+  padding: 12px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line-faint);
+  color: var(--ink);
+}
+.dev-table .id-col {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.dev-table .val-col {
+  font-feature-settings: 'tnum';
+  font-weight: 500;
+}
+.dot-status {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+}
+.dot-status.ok { background: #5a8a5e; }
+.dot-status.warn { background: #b8923e; }
+.dot-status.crit { background: var(--aka); }
+
+/* ── Anomaly — 纸片卡片 ── */
+.anom-list { display: flex; flex-direction: column; gap: 16px; }
+.anom-card {
+  padding: 20px 24px;
+  background: var(--warm-white);
+  border: 1px solid var(--line-faint);
+  border-radius: 2px;
+  transition: box-shadow 0.3s;
+  cursor: pointer;
+}
+.anom-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.anom-card .sev {
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.anom-card.critical .sev { color: var(--aka); }
+.anom-card.high .sev { color: #b8923e; }
+.anom-card.medium .sev { color: var(--ink-light); }
+.anom-card .desc {
+  font-size: 13px; line-height: 1.8; color: var(--ink);
+}
+.anom-card .meta {
+  font-size: 10px; color: var(--ink-faint); margin-top: 8px;
+  font-feature-settings: 'tnum';
+}
+
+/* ── PUE Chart ── */
+.chart-section {
+  padding: 80px 0;
+}
+.chart-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 24px;
+}
+.chart-header h3 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px; font-weight: 500; letter-spacing: 3px;
+}
+.chart-legend {
+  display: flex; gap: 24px;
+  font-size: 10px; color: var(--ink-faint); letter-spacing: 1px;
+}
+.leg-mark {
+  display: inline-block; width: 16px; height: 1px;
+  vertical-align: middle; margin-right: 6px;
+}
+.chart-area {
+  width: 100%; height: 180px;
+  border: 1px solid var(--line-faint);
+  border-radius: 2px;
+  background: var(--warm-white);
+  position: relative;
+  overflow: hidden;
+}
+.chart-area .subtle-wave {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(0deg,
+    rgba(192,74,26,0.04) 0%,
+    transparent 100%);
+  clip-path: polygon(
+    0% 80%, 8% 60%, 16% 65%, 24% 50%, 32% 55%,
+    40% 40%, 48% 45%, 56% 35%, 64% 42%, 72% 30%,
+    80% 38%, 88% 32%, 96% 40%, 100% 35%,
+    100% 100%, 0% 100%
+  );
+}
+.chart-area .target {
+  position: absolute; top: 32%;
+  left: 0; right: 0;
+  border-top: 1px dashed var(--ink-faint);
+}
+.chart-area .target-text {
+  position: absolute; top: 30%; right: 16px;
+  font-size: 9px; color: var(--ink-faint);
+  letter-spacing: 1px;
+}
+
+/* ── AI Insight — 诗意呈现 ── */
+.insight-section {
+  padding: 80px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.insight-left {
+  text-align: right;
+  padding-right: 40px;
+  border-right: 1px solid var(--line);
+}
+.insight-left .big-char {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 120px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--off-white);
+}
+.insight-left .label {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px; font-weight: 300;
+  letter-spacing: 4px; color: var(--ink-light);
+  margin-top: 16px;
+}
+.insight-right {
+  padding-top: 20px;
+}
+.insight-right .tag {
+  display: inline-block;
+  padding: 4px 14px;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  border: 1px solid var(--aka);
+  color: var(--aka);
+  margin-bottom: 20px;
+}
+.insight-right p {
+  font-size: 14px; line-height: 2;
+  color: var(--ink);
+}
+.rec-list {
+  list-style: none; margin-top: 32px;
+}
+.rec-list li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-faint);
+  font-size: 13px;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 12px;
+  line-height: 1.7;
+}
+.rec-list .n {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px; font-weight: 600;
+  color: var(--aka);
+}
+
+/* ── Energy Flow — 禅意 ── */
+.flow-section {
+  padding: 80px 0;
+}
+.flow-nodes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-top: 40px;
+}
+.flow-node {
+  width: 140px;
+  padding: 28px 16px;
+  text-align: center;
+  background: var(--warm-white);
+  border: 1px solid var(--line-faint);
+}
+.flow-node:first-child { border-radius: 4px 0 0 4px; }
+.flow-node:last-child { border-radius: 0 4px 4px 0; }
+.flow-node .fn-name {
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.flow-node .fn-val {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 28px; font-weight: 300;
+  color: var(--sumi); margin-top: 8px;
+  font-feature-settings: 'tnum';
+}
+.flow-node .fn-unit { font-size: 10px; color: var(--ink-faint); }
+.flow-node.primary { border-color: var(--aka); background: var(--aka-faint); }
+.flow-node.primary .fn-val { color: var(--aka); }
+.flow-link {
+  width: 40px; height: 1px;
+  background: var(--line);
+  position: relative;
+}
+.flow-link::after {
+  content: '→';
+  position: absolute; right: -2px; top: -8px;
+  font-size: 14px; color: var(--ink-faint);
+}
+
+/* ── Ratchet — 五步 ── */
+.ratchet-section {
+  padding: 80px 0;
+}
+.ratchet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.ratchet-step {
+  padding: 32px 24px;
+  background: var(--warm-white);
+  border: 1px solid var(--line-faint);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.ratchet-step.active {
+  border-color: var(--aka);
+  background: var(--aka-faint);
+}
+.ratchet-step .step-num {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 42px; font-weight: 300;
+  color: var(--line);
+  line-height: 1;
+}
+.ratchet-step.active .step-num { color: var(--aka); }
+.ratchet-step h4 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 2px;
+  margin-top: 16px;
+}
+.ratchet-step p {
+  font-size: 12px; color: var(--ink-light);
+  margin-top: 8px; line-height: 1.8;
+}
+
+/* ── Footer — 谦逊 ── */
+.foot {
+  padding: 60px 0 40px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--ink-faint);
+}
+.foot .sig {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px;
+  color: var(--ink-light);
+  letter-spacing: 4px;
+  display: block;
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="mark">PoseidonX<span class="aka">·</span>数据中心</div>
+    <div class="time">二〇二六年四月二十二日</div>
+  </header>
+  <hr class="sumi-line bold"/>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>
+      物理 ↔ 数字<br/>
+      <span class="emphasis">一一映射</span>
+    </h1>
+    <div class="en">Digital Twin · xFirst Principle Energy Datacenter</div>
+    <p class="philo">
+      每一台机柜是一个精确的几何节点。每一条母线是能量流动的脉络。传感器不是监控——是机房在呼吸。我们不填充空间，我们让空间说话。
+    </p>
+  </section>
+  <hr class="sumi-line"/>
+
+  <!-- KPI -->
+  <section class="kpi-row">
+    <div class="kpi-cell">
+      <div class="kpi-label">PUE</div>
+      <div class="kpi-val">1.18</div>
+      <div class="kpi-delta good">↓ 0.03</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">IT 负载</div>
+      <div class="kpi-val">847<span class="unit"> kW</span></div>
+      <div class="kpi-delta good">↓ 2.1%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">制冷</div>
+      <div class="kpi-val">142<span class="unit"> kW</span></div>
+      <div class="kpi-delta good">↓ 5.8%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">温度</div>
+      <div class="kpi-val">24.3<span class="unit">°C</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">湿度</div>
+      <div class="kpi-val">48<span class="unit">%</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">设备</div>
+      <div class="kpi-val">64</div>
+      <div class="kpi-delta">8×8</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">异常</div>
+      <div class="kpi-val" style="color:var(--aka)">3</div>
+      <div class="kpi-delta warn">1 严重</div>
+    </div>
+  </section>
+
+  <!-- 3D Viewport -->
+  <div class="viewport">
+    <div class="breath"></div>
+    <div class="center-text">
+      <div class="kanji">空间</div>
+      <div class="sub">Three.js · 8×8 Rack · Live Sync</div>
+    </div>
+    <div class="corner-label tl">数字孪生 · 实时渲染</div>
+    <div class="corner-label br">ROOM 80×50×12<br/>GPU HEAT FIELD · IDW<br/>COLD / HOT AISLE</div>
+  </div>
+
+  <!-- Devices + Anomalies -->
+  <div class="two-col">
+    <div>
+      <div class="col-head">设备矩阵 · 六十四台</div>
+      <table class="dev-table">
+        <thead>
+          <tr><th>编号</th><th>类型</th><th>功耗</th><th>温度</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="id-col">R1-01</td><td>GPU 服务器</td><td class="val-col">18.2 kW</td><td>67.3°C</td><td><span class="dot-status crit"></span></td></tr>
+          <tr><td class="id-col">R1-02</td><td>GPU 服务器</td><td class="val-col">16.8 kW</td><td>52.1°C</td><td><span class="dot-status ok"></span></td></tr>
+          <tr><td class="id-col">R2-01</td><td>存储阵列</td><td class="val-col">4.5 kW</td><td>38.7°C</td><td><span class="dot-status ok"></span></td></tr>
+          <tr><td class="id-col">R2-02</td><td>网络设备</td><td class="val-col">2.1 kW</td><td>34.2°C</td><td><span class="dot-status ok"></span></td></tr>
+          <tr><td class="id-col">R3-01</td><td>GPU 服务器</td><td class="val-col">17.4 kW</td><td>58.9°C</td><td><span class="dot-status warn"></span></td></tr>
+          <tr><td class="id-col">R3-02</td><td>CPU 服务器</td><td class="val-col">8.6 kW</td><td>45.0°C</td><td><span class="dot-status ok"></span></td></tr>
+          <tr><td class="id-col">R4-01</td><td>GPU 服务器</td><td class="val-col">19.1 kW</td><td>71.2°C</td><td><span class="dot-status crit"></span></td></tr>
+          <tr><td class="id-col">R4-02</td><td>UPS</td><td class="val-col">1.2 kW</td><td>29.8°C</td><td><span class="dot-status ok"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="col-head">异常记录</div>
+      <div class="anom-list">
+        <div class="anom-card critical">
+          <div class="sev">严重</div>
+          <div class="desc">R4-01 温度超限 71.2°C — 冷通道回风受阻，建议检查 CRAH-04 风机</div>
+          <div class="meta">12:04:32 · z-score 3.8</div>
+        </div>
+        <div class="anom-card high">
+          <div class="sev">警告</div>
+          <div class="desc">R1-01 功耗持续高位 18.2kW — GPU 利用率 98%，建议迁移负载</div>
+          <div class="meta">12:01:15 · z-score 2.9</div>
+        </div>
+        <div class="anom-card medium">
+          <div class="sev">提示</div>
+          <div class="desc">PDU-B2 相位不平衡 — L1/L2 差异 8.3A</div>
+          <div class="meta">11:58:40 · z-score 2.1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr class="sumi-line"/>
+
+  <!-- PUE Trend -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h3>能效趋势 · 二十四小时</h3>
+      <div class="chart-legend">
+        <span><span class="leg-mark" style="background:var(--sumi)"></span>实际</span>
+        <span><span class="leg-mark" style="background:var(--aka)"></span>预测</span>
+        <span><span class="leg-mark" style="background:var(--ink-faint);border-top:1px dashed var(--ink-faint)"></span>目标 1.20</span>
+      </div>
+    </div>
+    <div class="chart-area">
+      <div class="subtle-wave"></div>
+      <div class="target"></div>
+      <div class="target-text">PUE 1.20</div>
+    </div>
+  </section>
+  <hr class="sumi-line"/>
+
+  <!-- AI Insight -->
+  <section class="insight-section">
+    <div class="insight-left">
+      <div class="big-char">智</div>
+      <div class="label">AI 洞察</div>
+    </div>
+    <div class="insight-right">
+      <div class="tag">Energy Optimization</div>
+      <p>
+        当前 PUE 为 1.18，处于优秀水平。主要能耗集中在第一、四排 GPU 集群。冷通道存在热岛效应。建议迁移 R4-01 负载至低温区，调高 CRAH-04 风速，启用液冷辅助回路。预计可将 PUE 降至 1.15，年节省约四十八万元。
+      </p>
+      <ul class="rec-list">
+        <li><span class="n">一</span>迁移 R4-01 GPU 负载至 R6-03（预计降温 12°C）</li>
+        <li><span class="n">二</span>CRAH-04 风速 65% → 85%（消除热岛）</li>
+        <li><span class="n">三</span>启用液冷辅助回路（PUE ↓ 0.03）</li>
+        <li><span class="n">四</span>PDU-B2 回路负载再平衡（降谐波 2.1%）</li>
+        <li><span class="n">五</span>夜间低负载时段关闭 UPS-02 旁路（省 1.8kW）</li>
+      </ul>
+    </div>
+  </section>
+  <hr class="sumi-line"/>
+
+  <!-- Energy Flow -->
+  <section class="flow-section">
+    <div class="col-head" style="text-align:center">能量流</div>
+    <div class="flow-nodes">
+      <div class="flow-node"><div class="fn-name">市电</div><div class="fn-val">998</div><div class="fn-unit">kW</div></div>
+      <div class="flow-link"></div>
+      <div class="flow-node"><div class="fn-name">UPS</div><div class="fn-val">982</div><div class="fn-unit">kW · η98.4%</div></div>
+      <div class="flow-link"></div>
+      <div class="flow-node"><div class="fn-name">PDU</div><div class="fn-val">968</div><div class="fn-unit">kW</div></div>
+      <div class="flow-link"></div>
+      <div class="flow-node primary"><div class="fn-name">IT 负载</div><div class="fn-val">847</div><div class="fn-unit">kW</div></div>
+      <div class="flow-link"></div>
+      <div class="flow-node"><div class="fn-name">制冷</div><div class="fn-val">142</div><div class="fn-unit">kW</div></div>
+    </div>
+  </section>
+  <hr class="sumi-line"/>
+
+  <!-- Ratchet -->
+  <section class="ratchet-section">
+    <div class="col-head" style="text-align:center">Musk 五步法 · 第一性原理</div>
+    <div class="ratchet-grid">
+      <div class="ratchet-step active">
+        <div class="step-num">一</div>
+        <h4>质疑</h4>
+        <p>真的需要这个制冷量吗？</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="step-num">二</div>
+        <h4>删除</h4>
+        <p>去掉不必要的冷却回路</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="step-num">三</div>
+        <h4>简化</h4>
+        <p>合并电力分配路径</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="step-num">四</div>
+        <h4>加速</h4>
+        <p>AI 预测 + 自动调节</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <span class="sig">PoseidonX</span>
+    数据中心数字孪生 · Kenya Hara 东方极简 · Demo C
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,89 +1,106 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="ob-title" content="控制台交互">
-  <meta name="ob-subtitle" content="K-Master OpenBridge HMI — 智能对话式控制">
-  <title>控制台交互 — PoseidonX</title>
-  <link rel="stylesheet" href="/css/openbridge-theme.css">
-  <style>
-:root{--h-bg:#060d1a;--h-panel:rgba(10,22,45,0.92);--h-glass:rgba(12,25,50,0.7);--h-line:rgba(100,180,255,0.12);--h-cyan:#64d2ff;--h-green:#30d158;--h-orange:#ff9f0a;--h-red:#ff453a;--h-blue:#007aff;--h-purple:#bf5af2;--h-text:#f0f6ff;--h-text2:#9bb3cd;--h-text3:#5b7894;--h-mono:'SF Mono','Menlo',monospace;--h-sans:-apple-system,'Segoe UI',sans-serif}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--h-sans);background:var(--h-bg);color:var(--h-text);min-height:100vh;padding:var(--ob-topbar-height,48px) 20px 20px 80px;overflow:hidden}
-.hmi-layout{display:grid;grid-template-columns:1fr 380px;gap:16px;height:calc(100vh - 80px)}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>控制台交互 — PoseidonX</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap">
+<style>
+:root{
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.005 110);
+  --hai:oklch(0.78 0.005 110);--nezumi:oklch(0.68 0.006 110);
+  --sumi:oklch(0.18 0.008 110);--sumi-2:oklch(0.38 0.006 110);--sumi-3:oklch(0.55 0.005 110);
+  --koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);
+  --rubber:oklch(0.72 0.006 110);--rubber-hover:oklch(0.68 0.007 110);
+  --groove:oklch(0.82 0.004 110);--ridge:oklch(1.00 0 0 / 0.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--shironeri);color:var(--sumi);min-height:100vh;padding:48px 20px 20px 80px;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(oklch(0 0 0/.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/.008) 1px,transparent 1px);
+  background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+.hmi-layout{display:grid;grid-template-columns:1fr 380px;gap:16px;height:calc(100vh - 80px);position:relative;z-index:1}
 @media(max-width:1000px){.hmi-layout{grid-template-columns:1fr;height:auto;overflow-y:auto}}
 .left-panel{display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding-right:4px}
+/* ── Notification Bar ── */
 .notif-bar{display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
 .notif-bar::-webkit-scrollbar{display:none}
-.notif-item{display:inline-flex;align-items:center;gap:6px;background:var(--h-panel);border:1px solid var(--h-line);border-radius:10px;padding:6px 14px;font-size:11px;flex-shrink:0;transition:all .2s;cursor:default;white-space:nowrap}
-.notif-item:hover{border-color:rgba(100,180,255,.25)}
+.notif-item{display:inline-flex;align-items:center;gap:6px;background:var(--ishi);border:1px solid var(--groove);padding:6px 14px;font-size:11px;flex-shrink:0;white-space:nowrap}
+.notif-item:hover{border-color:var(--hai)}
 .n-dot{width:6px;height:6px;border-radius:50%}
-.n-dot.ok{background:var(--h-green)}.n-dot.warn{background:var(--h-orange);box-shadow:0 0 6px rgba(255,159,10,.4)}.n-dot.alarm{background:var(--h-red);animation:pulse-alarm 1.5s infinite}
+.n-dot.ok{background:var(--koke)}.n-dot.warn{background:var(--kitsune)}.n-dot.alarm{background:var(--shu);animation:pulse-alarm 1.5s infinite}
 @keyframes pulse-alarm{0%,100%{opacity:1}50%{opacity:0.4}}
-.card{background:var(--h-panel);border:1px solid var(--h-line);border-radius:14px;transition:all .3s}
-.card:hover{border-color:rgba(100,180,255,.2)}
+/* ── Cards ── */
+.card{background:var(--ishi);border:1px solid var(--groove)}
 .card-pad{padding:18px}
-.card-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.card-title .icon{font-size:15px}
+.card-title{font-family:'Noto Serif SC',serif;font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .seal{font-size:11px;font-weight:900;color:var(--shironeri);background:var(--sumi);padding:1px 5px;line-height:1.3;font-family:'Noto Serif SC',serif}
+/* ── System Grid ── */
 .sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.sys-tile{background:rgba(100,180,255,.03);border:1px solid rgba(100,180,255,.06);border-radius:10px;padding:12px;text-align:center;transition:all .2s;cursor:default}
-.sys-tile:hover{background:rgba(100,180,255,.06)}
-.sys-tile-name{font-size:10px;color:var(--h-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.sys-tile-status{font-size:12px;font-weight:700}
-.sys-tile-status.online{color:var(--h-green)}.sys-tile-status.standby{color:var(--h-orange)}.sys-tile-status.offline{color:var(--h-red)}
+.sys-tile{background:var(--kabe);border:1px solid var(--groove);padding:12px;text-align:center}
+.sys-tile:hover{background:var(--hai)}
+.sys-tile-name{font-size:10px;color:var(--sumi-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.sys-tile-status{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sys-tile-status.online{color:var(--koke)}.sys-tile-status.standby{color:var(--kitsune)}.sys-tile-status.offline{color:var(--shu)}
+/* ── Quick Commands (rubber buttons) ── */
 .quick-cmds{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.quick-cmds button{padding:10px 6px;border:1px solid var(--h-line);border-radius:10px;background:transparent;color:var(--h-text2);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--h-sans);display:flex;flex-direction:column;align-items:center;gap:4px}
-.quick-cmds button .cmd-icon{font-size:18px}
-.quick-cmds button:hover{background:rgba(100,180,255,.08);color:var(--h-cyan);border-color:rgba(100,180,255,.25);transform:translateY(-1px)}
-.quick-cmds button:active{transform:scale(.97)}
+.quick-cmds button{padding:10px 6px;border:none;background:var(--rubber);color:var(--sumi);font-size:11px;cursor:pointer;transition:all .08s;font-family:'Noto Sans SC',sans-serif;display:flex;flex-direction:column;align-items:center;gap:4px;
+  box-shadow:0 2px 3px oklch(0 0 0/.12),0 1px 1px oklch(0 0 0/.08),inset 0 1px 0 var(--ridge),inset 0 -1px 2px oklch(0 0 0/.06)}
+.quick-cmds button .cmd-seal{font-family:'Noto Serif SC',serif;font-size:16px;font-weight:900}
+.quick-cmds button:hover{background:var(--rubber-hover);transform:translateY(-1px)}
+.quick-cmds button:active{transform:translateY(0);box-shadow:inset 0 2px 3px oklch(0 0 0/.12),inset 0 1px 1px oklch(0 0 0/.08),0 1px 0 var(--ridge),0 -1px 2px oklch(0 0 0/.06)}
+/* ── Op Log ── */
 .op-log-card{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .op-log-body{flex:1;overflow-y:auto;min-height:100px}
 .log-table{width:100%;border-collapse:collapse;font-size:12px}
-.log-table th{text-align:left;padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--h-text3);border-bottom:1px solid rgba(100,180,255,.1);font-weight:600;position:sticky;top:0;background:var(--h-panel)}
-.log-table td{padding:8px 10px;border-bottom:1px solid rgba(100,180,255,.04);color:var(--h-text2)}
-.log-table tbody tr:hover td{background:rgba(100,180,255,.03)}
-.log-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:12px}
-.log-badge.ok{background:rgba(48,209,88,.12);color:var(--h-green)}.log-badge.auto{background:rgba(100,180,255,.1);color:var(--h-cyan)}.log-badge.warn{background:rgba(255,159,10,.12);color:var(--h-orange)}
-.chat-panel{display:flex;flex-direction:column;overflow:hidden;border-radius:14px;background:var(--h-panel);border:1px solid var(--h-line)}
-.chat-header{padding:16px 18px;border-bottom:1px solid var(--h-line);display:flex;align-items:center;gap:10px}
-.chat-header .ai-dot{width:10px;height:10px;border-radius:50%;background:var(--h-green);animation:breathe 3s ease-in-out infinite}
-@keyframes breathe{0%,100%{opacity:1;box-shadow:0 0 4px var(--h-green)}50%{opacity:.5;box-shadow:0 0 12px var(--h-green)}}
-.chat-header h3{font-size:14px;font-weight:700;flex:1}
-.chat-header .model-tag{font-size:10px;color:var(--h-purple);background:rgba(191,90,242,.1);padding:2px 8px;border-radius:6px;font-family:var(--h-mono)}
+.log-table th{text-align:left;padding:8px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--sumi-3);border-bottom:1px solid var(--groove);font-weight:600;position:sticky;top:0;background:var(--ishi);font-family:'JetBrains Mono',monospace}
+.log-table td{padding:8px 10px;border-bottom:1px solid var(--kabe);color:var(--sumi-2)}
+.log-table tbody tr:hover td{background:var(--kabe)}
+.log-badge{font-size:9px;font-weight:700;padding:2px 8px;font-family:'JetBrains Mono',monospace}
+.log-badge.ok{background:oklch(0.52 0.04 160/.1);color:var(--koke)}.log-badge.auto{background:oklch(0.82 0.004 110/.15);color:var(--sumi-2)}.log-badge.warn{background:oklch(0.56 0.05 70/.1);color:var(--kitsune)}
+/* ── Chat Panel ── */
+.chat-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--ishi);border:1px solid var(--groove)}
+.chat-header{padding:16px 18px;border-bottom:1px solid var(--groove);display:flex;align-items:center;gap:10px}
+.chat-header .ai-dot{width:10px;height:10px;border-radius:50%;background:var(--koke);animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.5}}
+.chat-header h3{font-family:'Noto Serif SC',serif;font-size:14px;font-weight:600;flex:1}
+.chat-header .model-tag{font-size:10px;color:var(--sumi-3);background:var(--kabe);padding:2px 8px;font-family:'JetBrains Mono',monospace}
 .chat-messages{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:88%;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.6;position:relative}
-.msg.sys{background:rgba(100,180,255,.06);border:1px solid rgba(100,180,255,.08);align-self:flex-start;border-bottom-left-radius:4px}
-.msg.usr{background:linear-gradient(135deg,var(--h-blue),#5e5ce6);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;box-shadow:0 4px 12px rgba(0,122,255,.2)}
-.msg .msg-time{font-size:9px;color:rgba(155,179,205,.5);margin-top:4px;font-family:var(--h-mono)}
-.msg.usr .msg-time{color:rgba(255,255,255,.4)}
+.msg{max-width:88%;padding:12px 16px;font-size:13px;line-height:1.6;position:relative}
+.msg.sys{background:var(--kabe);border:1px solid var(--groove);align-self:flex-start}
+.msg.usr{background:var(--sumi);color:var(--shironeri);align-self:flex-end}
+.msg .msg-time{font-size:9px;color:var(--sumi-3);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.msg.usr .msg-time{color:oklch(1 0 0 / .4)}
 .typing-indicator{align-self:flex-start;display:none;padding:10px 16px;gap:4px}
 .typing-indicator.show{display:flex}
-.typing-indicator span{width:6px;height:6px;border-radius:50%;background:var(--h-cyan);animation:typing-bounce .8s ease-in-out infinite}
+.typing-indicator span{width:6px;height:6px;border-radius:50%;background:var(--nezumi);animation:typing-bounce .8s ease-in-out infinite}
 .typing-indicator span:nth-child(2){animation-delay:.15s}
 .typing-indicator span:nth-child(3){animation-delay:.3s}
 @keyframes typing-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.chat-input{display:flex;border-top:1px solid var(--h-line);padding:12px 14px;gap:8px;align-items:center}
-.chat-input input{flex:1;border:1px solid var(--h-line);border-radius:10px;padding:10px 14px;background:rgba(100,180,255,.04);color:var(--h-text);font-size:13px;outline:none;font-family:var(--h-sans);transition:border-color .2s}
-.chat-input input:focus{border-color:var(--h-cyan)}
-.chat-input button{width:40px;height:40px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--h-blue),#5e5ce6);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
-.chat-input button:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(0,122,255,.3)}
+.chat-input{display:flex;border-top:1px solid var(--groove);padding:12px 14px;gap:8px;align-items:center}
+.chat-input input{flex:1;border:1px solid var(--groove);padding:10px 14px;background:var(--kabe);color:var(--sumi);font-size:13px;outline:none;font-family:'Noto Sans SC',sans-serif;transition:border-color .2s}
+.chat-input input:focus{border-color:var(--nezumi)}
+.chat-input button{width:40px;height:40px;border:none;background:var(--sumi);color:var(--shironeri);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .08s;
+  box-shadow:0 2px 3px oklch(0 0 0/.12),inset 0 1px 0 oklch(1 0 0/.1)}
+.chat-input button:hover{background:var(--sumi-2)}
 .chat-input button:active{transform:scale(.95)}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(100,180,255,.12);border-radius:2px}
-  </style>
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--hai)}
+</style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 <div class="hmi-layout">
   <div class="left-panel">
     <div class="notif-bar" id="notifBar">
       <div class="notif-item"><span class="n-dot ok"></span>DP 系统正常</div>
-      <div class="notif-item"><span class="n-dot warn"></span>风速增大 18kn</div>
+      <div class="notif-item"><span class="n-dot warn"></span>風速增大 18kn</div>
       <div class="notif-item"><span class="n-dot ok"></span>AIS 更新 12 目标</div>
       <div class="notif-item"><span class="n-dot ok"></span>ECDIS 航线同步完成</div>
-      <div class="notif-item"><span class="n-dot alarm"></span>应急发电机月度测试到期</div>
+      <div class="notif-item"><span class="n-dot alarm"></span>应急发电机月度测試到期</div>
     </div>
     <div class="card card-pad">
-      <div class="card-title"><span class="icon">🖥</span> 系统总览</div>
+      <div class="card-title"><span class="seal">统</span> 系统总览</div>
       <div class="sys-grid" id="sysGrid">
         <div class="sys-tile"><div class="sys-tile-name">推进</div><div class="sys-tile-status online">ONLINE</div></div>
         <div class="sys-tile"><div class="sys-tile-name">导航</div><div class="sys-tile-status online">ONLINE</div></div>
@@ -94,24 +111,24 @@ body{font-family:var(--h-sans);background:var(--h-bg);color:var(--h-text);min-he
       </div>
     </div>
     <div class="card card-pad">
-      <div class="card-title"><span class="icon">⚡</span> 快捷指令</div>
+      <div class="card-title"><span class="seal">令</span> 快捷指令</div>
       <div class="quick-cmds">
-        <button data-cmd="anchor"><span class="cmd-icon">⚓</span>抛锚</button>
-        <button data-cmd="horn"><span class="cmd-icon">📣</span>响笛</button>
-        <button data-cmd="esd"><span class="cmd-icon">⚠️</span>紧急停车</button>
-        <button data-cmd="ais"><span class="cmd-icon">📡</span>AIS广播</button>
-        <button data-cmd="lights"><span class="cmd-icon">💡</span>信号灯</button>
-        <button data-cmd="log"><span class="cmd-icon">📖</span>航行日志</button>
-        <button data-cmd="settings"><span class="cmd-icon">⚙️</span>系统设置</button>
-        <button data-cmd="report"><span class="cmd-icon">📈</span>性能报告</button>
-        <button data-cmd="weather"><span class="cmd-icon">🌤</span>气象更新</button>
+        <button data-cmd="anchor"><span class="cmd-seal">錨</span>拋錨</button>
+        <button data-cmd="horn"><span class="cmd-seal">笛</span>响笛</button>
+        <button data-cmd="esd"><span class="cmd-seal">停</span>紧急停车</button>
+        <button data-cmd="ais"><span class="cmd-seal">讯</span>AIS广播</button>
+        <button data-cmd="lights"><span class="cmd-seal">燈</span>信号燈</button>
+        <button data-cmd="log"><span class="cmd-seal">誌</span>航行日誌</button>
+        <button data-cmd="settings"><span class="cmd-seal">设</span>系统设置</button>
+        <button data-cmd="report"><span class="cmd-seal">报</span>性能报告</button>
+        <button data-cmd="weather"><span class="cmd-seal">象</span>气象更新</button>
       </div>
     </div>
     <div class="card card-pad op-log-card">
-      <div class="card-title"><span class="icon">📋</span> 操作日志</div>
+      <div class="card-title"><span class="seal">録</span> 操作日誌</div>
       <div class="op-log-body">
         <table class="log-table">
-          <thead><tr><th>时间</th><th>操作人</th><th>事件</th><th>结果</th></tr></thead>
+          <thead><tr><th>时間</th><th>操作人</th><th>事件</th><th>结果</th></tr></thead>
           <tbody id="logBody">
             <tr><td>14:32:18</td><td>大副</td><td>调整航向 → 185°</td><td><span class="log-badge ok">完成</span></td></tr>
             <tr><td>14:28:05</td><td>轮机长</td><td>主机转速 +10 RPM</td><td><span class="log-badge ok">完成</span></td></tr>
@@ -129,16 +146,16 @@ body{font-family:var(--h-sans);background:var(--h-bg);color:var(--h-text);min-he
       <span class="model-tag">GPT-4o</span>
     </div>
     <div class="chat-messages" id="chatMsgs">
-      <div class="msg sys">您好，船长。我是 PoseidonX AI 助手，随时为您提供航行支持和系统状态查询。<div class="msg-time">14:00:00</div></div>
-      <div class="msg usr">当前航行状态如何？<div class="msg-time">14:02:15</div></div>
-      <div class="msg sys">当前航速 12.5 节，航向 185°，主机功率 78%。6 个子系统全部在线，未发现异常。预计 18:30 抵达下一航路点 WP-13。<div class="msg-time">14:02:16</div></div>
-      <div class="msg usr">风浪情况怎样？<div class="msg-time">14:05:30</div></div>
-      <div class="msg sys">当前风速 18 节 (NW)，有效波高 1.8m，涌浪周期 7s。未超出作业限制，但建议关注未来 6 小时风速可能增至 25 节的预报。<div class="msg-time">14:05:31</div></div>
+      <div class="msg sys">您好，船长。我是 PoseidonX AI 助手，隨时为您提供航行支持和系统狀态查詢。<div class="msg-time">14:00:00</div></div>
+      <div class="msg usr">当前航行狀态如何？<div class="msg-time">14:02:15</div></div>
+      <div class="msg sys">当前航速 12.5 节，航向 185°，主机功率 78%。6 个子系统全部在线，未发現异常。预计 18:30 抵达下一航路点 WP-13。<div class="msg-time">14:02:16</div></div>
+      <div class="msg usr">風浪情況怎樣？<div class="msg-time">14:05:30</div></div>
+      <div class="msg sys">当前風速 18 节 (NW)，有効波高 1.8m，湧浪週期 7s。未超出作业限制，但建议关注未來 6 小时風速可能增至 25 节的预报。<div class="msg-time">14:05:31</div></div>
     </div>
     <div class="typing-indicator" id="typing"><span></span><span></span><span></span></div>
     <div class="chat-input">
-      <input type="text" id="chatIn" placeholder="输入指令或问题…" autocomplete="off">
-      <button id="chatSend">➤</button>
+      <input type="text" id="chatIn" placeholder="输入指令或问題…" autocomplete="off">
+      <button id="chatSend">&#10148;</button>
     </div>
   </div>
 </div>
@@ -161,7 +178,6 @@ function send(){
 }
 $('chatSend').addEventListener('click',send);
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
-// System overview update
 function fetchOverview(){
   fetch('/api/v1/systems/overview').then(r=>r.json()).then(d=>{
     const tiles=document.querySelectorAll('.sys-tile');
@@ -199,7 +215,7 @@ function fetchOpLog(){
 document.querySelector('.quick-cmds').addEventListener('click',e=>{
   const btn=e.target.closest('button');if(!btn)return;
   const cmd=btn.dataset.cmd||btn.textContent.trim();
-  btn.style.borderColor='rgba(100,210,255,0.4)';setTimeout(()=>btn.style.borderColor='',500);
+  btn.style.background='var(--rubber-hover)';setTimeout(()=>btn.style.background='',500);
   fetch('/api/v1/hmi/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:cmd})}).then(r=>r.json()).then(d=>{
     addMsg((d.message||'命令已执行')+' — '+cmd,'sys');
   }).catch(()=>{addMsg('指令已发送: '+cmd,'sys')});
@@ -208,6 +224,7 @@ fetchOverview();fetchNotifications();fetchOpLog();
 setInterval(fetchOverview,10000);setInterval(fetchNotifications,8000);setInterval(fetchOpLog,15000);
 (function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=()=>setTimeout(cn,5000)}catch(e){setTimeout(cn,5000)}}cn()})();
 </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="hmi"></script>
 </body>
 </html>

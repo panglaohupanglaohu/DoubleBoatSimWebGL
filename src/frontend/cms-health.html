@@ -1,83 +1,129 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="ob-title" content="设备健康">
-    <meta name="ob-subtitle" content="PoseidonX CMS — 状态监测系统">
     <title>设备健康 — PoseidonX</title>
-    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body{margin:0;padding:var(--ob-topbar-height,48px) 24px 24px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,sans-serif);}
-        .cms-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;}
-        .dev-tree{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;max-height:calc(100vh - 80px);overflow-y:auto;}
-        .dev-tree h3{font-size:14px;font-weight:600;margin:0 0 12px;}
-        .tree-group{margin-bottom:14px;}
-        .tree-group-title{font-size:12px;font-weight:600;color:var(--ob-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-        .tree-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:var(--ob-radius-sm);cursor:pointer;font-size:13px;}
-        .tree-item:hover{background:var(--ob-bg-section);}
-        .tree-item.selected{background:var(--ob-accent,#0078d4);color:#fff;}
-        .stat-bar{display:flex;gap:12px;margin-bottom:16px;}
-        .stat-item{flex:1;background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:14px;text-align:center;}
-        .stat-num{font-size:28px;font-weight:700;}
-        .stat-label{font-size:11px;color:var(--ob-text-tertiary);margin-top:2px;}
-        .trend-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
-        .trend-card{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;}
-        .trend-card h4{margin:0 0 8px;font-size:13px;font-weight:600;}
-        .trend-card canvas{width:100%;height:120px;display:block;}
-        .detail-readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
-        .bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-        .maint-card,.score-card{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;}
-        .maint-card h4,.score-card h4{margin:0 0 10px;font-size:13px;font-weight:600;}
-        .scores{display:flex;gap:20px;justify-content:center;padding:10px 0;}
-        .score-ring{text-align:center;}
-        .score-ring .val{font-size:30px;font-weight:700;}
-        .score-ring .lbl{font-size:11px;color:var(--ob-text-tertiary);margin-top:2px;}
+:root{
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.006 110);
+  --hai:oklch(0.78 0.006 110);--nezumi:oklch(0.68 0.005 110);--sumi:oklch(0.18 0.008 110);
+  --koke:oklch(0.42 0.05 160);--shu:oklch(0.48 0.12 28);--kitsune:oklch(0.56 0.08 65);
+  --washi-dot:oklch(0.88 0.004 110);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--shironeri);color:var(--sumi);min-height:100vh;padding:48px 24px 24px 80px;position:relative}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 20% 30%,var(--washi-dot) 0.5px,transparent 0.5px),
+  radial-gradient(circle at 60% 70%,var(--washi-dot) 0.3px,transparent 0.3px),
+  radial-gradient(circle at 80% 20%,var(--washi-dot) 0.4px,transparent 0.4px);
+  background-size:60px 60px,45px 45px,55px 55px;opacity:.4}
+.cms-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;position:relative;z-index:1}
+.seal{font-family:var(--font-serif);font-size:13px;color:var(--shu);border:1.5px solid var(--shu);width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-2deg);flex-shrink:0}
+.dev-tree{background:var(--shironeri);border:1px solid var(--kabe);padding:16px;max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:2px 2px 0 var(--ishi)}
+.dev-tree h3{font-family:var(--font-serif);font-size:14px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.tree-group{margin-bottom:14px}
+.tree-group-title{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--nezumi);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.tree-item{display:flex;align-items:center;gap:8px;padding:5px 8px;cursor:pointer;font-size:13px;transition:background .15s}
+.tree-item:hover{background:var(--ishi)}
+.tree-item.selected{background:var(--sumi);color:var(--shironeri)}
+.tree-dot{width:8px;height:8px;flex-shrink:0}
+.tree-dot.ok{background:var(--koke)}.tree-dot.warn{background:var(--kitsune)}.tree-dot.alarm{background:var(--shu)}
+.stat-bar{display:flex;gap:12px;margin-bottom:16px}
+.stat-item{flex:1;background:var(--shironeri);border:1px solid var(--kabe);padding:14px;text-align:center;box-shadow:2px 2px 0 var(--ishi)}
+.stat-num{font-size:28px;font-weight:700;font-family:var(--font-mono)}
+.stat-label{font-family:var(--font-mono);font-size:10px;color:var(--nezumi);margin-top:2px;text-transform:uppercase}
+.trend-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.trend-card{background:var(--shironeri);border:1px solid var(--kabe);padding:16px;box-shadow:2px 2px 0 var(--ishi)}
+.trend-card h4{margin:0 0 8px;font-family:var(--font-serif);font-size:13px;font-weight:700}
+.trend-card canvas{width:100%;height:120px;display:block}
+.detail-readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.readout{background:var(--ishi);border:1px solid var(--kabe);padding:12px;text-align:center}
+.readout .r-label{font-family:var(--font-mono);font-size:10px;color:var(--nezumi);text-transform:uppercase;letter-spacing:.5px}
+.readout .r-value{font-family:var(--font-mono);font-size:20px;font-weight:700;margin-top:4px}
+.readout .r-unit{font-family:var(--font-mono);font-size:10px;color:var(--nezumi)}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.maint-card,.score-card{background:var(--shironeri);border:1px solid var(--kabe);padding:16px;box-shadow:2px 2px 0 var(--ishi)}
+.maint-card h4,.score-card h4{margin:0 0 10px;font-family:var(--font-serif);font-size:13px;font-weight:700}
+/* table */
+.ws-table{width:100%;border-collapse:collapse;font-size:12px}
+.ws-table th{text-align:left;padding:8px;font-family:var(--font-mono);font-size:10px;color:var(--nezumi);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--kabe)}
+.ws-table td{padding:8px;border-bottom:1px solid var(--ishi)}
+.ws-badge{display:inline-flex;padding:2px 8px;font-family:var(--font-mono);font-size:10px;font-weight:600}
+.ws-badge-ok{background:oklch(0.42 0.05 160 / .1);color:var(--koke)}
+.ws-badge-warn{background:oklch(0.56 0.08 65 / .1);color:var(--kitsune)}
+.ws-badge-alarm{background:oklch(0.48 0.12 28 / .1);color:var(--shu)}
+.ws-badge-neutral{background:var(--ishi);color:var(--nezumi)}
+.scores{display:flex;gap:20px;justify-content:center;padding:10px 0}
+.score-ring{text-align:center}
+.score-ring .val{font-family:var(--font-mono);font-size:30px;font-weight:700}
+.score-ring .lbl{font-size:11px;color:var(--nezumi);margin-top:2px}
+/* Agent panel */
+.agent-panel{background:var(--shironeri);border:1px solid var(--kabe);padding:16px;margin-top:16px;box-shadow:2px 2px 0 var(--ishi);cursor:pointer}
+.agent-panel h4{margin:0;font-family:var(--font-serif);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;user-select:none}
+.agent-panel.expanded .agent-body{display:block!important}
+.agent-panel.expanded .agent-toggle{transform:rotate(90deg)}
+/* Chat */
+.chat-panel{background:var(--shironeri);border:1px solid var(--kabe);padding:16px;margin-top:16px;box-shadow:2px 2px 0 var(--ishi)}
+.chat-panel h4{margin:0 0 10px;font-family:var(--font-serif);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.chat-model{font-family:var(--font-mono);font-size:10px;color:var(--koke);background:oklch(0.42 0.05 160 / .06);border:1px solid oklch(0.42 0.05 160 / .15);padding:2px 8px;display:inline-flex;align-items:center;gap:4px}
+.chat-messages{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;margin-bottom:10px}
+.chat-msg{padding:8px 10px;font-size:12px;line-height:1.5;border-left:3px solid var(--koke);background:var(--ishi)}
+.chat-input-row{display:flex;gap:6px}
+.chat-input{flex:1;background:var(--ishi);border:1px solid var(--kabe);padding:7px 10px;color:var(--sumi);font-family:var(--font-sans);font-size:12px;outline:none}
+.chat-input:focus{border-color:var(--koke)}
+.chat-send{background:var(--sumi);border:none;color:var(--shironeri);padding:6px 14px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:2px 2px 0 var(--hai)}
+.chat-send:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--hai)}
     </style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
     <div class="cms-layout">
         <div class="dev-tree">
-            <h3>设备树 Equipment Tree</h3>
+            <h3><span class="seal">樹</span> 设备樹</h3>
             <div class="tree-group">
                 <div class="tree-group-title">推进系统 Propulsion</div>
-                <div class="tree-item selected"><span class="ob-dot ob-dot-ok"></span>主机 #1 ME</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>主机 #2 ME</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>齿轮箱 Gearbox</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-warning"></span>艘推 Bow Thr</div>
+                <div class="tree-item selected"><span class="tree-dot ok"></span>主机 #1 ME</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>主机 #2 ME</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>齿轮箱 Gearbox</div>
+                <div class="tree-item"><span class="tree-dot warn"></span>艘推 Bow Thr</div>
             </div>
             <div class="tree-group">
                 <div class="tree-group-title">辅机 Auxiliary</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>发电机 #1 DG</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>发电机 #2 DG</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-warning"></span>发电机 #3 DG</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>应急发电机 EDG</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>发电机 #1 DG</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>发电机 #2 DG</div>
+                <div class="tree-item"><span class="tree-dot warn"></span>发电机 #3 DG</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>应急发电机 EDG</div>
             </div>
             <div class="tree-group">
                 <div class="tree-group-title">甲板设备 Deck</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>锚机 Windlass</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>起重机 #1 Crane</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-alarm"></span>起重机 #2 Crane</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>锚机 Windlass</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>起重机 #1 Crane</div>
+                <div class="tree-item"><span class="tree-dot alarm"></span>起重机 #2 Crane</div>
             </div>
             <div class="tree-group">
                 <div class="tree-group-title">HVAC</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>主空调 Main AC</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>机舱通风 ER Vent</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>主空调 Main AC</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>机舱通风 ER Vent</div>
             </div>
             <div class="tree-group">
                 <div class="tree-group-title">泵组 Pumps</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>冷却水泵 CW Pump</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>燃油泵 FO Pump</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-warning"></span>压载泵 Ballast Pump</div>
-                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>舱底泵 Bilge Pump</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>冷却水泵 CW Pump</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>燃油泵 FO Pump</div>
+                <div class="tree-item"><span class="tree-dot warn"></span>压载泵 Ballast Pump</div>
+                <div class="tree-item"><span class="tree-dot ok"></span>舱底泵 Bilge Pump</div>
             </div>
         </div>
         <div class="cms-right">
             <div class="stat-bar">
-                <div class="stat-item"><div class="stat-num">128</div><div class="stat-label"> 总设备</div></div>
-                <div class="stat-item"><div class="stat-num" style="color:var(--ob-running)">121</div><div class="stat-label">正常</div></div>
-                <div class="stat-item"><div class="stat-num" style="color:var(--ob-warning)">5</div><div class="stat-label">注意</div></div>
-                <div class="stat-item"><div class="stat-num" style="color:var(--ob-alarm)">2</div><div class="stat-label">警告</div></div>
+                <div class="stat-item"><div class="stat-num">128</div><div class="stat-label">总设备</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:var(--koke)">121</div><div class="stat-label">正常</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:var(--kitsune)">5</div><div class="stat-label">注意</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:var(--shu)">2</div><div class="stat-label">警告</div></div>
                 <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">告警</div></div>
             </div>
             <div class="trend-cards">
@@ -85,67 +131,59 @@
                 <div class="trend-card"><h4>轴承温度趋势</h4><canvas id="cvTemp" height="120"></canvas></div>
             </div>
             <div class="detail-readouts">
-                <div class="ob-readout"><span class="ob-readout-label">振动</span><span class="ob-readout-value">2.1</span><span class="ob-readout-unit">mm/s</span></div>
-                <div class="ob-readout"><span class="ob-readout-label">轴承温度</span><span class="ob-readout-value">68.4</span><span class="ob-readout-unit">°C</span></div>
-                <div class="ob-readout"><span class="ob-readout-label">滑油温度</span><span class="ob-readout-value">54.2</span><span class="ob-readout-unit">°C</span></div>
-                <div class="ob-readout"><span class="ob-readout-label">运行时间</span><span class="ob-readout-value">12,480</span><span class="ob-readout-unit">hrs</span></div>
+                <div class="readout"><div class="r-label">振动</div><div class="r-value">2.1</div><div class="r-unit">mm/s</div></div>
+                <div class="readout"><div class="r-label">轴承温度</div><div class="r-value">68.4</div><div class="r-unit">°C</div></div>
+                <div class="readout"><div class="r-label">滑油温度</div><div class="r-value">54.2</div><div class="r-unit">°C</div></div>
+                <div class="readout"><div class="r-label">运行时间</div><div class="r-value">12,480</div><div class="r-unit">hrs</div></div>
             </div>
             <div class="bottom-row">
                 <div class="maint-card">
                     <h4>维护计划 Maintenance Schedule</h4>
-                    <table class="ob-table">
+                    <table class="ws-table">
                         <thead><tr><th>设备</th><th>项目</th><th>到期</th><th>状态</th></tr></thead>
                         <tbody>
-                            <tr><td>主机 #1</td><td>滑油更换</td><td>2026-04-15</td><td><span class="ob-badge ob-badge-warning">即将</span></td></tr>
-                            <tr><td>发电机 #3</td><td>气缸检查</td><td>2026-04-08</td><td><span class="ob-badge ob-badge-alarm">逾期</span></td></tr>
-                            <tr><td>起重机 #2</td><td>钢丝绳更换</td><td>2026-04-20</td><td><span class="ob-badge ob-badge-neutral">计划中</span></td></tr>
-                            <tr><td>压载泵</td><td>机封检查</td><td>2026-05-01</td><td><span class="ob-badge ob-badge-ok">正常</span></td></tr>
+                            <tr><td>主机 #1</td><td>滑油更换</td><td>2026-04-15</td><td><span class="ws-badge ws-badge-warn">即将</span></td></tr>
+                            <tr><td>发电机 #3</td><td>气缸检查</td><td>2026-04-08</td><td><span class="ws-badge ws-badge-alarm">逾期</span></td></tr>
+                            <tr><td>起重机 #2</td><td>钢丝绳更换</td><td>2026-04-20</td><td><span class="ws-badge ws-badge-neutral">计划中</span></td></tr>
+                            <tr><td>压载泵</td><td>机封检查</td><td>2026-05-01</td><td><span class="ws-badge ws-badge-ok">正常</span></td></tr>
                         </tbody>
                     </table>
                 </div>
                 <div class="score-card">
-                    <h4>健康评分 Health Score</h4>
+                    <h4>健康評分 Health Score</h4>
                     <div class="scores">
-                        <div class="score-ring"><div class="val" style="color:var(--ob-running)">94</div><div class="lbl">推进系统</div></div>
-                        <div class="score-ring"><div class="val" style="color:var(--ob-warning)">78</div><div class="lbl">辅机系统</div></div>
-                        <div class="score-ring"><div class="val" style="color:var(--ob-running)">91</div><div class="lbl">甲板设备</div></div>
+                        <div class="score-ring"><div class="val" style="color:var(--koke)">94</div><div class="lbl">推进系统</div></div>
+                        <div class="score-ring"><div class="val" style="color:var(--kitsune)">78</div><div class="lbl">辅机系统</div></div>
+                        <div class="score-ring"><div class="val" style="color:var(--koke)">91</div><div class="lbl">甲板设备</div></div>
                     </div>
                 </div>
             </div>
-            <!-- Agent System Health Panel (collapsed by default, click to expand) -->
-            <div class="bottom-row" style="margin-top:16px">
-                <div class="maint-card" id="agent-status-panel" style="cursor:pointer" onclick="this.classList.toggle('expanded')">
-                    <h4 style="margin:0;display:flex;align-items:center;gap:8px;user-select:none">🤖 Agent 系统状态 <span id="agent-toggle" style="font-size:11px;color:var(--ob-text-tertiary);transition:transform .2s">▶</span></h4>
-                    <div id="agent-status-body" style="display:none;margin-top:10px">
-                        <div id="sys-health-status" style="font-size:13px;padding:8px 0"><span style="color:var(--ob-text-tertiary)">加载中...</span></div>
-                        <div id="sys-diag" style="font-size:12px;color:var(--ob-text-secondary);margin-top:8px"></div>
-                    </div>
+            <div class="agent-panel" id="agent-status-panel" onclick="this.classList.toggle('expanded')">
+                <h4><span class="seal">智</span> Agent 系统狀态 <span class="agent-toggle" style="font-size:11px;color:var(--nezumi);transition:transform .2s">▶</span></h4>
+                <div class="agent-body" id="agent-status-body" style="display:none;margin-top:10px">
+                    <div id="sys-health-status" style="font-size:13px;padding:8px 0"><span style="color:var(--nezumi)">加载中...</span></div>
+                    <div id="sys-diag" style="font-size:12px;color:var(--nezumi);margin-top:8px"></div>
                 </div>
             </div>
-            <style>
-                #agent-status-panel.expanded #agent-status-body{display:block!important}
-                #agent-status-panel.expanded #agent-toggle{transform:rotate(90deg)}
-            </style>
-            <!-- AI Chat Panel -->
-            <div style="margin-top:16px;background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;">
+            <div class="chat-panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                    <h4 style="margin:0">💬 AI 设备健康助手</h4>
-                    <span style="font-size:10px;color:var(--ob-accent,#4fc3f7);background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);border-radius:4px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;font-family:monospace;">
-                        <span id="chatModelDot" style="width:7px;height:7px;border-radius:50%;background:#4a5568;display:inline-block;transition:background .3s"></span>
+                    <h4><span class="seal">问</span> AI 设备健康助手</h4>
+                    <span class="chat-model">
+                        <span id="chatModelDot" style="width:7px;height:7px;background:var(--nezumi);display:inline-block;transition:background .3s"></span>
                         <span id="chatModelName">—</span>
                     </span>
                 </div>
                 <div style="display:flex;gap:8px;margin-bottom:10px">
-                    <select id="chatAgentSelect" style="flex:1;font-size:12px;font-family:monospace;padding:5px 8px;background:var(--ob-bg-section,rgba(0,0,0,.15));color:var(--ob-text-primary);border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);outline:none;cursor:pointer;" title="选择对话智能体">
+                    <select id="chatAgentSelect" style="flex:1;font-family:var(--font-mono);font-size:12px;padding:5px 8px;background:var(--ishi);color:var(--sumi);border:1px solid var(--kabe);outline:none;cursor:pointer" title="选择对话智能体">
                         <option value="ship_navigator">Navigator (OOW)</option>
                     </select>
                 </div>
-                <div id="chatMessages" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;margin-bottom:10px;padding-right:4px;">
-                    <div style="padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;border-left:3px solid var(--ob-accent,#4fc3f7);background:var(--ob-bg-section,rgba(0,0,0,.05));">CMS 设备健康 AI 助手已就绪 — 可咨询设备维保、振动分析、健康评分等问题。</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-msg">CMS 设备健康 AI 助手已就绪 — 可咨询设备维保、振动分析、健康评分等问题。</div>
                 </div>
-                <div style="display:flex;gap:6px;">
-                    <input type="text" id="chatInput" placeholder="咨询设备健康、维保计划..." style="flex:1;background:var(--ob-bg-section,rgba(0,0,0,.15));border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);padding:7px 10px;color:var(--ob-text-primary);font-size:12px;outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
-                    <button onclick="sendChat()" style="background:rgba(79,195,247,.12);border:1px solid rgba(79,195,247,.3);border-radius:var(--ob-radius-sm);color:var(--ob-accent,#4fc3f7);padding:6px 14px;cursor:pointer;font-size:14px;font-weight:700;">↵</button>
+                <div class="chat-input-row">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="咨询设备健康、维保计划..." onkeydown="if(event.key==='Enter')sendChat()">
+                    <button class="chat-send" onclick="sendChat()">↵</button>
                 </div>
             </div>
         </div>
@@ -153,7 +191,6 @@
     <script>
     const A='/api/v1/agent-config';
 
-    // ── Equipment data registry for tree item click ──
     var equipmentDB={
         '主机 #1 ME':{id:'ME-1',vib:[1.8,1.9,2.0,1.7,2.1,2.3,2.0,1.9,2.2,2.1,2.4,2.1,1.8,2.0,2.1,2.3,2.5,2.2,2.0,2.1],temp:[62,63,64,65,64,66,67,68,67,66,68,69,68,67,68,69,70,68,67,68],vibVal:'2.1',tempVal:'68.4',oilTemp:'54.2',hours:'12,480',vibThresh:4.5,tempThresh:85,trendTitle:'主机 #1'},
         '主机 #2 ME':{id:'ME-2',vib:[2.0,2.1,1.9,2.2,2.0,1.8,2.3,2.1,2.0,1.9,2.1,2.2,2.0,1.8,2.1,2.3,2.2,2.0,1.9,2.1],temp:[60,61,62,63,62,64,65,66,65,64,66,67,66,65,66,67,68,66,65,66],vibVal:'2.1',tempVal:'66.0',oilTemp:'52.8',hours:'11,920',vibThresh:4.5,tempThresh:85,trendTitle:'主机 #2'},
@@ -174,37 +211,31 @@
         '舱底泵 Bilge Pump':{id:'BLP-1',vib:[0.8,0.9,0.7,1.0,0.8,0.6,1.1,0.9,0.8,0.7,0.9,1.0,0.8,0.6,0.9,1.1,1.0,0.8,0.7,0.9],temp:[36,37,38,39,38,40,41,42,41,40,42,43,42,41,42,43,44,42,41,42],vibVal:'0.9',tempVal:'42.0',oilTemp:'—',hours:'4,200',vibThresh:4.0,tempThresh:60,trendTitle:'舱底泵'}
     };
 
-    // ── Equipment tree click handler ──
+    // ── Equipment tree click ──
     (function(){
         var treeItems=document.querySelectorAll('.tree-item');
         treeItems.forEach(function(item){
             item.addEventListener('click',function(){
-                // Update selection
                 treeItems.forEach(function(t){t.classList.remove('selected');});
                 item.classList.add('selected');
-                // Find equipment data by text content
                 var devName=item.textContent.trim();
                 var eq=equipmentDB[devName];
                 if(!eq)return;
-                // Update trend chart titles
                 var trendCards=document.querySelectorAll('.trend-card h4');
                 if(trendCards[0])trendCards[0].textContent=eq.trendTitle+' 振动趋势';
                 if(trendCards[1])trendCards[1].textContent=eq.trendTitle+' 温度趋势';
-                // Redraw charts
-                drawTrend('cvVib',eq.vib,eq.vibThresh,'rgba(0,176,240,1)');
-                drawTrend('cvTemp',eq.temp,eq.tempThresh,'rgba(255,170,0,1)');
-                // Update readout values
-                var readouts=document.querySelectorAll('.ob-readout .ob-readout-value');
+                drawTrend('cvVib',eq.vib,eq.vibThresh,'oklch(0.42 0.05 160)');
+                drawTrend('cvTemp',eq.temp,eq.tempThresh,'oklch(0.56 0.08 65)');
+                var readouts=document.querySelectorAll('.readout .r-value');
                 if(readouts[0])readouts[0].textContent=eq.vibVal;
                 if(readouts[1])readouts[1].textContent=eq.tempVal;
                 if(readouts[2])readouts[2].textContent=eq.oilTemp;
                 if(readouts[3])readouts[3].textContent=eq.hours;
-                // Also try to fetch real data from API
                 fetch('/api/v1/cms/vibration-data?device_id='+eq.id).then(function(r){return r.json();}).then(function(d){
-                    if(d&&d.data){drawTrend('cvVib',d.data.map(function(p){return p.value;}),d.threshold||eq.vibThresh,'rgba(0,176,240,1)');}
+                    if(d&&d.data){drawTrend('cvVib',d.data.map(function(p){return p.value;}),d.threshold||eq.vibThresh,'oklch(0.42 0.05 160)');}
                 }).catch(function(){});
                 fetch('/api/v1/cms/temperature-data?device_id='+eq.id).then(function(r){return r.json();}).then(function(d){
-                    if(d&&d.data){drawTrend('cvTemp',d.data.map(function(p){return p.value;}),d.threshold||eq.tempThresh,'rgba(255,170,0,1)');}
+                    if(d&&d.data){drawTrend('cvTemp',d.data.map(function(p){return p.value;}),d.threshold||eq.tempThresh,'oklch(0.56 0.08 65)');}
                 }).catch(function(){});
             });
         });
@@ -217,42 +248,35 @@
             var max=Math.max.apply(null,data)*1.3;
             ctx.clearRect(0,0,W,H);
             var ty=H-(threshold/max)*H;
-            ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(255,60,60,0.6)';ctx.lineWidth=1;
+            ctx.setLineDash([6,4]);ctx.strokeStyle='oklch(0.48 0.12 28 / .5)';ctx.lineWidth=1;
             ctx.beginPath();ctx.moveTo(0,ty);ctx.lineTo(W,ty);ctx.stroke();ctx.setLineDash([]);
-            ctx.fillStyle='rgba(255,60,60,0.5)';ctx.font='10px sans-serif';
+            ctx.fillStyle='oklch(0.48 0.12 28 / .5)';ctx.font='10px "JetBrains Mono",monospace';
             ctx.fillText('阈值 '+threshold,W-60,ty-4);
             ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
             for(var i=0;i<data.length;i++){var x=i/(data.length-1)*W;var y=H-(data[i]/max)*H;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
             ctx.stroke();ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
-            ctx.fillStyle=color.replace('1)','0.08)');ctx.fill();
+            ctx.fillStyle=color.replace(')',', 0.08)').replace('oklch','oklch');
+            var grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,color.slice(0,-1)+' / .12)');grad.addColorStop(1,color.slice(0,-1)+' / 0)');
+            ctx.fillStyle=grad;ctx.fill();
         }
-        // Make drawTrend globally accessible for tree clicks
         window.drawTrend=drawTrend;
         var vib=[1.8,1.9,2.0,1.7,2.1,2.3,2.0,1.9,2.2,2.1,2.4,2.1,1.8,2.0,2.1,2.3,2.5,2.2,2.0,2.1];
         var temp=[62,63,64,65,64,66,67,68,67,66,68,69,68,67,68,69,70,68,67,68];
-        drawTrend('cvVib',vib,4.5,'rgba(0,176,240,1)');
-        drawTrend('cvTemp',temp,85,'rgba(255,170,0,1)');
+        drawTrend('cvVib',vib,4.5,'oklch(0.42 0.05 160)');
+        drawTrend('cvTemp',temp,85,'oklch(0.56 0.08 65)');
 
-        // Fetch real trend data from CMS API
         function fetchCMSTrends(){
             Promise.all([
                 fetch('/api/v1/cms/vibration-data?device_id=ME-1').then(function(r){return r.json();}).catch(function(){return null;}),
                 fetch('/api/v1/cms/temperature-data?device_id=ME-1').then(function(r){return r.json();}).catch(function(){return null;})
             ]).then(function(results){
                 var vibData=results[0],tempData=results[1];
-                if(vibData&&vibData.data){
-                    vib=vibData.data.map(function(d){return d.value;});
-                    drawTrend('cvVib',vib,vibData.threshold||4.5,'rgba(0,176,240,1)');
-                }
-                if(tempData&&tempData.data){
-                    temp=tempData.data.map(function(d){return d.value;});
-                    drawTrend('cvTemp',temp,tempData.threshold||85,'rgba(255,170,0,1)');
-                }
+                if(vibData&&vibData.data){vib=vibData.data.map(function(d){return d.value;});drawTrend('cvVib',vib,vibData.threshold||4.5,'oklch(0.42 0.05 160)');}
+                if(tempData&&tempData.data){temp=tempData.data.map(function(d){return d.value;});drawTrend('cvTemp',temp,tempData.threshold||85,'oklch(0.56 0.08 65)');}
             });
         }
         fetchCMSTrends();setInterval(fetchCMSTrends,30000);
 
-        // ── Dynamic system health from API ──
         async function loadSystemHealth(){
             try{
                 const[health,diag]=await Promise.all([
@@ -261,42 +285,29 @@
                 ]);
                 const statusEl=document.getElementById('sys-health-status');
                 if(!statusEl)return;
-                if(!health){statusEl.innerHTML='<span style="color:var(--ob-alarm)">后端连接失败</span>';return;}
+                if(!health){statusEl.innerHTML='<span style="color:var(--shu)">后端连接失败</span>';return;}
                 const st=health.status||'unknown';
-                const cls=st==='ok'||st==='healthy'?'ob-dot-ok':st==='degraded'?'ob-dot-warning':'ob-dot-alarm';
-                let html=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="ob-dot ${cls}"></span><b>系统: ${st}</b></div>`;
-                if(health.channels){
-                    html+=`<div style="font-size:12px;color:var(--ob-text-secondary)">Channels: ${health.channels.ok||0}/${health.channels.total||0} 正常</div>`;
-                }
-                if(health.uptime_seconds){
-                    const hrs=Math.floor(health.uptime_seconds/3600);
-                    const mins=Math.floor((health.uptime_seconds%3600)/60);
-                    html+=`<div style="font-size:12px;color:var(--ob-text-tertiary);margin-top:2px">运行时间: ${hrs}h ${mins}m</div>`;
-                }
+                const dotCol=st==='ok'||st==='healthy'?'var(--koke)':st==='degraded'?'var(--kitsune)':'var(--shu)';
+                let html=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="width:8px;height:8px;background:${dotCol}"></span><b>系统: ${st}</b></div>`;
+                if(health.channels){html+=`<div style="font-size:12px;color:var(--nezumi)">Channels: ${health.channels.ok||0}/${health.channels.total||0} 正常</div>`;}
+                if(health.uptime_seconds){const hrs=Math.floor(health.uptime_seconds/3600);const mins=Math.floor((health.uptime_seconds%3600)/60);html+=`<div style="font-size:12px;color:var(--hai);margin-top:2px">运行时间: ${hrs}h ${mins}m</div>`;}
                 statusEl.innerHTML=html;
-
-                // Diagnostics
                 const diagEl=document.getElementById('sys-diag');
                 if(diagEl&&diag){
                     let dhtml='';
-                    if(diag.agent_team){
-                        const at=diag.agent_team;
-                        dhtml+=`<div style="margin-bottom:8px"><b>Agent 团队:</b> ${at.team_count||0} 团队, ${at.agent_count||0} Agent</div>`;
-                    }
+                    if(diag.agent_team){const at=diag.agent_team;dhtml+=`<div style="margin-bottom:8px"><b>Agent 团队:</b> ${at.team_count||0} 团队, ${at.agent_count||0} Agent</div>`;}
                     if(diag.tools){dhtml+=`<div style="margin-bottom:8px"><b>工具:</b> ${diag.tools.count||0} 个</div>`}
                     if(diag.skills){dhtml+=`<div style="margin-bottom:8px"><b>技能:</b> ${diag.skills.count||0} 个</div>`}
                     if(diag.sessions){dhtml+=`<div><b>会话:</b> ${diag.sessions.active||0} 活跃</div>`}
-                    diagEl.innerHTML=dhtml||'<span style="color:var(--ob-text-tertiary)">诊断数据不可用</span>';
+                    diagEl.innerHTML=dhtml||'<span style="color:var(--nezumi)">诊断数据不可用</span>';
                 }
-
-
             }catch(e){console.warn('Health fetch failed:',e)}
         }
         loadSystemHealth();
         setInterval(loadSystemHealth,30000);
     })();
 
-    // ── AI Chat with localStorage persistence ──
+    // ── AI Chat ──
     (function(){
         var CHAT_STORAGE_KEY='cms_chatHistory';
         var chatSessionId=localStorage.getItem('cms_chatSessionId');
@@ -305,24 +316,12 @@
         var agentModelCache={};
 
         function saveChatHistory(){
-            var msgs=document.getElementById('chatMessages');
-            if(!msgs)return;
-            var items=[];
-            for(var i=0;i<msgs.children.length;i++){
-                items.push(msgs.children[i].outerHTML);
-            }
+            var msgs=document.getElementById('chatMessages');if(!msgs)return;
+            var items=[];for(var i=0;i<msgs.children.length;i++){items.push(msgs.children[i].outerHTML);}
             try{localStorage.setItem(CHAT_STORAGE_KEY,JSON.stringify(items.slice(-50)));}catch(e){}
         }
         function restoreChatHistory(){
-            try{
-                var saved=JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)||'[]');
-                if(saved.length===0)return;
-                var msgs=document.getElementById('chatMessages');
-                if(!msgs)return;
-                msgs.innerHTML='';
-                saved.forEach(function(html){var d=document.createElement('div');d.innerHTML=html;if(d.firstChild)msgs.appendChild(d.firstChild);});
-                msgs.scrollTop=msgs.scrollHeight;
-            }catch(e){}
+            try{var saved=JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)||'[]');if(saved.length===0)return;var msgs=document.getElementById('chatMessages');if(!msgs)return;msgs.innerHTML='';saved.forEach(function(html){var d=document.createElement('div');d.innerHTML=html;if(d.firstChild)msgs.appendChild(d.firstChild);});msgs.scrollTop=msgs.scrollHeight;}catch(e){}
         }
         restoreChatHistory();
 
@@ -330,100 +329,46 @@
 
         async function fetchAgentModelInfo(aid){
             if(agentModelCache[aid])return agentModelCache[aid];
-            try{
-                var r=await fetch(A+'/agents/'+aid+'/model-status');
-                if(!r.ok){agentModelCache[aid]={model_name:'',active:false};return agentModelCache[aid];}
-                var d=await r.json();
-                agentModelCache[aid]={model_name:d.model_name||d.model_id||'',active:!!d.active};
-                return agentModelCache[aid];
-            }catch(_){agentModelCache[aid]={model_name:'',active:false};return agentModelCache[aid];}
+            try{var r=await fetch(A+'/agents/'+aid+'/model-status');if(!r.ok){agentModelCache[aid]={model_name:'',active:false};return agentModelCache[aid];}var d=await r.json();agentModelCache[aid]={model_name:d.model_name||d.model_id||'',active:!!d.active};return agentModelCache[aid];}catch(_){agentModelCache[aid]={model_name:'',active:false};return agentModelCache[aid];}
         }
 
         function updateModelDisplay(aid){
-            var dot=document.getElementById('chatModelDot');
-            var name=document.getElementById('chatModelName');
+            var dot=document.getElementById('chatModelDot');var name=document.getElementById('chatModelName');
             var info=agentModelCache[aid]||{model_name:'—',active:false};
             name.textContent=info.model_name||'—';
-            dot.style.background=info.active?'#48bb78':'#4a5568';
-            dot.style.boxShadow=info.active?'0 0 8px rgba(72,187,120,.6)':'none';
-            dot.title=info.active?'LLM 可用':'LLM 不可用';
+            dot.style.background=info.active?'var(--koke)':'var(--nezumi)';
         }
 
         async function loadChatAgents(){
-            var sel=document.getElementById('chatAgentSelect');
-            var teams=['build_system'];
-            var opts='';
+            var sel=document.getElementById('chatAgentSelect');var teams=['build_system'];var opts='';
             for(var i=0;i<teams.length;i++){
-                try{
-                    var r=await fetch(A+'/teams/'+teams[i]+'/agents');
-                    if(!r.ok)continue;
-                    var agents=await r.json();
-                    for(var j=0;j<agents.length;j++){
-                        var a=agents[j];
-                        var aid=a.agent_id||a.id;
-                        var selected=aid===selectedAgentId?' selected':'';
-                        var info=await fetchAgentModelInfo(aid);
-                        var label=a.name+' ('+a.role+')';
-                        if(info.active&&info.model_name){
-                            label+=' ✦ '+info.model_name;
-                        }
-                        var color=info.active?'color:#48bb78;font-weight:600':'color:var(--ob-text-tertiary)';
-                        opts+='<option value="'+aid+'" style="'+color+'"'+selected+'>'+label+'</option>';
-                    }
-                }catch(_){}
+                try{var r=await fetch(A+'/teams/'+teams[i]+'/agents');if(!r.ok)continue;var agents=await r.json();
+                for(var j=0;j<agents.length;j++){var a=agents[j];var aid=a.agent_id||a.id;var selected=aid===selectedAgentId?' selected':'';var info=await fetchAgentModelInfo(aid);var label=a.name+' ('+a.role+')';if(info.active&&info.model_name){label+=' — '+info.model_name;}opts+='<option value="'+aid+'"'+selected+'>'+label+'</option>';}}catch(_){}
             }
-            if(opts)sel.innerHTML=opts;
-            updateModelDisplay(selectedAgentId);
+            if(opts)sel.innerHTML=opts;updateModelDisplay(selectedAgentId);
         }
         loadChatAgents();
 
-        document.getElementById('chatAgentSelect').addEventListener('change',function(){
-            selectedAgentId=this.value;
-            localStorage.setItem('cms_chatAgentId',selectedAgentId);
-            updateModelDisplay(selectedAgentId);
-        });
+        document.getElementById('chatAgentSelect').addEventListener('change',function(){selectedAgentId=this.value;localStorage.setItem('cms_chatAgentId',selectedAgentId);updateModelDisplay(selectedAgentId);});
 
         function addMsg(text,cls){
-            var ts=new Date().toISOString().slice(11,19);
-            var msgs=document.getElementById('chatMessages');
-            var div=document.createElement('div');
-            var borderColor=cls==='user'?'#f6ad55':cls==='danger'?'var(--ob-alarm,#f56565)':'var(--ob-accent,#4fc3f7)';
-            var bg=cls==='user'?'rgba(246,173,85,.06)':cls==='danger'?'rgba(245,101,101,.06)':'var(--ob-bg-section,rgba(0,0,0,.05))';
-            div.style.cssText='padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;border-left:3px solid '+borderColor+';background:'+bg+';word-break:break-word;';
-            div.innerHTML=escapeHtml(text).replace(/\n/g,'<br>')+'<div style="font-size:9px;color:var(--ob-text-tertiary);margin-top:4px;text-align:right">'+ts+'</div>';
-            msgs.appendChild(div);
-            msgs.scrollTop=msgs.scrollHeight;
-            while(msgs.children.length>50)msgs.removeChild(msgs.firstChild);
-            saveChatHistory();
+            var ts=new Date().toISOString().slice(11,19);var msgs=document.getElementById('chatMessages');var div=document.createElement('div');
+            var borderColor=cls==='user'?'var(--kitsune)':cls==='danger'?'var(--shu)':'var(--koke)';
+            var bg=cls==='user'?'oklch(0.56 0.08 65 / .04)':cls==='danger'?'oklch(0.48 0.12 28 / .04)':'var(--ishi)';
+            div.style.cssText='padding:8px 10px;font-size:12px;line-height:1.5;border-left:3px solid '+borderColor+';background:'+bg+';word-break:break-word;';
+            div.innerHTML=escapeHtml(text).replace(/\n/g,'<br>')+'<div style="font-family:var(--font-mono);font-size:9px;color:var(--hai);margin-top:4px;text-align:right">'+ts+'</div>';
+            msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+            while(msgs.children.length>50)msgs.removeChild(msgs.firstChild);saveChatHistory();
         }
 
         window.sendChat=function(){
-            var input=document.getElementById('chatInput');
-            var msg=input.value.trim();
-            if(!msg)return;
-            input.value='';
-            addMsg(msg,'user');
-            fetch('/api/v1/bridge-chat/send',{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({message:msg,session_id:chatSessionId,agent_id:selectedAgentId})
-            }).then(function(r){
-                if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.slice(0,120))});
-                return r.json();
-            }).then(function(d){
-                addMsg(d.reply||'无应答',d.urgency==='critical'?'danger':'');
-                if(d.source==='agent_llm'){
-                    document.getElementById('chatModelName').textContent=d.model||'LLM';
-                    var dot=document.getElementById('chatModelDot');
-                    dot.style.background='#48bb78';
-                    dot.style.boxShadow='0 0 8px rgba(72,187,120,.6)';
-                }
-                if(d.task_id){addMsg('✅ 任务已创建 (ID: '+d.task_id+')','');}
-            }).catch(function(err){addMsg('通信错误: '+(err.message||'网络不可达'),'danger');});
+            var input=document.getElementById('chatInput');var msg=input.value.trim();if(!msg)return;input.value='';addMsg(msg,'user');
+            fetch('/api/v1/bridge-chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,session_id:chatSessionId,agent_id:selectedAgentId})}).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.slice(0,120))});return r.json();}).then(function(d){addMsg(d.reply||'无应答',d.urgency==='critical'?'danger':'');if(d.source==='agent_llm'){document.getElementById('chatModelName').textContent=d.model||'LLM';document.getElementById('chatModelDot').style.background='var(--koke)';}if(d.task_id){addMsg('任务已创建 (ID: '+d.task_id+')','');}}).catch(function(err){addMsg('通信错误: '+(err.message||'网络不可达'),'danger');});
         };
     })();
     </script>
-    <script src="/js/nav-sidebar.js" data-active="cms"></script>
+    <script src="/js/i18n.js"></script>
+<script src="/js/nav-sidebar.js" data-active="cms"></script>
     <script>(function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(cn,5000);};}catch(e){setTimeout(cn,5000);}}cn();})();</script>
 </body>
 </html>

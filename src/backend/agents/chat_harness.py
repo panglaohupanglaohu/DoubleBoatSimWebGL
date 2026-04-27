@@ -226,9 +226,9 @@ class ProviderConfig:
     api_key: str = ""
     api_base_url: str = ""
     model: str = "deepseek-chat"
-    max_tokens: int = 4096
-    temperature: float = 0.7
-    timeout: float = 60.0
+    max_tokens: int = 65536  # DeepSeek V4: 64K output
+    temperature: float = 0.2
+    timeout: float = 1200.0  # Long timeout for big code generations
 
     # Default endpoints per provider
     _DEFAULT_URLS: dict = field(default_factory=lambda: {
@@ -260,8 +260,8 @@ class ProviderConfig:
             api_key=os.getenv("POSEIDON_LLM_API_KEY", os.getenv("DEEPSEEK_API_KEY", "")),
             api_base_url=os.getenv("POSEIDON_LLM_BASE_URL", ""),
             model=os.getenv("POSEIDON_LLM_MODEL", "deepseek-chat"),
-            max_tokens=int(os.getenv("POSEIDON_LLM_MAX_TOKENS", "4096")),
-            temperature=float(os.getenv("POSEIDON_LLM_TEMPERATURE", "0.7")),
+            max_tokens=int(os.getenv("POSEIDON_LLM_MAX_TOKENS", "65536")),
+            temperature=float(os.getenv("POSEIDON_LLM_TEMPERATURE", "0.2")),
         )
 
     @classmethod
@@ -279,8 +279,8 @@ class ProviderConfig:
             api_key=llm.get("api_key", os.getenv("DEEPSEEK_API_KEY", "")),
             api_base_url=llm.get("local", llm.get("api_base_url", "")),
             model=llm.get("model", "deepseek-chat"),
-            max_tokens=llm.get("max_tokens", 4096),
-            temperature=llm.get("temperature", 0.7),
+            max_tokens=llm.get("max_tokens", 65536),
+            temperature=llm.get("temperature", 0.2),
         )
 
     @classmethod
@@ -297,8 +297,8 @@ class ProviderConfig:
             api_key=getattr(model_config, "api_key", ""),
             api_base_url=getattr(model_config, "api_base_url", ""),
             model=getattr(model_config, "name", "deepseek-chat"),
-            max_tokens=getattr(model_config, "max_tokens", 4096),
-            temperature=getattr(model_config, "temperature", 0.7),
+            max_tokens=getattr(model_config, "max_tokens", 65536),
+            temperature=getattr(model_config, "temperature", 0.2),
         )
 
 

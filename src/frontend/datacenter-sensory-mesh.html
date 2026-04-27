@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PoseidonX — 感官织网 · Sensory Mesh · 4-Layer Digital Twin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+:root{
+  --bg-0:oklch(0.96 0.003 110);--bg-1:oklch(0.91 0.004 110);--bg-2:oklch(0.85 0.005 110);
+  --accent:oklch(0.18 0.008 110);--accent2:oklch(0.52 0.04 160);--accent3:oklch(0.55 0.005 110);--warn:oklch(0.56 0.05 70);--danger:oklch(0.48 0.07 22);
+  --text:oklch(0.18 0.008 110);--muted:oklch(0.55 0.005 110);--line:oklch(0.82 0.004 110);
+  --l1:oklch(0.18 0.008 110);--l2:oklch(0.55 0.005 110);--l3:oklch(0.52 0.04 160);--l4:oklch(0.56 0.05 70);
+  --sumi:oklch(0.18 0.008 110);--koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);
+  --kitsune:oklch(0.56 0.05 70);--shironeri:oklch(0.96 0.003 110);
+  --rubber:oklch(0.72 0.006 110);--rubber-hover:oklch(0.68 0.007 110);--rubber-press:oklch(0.64 0.007 110);
+  --groove:oklch(0.82 0.004 110);--ridge:oklch(1.00 0 0 / 0.6);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Noto Sans SC','JetBrains Mono',sans-serif;color:var(--text);overflow:hidden;
+  background:var(--bg-0);-webkit-font-smoothing:antialiased}
+/* 和紙质感 */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(oklch(0 0 0/0.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/0.008) 1px,transparent 1px);
+  background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+
+/* ─── TOP ─── */
+#top{display:flex;align-items:center;gap:14px;padding:8px 20px;height:48px;
+  background:oklch(0.93 0.003 110);
+  border-bottom:1px solid var(--groove)}
+#top .logo{font-weight:800;font-size:14px;letter-spacing:2px;
+  font-family:'Noto Serif SC',serif;color:var(--sumi)}
+#top .sub{color:var(--muted);font-size:10px;letter-spacing:2px;font-family:'JetBrains Mono',monospace}
+#top .spacer{flex:1}
+.pill{padding:4px 10px;font-size:10px;border:none;
+  background:var(--rubber);color:var(--sumi);
+  text-decoration:none;cursor:pointer;transition:.08s;letter-spacing:1px;text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;
+  box-shadow:0 1px 3px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.3),inset 0 -1px 0 oklch(0 0 0/0.06);
+  background-image:radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px);background-size:3px 3px}
+.pill:hover{background-color:var(--rubber-hover)}
+.pill:active{box-shadow:inset 0 2px 4px oklch(0 0 0/0.12);transform:translateY(1px);background-color:var(--rubber-press)}
+.pill.live{background:var(--sumi);color:var(--shironeri);box-shadow:0 1px 3px oklch(0 0 0/0.12),inset 0 1px 0 oklch(1 0 0/0.06)}
+.pill.active{background:var(--sumi);color:var(--shironeri)}
+
+/* ─── LAYOUT ─── */
+#app{display:grid;height:calc(100vh - 48px);
+  grid-template-columns:1fr 320px;grid-template-rows:1fr 180px;gap:1px}
+
+/* ─── 3D VIEWPORT ─── */
+#viewport{grid-column:1;grid-row:1;position:relative;overflow:hidden;background:oklch(0.85 0.005 110)}
+#viewport canvas{display:block;width:100%;height:100%}
+.vp-hud{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;
+  pointer-events:none;font-size:10px;z-index:10}
+.vp-hud .tag{background:oklch(0.93 0.003 110/0.85);border:1px solid var(--groove);padding:4px 10px;
+  letter-spacing:1.5px;pointer-events:auto;font-family:'JetBrains Mono',monospace;font-size:9px}
+.vp-hud .tag.live{color:var(--koke)}
+
+/* Layer control panel (left side of viewport) */
+#layer-panel{position:absolute;left:10px;top:44px;z-index:20;
+  display:flex;flex-direction:column;gap:3px;width:200px}
+.lyr-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:oklch(0.88 0.004 110);border:1px solid var(--groove);
+  cursor:pointer;font-size:10px;color:var(--sumi);letter-spacing:1px;transition:.08s;
+  font-family:'JetBrains Mono',monospace;
+  box-shadow:0 1px 3px oklch(0 0 0/0.06),inset 0 1px 0 oklch(1 0 0/0.3);
+  background-image:radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px);background-size:3px 3px}
+.lyr-btn:hover{background-color:oklch(0.85 0.005 110)}
+.lyr-btn:active{box-shadow:inset 0 2px 4px oklch(0 0 0/0.1);transform:translateY(1px)}
+.lyr-btn.active{border-width:2px}
+.lyr-btn.off{opacity:.3;text-decoration:line-through}
+.lyr-btn .dot{width:10px;height:10px;flex-shrink:0}
+.lyr-btn .key{margin-left:auto;color:var(--muted);font-size:9px;
+  background:oklch(0.93 0.003 110);padding:1px 5px;border:1px solid var(--groove)}
+.lyr-sep{height:1px;background:var(--groove);margin:4px 0}
+.lyr-group{font-size:9px;color:var(--muted);letter-spacing:2px;padding:4px 10px;font-family:'JetBrains Mono',monospace}
+
+/* detail readout */
+#readout{position:absolute;right:10px;top:60px;width:260px;z-index:20;
+  background:oklch(0.93 0.003 110/0.95);border:1px solid var(--sumi);padding:12px;
+  font-size:11px;display:none;
+  box-shadow:0 4px 16px oklch(0 0 0/0.1)}
+#readout.show{display:block}
+#readout h4{color:var(--sumi);font-size:12px;margin-bottom:8px;letter-spacing:1.5px;font-family:'Noto Serif SC',serif}
+#readout .row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--groove)}
+#readout .row .v{font-weight:700;color:var(--koke);font-family:'JetBrains Mono',monospace}
+
+/* explode slider */
+#explode-wrap{position:absolute;bottom:10px;left:10px;right:10px;z-index:20;
+  display:flex;align-items:center;gap:12px;padding:8px 14px;
+  background:oklch(0.93 0.003 110/0.9);border:1px solid var(--groove)}
+#explode-wrap label{font-size:10px;color:var(--muted);letter-spacing:1px;white-space:nowrap;font-family:'JetBrains Mono',monospace}
+#explode-slider{flex:1;-webkit-appearance:none;height:4px;
+  background:linear-gradient(90deg,var(--l1),var(--l2),var(--l3),var(--l4));outline:none}
+#explode-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  background:var(--sumi);cursor:pointer;box-shadow:0 1px 4px oklch(0 0 0/0.2)}
+#explode-val{font-size:11px;color:var(--sumi);font-weight:700;min-width:32px;font-family:'JetBrains Mono',monospace}
+
+/* ─── RIGHT PANEL ─── */
+#side{grid-column:2;grid-row:1/span 2;background:oklch(0.93 0.003 110);
+  border-left:1px solid var(--groove);overflow-y:auto;padding:14px}
+.side-head{font-size:10px;letter-spacing:2px;color:var(--muted);margin:14px 0 6px;
+  display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace}
+.side-head:first-child{margin-top:0}
+.card{padding:10px 12px;border:1px solid var(--groove);
+  background:oklch(0.94 0.003 110);margin-bottom:8px;font-size:11px;
+  box-shadow:inset 0 1px 4px oklch(0 0 0/0.03)}
+.card h3{font-size:12px;color:var(--sumi);margin-bottom:6px;letter-spacing:1.5px;font-family:'Noto Serif SC',serif}
+.card .row{display:flex;justify-content:space-between;padding:2px 0}
+.card .row .v{color:var(--koke);font-weight:700;font-family:'JetBrains Mono',monospace}
+
+/* layer detail cards */
+.layer-card{border-left:3px solid;padding:10px 12px;
+  background:oklch(0.94 0.003 110);margin-bottom:6px;cursor:pointer;transition:.15s;
+  box-shadow:inset 0 1px 3px oklch(0 0 0/0.03)}
+.layer-card:hover{transform:translateX(2px)}
+.layer-card.l1{border-color:var(--l1)}
+.layer-card.l2{border-color:var(--l2)}
+.layer-card.l3{border-color:var(--l3)}
+.layer-card.l4{border-color:var(--l4)}
+.layer-card .lc-name{font-size:11px;font-weight:700;letter-spacing:.5px}
+.layer-card .lc-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
+.layer-card .lc-kpi{display:flex;gap:10px;margin-top:6px;font-size:10px;font-family:'JetBrains Mono',monospace}
+.layer-card .lc-kpi span{color:var(--koke)}
+
+/* device list */
+.dev-item{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+  padding:6px 8px;border-bottom:1px solid var(--groove);margin:3px 0;
+  font-size:10px;cursor:pointer;transition:.12s}
+.dev-item:hover{background:oklch(0.92 0.003 110)}
+.dev-item .di-dot{width:8px;height:8px}
+.dev-item .di-name{font-weight:600;color:var(--text)}
+.dev-item .di-sub{font-size:9px;color:var(--muted)}
+.dev-item .di-val{font-weight:700;color:var(--koke);font-size:11px;font-family:'JetBrains Mono',monospace}
+
+/* ─── BOTTOM STRIP ─── */
+#bottom{grid-column:1;grid-row:2;display:grid;grid-template-columns:1fr 1fr;
+  gap:1px;border-top:1px solid var(--groove);background:var(--bg-1)}
+#bottom .pane{padding:10px 14px;background:oklch(0.93 0.003 110);overflow:hidden}
+.pane h3{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+
+/* job flow timeline */
+.job-flow{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.job-node{flex-shrink:0;width:110px;padding:8px;border:1px solid var(--groove);
+  background:oklch(0.94 0.003 110);font-size:10px;text-align:center;position:relative;
+  box-shadow:inset 0 1px 3px oklch(0 0 0/0.03)}
+.job-node .jn-ic{font-size:16px;margin-bottom:2px}
+.job-node .jn-name{font-weight:700;color:var(--text)}
+.job-node .jn-load{margin-top:3px;font-size:18px;font-weight:800;color:var(--koke);font-family:'JetBrains Mono',monospace}
+.job-node .jn-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.job-node.hot{border-color:var(--kitsune);background:oklch(0.92 0.01 70)}
+.job-node.hot .jn-load{color:var(--kitsune)}
+.job-arrow{display:flex;align-items:center;color:var(--muted);font-size:14px;flex-shrink:0}
+.job-arrow.active{color:var(--koke)}
+
+/* KPI mini strip */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.kpi-mini{padding:6px 8px;border:1px solid var(--groove);
+  background:oklch(0.94 0.003 110);text-align:center;box-shadow:inset 0 1px 3px oklch(0 0 0/0.03)}
+.kpi-mini .km-v{font-size:18px;font-weight:800;color:var(--sumi);font-family:'JetBrains Mono',monospace}
+.kpi-mini .km-l{font-size:8px;color:var(--muted);letter-spacing:1px;font-family:'JetBrains Mono',monospace}
+
+/* sensor heatmap legend */
+.heatbar{height:6px;
+  background:linear-gradient(90deg,oklch(0.52 0.04 160),oklch(0.65 0.02 110),oklch(0.56 0.05 70),oklch(0.48 0.07 22));margin:4px 0}
+.heatbar-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+/* ratchet panel */
+.ratchet-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--groove);
+  background:oklch(0.94 0.003 110);margin-bottom:8px;box-shadow:inset 0 1px 3px oklch(0 0 0/0.03)}
+.ratchet-bar .rb-pue{font-size:20px;font-weight:800;color:var(--sumi);font-feature-settings:'tnum';font-family:'JetBrains Mono',monospace}
+.ratchet-bar .rb-arrow{color:var(--koke);font-size:14px}
+.ratchet-bar .rb-round{font-size:10px;color:var(--muted)}
+.ratchet-btn{padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;
+  border:none;background:var(--rubber);color:var(--sumi);
+  cursor:pointer;transition:.08s;flex-shrink:0;
+  box-shadow:0 1px 3px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.3)}
+.ratchet-btn:hover{background-color:var(--rubber-hover)}
+.ratchet-btn:active{box-shadow:inset 0 2px 4px oklch(0 0 0/0.12);transform:translateY(1px)}
+.ratchet-btn.auto{border:1px solid var(--kitsune);color:var(--kitsune);background:oklch(0.90 0.02 70);box-shadow:none}
+.ratchet-btn.auto.on{background:oklch(0.85 0.03 70)}
+.heritage-item{padding:6px 8px;border-left:3px solid var(--koke);
+  background:oklch(0.93 0.005 160);margin:3px 0;font-size:10px;animation:slideIn .4s ease-out}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+.heritage-item .hi-t{font-weight:700;color:var(--text)}
+.heritage-item .hi-m{color:var(--muted);margin-top:2px}
+.heritage-item .hi-d{color:var(--koke);font-weight:700;font-family:'JetBrains Mono',monospace}
+
+/* lora topo */
+.lora-card{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+  padding:6px 8px;border-bottom:1px solid var(--groove);margin:3px 0;
+  font-size:10px;background:oklch(0.93 0.005 160)}
+.lora-card .lc-ic{font-size:14px}
+.lora-card .lc-id{font-weight:700;color:var(--koke);font-family:'JetBrains Mono',monospace}
+.lora-card .lc-meta{font-size:9px;color:var(--muted)}
+.lora-card .lc-rssi{font-weight:700;font-size:11px;font-family:'JetBrains Mono',monospace}
+.lora-card .lc-rssi.good{color:var(--koke)}
+.lora-card .lc-rssi.mid{color:var(--kitsune)}
+.lora-card .lc-rssi.bad{color:var(--danger)}
+
+/* heatmap toggle */
+.heat-ctrl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.heat-ctrl button{padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:9px;border:1px solid var(--groove);
+  background:oklch(0.90 0.004 110);color:var(--muted);cursor:pointer;transition:.15s;box-shadow:none}
+.heat-ctrl button:hover{border-color:var(--sumi);color:var(--sumi)}
+.heat-ctrl button.on{background:oklch(0.90 0.02 22);border-color:oklch(0.48 0.07 22/0.5);color:var(--shu)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:oklch(0.75 0.005 110)}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+
+<!-- Three.js via importmap -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="top">
+  <span class="logo">PoseidonX</span>
+  <span class="sub">感官織网 · SENSORY MESH · 4-LAYER DIGITAL TWIN</span>
+  <span class="spacer"></span>
+  <a class="pill" href="/marine-datacenter.html">DASHBOARD</a>
+  <a class="pill" href="/datacenter-digital-twin.html">DIGITAL TWIN</a>
+  <a class="pill" href="/datacenter-ratchet-evolution.html">棘轮演进</a>
+  <span class="pill" id="pill-ws">WS · OFF</span>
+  <span class="pill live" id="pill-status">LOADING</span>
+</div>
+
+<div id="app">
+
+  <!-- ═══ 3D VIEWPORT ═══ -->
+  <div id="viewport">
+    <div class="vp-hud">
+      <span class="tag">ORBIT · 拖拽旋转 · 滚轮缩放 · 右键平移</span>
+      <span class="tag live" id="vp-fps">-- FPS</span>
+    </div>
+
+    <div id="layer-panel">
+      <div class="lyr-group">SENSORY MESH LAYERS</div>
+      <button class="lyr-btn active" data-layer="device" style="border-color:var(--l1)" onclick="toggleLayer('device')">
+        <span class="dot" style="background:var(--l1)"></span>L1 设备层 · Device<span class="key">1</span></button>
+      <button class="lyr-btn active" data-layer="facility" style="border-color:var(--l2)" onclick="toggleLayer('facility')">
+        <span class="dot" style="background:var(--l2)"></span>L2 设施层 · Facility<span class="key">2</span></button>
+      <button class="lyr-btn active" data-layer="environment" style="border-color:var(--l3)" onclick="toggleLayer('environment')">
+        <span class="dot" style="background:var(--l3)"></span>L3 环境层 · Environ<span class="key">3</span></button>
+      <button class="lyr-btn active" data-layer="process" style="border-color:var(--l4)" onclick="toggleLayer('process')">
+        <span class="dot" style="background:var(--l4)"></span>L4 流程层 · Process<span class="key">4</span></button>
+      <div class="lyr-sep"></div>
+      <button class="lyr-btn" onclick="soloLayer(null)" style="border-color:var(--sumi)">
+        <span class="dot" style="background:var(--sumi)"></span>全部显示 · Show All<span class="key">0</span></button>
+      <button class="lyr-btn" onclick="explodeToggle()" id="btn-explode" style="border-color:var(--kitsune)">
+        <span class="dot" style="background:var(--kitsune)"></span>分层展开 · Explode<span class="key">E</span></button>
+    </div>
+
+    <div id="readout">
+      <h4 id="ro-title">—</h4>
+      <div id="ro-body"></div>
+    </div>
+
+    <div id="explode-wrap">
+      <label>层间距</label>
+      <input type="range" id="explode-slider" min="0" max="100" value="0">
+      <span id="explode-val">0%</span>
+      <label style="color:var(--l1)">L1</label>
+      <label style="color:var(--l2)">L2</label>
+      <label style="color:var(--l3)">L3</label>
+      <label style="color:var(--l4)">L4</label>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <aside id="side">
+    <div class="side-head">SENSORY MESH OVERVIEW</div>
+
+    <div class="layer-card l1" onclick="soloLayer('device')">
+      <div class="lc-name" style="color:var(--l1)">L1 设备层 · Device Layer</div>
+      <div class="lc-desc">服务器/GPU/CPU/Memory 组件級监控<br>單机功耗 · 溫度 · 利用率</div>
+      <div class="lc-kpi"><span id="lc1-cnt">0</span> 设备 · <span id="lc1-pw">0</span> kW</div>
+    </div>
+    <div class="layer-card l2" onclick="soloLayer('facility')">
+      <div class="lc-name" style="color:var(--l2)">L2 设施层 · Facility Layer</div>
+      <div class="lc-desc">机櫃 · 配电櫃 · 线纜 · CDU · CRAC · 冷卻回路</div>
+      <div class="lc-kpi"><span id="lc2-cnt">0</span> 机櫃 · <span id="lc2-cdu">0</span> CDU</div>
+    </div>
+    <div class="layer-card l3" onclick="soloLayer('environment')">
+      <div class="lc-name" style="color:var(--l3)">L3 环境层 · Environment Layer</div>
+      <div class="lc-desc">LoRa 溫濕度传感器 · 冷熱通道 · 气流场</div>
+      <div class="lc-kpi"><span id="lc3-cnt">0</span> 传感器 · <span id="lc3-temp">--</span> °C avg</div>
+    </div>
+    <div class="layer-card l4" onclick="soloLayer('process')">
+      <div class="lc-name" style="color:var(--l4)">L4 流程层 · Process Layer</div>
+      <div class="lc-desc">作业调度 · GPU/CPU 任务流 · 节点流转</div>
+      <div class="lc-kpi"><span id="lc4-jobs">0</span> 作业 · <span id="lc4-util">0</span>% 利用率</div>
+    </div>
+
+    <div class="side-head">RATCHET · 棘轮优化引擎 <span style="color:var(--koke)" id="ratchet-round">R0</span></div>
+    <div class="ratchet-bar">
+      <div style="flex:1">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:1px">CURRENT PUE</div>
+        <div class="rb-pue" id="r-pue">1.850</div>
+      </div>
+      <div class="rb-arrow">→</div>
+      <div style="text-align:right">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:1px">TARGET</div>
+        <div style="font-size:16px;font-weight:800;color:var(--accent2)">1.300</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button class="ratchet-btn" onclick="ratchetTick()" id="btn-tick">TICK 闭环</button>
+      <button class="ratchet-btn" onclick="ratchetLock()" id="btn-lock">LOCK 鎖定</button>
+      <button class="ratchet-btn auto" onclick="ratchetAutoToggle()" id="btn-auto">AUTO</button>
+    </div>
+    <div id="heritage-list" style="max-height:140px;overflow-y:auto"></div>
+
+    <div class="side-head">DATACENTER KPI</div>
+    <div class="kpi-row">
+      <div class="kpi-mini"><div class="km-v" id="kpi-pue">--</div><div class="km-l">PUE</div></div>
+      <div class="kpi-mini"><div class="km-v" id="kpi-it">--</div><div class="km-l">IT kW</div></div>
+      <div class="kpi-mini"><div class="km-v" id="kpi-cool">--</div><div class="km-l">COOL kW</div></div>
+      <div class="kpi-mini"><div class="km-v" id="kpi-hot">--</div><div class="km-l">HOT °C</div></div>
+    </div>
+
+    <div class="side-head">LoRa 传感网拓撲 <span id="lora-cnt" style="color:var(--koke)">0</span></div>
+    <div id="lora-list" style="max-height:180px;overflow-y:auto"></div>
+
+    <div class="side-head">熱力场控制 · THERMAL HEATMAP</div>
+    <div class="heat-ctrl">
+      <button id="btn-heatmap" onclick="toggleHeatmap()">地面熱力图</button>
+      <button id="btn-heatflow" onclick="toggleHeatFlow()">熱量粒子流</button>
+      <button id="btn-loratopo" onclick="toggleLoraTopo()">LoRa 拓撲</button>
+    </div>
+
+    <div class="side-head">TEMPERATURE LEGEND</div>
+    <div class="heatbar"></div>
+    <div class="heatbar-labels"><span>18°C</span><span>24°C</span><span>30°C</span><span>36°C</span></div>
+
+    <div class="side-head">DEVICE LIST <span id="dev-count" style="color:var(--sumi)">0</span></div>
+    <div id="dev-list" style="max-height:160px;overflow-y:auto"></div>
+  </aside>
+
+  <!-- ═══ BOTTOM ═══ -->
+  <div id="bottom">
+    <div class="pane">
+      <h3>L4 作业流转 · JOB FLOW ACROSS NODES</h3>
+      <div class="job-flow" id="job-flow"></div>
+    </div>
+    <div class="pane">
+      <h3>LAYER HEALTH MATRIX</h3>
+      <div id="health-matrix" style="font-size:10px;line-height:1.8"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ═══════════════ CONSTANTS ═══════════════ */
+const API = `${location.protocol}//${location.hostname}:8080/api/v1/datacenter`;
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+
+/* color helpers */
+function tempColor(t){
+  const lo=18,hi=36;
+  const f=clamp((t-lo)/(hi-lo),0,1);
+  if(f<0.33) return new THREE.Color().setHSL(.58,0.8,0.35+f*0.3);
+  if(f<0.66) return new THREE.Color().setHSL(.16+(.58-.16)*(1-(f-.33)/.33),0.85,0.5);
+  return new THREE.Color().setHSL(0,0.8,0.35+(f-.66)/.34*0.25);
+}
+function utilColor(u){ // 0-100
+  const f=u/100;
+  if(f<0.5) return new THREE.Color().setHSL(.38,0.6,0.3+f*0.2);
+  if(f<0.8) return new THREE.Color().setHSL(.12,0.7,0.4);
+  return new THREE.Color().setHSL(0,0.8,0.45);
+}
+
+/* ═══════════════ STATE ═══════════════ */
+let STATUS = {}, SENSORS = [], DEVICES = [], JOBS = [];
+const LAYERS = { device:true, facility:true, environment:true, process:true };
+let exploded = false, explodeAmount = 0;
+const layerGroups = {};
+let scene, camera, renderer, controls, raycaster, mouse, clock;
+let selectedObj = null;
+const RACK_ROWS = 4, RACK_COLS = 8, RACK_TOTAL = RACK_ROWS * RACK_COLS;
+const ROOM_W = 60, ROOM_D = 40, ROOM_H = 8;
+
+/* heatmap / lora topo / heat particles toggle state */
+let heatmapMesh = null, heatmapOn = false;
+let heatParticles = null, heatParticlesOn = false;
+let loraTopoGroup = null, loraTopoOn = false;
+let loraDevices = []; // references to lora sensor meshes for topo
+
+/* ratchet state */
+let RATCHET = { round:0, pue:1.850, baseline:1.850, target:1.300, heritage:[], autoTimer:null };
+const HEATMAP_RES = 128; // texture resolution
+
+/* ═══════════════ THREE.JS SETUP ═══════════════ */
+function initScene(){
+  const vp = $('#viewport');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xddd9d2);
+  scene.fog = new THREE.FogExp2(0xddd9d2, 0.008);
+
+  camera = new THREE.PerspectiveCamera(55, vp.clientWidth/vp.clientHeight, 0.5, 500);
+  camera.position.set(55, 40, 55);
+
+  renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+  renderer.setSize(vp.clientWidth, vp.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  vp.insertBefore(renderer.domElement, vp.firstChild);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 3, 0);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.48;
+  controls.minDistance = 15;
+  controls.maxDistance = 120;
+  controls.update();
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+  clock = new THREE.Clock();
+
+  // Lights
+  const amb = new THREE.AmbientLight(0xe8e4de, 0.6);
+  scene.add(amb);
+  const dir = new THREE.DirectionalLight(0xfaf8f4, 0.7);
+  dir.position.set(30, 50, 20); dir.castShadow = true;
+  dir.shadow.mapSize.set(2048,2048);
+  dir.shadow.camera.left=-50;dir.shadow.camera.right=50;
+  dir.shadow.camera.top=50;dir.shadow.camera.bottom=-50;
+  scene.add(dir);
+  const pt1 = new THREE.PointLight(0xfaf8f4, 0.3, 80);
+  pt1.position.set(0, ROOM_H, 0); scene.add(pt1);
+
+  // Layer groups
+  for(const k of ['device','facility','environment','process']){
+    layerGroups[k] = new THREE.Group();
+    layerGroups[k].name = k;
+    scene.add(layerGroups[k]);
+  }
+
+  // Grid helper (floor)
+  const grid = new THREE.GridHelper(80, 80, 0xc8c3ba, 0xc8c3ba);
+  grid.position.y = -0.01;
+  scene.add(grid);
+
+  window.addEventListener('resize', onResize);
+  renderer.domElement.addEventListener('click', onClick);
+}
+
+function onResize(){
+  const vp=$('#viewport');
+  camera.aspect = vp.clientWidth/vp.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(vp.clientWidth, vp.clientHeight);
+}
+
+/* ═══════════════ BUILD LAYERS ═══════════════ */
+
+// ── L2: FACILITY (底层 — 机柜、配电柜、CDU、线缆) ──
+function buildFacility(){
+  const g = layerGroups.facility;
+  // Room shell (wireframe)
+  const roomGeo = new THREE.BoxGeometry(ROOM_W, ROOM_H, ROOM_D);
+  const roomMat = new THREE.MeshPhongMaterial({
+    color:0xbfb9b0, transparent:true, opacity:0.08, wireframe:false, side:THREE.BackSide
+  });
+  const room = new THREE.Mesh(roomGeo, roomMat);
+  room.position.set(0, ROOM_H/2, 0);
+  room.userData = { layer:'facility', type:'room', name:'机房外壳 · Room Shell' };
+  g.add(room);
+
+  // Room wireframe edges
+  const roomEdge = new THREE.LineSegments(
+    new THREE.EdgesGeometry(roomGeo),
+    new THREE.LineBasicMaterial({ color:0x8a8378, transparent:true, opacity:0.3 })
+  );
+  roomEdge.position.copy(room.position);
+  g.add(roomEdge);
+
+  // Raised floor
+  const floorGeo = new THREE.BoxGeometry(ROOM_W-1, 0.3, ROOM_D-1);
+  const floorMat = new THREE.MeshPhongMaterial({ color:0xc8c3ba, transparent:true, opacity:0.5 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.position.y = 0.15; floor.receiveShadow = true;
+  floor.userData = { layer:'facility', type:'floor', name:'高架地板 · Raised Floor' };
+  g.add(floor);
+
+  // Racks (4 rows × 8 cols)
+  const rackGeo = new THREE.BoxGeometry(1.8, 5.5, 3);
+  for(let row=0;row<RACK_ROWS;row++){
+    for(let col=0;col<RACK_COLS;col++){
+      const idx = row*RACK_COLS+col;
+      const mat = new THREE.MeshPhongMaterial({
+        color:0x4a4640, emissive:0x3a3630, transparent:true, opacity:0.85
+      });
+      const rack = new THREE.Mesh(rackGeo, mat);
+      const x = -ROOM_W/2 + 8 + col * 6.5;
+      const z = -ROOM_D/2 + 8 + row * 9;
+      rack.position.set(x, 2.75, z);
+      rack.castShadow = true;
+      rack.userData = {
+        layer:'facility', type:'rack', name:`Rack-${String.fromCharCode(65+row)}${col+1}`,
+        rackIdx:idx, row, col,
+        power_kw: 8 + Math.random()*12,
+        intake_temp: 20 + Math.random()*8,
+      };
+      g.add(rack);
+
+      // Rack frame outline
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(rackGeo),
+        new THREE.LineBasicMaterial({ color:0x6b6560 })
+      );
+      edges.position.copy(rack.position);
+      g.add(edges);
+    }
+  }
+
+  // CDU units (2 units at the sides)
+  const cduGeo = new THREE.BoxGeometry(2.5, 4, 2);
+  for(let i=0;i<2;i++){
+    const cdu = new THREE.Mesh(cduGeo, new THREE.MeshPhongMaterial({
+      color:0x7a9b7a, emissive:0x3a4a3a
+    }));
+    cdu.position.set(ROOM_W/2-4, 2, (i===0?-1:1)*(ROOM_D/2-5));
+    cdu.castShadow = true;
+    cdu.userData = { layer:'facility', type:'cdu', name:`CDU-${i+1}`,
+      coolant_temp:18+Math.random()*4, flow_rate:120+Math.random()*40 };
+    g.add(cdu);
+    // label glow
+    const glow = new THREE.PointLight(0x7a9b7a, 0.3, 8);
+    glow.position.copy(cdu.position); glow.position.y = 5;
+    g.add(glow);
+  }
+
+  // CRAC units (2 units)
+  const cracGeo = new THREE.BoxGeometry(3, 5.5, 2.5);
+  for(let i=0;i<2;i++){
+    const crac = new THREE.Mesh(cracGeo, new THREE.MeshPhongMaterial({
+      color:0x9b9589, emissive:0x4a4640
+    }));
+    crac.position.set(-ROOM_W/2+4, 2.75, (i===0?-1:1)*(ROOM_D/2-6));
+    crac.castShadow = true;
+    crac.userData = { layer:'facility', type:'crac', name:`CRAC-${i+1}`,
+      fan_hz:42+Math.random()*8, supply_temp:14+Math.random()*3 };
+    g.add(crac);
+  }
+
+  // Power distribution (PDU cabinets)
+  const pduGeo = new THREE.BoxGeometry(1.5, 4, 1.5);
+  for(let i=0;i<4;i++){
+    const pdu = new THREE.Mesh(pduGeo, new THREE.MeshPhongMaterial({
+      color:0xa89060, emissive:0x544830
+    }));
+    pdu.position.set(-ROOM_W/2+4, 2, -ROOM_D/4 + i*ROOM_D/3);
+    pdu.userData = { layer:'facility', type:'pdu', name:`PDU-${i+1}`,
+      load_pct:60+Math.random()*30, voltage:380 };
+    g.add(pdu);
+  }
+
+  // Cable trays (overhead lines)
+  const cableMat = new THREE.LineBasicMaterial({ color:0x7a9b7a, linewidth:2 });
+  for(let row=0;row<RACK_ROWS;row++){
+    const z = -ROOM_D/2 + 8 + row * 9;
+    const pts = [
+      new THREE.Vector3(-ROOM_W/2+4, 6.5, z),
+      new THREE.Vector3(ROOM_W/2-4, 6.5, z)
+    ];
+    const cable = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), cableMat);
+    cable.userData = { layer:'facility', type:'cable', name:`Cable-Tray-Row${row+1}` };
+    g.add(cable);
+  }
+}
+
+// ── L1: DEVICE (设备组件 — CPU/GPU/Memory 在每个机柜内) ──
+function buildDevices(){
+  const g = layerGroups.device;
+  const rackMeshes = layerGroups.facility.children.filter(c=>c.userData?.type==='rack');
+
+  rackMeshes.forEach((rack,idx) => {
+    const { x, z } = rack.position;
+    const serverCount = 3 + Math.floor(Math.random()*3); // 3-5 servers per rack
+
+    for(let s=0;s<serverCount;s++){
+      const sy = 0.6 + s * 1.05;
+      // Server chassis
+      const chassisGeo = new THREE.BoxGeometry(1.4, 0.35, 2.4);
+      const chassisMat = new THREE.MeshPhongMaterial({
+        color:0x4a4640, emissive:0x3a3630, transparent:true, opacity:0.9
+      });
+      const chassis = new THREE.Mesh(chassisGeo, chassisMat);
+      chassis.position.set(x, sy, z);
+      chassis.userData = {
+        layer:'device', type:'server', name:`${rack.userData.name}/U${s+1}`,
+        rackIdx:idx, slot:s, cpu_util:Math.random()*100,
+        gpu_util:Math.random()*100, mem_gb:64+Math.floor(Math.random()*3)*64,
+        power_w:200+Math.random()*400, temp:40+Math.random()*30,
+      };
+      g.add(chassis);
+
+      // CPU chip (green-ish box)
+      const cpuGeo = new THREE.BoxGeometry(0.25, 0.12, 0.25);
+      const cpuMat = new THREE.MeshPhongMaterial({ color:0x7a9b7a, emissive:0x3a4a3a });
+      const cpu = new THREE.Mesh(cpuGeo, cpuMat);
+      cpu.position.set(x-0.35, sy+0.22, z-0.5);
+      cpu.userData = { layer:'device', type:'cpu', name:`${rack.userData.name}/U${s+1}/CPU`,
+        util:chassis.userData.cpu_util, freq_ghz:2.4+Math.random()*1.2,
+        temp:45+Math.random()*25 };
+      g.add(cpu);
+
+      // GPU chip (amber box)
+      const gpuGeo = new THREE.BoxGeometry(0.35, 0.15, 0.3);
+      const gpuMat = new THREE.MeshPhongMaterial({ color:0xa89060, emissive:0x544830 });
+      const gpu = new THREE.Mesh(gpuGeo, gpuMat);
+      gpu.position.set(x+0.3, sy+0.22, z-0.3);
+      gpu.userData = { layer:'device', type:'gpu', name:`${rack.userData.name}/U${s+1}/GPU`,
+        util:chassis.userData.gpu_util, vram_gb:24+Math.floor(Math.random()*3)*24,
+        temp:50+Math.random()*30, tflops:30+Math.random()*50 };
+      g.add(gpu);
+
+      // Memory (thin blue bar)
+      const memGeo = new THREE.BoxGeometry(0.6, 0.06, 0.1);
+      const memMat = new THREE.MeshPhongMaterial({ color:0x8a8378, emissive:0x4a4640 });
+      const mem = new THREE.Mesh(memGeo, memMat);
+      mem.position.set(x, sy+0.22, z+0.6);
+      mem.userData = { layer:'device', type:'memory', name:`${rack.userData.name}/U${s+1}/MEM`,
+        capacity_gb:chassis.userData.mem_gb, usage_pct:30+Math.random()*60 };
+      g.add(mem);
+
+      // Disk (small grey box)
+      const diskGeo = new THREE.BoxGeometry(0.2, 0.08, 0.3);
+      const diskMat = new THREE.MeshPhongMaterial({ color:0x6b6560, emissive:0x3a3630 });
+      const disk = new THREE.Mesh(diskGeo, diskMat);
+      disk.position.set(x+0.5, sy+0.22, z+0.6);
+      disk.userData = { layer:'device', type:'disk', name:`${rack.userData.name}/U${s+1}/NVMe`,
+        capacity_tb:2+Math.floor(Math.random()*6), iops:50000+Math.random()*150000 };
+      g.add(disk);
+    }
+  });
+}
+
+// ── L3: ENVIRONMENT (LoRa设备实体 + 天线 + 传感器 + 冷热通道 + 气流) ──
+function buildEnvironment(){
+  const g = layerGroups.environment;
+  loraDevices = [];
+
+  // ── LoRa 传感器设备实体 (带天线/盒体/LED指示灯) ──
+  const LORA_POSITIONS = [];
+  // 在机柜行间 + 墙壁 + 天花板布置 24 个 LoRa 节点
+  for(let row=0;row<RACK_ROWS;row++){
+    for(let col=0;col<3;col++){
+      const x = -ROOM_W/2 + 10 + col * (ROOM_W-20)/2;
+      const z = -ROOM_D/2 + 8 + row * 9 + (col%2)*4;
+      LORA_POSITIONS.push({ x, z, y: 0.8 + Math.random()*0.5, mount:'rack' });
+    }
+  }
+  // 墙壁挂载
+  for(let i=0;i<6;i++){
+    const wall = i%2===0;
+    LORA_POSITIONS.push({
+      x: wall ? (i<3?-1:1)*(ROOM_W/2-2) : (Math.random()-0.5)*(ROOM_W-12),
+      z: wall ? (Math.random()-0.5)*(ROOM_D-8) : (i<3?-1:1)*(ROOM_D/2-2),
+      y: 3 + Math.random()*3, mount:'wall'
+    });
+  }
+  // 天花板挂载
+  for(let i=0;i<6;i++){
+    LORA_POSITIONS.push({
+      x: (Math.random()-0.5)*(ROOM_W-16),
+      z: (Math.random()-0.5)*(ROOM_D-12),
+      y: ROOM_H-1.2+Math.random()*0.5, mount:'ceiling'
+    });
+  }
+
+  LORA_POSITIONS.forEach((pos, i) => {
+    const temp = 18 + Math.random()*16;
+    const hum = 30 + Math.random()*40;
+    const rssi = -50 - Math.random()*40;
+    const battery = 40 + Math.random()*55;
+    const col = tempColor(temp);
+
+    // ── 设备盒体 (白色 PCB 盒子) ──
+    const boxGeo = new THREE.BoxGeometry(0.6, 0.25, 0.4);
+    const boxMat = new THREE.MeshPhongMaterial({ color:0xd5d0c8, emissive:0x4a4640 });
+    const box = new THREE.Mesh(boxGeo, boxMat);
+    box.position.set(pos.x, pos.y, pos.z);
+    box.userData = {
+      layer:'environment', type:'lora_sensor', name:`LoRa-${String(i+1).padStart(2,'0')}`,
+      temp, humidity:hum, rssi, battery, mount:pos.mount,
+      channel: i<8 ? 'CH0' : i<16 ? 'CH1' : 'CH2',
+      sf: rssi > -70 ? 'SF7' : rssi > -85 ? 'SF9' : 'SF12',
+      gateway: i < 12 ? 'GW-A' : 'GW-B'
+    };
+    g.add(box);
+    loraDevices.push(box);
+
+    // ── 天线 (竖直细圆柱) ──
+    const antennaGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6);
+    const antennaMat = new THREE.MeshPhongMaterial({ color:0x8a8378 });
+    const antenna = new THREE.Mesh(antennaGeo, antennaMat);
+    antenna.position.set(pos.x+0.2, pos.y+0.42, pos.z);
+    antenna.userData = { layer:'environment', _loraAntenna:true };
+    g.add(antenna);
+
+    // ── 天线顶部小球 ──
+    const tipGeo = new THREE.SphereGeometry(0.06, 8, 8);
+    const tipMat = new THREE.MeshPhongMaterial({ color:0x8a8378 });
+    const tip = new THREE.Mesh(tipGeo, tipMat);
+    tip.position.set(pos.x+0.2, pos.y+0.72, pos.z);
+    tip.userData = { layer:'environment', _loraAntenna:true };
+    g.add(tip);
+
+    // ── LED 指示灯 (温度色球 — 发光) ──
+    const ledGeo = new THREE.SphereGeometry(0.08, 8, 8);
+    const ledMat = new THREE.MeshPhongMaterial({
+      color:col, emissive:col.clone().multiplyScalar(0.6),
+      transparent:true, opacity:0.9
+    });
+    const led = new THREE.Mesh(ledGeo, ledMat);
+    led.position.set(pos.x-0.15, pos.y+0.15, pos.z+0.18);
+    led.userData = { layer:'environment', _loraLED:true, sensorIdx:i };
+    g.add(led);
+
+    // ── 温度感应域 (半透明球形热力范围) ──
+    const fieldGeo = new THREE.SphereGeometry(2.5, 16, 16);
+    const fieldMat = new THREE.MeshBasicMaterial({
+      color:col, transparent:true, opacity:0.04, side:THREE.DoubleSide
+    });
+    const field = new THREE.Mesh(fieldGeo, fieldMat);
+    field.position.copy(box.position);
+    field.userData = { layer:'environment', _halo:true };
+    g.add(field);
+
+    // ── 信号波纹环 (LoRa 射频扩散) ──
+    for(let r=0;r<3;r++){
+      const ringGeo = new THREE.RingGeometry(0.8+r*1.2, 0.9+r*1.2, 24);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color:0x7a9b7a, transparent:true, opacity:0.08-r*0.02, side:THREE.DoubleSide
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.copy(box.position);
+      ring.rotation.x = -Math.PI/2;
+      ring.userData = { layer:'environment', _rfRing:true, ringIdx:r, baseY:box.position.y };
+      g.add(ring);
+    }
+  });
+
+  // ── 冷通道 (蓝色半透明) ──
+  const aisleMat = new THREE.MeshBasicMaterial({
+    color:0x7a9b7a, transparent:true, opacity:0.06, side:THREE.DoubleSide
+  });
+  for(let row=0;row<RACK_ROWS-1;row++){
+    const z = -ROOM_D/2 + 8 + row*9 + 4.5;
+    const aisle = new THREE.Mesh(
+      new THREE.PlaneGeometry(RACK_COLS*6.5-2, ROOM_H-1), aisleMat.clone()
+    );
+    aisle.position.set(0, ROOM_H/2, z);
+    aisle.userData = { layer:'environment', type:'cold_aisle', name:`Cold-Aisle-${row+1}`, avg_temp:18+Math.random()*3 };
+    g.add(aisle);
+  }
+
+  // ── 热通道 (红色半透明) ──
+  const hotMat = new THREE.MeshBasicMaterial({
+    color:0x9b5a4a, transparent:true, opacity:0.04, side:THREE.DoubleSide
+  });
+  for(let row=0;row<RACK_ROWS;row++){
+    const z = -ROOM_D/2 + 8 + row*9;
+    const hot = new THREE.Mesh(
+      new THREE.PlaneGeometry(RACK_COLS*6.5-2, ROOM_H-1), hotMat.clone()
+    );
+    hot.position.set(0, ROOM_H/2, z+1.8);
+    hot.userData = { layer:'environment', type:'hot_aisle', name:`Hot-Aisle-${row+1}`, avg_temp:28+Math.random()*5 };
+    g.add(hot);
+  }
+
+  // ── 气流箭头线 ──
+  const arrowMat = new THREE.LineBasicMaterial({ color:0x7a9b7a, transparent:true, opacity:0.3 });
+  for(let i=0;i<40;i++){
+    const x = (Math.random()-0.5)*(ROOM_W-16);
+    const z = (Math.random()-0.5)*(ROOM_D-12);
+    const pts = [
+      new THREE.Vector3(x, 0.5, z),
+      new THREE.Vector3(x+Math.random()*2-1, 3+Math.random()*3, z+Math.random()*2-1)
+    ];
+    const arrow = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), arrowMat.clone());
+    arrow.userData = { layer:'environment', _airflow:true };
+    g.add(arrow);
+  }
+
+  // Build LoRa topo group (hidden by default, toggle with button)
+  buildLoraTopoGroup();
+}
+
+// ── LoRa 组网拓扑线 (star/mesh topology GW→sensors) ──
+function buildLoraTopoGroup(){
+  loraTopoGroup = new THREE.Group();
+  loraTopoGroup.visible = false;
+  loraTopoGroup.name = 'lora_topo';
+
+  // Gateway positions (2 gateways)
+  const gwPositions = [
+    new THREE.Vector3(-ROOM_W/2+6, ROOM_H-2, 0),
+    new THREE.Vector3(ROOM_W/2-6, ROOM_H-2, 0)
+  ];
+  // Gateway boxes
+  gwPositions.forEach((pos,i) => {
+    const gwGeo = new THREE.BoxGeometry(1.2, 0.8, 0.6);
+    const gwMat = new THREE.MeshPhongMaterial({ color:0x7a9b7a, emissive:0x4a6a4a });
+    const gw = new THREE.Mesh(gwGeo, gwMat);
+    gw.position.copy(pos);
+    gw.userData = { layer:'environment', type:'lora_gateway', name:`GW-${i===0?'A':'B'}`,
+      connected: loraDevices.filter(d=>d.userData.gateway===`GW-${i===0?'A':'B'}`).length };
+    loraTopoGroup.add(gw);
+    // GW antenna
+    const ga = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6),
+      new THREE.MeshPhongMaterial({ color:0xaabbcc })
+    );
+    ga.position.set(pos.x, pos.y+1, pos.z);
+    loraTopoGroup.add(ga);
+    // GW glow
+    const gl = new THREE.PointLight(0x7a9b7a, 0.6, 20);
+    gl.position.set(pos.x, pos.y+0.5, pos.z);
+    loraTopoGroup.add(gl);
+  });
+
+  // Topo lines: GW → each sensor
+  const lineMat = new THREE.LineBasicMaterial({ color:0x7a9b7a, transparent:true, opacity:0.2 });
+  const strongMat = new THREE.LineBasicMaterial({ color:0x7a9b7a, transparent:true, opacity:0.5 });
+  loraDevices.forEach(sensor => {
+    const gwIdx = sensor.userData.gateway === 'GW-A' ? 0 : 1;
+    const gwPos = gwPositions[gwIdx];
+    const strength = sensor.userData.rssi > -70 ? 'good' : sensor.userData.rssi > -85 ? 'mid' : 'bad';
+    const pts = [gwPos.clone(), sensor.position.clone()];
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      strength === 'good' ? strongMat.clone() : lineMat.clone()
+    );
+    line.userData = { _topoLine:true, strength };
+    loraTopoGroup.add(line);
+  });
+
+  // Mesh links between nearby sensors (peer-to-peer relay)
+  for(let i=0;i<loraDevices.length;i++){
+    for(let j=i+1;j<loraDevices.length;j++){
+      const dist = loraDevices[i].position.distanceTo(loraDevices[j].position);
+      if(dist < 12){ // relay range
+        const pts = [loraDevices[i].position.clone(), loraDevices[j].position.clone()];
+        const meshLine = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineBasicMaterial({ color:0x8a8378, transparent:true, opacity:0.08 })
+        );
+        meshLine.userData = { _meshLink:true };
+        loraTopoGroup.add(meshLine);
+      }
+    }
+  }
+
+  scene.add(loraTopoGroup);
+}
+
+// ── 地面热力图 (DataTexture interpolated from sensor temps) ──
+function buildHeatmap(){
+  const size = HEATMAP_RES;
+  const data = new Uint8Array(size * size * 4);
+  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+  tex.needsUpdate = true;
+
+  const heatGeo = new THREE.PlaneGeometry(ROOM_W-2, ROOM_D-2);
+  const heatMat = new THREE.MeshBasicMaterial({
+    map:tex, transparent:true, opacity:0.6, side:THREE.DoubleSide, depthWrite:false
+  });
+  heatmapMesh = new THREE.Mesh(heatGeo, heatMat);
+  heatmapMesh.rotation.x = -Math.PI/2;
+  heatmapMesh.position.y = 0.35;
+  heatmapMesh.visible = false;
+  heatmapMesh.userData = { _heatmapTex:tex, _heatmapData:data };
+  scene.add(heatmapMesh);
+  updateHeatmapTexture();
+}
+
+function updateHeatmapTexture(){
+  if(!heatmapMesh) return;
+  const size = HEATMAP_RES;
+  const data = heatmapMesh.userData._heatmapData;
+  const sensors = loraDevices;
+  const halfW = (ROOM_W-2)/2, halfD = (ROOM_D-2)/2;
+
+  for(let py=0;py<size;py++){
+    for(let px=0;px<size;px++){
+      // Map pixel to world XZ
+      const wx = -halfW + (px/size)*(ROOM_W-2);
+      const wz = -halfD + (py/size)*(ROOM_D-2);
+      // IDW interpolation from sensors
+      let wSum=0, tSum=0;
+      sensors.forEach(s=>{
+        const dx = wx - s.position.x, dz = wz - s.position.z;
+        const dist = Math.sqrt(dx*dx+dz*dz) + 0.5;
+        const w = 1/(dist*dist);
+        wSum += w;
+        tSum += w * (s.userData.temp||24);
+      });
+      const temp = tSum/wSum;
+      // Temp → color (18°C blue → 36°C red)
+      const f = clamp((temp-18)/18, 0, 1);
+      let r,gr,b;
+      if(f<0.33){ r=30; gr=80+f*3*175; b=200-f*3*100; }
+      else if(f<0.66){ const t2=(f-0.33)/0.33; r=50+t2*200; gr=255-t2*80; b=100-t2*80; }
+      else { const t3=(f-0.66)/0.34; r=250; gr=175-t3*140; b=20+t3*10; }
+      const idx = (py*size+px)*4;
+      data[idx]=r; data[idx+1]=gr; data[idx+2]=b; data[idx+3]=140; // alpha
+    }
+  }
+  heatmapMesh.userData._heatmapTex.needsUpdate = true;
+}
+
+// ── 热量流动粒子系统 (热气从服务器上升、冷气从CRAC下沉) ──
+let heatParticleSystem = null;
+const HEAT_PARTICLE_COUNT = 600;
+
+function buildHeatParticles(){
+  const geo = new THREE.BufferGeometry();
+  const positions = new Float32Array(HEAT_PARTICLE_COUNT * 3);
+  const colors = new Float32Array(HEAT_PARTICLE_COUNT * 3);
+  const velocities = []; // stored separately for animation
+  const rackMeshes = layerGroups.facility.children.filter(c=>c.userData?.type==='rack');
+  const cracMeshes = layerGroups.facility.children.filter(c=>c.userData?.type==='crac');
+
+  for(let i=0;i<HEAT_PARTICLE_COUNT;i++){
+    const isHot = i < HEAT_PARTICLE_COUNT * 0.6; // 60% hot rising, 40% cold sinking
+    let x, y, z, vx, vy, vz;
+    if(isHot && rackMeshes.length){
+      // Start above a random rack
+      const rack = rackMeshes[Math.floor(Math.random()*rackMeshes.length)];
+      x = rack.position.x + (Math.random()-0.5)*1.5;
+      y = 5 + Math.random()*2;
+      z = rack.position.z + (Math.random()-0.5)*2;
+      vx = (Math.random()-0.5)*0.3;
+      vy = 0.5 + Math.random()*1.0; // rising
+      vz = (Math.random()-0.5)*0.3;
+      // Hot colors (shu/kitsune earthy warm)
+      const f = Math.random();
+      colors[i*3] = 0.6+f*0.1; colors[i*3+1] = 0.35+f*0.2; colors[i*3+2] = 0.28;
+    } else {
+      // Start near CRAC, flow downward
+      const crac = cracMeshes.length ? cracMeshes[Math.floor(Math.random()*cracMeshes.length)] : {position:{x:0,z:0}};
+      x = crac.position.x + (Math.random()-0.5)*3;
+      y = 5 + Math.random()*2;
+      z = crac.position.z + (Math.random()-0.5)*3;
+      vx = (Math.random()-0.5)*0.5;
+      vy = -(0.3 + Math.random()*0.8); // sinking
+      vz = (Math.random()-0.5)*0.5;
+      // Cold colors (koke green muted)
+      colors[i*3] = 0.47; colors[i*3+1] = 0.6+Math.random()*0.1; colors[i*3+2] = 0.47;
+    }
+    positions[i*3]=x; positions[i*3+1]=y; positions[i*3+2]=z;
+    velocities.push({ vx, vy, vz, isHot, life:Math.random() });
+  }
+
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const mat = new THREE.PointsMaterial({
+    size:0.25, vertexColors:true, transparent:true, opacity:0.6,
+    sizeAttenuation:true, blending:THREE.NormalBlending, depthWrite:false
+  });
+
+  heatParticleSystem = new THREE.Points(geo, mat);
+  heatParticleSystem.visible = false;
+  heatParticleSystem.userData = { _velocities:velocities };
+  scene.add(heatParticleSystem);
+}
+
+function animateHeatParticles(dt){
+  if(!heatParticleSystem || !heatParticleSystem.visible) return;
+  const pos = heatParticleSystem.geometry.attributes.position.array;
+  const vels = heatParticleSystem.userData._velocities;
+  const rackMeshes = layerGroups.facility.children.filter(c=>c.userData?.type==='rack');
+  const cracMeshes = layerGroups.facility.children.filter(c=>c.userData?.type==='crac');
+
+  for(let i=0;i<HEAT_PARTICLE_COUNT;i++){
+    const v = vels[i];
+    pos[i*3]   += v.vx * dt;
+    pos[i*3+1] += v.vy * dt;
+    pos[i*3+2] += v.vz * dt;
+    v.life += dt * 0.15;
+
+    // Reset particle when out of room bounds or life exhausted
+    if(pos[i*3+1] > ROOM_H+1 || pos[i*3+1] < -0.5 || v.life > 1 ||
+       Math.abs(pos[i*3]) > ROOM_W/2 || Math.abs(pos[i*3+2]) > ROOM_D/2){
+      v.life = 0;
+      if(v.isHot && rackMeshes.length){
+        const rack = rackMeshes[Math.floor(Math.random()*rackMeshes.length)];
+        pos[i*3] = rack.position.x + (Math.random()-0.5)*1.5;
+        pos[i*3+1] = 4.5 + Math.random()*1;
+        pos[i*3+2] = rack.position.z + (Math.random()-0.5)*2;
+      } else if(cracMeshes.length) {
+        const crac = cracMeshes[Math.floor(Math.random()*cracMeshes.length)];
+        pos[i*3] = crac.position.x + (Math.random()-0.5)*3;
+        pos[i*3+1] = 5 + Math.random()*2;
+        pos[i*3+2] = crac.position.z + (Math.random()-0.5)*3;
+      }
+    }
+  }
+  heatParticleSystem.geometry.attributes.position.needsUpdate = true;
+}
+
+// ── L4: PROCESS (作业在节点间流转) ──
+function buildProcess(){
+  const g = layerGroups.process;
+  // Job particles — small spheres representing tasks migrating between racks
+  const jobColors = [0xa89060, 0x8a8378, 0x9b9589, 0x9b5a4a, 0x7a9b7a];
+  const jobNames = ['LLM-Train-7B','Inference-Batch','Data-ETL','Model-Eval','Render-Job'];
+  const rackMeshes = layerGroups.facility.children.filter(c=>c.userData?.type==='rack');
+
+  for(let j=0;j<8;j++){
+    const jobType = j % jobNames.length;
+    const srcRack = rackMeshes[Math.floor(Math.random()*rackMeshes.length)];
+    const dstRack = rackMeshes[Math.floor(Math.random()*rackMeshes.length)];
+    const col = jobColors[jobType];
+
+    // Source marker
+    const markerGeo = new THREE.OctahedronGeometry(0.3, 0);
+    const markerMat = new THREE.MeshPhongMaterial({ color:col, emissive:col, emissiveIntensity:0.3 });
+    const marker = new THREE.Mesh(markerGeo, markerMat);
+    marker.position.set(srcRack.position.x, 6.5, srcRack.position.z);
+    marker.userData = {
+      layer:'process', type:'job', name:jobNames[jobType]+`-${j}`,
+      src:srcRack.userData.name, dst:dstRack.userData.name,
+      status: j<3?'running':'queued',
+      cpu_pct:20+Math.random()*70, gpu_pct:Math.random()*100,
+      mem_pct:30+Math.random()*50, progress:Math.random()*100,
+      _animSrc:srcRack.position.clone(), _animDst:dstRack.position.clone(),
+      _animPhase:Math.random()*Math.PI*2, _animSpeed:0.3+Math.random()*0.5
+    };
+    g.add(marker);
+
+    // Flow line (src → dst)
+    const linePts = [
+      new THREE.Vector3(srcRack.position.x, 6.5, srcRack.position.z),
+      new THREE.Vector3(
+        (srcRack.position.x+dstRack.position.x)/2,
+        7.5 + Math.random()*1.5,
+        (srcRack.position.z+dstRack.position.z)/2
+      ),
+      new THREE.Vector3(dstRack.position.x, 6.5, dstRack.position.z),
+    ];
+    const curve = new THREE.QuadraticBezierCurve3(linePts[0], linePts[1], linePts[2]);
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(24));
+    const lineMat = new THREE.LineBasicMaterial({ color:col, transparent:true, opacity:0.25 });
+    const line = new THREE.Line(lineGeo, lineMat);
+    line.userData = { layer:'process', _flowLine:true };
+    g.add(line);
+  }
+}
+
+/* ═══════════════ ANIMATION ═══════════════ */
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  controls.update();
+
+  // Animate process layer job markers
+  layerGroups.process.children.forEach(obj => {
+    if(obj.userData?.type === 'job'){
+      const d = obj.userData;
+      const phase = d._animPhase + t * d._animSpeed;
+      const f = (Math.sin(phase)+1)/2;
+      obj.position.x = lerp(d._animSrc.x, d._animDst.x, f);
+      obj.position.z = lerp(d._animSrc.z, d._animDst.z, f);
+      obj.position.y = 6.5 + Math.sin(phase*2)*0.5;
+      obj.rotation.y = t * 2;
+    }
+  });
+
+  // Animate environment — LoRa LED blink + RF ring expansion + halo pulse
+  layerGroups.environment.children.forEach(obj => {
+    if(obj.userData?._loraLED){
+      const pulse = 0.5 + Math.sin(t*3 + obj.userData.sensorIdx)*0.4;
+      obj.material.emissiveIntensity = pulse;
+    }
+    if(obj.userData?._rfRing){
+      const phase = (t * 0.8 + obj.userData.ringIdx * 0.4) % 2;
+      const scale = 1 + phase * 1.5;
+      obj.scale.setScalar(scale);
+      obj.material.opacity = Math.max(0, 0.12 - phase * 0.06);
+    }
+    if(obj.userData?._halo){
+      obj.material.opacity = 0.02 + Math.sin(t*1.5+obj.position.x)*0.02;
+    }
+    if(obj.userData?._airflow){
+      obj.material.opacity = 0.15 + Math.sin(t*3+obj.position.x*0.5)*0.15;
+    }
+  });
+
+  // LoRa topo line pulse
+  if(loraTopoGroup && loraTopoGroup.visible){
+    loraTopoGroup.children.forEach(obj => {
+      if(obj.userData?._topoLine){
+        const base = obj.userData.strength === 'good' ? 0.4 : 0.15;
+        obj.material.opacity = base + Math.sin(t*2)*0.1;
+      }
+      if(obj.userData?._meshLink){
+        obj.material.opacity = 0.04 + Math.sin(t*1.5+obj.position?.x||0)*0.04;
+      }
+    });
+  }
+
+  // Animate device layer — CPU/GPU glow by utilization
+  layerGroups.device.children.forEach(obj => {
+    if(obj.userData?.type === 'cpu' || obj.userData?.type === 'gpu'){
+      const pulse = 0.8 + Math.sin(t*4 + obj.position.x)*0.2;
+      obj.material.emissiveIntensity = pulse * (obj.userData.util||50)/100;
+    }
+  });
+
+  // Animate heat particles
+  animateHeatParticles(dt);
+
+  // FPS counter
+  if(Math.floor(t*2)%2===0){
+    $('#vp-fps').textContent = `${Math.round(1/Math.max(dt,0.001))} FPS`;
+  }
+
+  renderer.render(scene, camera);
+}
+
+/* ═══════════════ LAYER CONTROLS ═══════════════ */
+function toggleLayer(name){
+  LAYERS[name] = !LAYERS[name];
+  layerGroups[name].visible = LAYERS[name];
+  const btn = $(`.lyr-btn[data-layer="${name}"]`);
+  if(btn) btn.classList.toggle('off', !LAYERS[name]);
+}
+window.toggleLayer = toggleLayer;
+
+function soloLayer(name){
+  if(!name){
+    // show all
+    for(const k in LAYERS){ LAYERS[k]=true; layerGroups[k].visible=true; }
+    $$('.lyr-btn[data-layer]').forEach(b=>b.classList.remove('off'));
+    return;
+  }
+  for(const k in LAYERS){
+    LAYERS[k] = (k===name);
+    layerGroups[k].visible = LAYERS[k];
+  }
+  $$('.lyr-btn[data-layer]').forEach(b=>{
+    b.classList.toggle('off', b.dataset.layer!==name);
+  });
+  // fly camera towards that layer's center
+  const target = layerGroups[name];
+  if(target.children.length){
+    const box = new THREE.Box3().setFromObject(target);
+    const center = box.getCenter(new THREE.Vector3());
+    controls.target.lerp(center, 0.5);
+  }
+}
+window.soloLayer = soloLayer;
+
+function explodeToggle(){
+  exploded = !exploded;
+  $('#btn-explode').classList.toggle('active', exploded);
+  const target = exploded ? 60 : 0;
+  animateExplode(target);
+}
+window.explodeToggle = explodeToggle;
+
+function animateExplode(target){
+  const start = explodeAmount;
+  const dur = 600;
+  const t0 = performance.now();
+  function step(now){
+    const f = clamp((now-t0)/dur, 0, 1);
+    const eased = f<0.5 ? 2*f*f : -1+(4-2*f)*f; // easeInOutQuad
+    explodeAmount = lerp(start, target, eased);
+    applyExplode(explodeAmount);
+    $('#explode-slider').value = explodeAmount;
+    $('#explode-val').textContent = Math.round(explodeAmount)+'%';
+    if(f<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function applyExplode(pct){
+  const spread = pct / 100 * 12; // max 12 units vertical spread
+  const offsets = { device:-spread*0.3, facility:-spread*0.1, environment:spread*0.5, process:spread*1.2 };
+  for(const [name, dy] of Object.entries(offsets)){
+    layerGroups[name].position.y = dy;
+  }
+}
+
+$('#explode-slider').addEventListener('input', e=>{
+  explodeAmount = parseFloat(e.target.value);
+  applyExplode(explodeAmount);
+  $('#explode-val').textContent = Math.round(explodeAmount)+'%';
+  exploded = explodeAmount > 5;
+  $('#btn-explode').classList.toggle('active', exploded);
+});
+
+/* ═══════════════ CLICK / SELECT ═══════════════ */
+function onClick(evt){
+  const vp = $('#viewport');
+  const rect = vp.getBoundingClientRect();
+  mouse.x = ((evt.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((evt.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  const allMeshes = [];
+  for(const k in layerGroups){
+    if(LAYERS[k]) layerGroups[k].traverse(c=>{ if(c.isMesh) allMeshes.push(c); });
+  }
+  const hits = raycaster.intersectObjects(allMeshes);
+  if(hits.length){
+    const obj = hits[0].object;
+    if(obj.userData?.name){
+      showReadout(obj);
+      return;
+    }
+  }
+  hideReadout();
+}
+
+function showReadout(obj){
+  const d = obj.userData;
+  const ro = $('#readout');
+  $('#ro-title').textContent = `${d.name} (${d.type})`;
+  let html = `<div class="row"><span>Layer</span><span class="v">${d.layer}</span></div>`;
+
+  if(d.type==='rack'){
+    html += row('Power', (d.power_kw||0).toFixed(1)+' kW');
+    html += row('Intake', (d.intake_temp||0).toFixed(1)+' °C');
+  } else if(d.type==='server'){
+    html += row('CPU', (d.cpu_util||0).toFixed(0)+'%');
+    html += row('GPU', (d.gpu_util||0).toFixed(0)+'%');
+    html += row('Memory', d.mem_gb+' GB');
+    html += row('Power', (d.power_w||0).toFixed(0)+' W');
+    html += row('Temp', (d.temp||0).toFixed(1)+' °C');
+  } else if(d.type==='cpu'){
+    html += row('Utilization', (d.util||0).toFixed(0)+'%');
+    html += row('Frequency', (d.freq_ghz||0).toFixed(1)+' GHz');
+    html += row('Temp', (d.temp||0).toFixed(1)+' °C');
+  } else if(d.type==='gpu'){
+    html += row('Utilization', (d.util||0).toFixed(0)+'%');
+    html += row('VRAM', d.vram_gb+' GB');
+    html += row('TFLOPS', (d.tflops||0).toFixed(1));
+    html += row('Temp', (d.temp||0).toFixed(1)+' °C');
+  } else if(d.type==='memory'){
+    html += row('Capacity', d.capacity_gb+' GB');
+    html += row('Usage', (d.usage_pct||0).toFixed(0)+'%');
+  } else if(d.type==='disk'){
+    html += row('Capacity', d.capacity_tb+' TB');
+    html += row('IOPS', Math.round(d.iops||0).toLocaleString());
+  } else if(d.type==='lora_sensor'){
+    html += row('Temp', (d.temp||0).toFixed(1)+' °C');
+    html += row('Humidity', (d.humidity||0).toFixed(0)+'%');
+    html += row('RSSI', (d.rssi||0).toFixed(0)+' dBm');
+    html += row('Battery', (d.battery||0).toFixed(0)+'%');
+    html += row('Mount', d.mount||'--');
+    html += row('SF', d.sf||'--');
+    html += row('Channel', d.channel||'--');
+    html += row('Gateway', d.gateway||'--');
+  } else if(d.type==='lora_gateway'){
+    html += row('Connected', d.connected+' sensors');
+  } else if(d.type==='cdu'){
+    html += row('Coolant', (d.coolant_temp||0).toFixed(1)+' °C');
+    html += row('Flow', (d.flow_rate||0).toFixed(0)+' L/min');
+  } else if(d.type==='crac'){
+    html += row('Fan Hz', (d.fan_hz||0).toFixed(1)+' Hz');
+    html += row('Supply', (d.supply_temp||0).toFixed(1)+' °C');
+  } else if(d.type==='pdu'){
+    html += row('Load', (d.load_pct||0).toFixed(0)+'%');
+    html += row('Voltage', d.voltage+' V');
+  } else if(d.type==='job'){
+    html += row('Status', d.status);
+    html += row('Source', d.src);
+    html += row('Dest', d.dst);
+    html += row('CPU', (d.cpu_pct||0).toFixed(0)+'%');
+    html += row('GPU', (d.gpu_pct||0).toFixed(0)+'%');
+    html += row('Progress', (d.progress||0).toFixed(0)+'%');
+  } else if(d.type==='cold_aisle'||d.type==='hot_aisle'){
+    html += row('Avg Temp', (d.avg_temp||0).toFixed(1)+' °C');
+  } else {
+    html += row('Info', d.name);
+  }
+  $('#ro-body').innerHTML = html;
+  ro.classList.add('show');
+}
+function hideReadout(){ $('#readout').classList.remove('show'); }
+function row(k,v){ return `<div class="row"><span>${k}</span><span class="v">${v}</span></div>`; }
+
+/* ═══════════════ KEYBOARD SHORTCUTS ═══════════════ */
+document.addEventListener('keydown', e=>{
+  const k = e.key;
+  if(k==='1') toggleLayer('device');
+  else if(k==='2') toggleLayer('facility');
+  else if(k==='3') toggleLayer('environment');
+  else if(k==='4') toggleLayer('process');
+  else if(k==='0') soloLayer(null);
+  else if(k==='e'||k==='E') explodeToggle();
+  else if(k==='h'||k==='H') toggleHeatmap();
+  else if(k==='f'||k==='F') toggleHeatFlow();
+  else if(k==='t'||k==='T') toggleLoraTopo();
+  else if(k===' ') { e.preventDefault(); ratchetTick(); }
+});
+
+/* ═══════════════ TOGGLE: HEATMAP / HEAT FLOW / LORA TOPO ═══════════════ */
+function toggleHeatmap(){
+  heatmapOn = !heatmapOn;
+  if(heatmapMesh) heatmapMesh.visible = heatmapOn;
+  $('#btn-heatmap').classList.toggle('on', heatmapOn);
+  if(heatmapOn) updateHeatmapTexture();
+}
+window.toggleHeatmap = toggleHeatmap;
+
+function toggleHeatFlow(){
+  heatParticlesOn = !heatParticlesOn;
+  if(heatParticleSystem) heatParticleSystem.visible = heatParticlesOn;
+  $('#btn-heatflow').classList.toggle('on', heatParticlesOn);
+}
+window.toggleHeatFlow = toggleHeatFlow;
+
+function toggleLoraTopo(){
+  loraTopoOn = !loraTopoOn;
+  if(loraTopoGroup) loraTopoGroup.visible = loraTopoOn;
+  $('#btn-loratopo').classList.toggle('on', loraTopoOn);
+}
+window.toggleLoraTopo = toggleLoraTopo;
+
+/* ═══════════════ RATCHET OPTIMIZATION ENGINE ═══════════════ */
+// Principle: 每次 tick 尝试优化(降低PUE/降低温度), 验证通过后 LOCK — 只进不退
+async function ratchetTick(){
+  const btn = $('#btn-tick');
+  btn.disabled = true; btn.textContent = '⏳ TICK...';
+
+  // 1. Try backend API first
+  let result = null;
+  try{
+    const r = await fetch(`${API}/loop/tick`, {method:'POST'});
+    if(r.ok) result = await r.json();
+  }catch(e){}
+
+  // 2. If backend unavailable, simulate locally
+  if(!result){
+    result = simulateRatchetTick();
+  }
+
+  // 3. Animate the optimization effect in 3D
+  await animateRatchetIn3D(result);
+
+  // 4. Update state
+  if(result.verified !== false){
+    RATCHET.round++;
+    RATCHET.pue = result.current_pue || RATCHET.pue;
+    // Apply thermal improvement to sensors
+    applyThermalImprovement(result);
+    updateHeatmapTexture();
+  }
+
+  renderRatchetUI();
+  btn.disabled = false; btn.textContent = '🔄 TICK 闭环';
+}
+window.ratchetTick = ratchetTick;
+
+function simulateRatchetTick(){
+  const delta = 0.002 + Math.random() * 0.008; // 0.002 - 0.010 PUE improvement
+  const newPue = Math.max(RATCHET.target, RATCHET.pue - delta);
+  const policy = ['CRAC频率优化','冷通道封闭','气流再平衡','液冷CDU升级','AI负载迁移'][Math.floor(Math.random()*5)];
+  const saving = 3 + Math.random() * 15;
+  return {
+    decided_policy: policy,
+    current_pue: newPue,
+    baseline_pue: RATCHET.pue,
+    delta_pue: -(RATCHET.pue - newPue),
+    saving_kwh_day: saving,
+    verified: newPue < RATCHET.pue,
+    snapshot: { sensors: loraDevices.length, racks: RACK_TOTAL }
+  };
+}
+
+async function ratchetLock(){
+  const delta = RATCHET.baseline - RATCHET.pue;
+  if(delta <= 0) return;
+
+  const entry = {
+    round: RATCHET.round,
+    title: `R${RATCHET.round} 棘轮锁定 · ΔPUE=${delta.toFixed(4)}`,
+    pue: RATCHET.pue,
+    delta_pue: -delta,
+    saving_kwh: 5 + Math.random()*15,
+    locked_at: Date.now(),
+    category: ['thermal','iot','loop','principle'][Math.floor(Math.random()*4)]
+  };
+  RATCHET.heritage.push(entry);
+  RATCHET.baseline = RATCHET.pue; // new baseline = current (can never go back!)
+
+  // Try backend
+  try{
+    await fetch(`${API}/evolve`, { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ title:entry.title, category:entry.category,
+        delta_pue:entry.delta_pue, delta_kwh_day:entry.saving_kwh })
+    });
+  }catch(e){}
+
+  renderRatchetUI();
+  // Flash the room green to indicate lock
+  flashRoomColor(0x7a9b7a, 500);
+}
+window.ratchetLock = ratchetLock;
+
+function ratchetAutoToggle(){
+  const btn = $('#btn-auto');
+  if(RATCHET.autoTimer){
+    clearInterval(RATCHET.autoTimer);
+    RATCHET.autoTimer = null;
+    btn.classList.remove('on');
+    btn.textContent = '🤖 AUTO';
+  } else {
+    btn.classList.add('on');
+    btn.textContent = '⏸ STOP';
+    RATCHET.autoTimer = setInterval(async()=>{
+      await ratchetTick();
+      if(RATCHET.pue <= RATCHET.target + 0.01){
+        clearInterval(RATCHET.autoTimer);
+        RATCHET.autoTimer = null;
+        btn.classList.remove('on');
+        btn.textContent = '✅ DONE';
+      }
+    }, 4000);
+  }
+}
+window.ratchetAutoToggle = ratchetAutoToggle;
+
+function applyThermalImprovement(result){
+  // Slightly cool down sensors near the improved zone
+  const improvement = Math.abs(result.delta_pue || 0) * 50; // scale factor
+  loraDevices.forEach(s => {
+    if(Math.random() < 0.4){
+      s.userData.temp = Math.max(18, s.userData.temp - improvement * (0.5 + Math.random()));
+      // Update LED color
+      const col = tempColor(s.userData.temp);
+      // Find corresponding LED
+      layerGroups.environment.children.forEach(obj => {
+        if(obj.userData?._loraLED && obj.userData.sensorIdx === loraDevices.indexOf(s)){
+          obj.material.color.copy(col);
+          obj.material.emissive.copy(col).multiplyScalar(0.6);
+        }
+      });
+    }
+  });
+}
+
+async function animateRatchetIn3D(result){
+  // Pulse racks that are being optimized
+  const racks = layerGroups.facility.children.filter(c=>c.userData?.type==='rack');
+  const optimizedRacks = racks.filter(()=>Math.random()<0.3);
+
+  optimizedRacks.forEach(rack => {
+    const orig = rack.material.emissive.clone();
+    rack.material.emissive.set(result.verified!==false ? 0x7a9b7a : 0x9b5a4a);
+    rack.material.emissiveIntensity = 0.5;
+    setTimeout(()=>{
+      rack.material.emissive.copy(orig);
+      rack.material.emissiveIntensity = 0;
+    }, 800);
+  });
+
+  await new Promise(r=>setTimeout(r, 600));
+
+  // Auto-lock if verified
+  if(result.verified !== false && RATCHET.pue < RATCHET.baseline){
+    await ratchetLock();
+  }
+}
+
+function flashRoomColor(color, dur){
+  const room = layerGroups.facility.children.find(c=>c.userData?.type==='room');
+  if(!room) return;
+  const origColor = room.material.color.clone();
+  const origOpacity = room.material.opacity;
+  room.material.color.set(color);
+  room.material.opacity = 0.15;
+  setTimeout(()=>{
+    room.material.color.copy(origColor);
+    room.material.opacity = origOpacity;
+  }, dur);
+}
+
+function renderRatchetUI(){
+  $('#r-pue').textContent = RATCHET.pue.toFixed(3);
+  $('#ratchet-round').textContent = `R${RATCHET.round}`;
+  const cumDelta = RATCHET.heritage.reduce((s,h)=>s+Math.abs(h.delta_pue||0), 0);
+
+  const box = $('#heritage-list');
+  if(!RATCHET.heritage.length){
+    box.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:4px">尚无锁定 — 点击 TICK 或 AUTO 开始优化</div>';
+    return;
+  }
+  box.innerHTML = RATCHET.heritage.slice().reverse().map(h => {
+    const ic = {thermal:'🔥',iot:'📡',loop:'🔄',principle:'⚡'}[h.category]||'🧬';
+    return `<div class="heritage-item">
+      <div class="hi-t">${ic} #${h.round} ${h.title.split('·')[0]}</div>
+      <div class="hi-m"><span class="hi-d">ΔPUE ${h.delta_pue.toFixed(4)}</span> · ${h.saving_kwh.toFixed(1)} kWh/d · 🔒 ${new Date(h.locked_at).toLocaleTimeString()}</div>
+    </div>`;
+  }).join('');
+  box.scrollTop = 0;
+}
+
+/* ═══════════════ LORA LIST ═══════════════ */
+function buildLoraList(){
+  const box = $('#lora-list');
+  $('#lora-cnt').textContent = loraDevices.length;
+  box.innerHTML = loraDevices.map(s => {
+    const d = s.userData;
+    const rssiCls = d.rssi > -70 ? 'good' : d.rssi > -85 ? 'mid' : 'bad';
+    const bars = d.rssi > -70 ? '▐▐▐▐' : d.rssi > -85 ? '▐▐▐░' : '▐░░░';
+    return `<div class="lora-card" onclick="flyToObject('${d.name}')">
+      <div class="lc-ic">📡</div>
+      <div><div class="lc-id">${d.name}</div>
+        <div class="lc-meta">${d.mount} · ${d.sf} · ${d.channel} → ${d.gateway} · 🔋${d.battery.toFixed(0)}%</div></div>
+      <div class="lc-rssi ${rssiCls}" title="${d.rssi.toFixed(0)} dBm">${bars}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════ BACKEND API ═══════════════ */
+async function fetchStatus(){
+  try{
+    const r = await fetch(`${API}/status`); const d = await r.json();
+    Object.assign(STATUS, d);
+    $('#kpi-pue').textContent = (STATUS.current_pue||0).toFixed(3);
+    $('#kpi-it').textContent = (STATUS.it_power_kw||0).toFixed(0);
+    $('#kpi-cool').textContent = (STATUS.cooling_power_kw||0).toFixed(0);
+    $('#pill-status').textContent = `PUE ${(STATUS.current_pue||0).toFixed(2)}`;
+    if(RATCHET.round === 0) RATCHET.pue = STATUS.current_pue || RATCHET.pue;
+  }catch(e){ console.warn('status fetch:', e); }
+}
+
+async function fetchSensors(){
+  try{
+    const r = await fetch(`${API}/iot/sensors`); const d = await r.json();
+    SENSORS = d.sensors || [];
+    updateEnvironmentLayer();
+  }catch(e){}
+}
+
+async function fetchFourView(){
+  try{
+    const r = await fetch(`${API}/four-view`); const d = await r.json();
+    updateLayerCards(d);
+  }catch(e){}
+}
+
+async function fetchHeritage(){
+  try{
+    const r = await fetch(`${API}/heritage`); const d = await r.json();
+    const items = d.heritage || [];
+    if(items.length > RATCHET.heritage.length){
+      RATCHET.heritage = items.map(h => ({
+        round: h.round || RATCHET.heritage.length,
+        title: h.title, pue: h.pue || RATCHET.pue,
+        delta_pue: h.delta_pue || 0, saving_kwh: h.delta_kwh_day || 0,
+        locked_at: (h.locked_at||0)*1000, category: h.category||'general'
+      }));
+      renderRatchetUI();
+    }
+  }catch(e){}
+}
+
+function updateEnvironmentLayer(){
+  SENSORS.forEach((apiSensor, i) => {
+    if(i < loraDevices.length){
+      const mesh = loraDevices[i];
+      const temp = apiSensor.value || mesh.userData.temp;
+      mesh.userData.temp = temp;
+    }
+  });
+  const maxTemp = loraDevices.length ? Math.max(...loraDevices.map(s=>s.userData.temp)) : 0;
+  $('#kpi-hot').textContent = maxTemp.toFixed(1);
+  if(heatmapOn) updateHeatmapTexture();
+}
+
+function updateLayerCards(fourView){
+  if(fourView.device){
+    const dv = fourView.device;
+    $('#lc1-cnt').textContent = dv.total_devices || RACK_TOTAL * 4;
+    $('#lc1-pw').textContent = (dv.total_power_kw || STATUS.it_power_kw || 0).toFixed(0);
+  }
+  if(fourView.facility){
+    const fv = fourView.facility;
+    $('#lc2-cnt').textContent = fv.rack_count || RACK_TOTAL;
+    $('#lc2-cdu').textContent = fv.cdu_count || 2;
+  }
+  if(fourView.environment){
+    const ev = fourView.environment;
+    $('#lc3-cnt').textContent = ev.sensor_count || loraDevices.length || 24;
+    $('#lc3-temp').textContent = (ev.avg_temp || 24).toFixed(1);
+  }
+  if(fourView.process){
+    const pv = fourView.process;
+    $('#lc4-jobs').textContent = pv.active_jobs || 8;
+    $('#lc4-util').textContent = (pv.avg_utilization || 65).toFixed(0);
+  }
+}
+
+function buildDeviceList(){
+  const servers = layerGroups.device.children.filter(c=>c.userData?.type==='server');
+  const box = $('#dev-list');
+  $('#dev-count').textContent = servers.length;
+  box.innerHTML = servers.slice(0, 20).map(s => {
+    const d = s.userData;
+    const tempCls = d.temp > 65 ? 'style="color:var(--danger)"' : d.temp > 55 ? 'style="color:var(--warn)"' : '';
+    return `<div class="dev-item" onclick="flyToObject('${d.name}')">
+      <div class="di-dot" style="background:${utilColor(d.cpu_util).getStyle()}"></div>
+      <div><div class="di-name">${d.name}</div>
+        <div class="di-sub">CPU ${d.cpu_util.toFixed(0)}% · GPU ${d.gpu_util.toFixed(0)}%</div></div>
+      <div class="di-val" ${tempCls}>${d.power_w.toFixed(0)}W</div>
+    </div>`;
+  }).join('');
+}
+
+function flyToObject(name){
+  for(const k in layerGroups){
+    layerGroups[k].traverse(c=>{
+      if(c.userData?.name === name && c.isMesh){
+        controls.target.copy(c.position);
+        camera.position.set(c.position.x+10, c.position.y+8, c.position.z+10);
+        showReadout(c);
+      }
+    });
+  }
+  // Also check lora topo group
+  if(loraTopoGroup){
+    loraTopoGroup.traverse(c=>{
+      if(c.userData?.name === name && c.isMesh){
+        controls.target.copy(c.position);
+        camera.position.set(c.position.x+10, c.position.y+8, c.position.z+10);
+        showReadout(c);
+      }
+    });
+  }
+}
+window.flyToObject = flyToObject;
+
+function buildJobFlow(){
+  const jobs = layerGroups.process.children.filter(c=>c.userData?.type==='job');
+  const box = $('#job-flow');
+  if(!jobs.length){ box.innerHTML='<div style="color:var(--muted);padding:8px">No jobs</div>'; return; }
+  box.innerHTML = jobs.map((j,i) => {
+    const d = j.userData;
+    const hot = d.gpu_pct > 80;
+    return (i>0 ? '<div class="job-arrow active">→</div>' : '') +
+    `<div class="job-node${hot?' hot':''}">
+      <div class="jn-ic">${d.status==='running'?'⚡':'⏳'}</div>
+      <div class="jn-name">${d.name.split('-').slice(0,2).join('-')}</div>
+      <div class="jn-load">${d.progress.toFixed(0)}%</div>
+      <div class="jn-sub">GPU ${d.gpu_pct.toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function buildHealthMatrix(){
+  const box = $('#health-matrix');
+  const avgCpu = loraDevices.length ? (layerGroups.device.children.filter(c=>c.userData?.type==='cpu')
+    .reduce((s,c)=>s+c.userData.util,0)/(layerGroups.device.children.filter(c=>c.userData?.type==='cpu').length||1)).toFixed(0) : '0';
+  const avgTemp = loraDevices.length ? (loraDevices.reduce((s,d)=>s+d.userData.temp,0)/loraDevices.length).toFixed(1) : '0';
+  const hotSpots = loraDevices.filter(d=>d.userData.temp>30).length;
+  const layers = [
+    { name:'L1 Device', color:'var(--l1)', val:`CPU ${avgCpu}% · ${layerGroups.device.children.filter(c=>c.userData?.type==='server').length} svr` },
+    { name:'L2 Facility', color:'var(--l2)', val:`${RACK_TOTAL} racks · 2 CDU · 2 CRAC` },
+    { name:'L3 Environment', color:'var(--l3)', val:`${loraDevices.length} LoRa · avg ${avgTemp}°C · ${hotSpots} hot` },
+    { name:'L4 Process', color:'var(--l4)', val:`${layerGroups.process.children.filter(c=>c.userData?.type==='job').length} jobs` },
+  ];
+  box.innerHTML = layers.map(l =>
+    `<div style="padding:3px 6px;border-left:2px solid ${l.color};margin:2px 0;font-size:10px">
+      <span style="color:${l.color};font-weight:700">${l.name}</span>
+      <span style="color:var(--muted);margin-left:6px">${l.val}</span>
+    </div>`
+  ).join('') + `<div style="padding:3px 6px;border-left:2px solid var(--accent2);margin:4px 0;font-size:10px">
+    <span style="color:var(--accent2);font-weight:700">⚙ Ratchet</span>
+    <span style="color:var(--muted);margin-left:6px">R${RATCHET.round} · PUE ${RATCHET.pue.toFixed(3)} · ${RATCHET.heritage.length} locked</span>
+  </div>`;
+}
+
+/* ═══════════════ WEBSOCKET ═══════════════ */
+function connectWS(){
+  const pill = $('#pill-ws');
+  try{
+    const ws = new WebSocket(`ws://${location.hostname}:8080/ws/datacenter`);
+    ws.onopen = ()=>{ pill.textContent='WS · LIVE'; pill.classList.add('live'); };
+    ws.onclose= ()=>{ pill.textContent='WS · OFF'; pill.classList.remove('live');
+      setTimeout(connectWS, 3000); };
+    ws.onerror= ()=>{ pill.textContent='WS · ERR'; pill.classList.remove('live'); };
+    ws.onmessage = ev => {
+      try{
+        const m = JSON.parse(ev.data);
+        if(m.type==='tick' && m.status) { Object.assign(STATUS, m.status); }
+      }catch(e){}
+    };
+  }catch(e){ pill.textContent='WS · ERR'; }
+}
+
+/* ═══════════════ BOOT ═══════════════ */
+async function boot(){
+  initScene();
+  buildFacility();
+  buildDevices();
+  buildEnvironment();
+  buildProcess();
+  buildHeatmap();
+  buildHeatParticles();
+
+  buildDeviceList();
+  buildLoraList();
+  buildJobFlow();
+  buildHealthMatrix();
+  renderRatchetUI();
+
+  animate();
+
+  await Promise.all([fetchStatus(), fetchSensors(), fetchFourView(), fetchHeritage()]);
+  connectWS();
+
+  setInterval(()=>{ fetchStatus(); fetchSensors(); }, 5000);
+  setInterval(()=>{ fetchFourView(); buildHealthMatrix(); }, 10000);
+
+  // Default: show heatmap + slight explode
+  setTimeout(()=>{
+    toggleHeatmap();
+    toggleHeatFlow();
+    animateExplode(15);
+  }, 800);
+}
+
+window.addEventListener('load', boot);
+</script>
+<script src="/js/i18n.js"></script>
+</body>
+</html>

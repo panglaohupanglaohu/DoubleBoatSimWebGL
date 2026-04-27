@@ -833,6 +833,11 @@ export class SimpleBridgeChat {
 if (typeof window !== 'undefined') {
   console.log('🌊 Bridge Chat script loaded, initializing...');
   window.addEventListener('DOMContentLoaded', () => {
+    // CCTV 监控模式下不创建桥楼聊天面板
+    if (new URLSearchParams(window.location.search).has('cam')) {
+      console.log('🚫 Bridge Chat skipped (cam-mode)');
+      return;
+    }
     console.log('🌊 DOM ready, creating Bridge Chat...');
     setTimeout(() => {
       try {

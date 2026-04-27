@@ -5,18 +5,19 @@
    Font: Noto Sans (required by OpenBridge spec)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@370;400;500;570;670;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 /* ── Global Primitives ─────────────────────────────────────── */
 :root {
-  --ob-font: 'Noto Sans', system-ui, -apple-system, sans-serif;
-  --ob-font-mono: 'IBM Plex Mono', 'Menlo', monospace;
-  --ob-radius-sm: 6px;
-  --ob-radius-md: 8px;
-  --ob-radius-lg: 12px;
-  --ob-radius-xl: 16px;
-  --ob-radius-round: 1000px;
-  --ob-transition: 0.18s ease;
+  --ob-font: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  --ob-font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Menlo', monospace;
+  --ob-font-serif: 'Noto Serif SC', 'Georgia', serif;
+  --ob-radius-sm: 0px;
+  --ob-radius-md: 0px;
+  --ob-radius-lg: 0px;
+  --ob-radius-xl: 0px;
+  --ob-radius-round: 0px;
+  --ob-transition: 0.08s ease;
   --ob-sidebar-width: 64px;
   --ob-topbar-height: 48px;
 }
@@ -73,56 +74,56 @@
   --ob-nav-text-active: rgb(255,255,255);
 }
 
-/* ── Dusk Theme (Default for maritime) ─────────────────────── */
+/* ── Dusk Theme (Default — wabi-sabi 侘寂橡膠) ─────────────── */
 [data-obc-theme='dusk'], :root {
-  --ob-bg-global: rgb(36,36,36);
-  --ob-bg-body: rgb(26,26,26);
-  --ob-bg-section: rgb(18,18,18);
-  --ob-bg-backdrop: rgb(3,3,3);
-  --ob-bg-panel: rgb(36,36,36);
-  --ob-bg-card: rgb(36,36,36);
-  --ob-bg-card-hover: rgb(45,45,45);
-  --ob-bg-input: rgb(18,18,18);
-  --ob-bg-raised: rgb(102,102,102);
+  --ob-bg-global: oklch(0.93 0.003 110);
+  --ob-bg-body: oklch(0.96 0.003 110);
+  --ob-bg-section: oklch(0.91 0.004 110);
+  --ob-bg-backdrop: oklch(0.85 0.005 110);
+  --ob-bg-panel: oklch(0.93 0.003 110);
+  --ob-bg-card: oklch(0.94 0.003 110);
+  --ob-bg-card-hover: oklch(0.91 0.004 110);
+  --ob-bg-input: oklch(0.96 0.003 110);
+  --ob-bg-raised: oklch(0.72 0.006 110);
 
-  --ob-text-primary: rgb(198,198,198);
-  --ob-text-secondary: rgb(165,165,165);
-  --ob-text-tertiary: rgb(130,130,130);
-  --ob-text-disabled: rgb(58,58,58);
-  --ob-text-inverse: rgb(38,38,38);
+  --ob-text-primary: oklch(0.18 0.008 110);
+  --ob-text-secondary: oklch(0.35 0.008 110);
+  --ob-text-tertiary: oklch(0.55 0.005 110);
+  --ob-text-disabled: oklch(0.75 0.005 110);
+  --ob-text-inverse: oklch(0.96 0.003 110);
 
-  --ob-border: rgb(0,0,0);
-  --ob-border-strong: rgb(58,58,58);
-  --ob-border-subtle: rgba(255,255,255,0.09);
+  --ob-border: oklch(0.82 0.004 110);
+  --ob-border-strong: oklch(0.70 0.005 110);
+  --ob-border-subtle: oklch(0 0 0 / 0.06);
 
-  --ob-accent: rgb(67,103,154);
-  --ob-accent-hover: rgb(90,132,191);
-  --ob-accent-light: rgb(35,46,61);
-  --ob-accent-text: rgb(255,255,255);
+  --ob-accent: oklch(0.18 0.008 110);
+  --ob-accent-hover: oklch(0.30 0.008 110);
+  --ob-accent-light: oklch(0.88 0.004 110);
+  --ob-accent-text: oklch(0.96 0.003 110);
 
-  --ob-alarm: rgb(203,19,29);
-  --ob-warning: rgb(254,155,41);
-  --ob-caution: rgb(233,195,0);
-  --ob-running: rgb(18,119,15);
-  --ob-on-alarm: rgb(255,255,255);
-  --ob-on-warning: rgb(0,0,0);
-  --ob-on-caution: rgb(0,0,0);
+  --ob-alarm: oklch(0.48 0.07 22);
+  --ob-warning: oklch(0.56 0.05 70);
+  --ob-caution: oklch(0.65 0.04 80);
+  --ob-running: oklch(0.52 0.04 160);
+  --ob-on-alarm: oklch(0.96 0.003 110);
+  --ob-on-warning: oklch(0.18 0.008 110);
+  --ob-on-caution: oklch(0.18 0.008 110);
 
-  --ob-green: rgb(71,144,113);
-  --ob-cyan: rgb(53,109,131);
-  --ob-red: rgb(179,111,125);
-  --ob-orange: rgb(164,122,69);
-  --ob-teal: rgb(51,143,141);
+  --ob-green: oklch(0.52 0.04 160);
+  --ob-cyan: oklch(0.55 0.005 110);
+  --ob-red: oklch(0.48 0.07 22);
+  --ob-orange: oklch(0.56 0.05 70);
+  --ob-teal: oklch(0.52 0.04 160);
 
-  --ob-shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-  --ob-shadow-md: 0 2px 4px rgba(0,0,0,0.5);
-  --ob-shadow-lg: 0 4px 16px rgba(0,0,0,0.6);
-  --ob-shadow-xl: 0 8px 32px rgba(0,0,0,0.8);
+  --ob-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.06);
+  --ob-shadow-md: 0 2px 4px oklch(0 0 0 / 0.08);
+  --ob-shadow-lg: 0 4px 16px oklch(0 0 0 / 0.10);
+  --ob-shadow-xl: 0 8px 32px oklch(0 0 0 / 0.12);
 
-  --ob-nav-bg: rgb(18,18,18);
-  --ob-nav-active: rgb(67,103,154);
-  --ob-nav-text: rgb(130,130,130);
-  --ob-nav-text-active: rgb(255,255,255);
+  --ob-nav-bg: oklch(0.91 0.004 110);
+  --ob-nav-active: oklch(0.18 0.008 110);
+  --ob-nav-text: oklch(0.55 0.005 110);
+  --ob-nav-text-active: oklch(0.96 0.003 110);
 }
 
 /* ── Night Theme ───────────────────────────────────────────── */
@@ -239,13 +240,26 @@
 html, body {
   height: 100%;
   font-family: var(--ob-font);
-  font-weight: 370;
+  font-weight: 400;
   font-size: 16px;
   line-height: 24px;
   color: var(--ob-text-primary);
   background: var(--ob-bg-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 和紙质感 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(oklch(0 0 0/0.012) 1px, transparent 1px),
+                    radial-gradient(oklch(0 0 0/0.008) 1px, transparent 1px);
+  background-size: 5px 5px, 7px 7px;
+  background-position: 0 0, 3px 3px;
 }
 
 /* ── Layout Shell ──────────────────────────────────────────── */
@@ -290,17 +304,21 @@ html, body {
 
 .ob-topbar-title {
   font-size: 16px;
-  font-weight: 570;
+  font-weight: 600;
+  font-family: var(--ob-font-serif);
   color: var(--ob-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 1px;
 }
 
 .ob-topbar-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ob-text-tertiary);
   margin-left: 8px;
+  font-family: var(--ob-font-mono);
+  letter-spacing: 1.5px;
 }
 
 .ob-topbar-actions {
@@ -419,8 +437,13 @@ html, body {
 
 [data-obc-theme='dusk'] .ob-nav-item[data-tooltip]:hover::after,
 [data-obc-theme='night'] .ob-nav-item[data-tooltip]:hover::after {
-  color: var(--ob-text-primary);
+  color: var(--ob-text-inverse);
 }
+
+/* \u2500\u2500 Scrollbar (wabi-sabi) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: oklch(0.75 0.005 110); }
+::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Card Components ───────────────────────────────────────── */
 .ob-card {
@@ -440,9 +463,11 @@ html, body {
 }
 
 .ob-card-title {
-  font-size: 14px;
-  font-weight: 570;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--ob-font-serif);
   color: var(--ob-text-primary);
+  letter-spacing: 0.5px;
 }
 
 .ob-card-badge {
@@ -478,16 +503,18 @@ html, body {
 }
 
 .ob-readout-label {
-  font-size: 11px;
-  font-weight: 570;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: var(--ob-font-mono);
   color: var(--ob-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 1.5px;
 }
 
 .ob-readout-value {
   font-size: 24px;
-  font-weight: 670;
+  font-weight: 700;
+  font-family: var(--ob-font-mono);
   color: var(--ob-text-primary);
   line-height: 1.1;
 }
@@ -526,9 +553,9 @@ html, body {
   border-radius: var(--ob-radius-round);
   white-space: nowrap;
 }
-.ob-badge-ok { background: rgba(0,131,0,0.15); color: var(--ob-running); }
-.ob-badge-alarm { background: rgba(203,19,29,0.15); color: var(--ob-alarm); }
-.ob-badge-warning { background: rgba(254,155,41,0.15); color: var(--ob-warning); }
+.ob-badge-ok { background: oklch(0.52 0.04 160 / 0.1); color: var(--ob-running); }
+.ob-badge-alarm { background: oklch(0.48 0.07 22 / 0.1); color: var(--ob-alarm); }
+.ob-badge-warning { background: oklch(0.56 0.05 70 / 0.1); color: var(--ob-warning); }
 .ob-badge-neutral { background: var(--ob-accent-light); color: var(--ob-accent); }
 
 /* ── Buttons ───────────────────────────────────────────────── */
@@ -539,20 +566,29 @@ html, body {
   gap: 6px;
   padding: 8px 16px;
   border-radius: var(--ob-radius-sm);
-  border: 1px solid var(--ob-border);
-  background: var(--ob-bg-card);
+  border: none;
+  background: var(--ob-bg-raised);
   color: var(--ob-text-primary);
-  font-family: var(--ob-font);
-  font-size: 14px;
-  font-weight: 570;
+  font-family: var(--ob-font-mono);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: background var(--ob-transition), border-color var(--ob-transition);
   text-decoration: none;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 5px oklch(0 0 0/0.12), 0 1px 2px oklch(0 0 0/0.08),
+              inset 0 1px 0 oklch(1 0 0/0.35), inset 0 -1px 0 oklch(0 0 0/0.08);
+  background-image: radial-gradient(oklch(0 0 0/0.02) 1px, transparent 1px);
+  background-size: 3px 3px;
 }
 
 .ob-btn:hover {
-  background: var(--ob-bg-card-hover);
-  border-color: var(--ob-border-strong);
+  background-color: oklch(0.68 0.007 110);
+}
+
+.ob-btn:active {
+  box-shadow: inset 0 2px 4px oklch(0 0 0/0.12);
+  transform: translateY(1px);
 }
 
 .ob-btn-primary {

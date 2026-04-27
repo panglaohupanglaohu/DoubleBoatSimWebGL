@@ -1,288 +1,271 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="ob-title" content="系统自我演进">
-  <meta name="ob-subtitle" content="AI Native CPS — Closed-Loop Self-Evolution Engine">
-  <title>系统自我演进 — PoseidonX</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/openbridge-theme.css">
-  <style>
-:root{--evo-bg:#060d1a;--evo-panel:rgba(10,22,45,0.95);--evo-panel2:rgba(14,30,58,0.9);--evo-panel-glass:rgba(12,25,50,0.7);--evo-line:rgba(100,180,255,0.12);--evo-line-strong:rgba(100,180,255,0.25);--evo-cyan:#64d2ff;--evo-cyan-dim:#3a8cbf;--evo-blue:#007aff;--evo-indigo:#5e5ce6;--evo-purple:#bf5af2;--evo-pink:#ff375f;--evo-red:#ff453a;--evo-orange:#ff9f0a;--evo-yellow:#ffd60a;--evo-green:#30d158;--evo-mint:#63e6be;--evo-teal:#40c2a4;--evo-text:#f0f6ff;--evo-text2:#9bb3cd;--evo-text3:#5b7894;--evo-mono:'IBM Plex Mono','Menlo',monospace;--evo-sans:'Space Grotesk',-apple-system,sans-serif;--evo-glow-cyan:0 0 20px rgba(100,210,255,0.3);--evo-glow-green:0 0 20px rgba(48,209,88,0.3);--evo-glow-pink:0 0 20px rgba(255,55,95,0.3)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--evo-sans);background:var(--evo-bg);color:var(--evo-text);min-height:100vh;overflow-x:hidden}
-.evo-app{display:flex;flex-direction:column;height:100vh}
-.evo-header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:linear-gradient(180deg,rgba(10,22,45,0.98) 0%,rgba(6,13,26,0.95) 100%);border-bottom:1px solid var(--evo-line);backdrop-filter:blur(20px);flex-shrink:0;position:relative;z-index:100}
-.evo-header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--evo-cyan),var(--evo-green),var(--evo-purple),transparent);opacity:0.5}
-.evo-brand{display:flex;align-items:center;gap:16px}
-.evo-brand h1{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--evo-cyan),var(--evo-green),var(--evo-teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
-.evo-engine-badge{font-family:var(--evo-mono);font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;background:rgba(48,209,88,0.12);color:var(--evo-green);border:1px solid rgba(48,209,88,0.25);display:flex;align-items:center;gap:6px}
-.evo-engine-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--evo-green);animation:evo-pulse 2s ease-in-out infinite}
-@keyframes evo-pulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--evo-green)}50%{opacity:0.5;box-shadow:0 0 12px var(--evo-green)}}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>系统自我演进 — PoseidonX</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap">
+<style>
+:root{
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.005 110);
+  --hai:oklch(0.78 0.005 110);--nezumi:oklch(0.68 0.006 110);
+  --sumi:oklch(0.18 0.008 110);--sumi-2:oklch(0.38 0.006 110);--sumi-3:oklch(0.55 0.005 110);
+  --koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);
+  --rubber:oklch(0.72 0.006 110);--rubber-hover:oklch(0.68 0.007 110);--rubber-press:oklch(0.64 0.007 110);
+  --groove:oklch(0.82 0.004 110);--ridge:oklch(1.00 0 0 / 0.6);
+  --text:oklch(0.18 0.008 110);--text-2:oklch(0.42 0.006 110);--text-3:oklch(0.60 0.005 110);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--shironeri);color:var(--sumi);min-height:100vh;overflow-x:hidden;padding:48px 16px 16px 80px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(oklch(0 0 0/.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/.008) 1px,transparent 1px);
+  background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+.evo-app{display:flex;flex-direction:column;height:calc(100vh - 48px - 16px);position:relative;z-index:1}
+.evo-header{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--groove);flex-shrink:0;margin-bottom:16px}
+.evo-brand{display:flex;align-items:center;gap:14px}
+.evo-brand h1{font-family:var(--font-serif);font-size:20px;font-weight:600;color:var(--sumi);letter-spacing:1px}
+.evo-engine-badge{font-family:var(--font-mono);font-size:11px;font-weight:500;padding:4px 12px;background:oklch(0.52 0.04 160/.08);color:var(--koke);border:1px solid oklch(0.52 0.04 160/.15);display:flex;align-items:center;gap:6px}
+.evo-engine-badge .pulse{width:6px;height:6px;border-radius:50%;background:var(--koke);animation:ws-pulse 2s ease-in-out infinite}
+@keyframes ws-pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .evo-actions{display:flex;gap:8px;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--evo-sans);transition:all 0.25s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
-.btn:active{transform:scale(0.97)}.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
-.btn-ghost{background:transparent;color:var(--evo-text2);border:1px solid var(--evo-line)}.btn-ghost:hover{background:rgba(100,180,255,0.08);color:var(--evo-cyan);border-color:var(--evo-line-strong)}
-.btn-primary{background:linear-gradient(135deg,var(--evo-blue),var(--evo-indigo));color:#fff;box-shadow:0 4px 16px rgba(0,122,255,0.3)}.btn-primary:hover{box-shadow:0 6px 24px rgba(0,122,255,0.45);transform:translateY(-1px)}
-.btn-accent{background:linear-gradient(135deg,var(--evo-cyan),var(--evo-teal));color:#000;font-weight:700;box-shadow:0 4px 16px rgba(100,210,255,0.3)}.btn-accent:hover{box-shadow:0 6px 24px rgba(100,210,255,0.45);transform:translateY(-1px)}
-.btn-sm{padding:5px 12px;font-size:12px;border-radius:8px}.btn-xs{padding:3px 8px;font-size:11px;border-radius:6px}
-.evo-main{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 28px 48px;scroll-behavior:smooth}
-.evo-section{margin-bottom:32px}
-.evo-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.evo-section-title{font-size:15px;font-weight:700;color:var(--evo-text);display:flex;align-items:center;gap:10px}
-.evo-section-title .icon{font-size:18px}
-.evo-section-subtitle{font-size:12px;color:var(--evo-text3);margin-top:2px}
-.evo-card{background:var(--evo-panel);border:1px solid var(--evo-line);border-radius:14px;backdrop-filter:blur(12px);transition:all 0.3s;position:relative;overflow:hidden}
-.evo-card:hover{border-color:var(--evo-line-strong)}
-.evo-card-pad{padding:20px}
-.hero-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px}
-.hero-stat{background:var(--evo-panel);border:1px solid var(--evo-line);border-radius:14px;padding:18px 16px;position:relative;overflow:hidden;transition:all 0.3s;cursor:default}
-.hero-stat:hover{border-color:var(--evo-line-strong);transform:translateY(-2px)}
-.hero-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
-.hero-stat.hs-cyan::before{background:linear-gradient(90deg,var(--evo-cyan),transparent)}
-.hero-stat.hs-green::before{background:linear-gradient(90deg,var(--evo-green),transparent)}
-.hero-stat.hs-orange::before{background:linear-gradient(90deg,var(--evo-orange),transparent)}
-.hero-stat.hs-pink::before{background:linear-gradient(90deg,var(--evo-pink),transparent)}
-.hero-stat.hs-purple::before{background:linear-gradient(90deg,var(--evo-purple),transparent)}
-.hero-stat.hs-teal::before{background:linear-gradient(90deg,var(--evo-teal),transparent)}
-.hero-stat .hs-label{font-size:11px;color:var(--evo-text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
-.hero-stat .hs-value{font-size:32px;font-weight:700;font-family:var(--evo-mono);line-height:1}
-.hero-stat .hs-sub{font-size:11px;color:var(--evo-text3);margin-top:6px;font-family:var(--evo-mono)}
+.seal{display:inline-block;font-size:10px;font-weight:900;color:var(--shironeri);background:var(--sumi);padding:1px 5px;line-height:1.3;font-family:var(--font-serif);vertical-align:middle;margin-right:6px}
+.seal-koke{background:var(--koke)}.seal-shu{background:var(--shu)}.seal-kitsune{background:var(--kitsune)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:var(--font-sans);transition:background .15s,color .15s;background:var(--rubber);color:var(--sumi)}
+.btn:hover{background:var(--rubber-hover)}.btn:active{background:var(--rubber-press)}
+.btn:disabled{opacity:0.35;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--sumi-2);border:1px solid var(--groove)}.btn-ghost:hover{background:var(--ishi);color:var(--sumi)}
+.btn-primary{background:var(--sumi);color:var(--shironeri)}.btn-primary:hover{background:oklch(0.28 0.008 110)}
+.btn-accent{background:var(--koke);color:var(--shironeri);font-weight:600}.btn-accent:hover{background:oklch(0.46 0.04 160)}
+.btn-sm{padding:5px 12px;font-size:12px}.btn-xs{padding:3px 8px;font-size:11px}
+.evo-main{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:48px;scroll-behavior:smooth}
+.evo-section{margin-bottom:28px}
+.evo-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.evo-section-title{font-family:var(--font-serif);font-size:15px;font-weight:600;color:var(--sumi);display:flex;align-items:center;gap:8px}
+.evo-section-subtitle{font-size:12px;color:var(--text-3);margin-top:2px}
+.evo-card{background:var(--ishi);border:1px solid var(--groove);transition:border-color .2s;position:relative;overflow:hidden}
+.evo-card:hover{border-color:var(--hai)}
+.evo-card-pad{padding:18px}
+.hero-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
+.hero-stat{background:var(--ishi);border:1px solid var(--groove);padding:16px 14px;position:relative;overflow:hidden;transition:border-color .2s}
+.hero-stat:hover{border-color:var(--hai)}
+.hero-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.hero-stat.hs-cyan::before{background:var(--koke)}.hero-stat.hs-green::before{background:var(--koke)}
+.hero-stat.hs-orange::before{background:var(--kitsune)}.hero-stat.hs-pink::before{background:var(--shu)}
+.hero-stat.hs-purple::before{background:var(--nezumi)}.hero-stat.hs-teal::before{background:var(--koke)}
+.hero-stat .hs-label{font-size:10px;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;font-family:var(--font-mono)}
+.hero-stat .hs-value{font-size:28px;font-weight:700;font-family:var(--font-mono);line-height:1}
+.hero-stat .hs-sub{font-size:10px;color:var(--text-3);margin-top:6px;font-family:var(--font-mono)}
 .hero-stat .hs-ring{position:absolute;top:12px;right:12px}
-.pipeline-canvas-wrap{position:relative;height:180px;border-radius:14px;overflow:hidden}
+.pipeline-canvas-wrap{position:relative;height:180px;overflow:hidden}
 #pipelineCanvas{width:100%;height:100%;display:block}
-.evo-split{display:grid;gap:16px}
+.evo-split{display:grid;gap:14px}
 .evo-split-2{grid-template-columns:1fr 1fr}
 .evo-split-3{grid-template-columns:1fr 1fr 1fr}
 .evo-split-2-1{grid-template-columns:2fr 1fr}
 .evo-split-1-2{grid-template-columns:1fr 2fr}
 .chart-container{position:relative}.chart-container canvas{width:100%;display:block}
 .agent-feed{max-height:400px;overflow-y:auto}
-.agent-item{display:flex;gap:12px;padding:12px;border-bottom:1px solid rgba(100,180,255,0.06);transition:background 0.2s}
-.agent-item:hover{background:rgba(100,180,255,0.04)}.agent-item:last-child{border-bottom:none}
-.agent-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(100,180,255,0.1);border:1px solid rgba(100,180,255,0.15)}
-.agent-avatar.aa-active{animation:evo-breathe 3s ease-in-out infinite}
-@keyframes evo-breathe{0%,100%{box-shadow:none}50%{box-shadow:var(--evo-glow-cyan)}}
+.agent-item{display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--kabe);transition:background .15s}
+.agent-item:hover{background:oklch(0.93 0.003 110)}.agent-item:last-child{border-bottom:none}
+.agent-avatar{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--kabe);border:1px solid var(--groove);font-family:var(--font-serif);font-size:14px;font-weight:900;color:var(--sumi)}
 .agent-info{flex:1;min-width:0}
 .agent-name{font-size:13px;font-weight:600}
-.agent-task{font-size:12px;color:var(--evo-text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.agent-time{font-size:10px;color:var(--evo-text3);font-family:var(--evo-mono);margin-top:4px}
-.agent-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;align-self:flex-start;margin-top:2px}
-.agent-status.as-active{background:rgba(48,209,88,0.15);color:var(--evo-green)}
-.agent-status.as-idle{background:rgba(100,180,255,0.1);color:var(--evo-cyan-dim)}
-.agent-status.as-error{background:rgba(255,69,58,0.15);color:var(--evo-red)}
+.agent-task{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-time{font-size:10px;color:var(--text-3);font-family:var(--font-mono);margin-top:4px}
+.agent-status{font-size:10px;font-weight:600;padding:2px 8px;align-self:flex-start;margin-top:2px;font-family:var(--font-mono)}
+.agent-status.as-active{background:oklch(0.52 0.04 160/.08);color:var(--koke)}
+.agent-status.as-idle{background:var(--kabe);color:var(--sumi-3)}
+.agent-status.as-error{background:oklch(0.48 0.07 22/.08);color:var(--shu)}
 .rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
-.rule-card{background:var(--evo-panel2);border:1px solid var(--evo-line);border-radius:12px;padding:16px;transition:all 0.25s;position:relative}
-.rule-card:hover{border-color:var(--evo-line-strong);transform:translateY(-2px)}
+.rule-card{background:var(--shironeri);border:1px solid var(--groove);padding:16px;transition:border-color .2s;position:relative}
+.rule-card:hover{border-color:var(--hai)}
 .rule-card .rc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.rule-card .rc-id{font-family:var(--evo-mono);font-size:12px;font-weight:600;color:var(--evo-cyan)}
+.rule-card .rc-id{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--koke)}
 .rule-card .rc-title{font-size:14px;font-weight:600;margin-bottom:4px}
-.rule-card .rc-desc{font-size:12px;color:var(--evo-text2);line-height:1.6}
+.rule-card .rc-desc{font-size:12px;color:var(--text-2);line-height:1.6}
 .rule-card .rc-meta{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
-.rule-card .rc-result{position:absolute;top:14px;right:14px;font-size:18px}
-.rule-card .rc-fail-detail{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6;background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.12);color:var(--evo-red)}
-.rule-card .rc-pass-detail{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6;background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.12);color:var(--evo-green)}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--evo-mono)}
-.chip-domain{background:rgba(100,210,255,0.1);color:var(--evo-cyan);border:1px solid rgba(100,210,255,0.2)}
-.chip-sev-critical{background:rgba(255,55,95,0.12);color:var(--evo-pink);border:1px solid rgba(255,55,95,0.2)}
-.chip-sev-high{background:rgba(255,159,10,0.12);color:var(--evo-orange);border:1px solid rgba(255,159,10,0.2)}
-.chip-sev-medium{background:rgba(100,210,255,0.1);color:var(--evo-cyan);border:1px solid rgba(100,210,255,0.15)}
-.chip-sev-low{background:rgba(48,209,88,0.1);color:var(--evo-green);border:1px solid rgba(48,209,88,0.15)}
-.st-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px}
-.st-badge::before{content:'';width:7px;height:7px;border-radius:50%}
-.st-discovered{color:var(--evo-cyan)}.st-discovered::before{background:var(--evo-cyan)}
-.st-dispatched{color:var(--evo-orange)}.st-dispatched::before{background:var(--evo-orange)}
-.st-in_progress{color:var(--evo-blue)}.st-in_progress::before{background:var(--evo-blue);box-shadow:0 0 8px var(--evo-blue)}
-.st-verify_pending{color:var(--evo-purple)}.st-verify_pending::before{background:var(--evo-purple);animation:evo-pulse 2s infinite}
-.st-verified{color:var(--evo-green)}.st-verified::before{background:var(--evo-green)}
-.st-failed{color:var(--evo-red)}.st-failed::before{background:var(--evo-red)}
-.st-closed{color:var(--evo-text3)}.st-closed::before{background:var(--evo-text3)}
+.rule-card .rc-result{position:absolute;top:14px;right:14px;font-size:14px;font-family:var(--font-mono)}
+.rule-card .rc-fail-detail{margin-top:10px;padding:10px 12px;font-size:12px;line-height:1.6;background:oklch(0.48 0.07 22/.06);border:1px solid oklch(0.48 0.07 22/.12);color:var(--shu)}
+.rule-card .rc-pass-detail{margin-top:10px;padding:10px 12px;font-size:12px;line-height:1.6;background:oklch(0.52 0.04 160/.06);border:1px solid oklch(0.52 0.04 160/.12);color:var(--koke)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.chip-domain{background:oklch(0.52 0.04 160/.06);color:var(--koke);border:1px solid oklch(0.52 0.04 160/.12)}
+.chip-sev-critical{background:oklch(0.48 0.07 22/.06);color:var(--shu);border:1px solid oklch(0.48 0.07 22/.12)}
+.chip-sev-high{background:oklch(0.56 0.05 70/.06);color:var(--kitsune);border:1px solid oklch(0.56 0.05 70/.12)}
+.chip-sev-medium{background:oklch(0.52 0.04 160/.06);color:var(--koke);border:1px solid oklch(0.52 0.04 160/.1)}
+.chip-sev-low{background:var(--kabe);color:var(--sumi-3);border:1px solid var(--groove)}
+.st-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;font-family:var(--font-mono)}
+.st-badge::before{content:'';width:6px;height:6px;border-radius:50%}
+.st-discovered{color:var(--koke)}.st-discovered::before{background:var(--koke)}
+.st-dispatched{color:var(--kitsune)}.st-dispatched::before{background:var(--kitsune)}
+.st-in_progress{color:var(--sumi)}.st-in_progress::before{background:var(--sumi)}
+.st-verify_pending{color:var(--nezumi)}.st-verify_pending::before{background:var(--nezumi)}
+.st-verified{color:var(--koke)}.st-verified::before{background:var(--koke)}
+.st-failed{color:var(--shu)}.st-failed::before{background:var(--shu)}
+.st-closed{color:var(--sumi-3)}.st-closed::before{background:var(--sumi-3)}
 .evo-table{width:100%;border-collapse:collapse;font-size:13px}
-.evo-table th{text-align:left;padding:12px 14px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--evo-text3);border-bottom:1px solid var(--evo-line-strong);font-weight:600}
-.evo-table td{padding:14px;border-bottom:1px solid rgba(100,180,255,0.05);vertical-align:middle}
-.evo-table tbody tr{transition:background 0.15s;cursor:pointer}
-.evo-table tbody tr:hover td{background:rgba(100,180,255,0.04)}
-.log-console{background:#080e1a;border:1px solid rgba(100,180,255,0.1);border-radius:12px;max-height:340px;overflow-y:auto;padding:16px 18px;font-family:var(--evo-mono);font-size:12px;line-height:1.8;color:var(--evo-text2);white-space:pre-wrap;word-break:break-all}
-.log-console .log-ok{color:var(--evo-green)}.log-console .log-err{color:var(--evo-red)}.log-console .log-info{color:var(--evo-cyan)}.log-console .log-warn{color:var(--evo-orange)}
+.evo-table th{text-align:left;padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-3);border-bottom:1px solid var(--groove);font-weight:600;font-family:var(--font-mono)}
+.evo-table td{padding:12px;border-bottom:1px solid var(--kabe);vertical-align:middle}
+.evo-table tbody tr{transition:background .1s;cursor:pointer}
+.evo-table tbody tr:hover td{background:oklch(0.93 0.003 110)}
+.log-console{background:var(--shironeri);border:1px solid var(--groove);max-height:340px;overflow-y:auto;padding:14px 16px;font-family:var(--font-mono);font-size:12px;line-height:1.8;color:var(--text-2);white-space:pre-wrap;word-break:break-all}
+.log-console .log-ok{color:var(--koke)}.log-console .log-err{color:var(--shu)}.log-console .log-info{color:var(--sumi-2)}.log-console .log-warn{color:var(--kitsune)}
 .timeline{position:relative;padding-left:32px}
-.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--evo-cyan),var(--evo-line),transparent)}
-.tl-item{position:relative;margin-bottom:18px;padding-left:20px}
-.tl-item::before{content:'';position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--evo-text3);background:var(--evo-bg);z-index:1}
-.tl-item.tl-pass::before{border-color:var(--evo-green);background:rgba(48,209,88,0.25)}
-.tl-item.tl-fail::before{border-color:var(--evo-red);background:rgba(255,69,58,0.25)}
-.tl-item.tl-active::before{border-color:var(--evo-cyan);background:rgba(100,210,255,0.25);box-shadow:0 0 10px rgba(100,210,255,0.4)}
-.tl-time{font-size:11px;color:var(--evo-text3);font-family:var(--evo-mono)}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:1px;background:var(--groove)}
+.tl-item{position:relative;margin-bottom:16px;padding-left:20px}
+.tl-item::before{content:'';position:absolute;left:-24px;top:6px;width:10px;height:10px;border-radius:50%;border:2px solid var(--sumi-3);background:var(--shironeri);z-index:1}
+.tl-item.tl-pass::before{border-color:var(--koke);background:oklch(0.52 0.04 160/.15)}
+.tl-item.tl-fail::before{border-color:var(--shu);background:oklch(0.48 0.07 22/.15)}
+.tl-item.tl-active::before{border-color:var(--koke);background:oklch(0.52 0.04 160/.2)}
+.tl-time{font-size:10px;color:var(--text-3);font-family:var(--font-mono)}
 .tl-title{font-size:13px;font-weight:600;margin:3px 0 2px}
-.tl-detail{font-size:12px;color:var(--evo-text2)}
-.detail-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);justify-content:center;align-items:center}
+.tl-detail{font-size:12px;color:var(--text-2)}
+.detail-overlay{display:none;position:fixed;inset:0;z-index:900;background:oklch(0 0 0/.35);justify-content:center;align-items:center}
 .detail-overlay.open{display:flex}
-.detail-panel{background:var(--evo-panel);border:1px solid var(--evo-line-strong);border-radius:18px;width:680px;max-width:94vw;max-height:85vh;overflow-y:auto;box-shadow:0 12px 60px rgba(0,0,0,0.5);padding:32px}
-.detail-panel h3{font-size:20px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:12px}
-.detail-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(100,180,255,0.05);font-size:13px}
-.detail-row .lbl{color:var(--evo-text2)}.detail-row .val{font-family:var(--evo-mono);text-align:right;max-width:60%;font-size:12px}
-.detail-actions{display:flex;gap:10px;margin-top:24px;padding-top:18px;border-top:1px solid var(--evo-line)}
-.toast{position:fixed;bottom:28px;right:28px;padding:14px 24px;background:var(--evo-panel);border:1px solid var(--evo-line-strong);border-radius:12px;font-size:13px;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.4);backdrop-filter:blur(16px)}
+.detail-panel{background:var(--shironeri);border:1px solid var(--groove);width:680px;max-width:94vw;max-height:85vh;overflow-y:auto;padding:28px}
+.detail-panel h3{font-family:var(--font-serif);font-size:18px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--kabe);font-size:13px}
+.detail-row .lbl{color:var(--text-2)}.detail-row .val{font-family:var(--font-mono);text-align:right;max-width:60%;font-size:12px}
+.detail-actions{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--groove)}
+.toast{position:fixed;bottom:28px;right:28px;padding:12px 22px;background:var(--sumi);color:var(--shironeri);border:1px solid var(--sumi-2);font-size:13px;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;font-family:var(--font-mono)}
 .toast.show{opacity:1;transform:translateY(0)}
-.tab-bar{display:flex;gap:2px;background:rgba(100,180,255,0.06);border-radius:10px;padding:3px;flex-wrap:wrap}
-.tab-item{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--evo-text3);transition:all 0.2s;border:none;background:none;font-family:var(--evo-sans)}
-.tab-item:hover{color:var(--evo-text2);background:rgba(100,180,255,0.06)}
-.tab-item.active{color:var(--evo-text);background:rgba(100,180,255,0.12)}
+.tab-bar{display:flex;gap:2px;background:var(--kabe);padding:3px;flex-wrap:wrap}
+.tab-item{padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--sumi-3);transition:all .15s;border:none;background:none;font-family:var(--font-sans)}
+.tab-item:hover{color:var(--sumi);background:var(--ishi)}
+.tab-item.active{color:var(--sumi);background:var(--shironeri)}
 .radar-wrap{display:flex;align-items:center;justify-content:center;padding:12px 0}
-.empty-state{text-align:center;padding:48px 20px;color:var(--evo-text3)}
-.empty-state .icon{font-size:48px;margin-bottom:14px;opacity:0.6}
-.empty-state p{font-size:14px;margin-bottom:16px}
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(100,180,255,0.15);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:rgba(100,180,255,0.25)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-3)}
+.empty-state p{font-size:14px;margin-bottom:14px}
+.rating-badge{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;font-size:32px;font-weight:900;font-family:var(--font-mono);letter-spacing:-2px;border:2px solid;transition:all .3s}
+.rating-A{background:oklch(0.52 0.04 160/.08);color:var(--koke);border-color:oklch(0.52 0.04 160/.3)}
+.rating-B{background:oklch(0.52 0.04 160/.06);color:var(--koke);border-color:oklch(0.52 0.04 160/.2)}
+.rating-C{background:oklch(0.56 0.05 70/.06);color:var(--kitsune);border-color:oklch(0.56 0.05 70/.2)}
+.rating-D{background:oklch(0.56 0.05 70/.08);color:var(--kitsune);border-color:oklch(0.56 0.05 70/.3)}
+.rating-E{background:oklch(0.48 0.07 22/.08);color:var(--shu);border-color:oklch(0.48 0.07 22/.3)}
+.domain-score-bar{height:4px;background:var(--kabe);overflow:hidden;margin-top:4px}
+.domain-score-fill{height:100%;transition:width .8s ease}
+.zone-card{padding:12px;border:1px solid var(--groove);margin-bottom:8px;transition:border-color .15s}
+.zone-card:hover{border-color:var(--hai)}
+.zone-active{border-color:oklch(0.52 0.04 160/.3);background:oklch(0.52 0.04 160/.04)}
+.zone-type-badge{display:inline-block;padding:1px 6px;font-size:10px;font-weight:700;font-family:var(--font-mono)}
+.zt-ECA{background:oklch(0.56 0.05 70/.08);color:var(--kitsune)}.zt-SECA{background:oklch(0.56 0.05 70/.1);color:var(--kitsune)}
+.zt-PSSA{background:oklch(0.52 0.04 160/.08);color:var(--koke)}.zt-HIGH_RISK{background:oklch(0.48 0.07 22/.08);color:var(--shu)}
+.zt-CUSTOM{background:var(--kabe);color:var(--sumi-2)}
+.esc-normal{color:var(--koke)}.esc-corrective{color:var(--kitsune)}.esc-review{color:var(--shu)}.esc-hold{color:var(--shu);font-weight:700}
+.trail-entry{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--kabe);font-size:12px;align-items:flex-start}
+.trail-entry:last-child{border-bottom:none}
+.trail-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:var(--kabe);font-family:var(--font-serif);font-weight:900}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--hai)}::-webkit-scrollbar-thumb:hover{background:var(--nezumi)}
 @media(max-width:1400px){.hero-stats{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:1024px){.hero-stats{grid-template-columns:repeat(2,1fr)}.evo-split-2,.evo-split-3,.evo-split-2-1,.evo-split-1-2{grid-template-columns:1fr}.rules-grid{grid-template-columns:1fr}}
-@media(max-width:640px){.hero-stats{grid-template-columns:1fr}.evo-main{padding:16px}.evo-header{flex-direction:column;gap:12px;padding:12px 16px}}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.animate-in{animation:fadeInUp 0.5s ease-out both}
-.animate-in-delay1{animation-delay:0.1s}.animate-in-delay2{animation-delay:0.2s}.animate-in-delay3{animation-delay:0.3s}.animate-in-delay4{animation-delay:0.4s}
-/* ── Phase 3: Compliance Rating (DNV CII) ── */
-.rating-badge{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:16px;font-size:36px;font-weight:800;font-family:var(--evo-mono);letter-spacing:-2px;border:3px solid;transition:all 0.4s}
-.rating-A{background:rgba(48,209,88,0.15);color:var(--evo-green);border-color:rgba(48,209,88,0.4);box-shadow:0 0 24px rgba(48,209,88,0.2)}
-.rating-B{background:rgba(100,210,255,0.12);color:var(--evo-cyan);border-color:rgba(100,210,255,0.3);box-shadow:0 0 20px rgba(100,210,255,0.15)}
-.rating-C{background:rgba(255,214,10,0.12);color:var(--evo-yellow);border-color:rgba(255,214,10,0.3)}
-.rating-D{background:rgba(255,159,10,0.12);color:var(--evo-orange);border-color:rgba(255,159,10,0.4);box-shadow:0 0 20px rgba(255,159,10,0.2)}
-.rating-E{background:rgba(255,69,58,0.15);color:var(--evo-red);border-color:rgba(255,69,58,0.5);box-shadow:0 0 24px rgba(255,69,58,0.3);animation:evo-pulse 1.5s infinite}
-.domain-score-bar{height:6px;border-radius:3px;background:rgba(100,180,255,0.1);overflow:hidden;margin-top:4px}
-.domain-score-fill{height:100%;border-radius:3px;transition:width 0.8s ease}
-/* ── Phase 3: Zone Map ── */
-.zone-card{padding:12px;border-radius:10px;border:1px solid var(--evo-line);margin-bottom:8px;transition:all 0.2s}
-.zone-card:hover{border-color:var(--evo-line-strong);transform:translateX(2px)}
-.zone-active{border-color:rgba(48,209,88,0.4);background:rgba(48,209,88,0.06)}
-.zone-type-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--evo-mono)}
-.zt-ECA{background:rgba(255,214,10,0.15);color:var(--evo-yellow)}
-.zt-SECA{background:rgba(255,159,10,0.15);color:var(--evo-orange)}
-.zt-PSSA{background:rgba(48,209,88,0.15);color:var(--evo-green)}
-.zt-HIGH_RISK{background:rgba(255,69,58,0.15);color:var(--evo-red)}
-.zt-CUSTOM{background:rgba(100,210,255,0.15);color:var(--evo-cyan)}
-/* ── Phase 3: Escalation Tiers ── */
-.esc-normal{color:var(--evo-green)}.esc-corrective{color:var(--evo-orange)}.esc-review{color:var(--evo-pink)}.esc-hold{color:var(--evo-red);font-weight:700}
-.checklist-tab{display:flex;gap:8px;margin-bottom:12px}
-.checklist-tab button{flex:1}
-.trail-entry{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(100,180,255,0.05);font-size:12px;align-items:flex-start}
-.trail-entry:last-child{border-bottom:none}
-.trail-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-  </style>
+@media(max-width:640px){.hero-stats{grid-template-columns:1fr}.evo-main{padding:12px}.evo-header{flex-direction:column;gap:10px}}
+</style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 <div class="evo-app">
   <div class="evo-header">
     <div class="evo-brand">
-      <h1>⚡ 系统自我演进</h1>
+      <h1>系统自我演进</h1>
       <div class="evo-engine-badge" id="engine-badge">
         <span class="pulse"></span>
-        <span id="badge-text">初始化中...</span>
+        <span id="badge-text">初始化中</span>
       </div>
     </div>
     <div class="evo-actions">
-      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ 刷新</button>
-      <button class="btn btn-primary btn-sm" id="btn-audit" onclick="runAudit()">🔍 运行审查</button>
-      <button class="btn btn-accent btn-sm" id="btn-cycle" onclick="runFullCycle()">▶ 完整演进周期</button>
-      <a href="/agent-team-config.html" class="btn btn-ghost btn-sm">🤖 团队</a>
-      <a href="/captain-cockpit-new.html" class="btn btn-ghost btn-sm">⚓ 中控</a>
+      <button class="btn btn-primary btn-sm" id="btn-audit" onclick="runAudit()"><span class="seal">査</span> 运行审查</button>
+      <button class="btn btn-sm" id="btn-dispatch" onclick="runDispatch()" disabled><span class="seal seal-kitsune">派</span> 派发</button>
+      <button class="btn btn-accent btn-sm" id="btn-verify" onclick="runVerify()" disabled><span class="seal seal-koke">验</span> 验证</button>
+      <button class="btn btn-ghost btn-sm" id="btn-cycle" onclick="runFullCycle()"><span class="seal">环</span> 完整周期</button>
+      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">刷新</button>
     </div>
   </div>
   <div class="evo-main">
     <div class="hero-stats" id="hero-stats"></div>
-    
-    <!-- 达尔文棘轮 · 只增不减的特性累积 -->
-    <div class="evo-section animate-in" id="darwin-ratchet-section">
+
+    <div class="evo-section" id="darwin-ratchet-section">
       <div class="evo-section-header">
         <div>
-          <div class="evo-section-title"><span class="icon">🧬</span> 达尔文棘轮 · Darwin Ratchet
-            <span style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;background:rgba(191,90,242,0.15);color:var(--evo-purple);border:1px solid rgba(191,90,242,0.3);margin-left:8px;">IRREVERSIBLE</span>
-          </div>
+          <div class="evo-section-title"><span class="seal">棘</span> 达尔文棘轮 · Darwin Ratchet</div>
           <div class="evo-section-subtitle">自然选择 + 棘轮机制 — 已锁定的演化特性只增不减, 永不回退</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <div id="darwin-gen-badge" style="font-family:var(--evo-mono);font-size:12px;padding:4px 12px;border-radius:20px;background:rgba(48,209,88,0.12);color:var(--evo-green);border:1px solid rgba(48,209,88,0.25);">Gen: 0</div>
-          <button class="btn btn-ghost btn-sm" onclick="refreshDarwinPanel()">🔄</button>
+          <div id="darwin-gen-badge" style="font-family:var(--font-mono);font-size:12px;padding:4px 12px;background:oklch(0.52 0.04 160/.08);color:var(--koke);border:1px solid oklch(0.52 0.04 160/.15);">Gen: 0</div>
         </div>
       </div>
       <div class="evo-card evo-card-pad" style="padding:20px;">
-        <!-- 棘轮统计条 -->
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;">
-          <div style="padding:12px 14px;background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.25);border-radius:10px;">
-            <div style="font-size:10px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🔒 锁定</div>
-            <div style="font-size:24px;font-weight:700;color:var(--evo-green);font-family:var(--evo-mono);" id="darwin-locked">0</div>
+          <div style="padding:12px 14px;background:oklch(0.52 0.04 160/.06);border:1px solid oklch(0.52 0.04 160/.15);">
+            <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-mono)"><span class="seal seal-koke">锁</span></div>
+            <div style="font-size:24px;font-weight:700;color:var(--koke);font-family:var(--font-mono);" id="darwin-locked">0</div>
           </div>
-          <div style="padding:12px 14px;background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.25);border-radius:10px;">
-            <div style="font-size:10px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">⏳ 待验</div>
-            <div style="font-size:24px;font-weight:700;color:var(--evo-yellow);font-family:var(--evo-mono);" id="darwin-pending">0</div>
+          <div style="padding:12px 14px;background:oklch(0.56 0.05 70/.06);border:1px solid oklch(0.56 0.05 70/.15);">
+            <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-mono)"><span class="seal seal-kitsune">待</span></div>
+            <div style="font-size:24px;font-weight:700;color:var(--kitsune);font-family:var(--font-mono);" id="darwin-pending">0</div>
           </div>
-          <div style="padding:12px 14px;background:rgba(100,210,255,0.08);border:1px solid rgba(100,210,255,0.25);border-radius:10px;">
-            <div style="font-size:10px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🎨 Scene</div>
-            <div style="font-size:24px;font-weight:700;color:var(--evo-cyan);font-family:var(--evo-mono);" id="darwin-cat-scene">0</div>
+          <div style="padding:12px 14px;background:oklch(0.52 0.04 160/.06);border:1px solid oklch(0.52 0.04 160/.15);">
+            <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-mono)"><span class="seal seal-koke">景</span></div>
+            <div style="font-size:24px;font-weight:700;color:var(--koke);font-family:var(--font-mono);" id="darwin-cat-scene">0</div>
           </div>
-          <div style="padding:12px 14px;background:rgba(191,90,242,0.08);border:1px solid rgba(191,90,242,0.25);border-radius:10px;">
-            <div style="font-size:10px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🟣 UI</div>
-            <div style="font-size:24px;font-weight:700;color:var(--evo-purple);font-family:var(--evo-mono);" id="darwin-cat-ui">0</div>
+          <div style="padding:12px 14px;background:var(--kabe);border:1px solid var(--groove);">
+            <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-mono)"><span class="seal">介</span></div>
+            <div style="font-size:24px;font-weight:700;color:var(--nezumi);font-family:var(--font-mono);" id="darwin-cat-ui">0</div>
           </div>
-          <div style="padding:12px 14px;background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.25);border-radius:10px;">
-            <div style="font-size:10px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🚨 Safety</div>
-            <div style="font-size:24px;font-weight:700;color:var(--evo-red);font-family:var(--evo-mono);" id="darwin-cat-safety">0</div>
+          <div style="padding:12px 14px;background:oklch(0.48 0.07 22/.06);border:1px solid oklch(0.48 0.07 22/.12);">
+            <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-mono)"><span class="seal seal-shu">安</span></div>
+            <div style="font-size:24px;font-weight:700;color:var(--shu);font-family:var(--font-mono);" id="darwin-cat-safety">0</div>
           </div>
-          <div style="padding:12px 14px;background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.25);border-radius:10px;">
-            <div style="font-size:10px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🧠 AI</div>
-            <div style="font-size:24px;font-weight:700;color:var(--evo-orange);font-family:var(--evo-mono);" id="darwin-cat-ai">0</div>
+          <div style="padding:12px 14px;background:oklch(0.56 0.05 70/.06);border:1px solid oklch(0.56 0.05 70/.12);">
+            <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:var(--font-mono)"><span class="seal seal-kitsune">智</span></div>
+            <div style="font-size:24px;font-weight:700;color:var(--kitsune);font-family:var(--font-mono);" id="darwin-cat-ai">0</div>
           </div>
         </div>
-        
-        <!-- 棘轮时间线 -->
-        <div style="font-size:11px;color:var(--evo-text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-weight:600;">▼ 演化时间线 (Generation Timeline)</div>
+        <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-weight:600;font-family:var(--font-mono)">演化时间线 (Generation Timeline)</div>
         <div id="darwin-timeline" style="max-height:460px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px;">
-          <div style="color:var(--evo-text3);text-align:center;padding:24px;font-size:12px;">初始化棘轮引擎中...</div>
+          <div style="color:var(--text-3);text-align:center;padding:24px;font-size:12px;">初始化棘轮引擎中...</div>
         </div>
       </div>
     </div>
-    
-    <div class="evo-section animate-in animate-in-delay1">
+
+    <div class="evo-section">
       <div class="evo-section-header">
         <div>
-          <div class="evo-section-title"><span class="icon">⛓️</span> 演进流水线</div>
-          <div class="evo-section-subtitle">Closed-Loop: Audit → Discover → Dispatch → Build → Verify → Close</div>
+          <div class="evo-section-title"><span class="seal">流</span> 演进流水线</div>
+          <div class="evo-section-subtitle">Closed-Loop: Audit — Discover — Dispatch — Build — Verify — Close</div>
         </div>
       </div>
       <div class="evo-card pipeline-canvas-wrap">
         <canvas id="pipelineCanvas"></canvas>
       </div>
     </div>
-    <div class="evo-split evo-split-2-1 animate-in animate-in-delay2">
+
+    <div class="evo-split evo-split-2-1">
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">⚡</span> 演进操作</div>
+          <div class="evo-section-title"><span class="seal">操</span> 演进操作</div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost btn-sm" id="btn-dispatch" onclick="runDispatch()" disabled>📤 派发</button>
-            <button class="btn btn-ghost btn-sm" id="btn-verify" onclick="runVerify()" disabled>✅ 验证</button>
+            <button class="btn btn-ghost btn-xs" onclick="$('op-log').innerHTML=''">清空</button>
           </div>
         </div>
         <div class="evo-card">
-          <div class="log-console" id="op-log">⚡ 系统自我演进引擎 v2.0 就绪
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  审查引擎: 准备就绪
-  派发管道: 空闲
-  验证器:   待命
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-点击「运行审查」或「完整演进周期」开始。</div>
+          <div class="log-console" id="op-log">系统自我演进引擎就绪
+正在加载演进数据...</div>
         </div>
       </div>
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">🤖</span> Agent 活动</div>
-          <span style="font-size:11px;color:var(--evo-text3);font-family:var(--evo-mono)" id="agent-count"></span>
+          <div class="evo-section-title"><span class="seal">员</span> Agent 活动</div>
+          <span id="agent-count" style="color:var(--text-3);font-size:11px;font-family:var(--font-mono)">0 活跃</span>
         </div>
         <div class="evo-card agent-feed" id="agent-feed"></div>
       </div>
     </div>
-    <div class="evo-split evo-split-3 animate-in animate-in-delay3" style="margin-top:16px">
+
+    <div class="evo-split evo-split-3" style="margin-top:14px">
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">📈</span> 演进趋势</div>
+          <div class="evo-section-title"><span class="seal seal-koke">趨</span> 演进趋势</div>
         </div>
         <div class="evo-card chart-container" style="padding:16px">
           <canvas id="trendChart" height="220"></canvas>
@@ -290,7 +273,7 @@ body{font-family:var(--evo-sans);background:var(--evo-bg);color:var(--evo-text);
       </div>
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">🎯</span> 域覆盖雷达</div>
+          <div class="evo-section-title"><span class="seal">域</span> 域覆盖雷达</div>
         </div>
         <div class="evo-card radar-wrap" style="padding:16px">
           <canvas id="radarChart" width="260" height="260"></canvas>
@@ -298,37 +281,37 @@ body{font-family:var(--evo-sans);background:var(--evo-bg);color:var(--evo-text);
       </div>
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">🔥</span> 审查热力图</div>
+          <div class="evo-section-title"><span class="seal seal-shu">熱</span> 审查热力图</div>
         </div>
         <div class="evo-card" style="padding:16px">
           <div id="heatmap-container"></div>
-          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--evo-text3);font-family:var(--evo-mono)">
-            <span>低频</span>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;color:var(--text-3);font-family:var(--font-mono)">
+            <span>低</span>
             <div style="display:flex;gap:3px">
-              <span style="width:12px;height:12px;border-radius:2px;background:rgba(100,210,255,0.1)"></span>
-              <span style="width:12px;height:12px;border-radius:2px;background:rgba(100,210,255,0.3)"></span>
-              <span style="width:12px;height:12px;border-radius:2px;background:rgba(48,209,88,0.5)"></span>
-              <span style="width:12px;height:12px;border-radius:2px;background:rgba(255,159,10,0.7)"></span>
-              <span style="width:12px;height:12px;border-radius:2px;background:rgba(255,55,95,0.9)"></span>
+              <div style="width:16px;height:8px;background:var(--kabe)"></div>
+              <div style="width:16px;height:8px;background:oklch(0.52 0.04 160/.2)"></div>
+              <div style="width:16px;height:8px;background:oklch(0.52 0.04 160/.4)"></div>
+              <div style="width:16px;height:8px;background:oklch(0.56 0.05 70/.6)"></div>
+              <div style="width:16px;height:8px;background:oklch(0.48 0.07 22/.8)"></div>
             </div>
-            <span>高频</span>
+            <span>高</span>
           </div>
         </div>
       </div>
     </div>
-    <!-- ── Phase 3: A~E 合规评级 + 区域 + 升级 ── -->
-    <div class="evo-split evo-split-3 animate-in" style="margin-top:16px">
+
+    <div class="evo-split evo-split-3" style="margin-top:14px">
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">🏆</span> 合规评级 (DNV CII)</div>
+          <div class="evo-section-title"><span class="seal seal-koke">評</span> 合规评级 (DNV CII)</div>
         </div>
         <div class="evo-card evo-card-pad" id="rating-panel">
           <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
             <div class="rating-badge rating-A" id="rating-badge">A</div>
             <div>
-              <div style="font-size:28px;font-weight:700;font-family:var(--evo-mono)" id="rating-score">100</div>
-              <div style="font-size:11px;color:var(--evo-text2)" id="rating-label">Major Superior</div>
-              <div style="font-size:10px;color:var(--evo-text3);margin-top:4px;font-family:var(--evo-mono)" id="rating-trend-arrow">—</div>
+              <div style="font-size:24px;font-weight:700;font-family:var(--font-mono)" id="rating-score">100</div>
+              <div style="font-size:11px;color:var(--text-2)" id="rating-label">Major Superior</div>
+              <div style="font-size:10px;color:var(--text-3);margin-top:4px;font-family:var(--font-mono)" id="rating-trend-arrow">—</div>
             </div>
           </div>
           <div id="domain-scores-container"></div>
@@ -336,75 +319,76 @@ body{font-family:var(--evo-sans);background:var(--evo-bg);color:var(--evo-text);
       </div>
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">🌍</span> 合规区域 (Zone)</div>
-          <span style="font-size:11px;color:var(--evo-text3);font-family:var(--evo-mono)" id="zone-count"></span>
+          <div class="evo-section-title"><span class="seal">区</span> 合规区域 (Zone)</div>
+          <span id="zone-count" style="color:var(--text-3);font-size:11px;font-family:var(--font-mono)"></span>
         </div>
         <div class="evo-card" style="padding:12px;max-height:320px;overflow-y:auto" id="zone-panel"></div>
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="simZone(54.5,12.0)" title="波罗的海">📍 Baltic</button>
-          <button class="btn btn-ghost btn-sm" onclick="simZone(52.0,3.0)" title="北海">📍 North Sea</button>
-          <button class="btn btn-ghost btn-sm" onclick="simZone(31.0,122.5)" title="中国排放区">📍 China DECA</button>
-          <button class="btn btn-ghost btn-sm" onclick="simZone(0.0,90.0)" title="加拉帕戈斯">📍 Galápagos</button>
-          <button class="btn btn-ghost btn-sm" onclick="simZone(12.0,45.0)" title="亚丁湾">📍 Gulf of Aden</button>
-          <button class="btn btn-ghost btn-sm" onclick="simZone(1.3,103.8)" title="马六甲海峡">📍 Malacca</button>
-          <button class="btn btn-ghost btn-sm" onclick="simZone(0.0,0.0)" title="清除位置(开放水域)">🌊 开放水域</button>
+          <button class="btn btn-ghost btn-xs" onclick="simZone(31.2,121.5)">上海</button>
+          <button class="btn btn-ghost btn-xs" onclick="simZone(1.3,103.8)">新加坡</button>
+          <button class="btn btn-ghost btn-xs" onclick="simZone(51.9,1.3)">英吉利海峡</button>
+          <button class="btn btn-ghost btn-xs" onclick="simZone(56.0,10.5)">北海 ECA</button>
+          <button class="btn btn-ghost btn-xs" onclick="simZone(22.3,114.2)">香港</button>
         </div>
       </div>
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">⚠️</span> 升级仪表板</div>
-          <span style="font-size:11px;color:var(--evo-text3);font-family:var(--evo-mono)" id="esc-count"></span>
+          <div class="evo-section-title"><span class="seal seal-shu">升</span> 升级仪表板</div>
+          <span id="esc-count" style="color:var(--text-3);font-size:11px;font-family:var(--font-mono)"></span>
         </div>
         <div class="evo-card evo-card-pad" id="escalation-panel"></div>
       </div>
     </div>
-    <!-- ── Phase 3: 双层自查清单 + 审计轨迹 ── -->
-    <div class="evo-split evo-split-2 animate-in" style="margin-top:16px">
+
+    <div class="evo-split evo-split-2" style="margin-top:14px">
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">📝</span> 双层自查清单 (ClassNK)</div>
+          <div class="evo-section-title"><span class="seal">检</span> 双重检查单 (ClassNK)</div>
         </div>
         <div class="evo-card evo-card-pad">
-          <div class="checklist-tab">
-            <button class="btn btn-ghost btn-sm" id="cl-company-btn" onclick="showChecklist('company')" style="flex:1">🏢 公司级 (DOC)</button>
-            <button class="btn btn-ghost btn-sm" id="cl-ship-btn" onclick="showChecklist('ship')" style="flex:1">🚢 船级 (SMC)</button>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="btn btn-primary btn-sm" id="cl-company-btn" onclick="showChecklist('company')">公司级</button>
+            <button class="btn btn-ghost btn-sm" id="cl-ship-btn" onclick="showChecklist('ship')">船舶级</button>
           </div>
-          <div id="checklist-content" style="max-height:260px;overflow-y:auto"></div>
+          <div id="checklist-content"></div>
         </div>
       </div>
       <div class="evo-section" style="margin-bottom:0">
         <div class="evo-section-header">
-          <div class="evo-section-title"><span class="icon">📜</span> 审计轨迹 (Logbook)</div>
-          <button class="btn btn-ghost btn-xs" onclick="loadAuditTrail()">↻</button>
+          <div class="evo-section-title"><span class="seal">跡</span> 审计轨迹 (Logbook)</div>
+          <button class="btn btn-ghost btn-xs" onclick="loadAuditTrail()">刷新</button>
         </div>
         <div class="evo-card" style="padding:12px;max-height:320px;overflow-y:auto" id="trail-panel"></div>
       </div>
     </div>
-    <div class="evo-section animate-in animate-in-delay4">
+
+    <div class="evo-section" style="margin-top:14px">
       <div class="evo-section-header">
         <div>
-          <div class="evo-section-title"><span class="icon">📋</span> 审查规则库</div>
+          <div class="evo-section-title"><span class="seal">规</span> 审查规则库</div>
           <div class="evo-section-subtitle">基于 IMO/IAMSAR/SOLAS/COLREGs 标准的自动化审查</div>
         </div>
-        <span id="rules-count" style="color:var(--evo-text3);font-size:12px;font-family:var(--evo-mono)"></span>
+        <span id="rules-count" style="color:var(--text-3);font-size:12px;font-family:var(--font-mono)"></span>
       </div>
       <div class="rules-grid" id="rules-grid"></div>
     </div>
+
     <div class="evo-section">
       <div class="evo-section-header">
         <div>
-          <div class="evo-section-title"><span class="icon">📊</span> 演进条目</div>
+          <div class="evo-section-title"><span class="seal">目</span> 演进条目</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
           <div class="tab-bar" id="status-tabs"></div>
-          <span id="items-count" style="color:var(--evo-text3);font-size:12px;font-family:var(--evo-mono)"></span>
+          <span id="items-count" style="color:var(--text-3);font-size:12px;font-family:var(--font-mono)"></span>
         </div>
       </div>
       <div class="evo-card" id="items-container" style="overflow:hidden"></div>
     </div>
+
     <div class="evo-section">
       <div class="evo-section-header">
-        <div class="evo-section-title"><span class="icon">🕐</span> 审查历史</div>
+        <div class="evo-section-title"><span class="seal">史</span> 审查历史</div>
       </div>
       <div class="evo-card evo-card-pad">
         <div class="timeline" id="audit-timeline"></div>
@@ -437,7 +421,7 @@ const domainChip=d=>'<span class="chip chip-domain">'+esc(d)+'</span>';
 const statusBadge=s=>'<span class="st-badge st-'+s+'">'+stLabel(s)+'</span>';
 function appendLog(msg,cls){const log=$('op-log');log.innerHTML+='\n<span class="'+cls+'">['+fmtNow()+'] '+esc(msg)+'</span>';log.scrollTop=log.scrollHeight;}
 
-function svgRing(pct,size,stroke,color){size=size||44;stroke=stroke||4;color=color||'var(--evo-cyan)';const r=(size-stroke)/2,circ=2*Math.PI*r,off=circ*(1-Math.min(pct,100)/100);return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="rgba(100,180,255,0.1)" stroke-width="'+stroke+'"/><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="'+stroke+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'" stroke-linecap="round" transform="rotate(-90 '+size/2+' '+size/2+')" style="transition:stroke-dashoffset 1s ease"/><text x="'+size/2+'" y="'+size/2+'" text-anchor="middle" dominant-baseline="central" fill="var(--evo-text)" font-family="var(--evo-mono)" font-size="'+(size/4)+'" font-weight="700">'+Math.round(pct)+'%</text></svg>';}
+function svgRing(pct,size,stroke,color){size=size||44;stroke=stroke||4;color=color||'var(--koke)';const r=(size-stroke)/2,circ=2*Math.PI*r,off=circ*(1-Math.min(pct,100)/100);return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="var(--kabe)" stroke-width="'+stroke+'"/><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="'+stroke+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'" stroke-linecap="round" transform="rotate(-90 '+size/2+' '+size/2+')" style="transition:stroke-dashoffset 1s ease"/><text x="'+size/2+'" y="'+size/2+'" text-anchor="middle" dominant-baseline="central" fill="var(--sumi)" font-family="var(--font-mono)" font-size="'+(size/4)+'" font-weight="700">'+Math.round(pct)+'%</text></svg>';}
 
 function renderHeroStats(st,summary){
   const s=st?.stats||{},bs=st?.items_by_status||{},rc=st?.audit_rules_count||0,total=st?.evolution_items_count||0;
@@ -445,22 +429,23 @@ function renderHeroStats(st,summary){
   const escalated=st?.escalated_rules||0;const zones=st?.active_zones||0;
   const pending=(bs.discovered||0)+(bs.dispatched||0);
   $('hero-stats').innerHTML=
-    '<div class="hero-stat hs-cyan animate-in"><div class="hs-label">📊 总审查</div><div class="hs-value" style="color:var(--evo-cyan)">'+(s.total_audits||0)+'</div><div class="hs-sub">'+rc+' 条规则</div></div>'+
-    '<div class="hero-stat hs-green animate-in animate-in-delay1"><div class="hs-label">🏆 合规评级</div><div class="hs-value"><span class="rating-badge rating-'+rating+'" style="width:42px;height:42px;font-size:24px;border-radius:10px;border-width:2px">'+rating+'</span></div><div class="hs-sub">得分 '+score+'</div></div>'+
-    '<div class="hero-stat hs-orange animate-in animate-in-delay2"><div class="hs-label">⏳ 待处理</div><div class="hs-value" style="color:var(--evo-orange)">'+pending+'</div><div class="hs-sub">'+(bs.discovered||0)+' 发现 + '+(bs.dispatched||0)+' 派发</div></div>'+
-    '<div class="hero-stat hs-purple animate-in animate-in-delay3"><div class="hs-label">📋 演进条目</div><div class="hs-value" style="color:var(--evo-purple)">'+total+'</div><div class="hs-sub">'+Object.entries(bs).map(function(e){return stLabel(e[0])+':'+e[1]}).join(' · ')+'</div></div>'+
-    '<div class="hero-stat hs-teal animate-in animate-in-delay4"><div class="hs-label">🌍 活跃区域</div><div class="hs-value" style="color:var(--evo-teal)">'+zones+'</div><div class="hs-sub">'+(summary?.zones_total||6)+' 总区域</div></div>'+
-    '<div class="hero-stat hs-pink animate-in animate-in-delay4"><div class="hs-label">⚠️ 升级规则</div><div class="hs-value" style="color:'+(escalated>0?'var(--evo-red)':'var(--evo-green)')+'">'+escalated+'</div><div class="hs-sub">'+(escalated>0?'需要关注':'全部正常')+'</div></div>';
+    '<div class="hero-stat hs-cyan"><div class="hs-label"><span class="seal seal-koke">査</span> 总审查</div><div class="hs-value" style="color:var(--koke)">'+(s.total_audits||0)+'</div><div class="hs-sub">'+rc+' 条规则</div></div>'+
+    '<div class="hero-stat hs-green"><div class="hs-label"><span class="seal seal-koke">評</span> 合规评级</div><div class="hs-value"><span class="rating-badge rating-'+rating+'" style="width:38px;height:38px;font-size:22px;border-width:2px">'+rating+'</span></div><div class="hs-sub">得分 '+score+'</div></div>'+
+    '<div class="hero-stat hs-orange"><div class="hs-label"><span class="seal seal-kitsune">待</span> 待处理</div><div class="hs-value" style="color:var(--kitsune)">'+pending+'</div><div class="hs-sub">'+(bs.discovered||0)+' 发现 + '+(bs.dispatched||0)+' 派发</div></div>'+
+    '<div class="hero-stat hs-purple"><div class="hs-label"><span class="seal">目</span> 演进条目</div><div class="hs-value" style="color:var(--nezumi)">'+total+'</div><div class="hs-sub">'+Object.entries(bs).map(function(e){return stLabel(e[0])+':'+e[1]}).join(' · ')+'</div></div>'+
+    '<div class="hero-stat hs-teal"><div class="hs-label"><span class="seal seal-koke">区</span> 活跃区域</div><div class="hs-value" style="color:var(--koke)">'+zones+'</div><div class="hs-sub">'+(summary?.zones_total||6)+' 总区域</div></div>'+
+    '<div class="hero-stat hs-pink"><div class="hs-label"><span class="seal seal-shu">升</span> 升级规则</div><div class="hs-value" style="color:'+(escalated>0?'var(--shu)':'var(--koke)')+'">'+escalated+'</div><div class="hs-sub">'+(escalated>0?'需要关注':'全部正常')+'</div></div>';
 }
 
+const PIPE_LABELS=['査','发','派','建','验','通','闭'];
 const PIPE_STEPS=[
-  {icon:'🔍',label:'审查',key:'audit',color:'#64d2ff'},
-  {icon:'💡',label:'发现',key:'discovered',color:'#ffd60a'},
-  {icon:'📤',label:'派发',key:'dispatched',color:'#ff9f0a'},
-  {icon:'🔨',label:'构建',key:'in_progress',color:'#007aff'},
-  {icon:'🧪',label:'验证',key:'verify_pending',color:'#bf5af2'},
-  {icon:'✅',label:'通过',key:'verified',color:'#30d158'},
-  {icon:'📦',label:'关闭',key:'closed',color:'#40c2a4'}
+  {label:'审查',key:'audit',color:'var(--koke)'},
+  {label:'发现',key:'discovered',color:'var(--kitsune)'},
+  {label:'派发',key:'dispatched',color:'var(--kitsune)'},
+  {label:'构建',key:'in_progress',color:'var(--sumi)'},
+  {label:'验证',key:'verify_pending',color:'var(--nezumi)'},
+  {label:'通过',key:'verified',color:'var(--koke)'},
+  {label:'关闭',key:'closed',color:'var(--sumi-3)'}
 ];
 
 function initPipeline(){
@@ -470,42 +455,43 @@ function initPipeline(){
   function spawnParticles(){
     for(let i=0;i<PIPE_STEPS.length-1;i++){
       if((_pipeData[PIPE_STEPS[i].key]||0)>0&&Math.random()<0.08){
-        _particles.push({from:i,to:i+1,t:0,speed:0.003+Math.random()*0.004,color:PIPE_STEPS[i].color,size:2+Math.random()*2});
+        _particles.push({from:i,to:i+1,t:0,speed:0.003+Math.random()*0.004,size:2+Math.random()*2});
       }
     }
     _particles=_particles.filter(function(p){return p.t<=1});
   }
   function draw(){
     const w=canvas._w,h=canvas._h;ctx.clearRect(0,0,w,h);
-    ctx.strokeStyle='rgba(100,180,255,0.04)';ctx.lineWidth=1;
+    ctx.strokeStyle='oklch(0.82 0.004 110 / 0.06)';ctx.lineWidth=1;
     for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
     for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
     const stepW=w/PIPE_STEPS.length,cy=h/2;
     for(let i=0;i<PIPE_STEPS.length-1;i++){
       const x1=stepW*i+stepW/2+28,x2=stepW*(i+1)+stepW/2-28;
       const count=_pipeData[PIPE_STEPS[i].key]||0;
-      const alpha=count>0?0.6:0.15;
-      ctx.beginPath();ctx.moveTo(x1,cy);ctx.bezierCurveTo(x1+(x2-x1)*0.3,cy-8,x2-(x2-x1)*0.3,cy+8,x2,cy);
-      ctx.strokeStyle='rgba(100,180,255,'+alpha+')';ctx.lineWidth=count>0?2.5:1.5;ctx.stroke();
-      if(count>0){const mx=(x1+x2)/2;ctx.fillStyle=PIPE_STEPS[i].color;ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(mx-4,cy-4);ctx.lineTo(mx+4,cy);ctx.lineTo(mx-4,cy+4);ctx.fill();ctx.globalAlpha=1;}
+      const alpha=count>0?0.5:0.12;
+      ctx.beginPath();ctx.moveTo(x1,cy);ctx.lineTo(x2,cy);
+      ctx.strokeStyle='oklch(0.68 0.006 110 / '+alpha+')';ctx.lineWidth=count>0?2:1;ctx.stroke();
+      if(count>0){const mx=(x1+x2)/2;ctx.fillStyle='oklch(0.55 0.005 110)';ctx.beginPath();ctx.moveTo(mx-3,cy-3);ctx.lineTo(mx+3,cy);ctx.lineTo(mx-3,cy+3);ctx.fill();}
     }
     spawnParticles();
     _particles.forEach(function(p){
       p.t+=p.speed;const i=p.from;
       const x1=stepW*i+stepW/2+28,x2=stepW*(i+1)+stepW/2-28;
-      const t=p.t,mt=1-t;
-      const px=mt*mt*mt*x1+3*mt*mt*t*(x1+(x2-x1)*0.3)+3*mt*t*t*(x2-(x2-x1)*0.3)+t*t*t*x2;
-      const py=mt*mt*mt*cy+3*mt*mt*t*(cy-8)+3*mt*t*t*(cy+8)+t*t*t*cy;
-      ctx.beginPath();ctx.arc(px,py,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.globalAlpha=0.8;ctx.fill();
-      ctx.globalAlpha=0.3;ctx.shadowColor=p.color;ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;ctx.globalAlpha=1;
+      const px=x1+(x2-x1)*p.t;
+      ctx.beginPath();ctx.arc(px,cy,p.size,0,Math.PI*2);ctx.fillStyle='oklch(0.55 0.005 110 / 0.6)';ctx.fill();
     });
     PIPE_STEPS.forEach(function(s,i){
-      const cx2=stepW*i+stepW/2,count=_pipeData[s.key]||0,active=count>0,radius=active?26:22;
-      if(active){ctx.beginPath();ctx.arc(cx2,cy,radius+8,0,Math.PI*2);const grad=ctx.createRadialGradient(cx2,cy,radius,cx2,cy,radius+12);grad.addColorStop(0,s.color+'30');grad.addColorStop(1,'transparent');ctx.fillStyle=grad;ctx.fill();}
-      ctx.beginPath();ctx.arc(cx2,cy,radius,0,Math.PI*2);ctx.fillStyle=active?s.color+'20':'rgba(10,22,45,0.9)';ctx.fill();ctx.strokeStyle=active?s.color:'rgba(100,180,255,0.2)';ctx.lineWidth=active?2.5:1.5;ctx.stroke();
-      ctx.font=(active?20:16)+'px "Apple Color Emoji","Segoe UI Emoji",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.icon,cx2,cy-1);
-      ctx.font='600 11px "Space Grotesk",sans-serif';ctx.fillStyle=active?'#f0f6ff':'#5b7894';ctx.fillText(s.label,cx2,cy+radius+16);
-      if(count>0){ctx.font='700 12px "IBM Plex Mono",monospace';ctx.fillStyle=s.color;ctx.fillText(count,cx2,cy+radius+30);}
+      const cx2=stepW*i+stepW/2,count=_pipeData[s.key]||0,active=count>0,radius=active?24:20;
+      ctx.beginPath();ctx.arc(cx2,cy,radius,0,Math.PI*2);
+      ctx.fillStyle=active?'oklch(0.91 0.004 110)':'oklch(0.96 0.003 110)';ctx.fill();
+      ctx.strokeStyle=active?'oklch(0.55 0.005 110)':'oklch(0.82 0.004 110)';ctx.lineWidth=active?2:1;ctx.stroke();
+      /* Seal kanji in center */
+      ctx.font=(active?'900 14':'600 12')+'px "Noto Serif SC",serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=active?'oklch(0.18 0.008 110)':'oklch(0.55 0.005 110)';
+      ctx.fillText(PIPE_LABELS[i],cx2,cy);
+      ctx.font='500 11px "Noto Sans SC",sans-serif';ctx.fillStyle=active?'oklch(0.18 0.008 110)':'oklch(0.55 0.005 110)';ctx.fillText(s.label,cx2,cy+radius+14);
+      if(count>0){ctx.font='700 12px "JetBrains Mono",monospace';ctx.fillStyle='oklch(0.38 0.006 110)';ctx.fillText(count,cx2,cy+radius+28);}
     });
     _pipelineAnim=requestAnimationFrame(draw);
   }
@@ -522,22 +508,22 @@ function drawTrendChart(){
   const w=rect.width,h=220;ctx.clearRect(0,0,w,h);
   const pad={top:20,right:20,bottom:30,left:40},cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
   const data=_trendData;
-  if(!data.labels.length){ctx.fillStyle='#5b7894';ctx.font='13px "Space Grotesk",sans-serif';ctx.textAlign='center';ctx.fillText('运行审查后显示趋势数据',w/2,h/2);return;}
+  if(!data.labels.length){ctx.fillStyle='var(--sumi-3)';ctx.font='13px "Noto Sans SC",sans-serif';ctx.textAlign='center';ctx.fillText('运行审查后显示趋势数据',w/2,h/2);return;}
   const maxVal=Math.max(1,...data.passed,...data.failed,...data.items),n=data.labels.length;
-  ctx.strokeStyle='rgba(100,180,255,0.06)';ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=pad.top+ch*i/4;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();ctx.fillStyle='#5b7894';ctx.font='10px "IBM Plex Mono",monospace';ctx.textAlign='right';ctx.fillText(Math.round(maxVal*(4-i)/4),pad.left-6,y+4);}
-  ctx.fillStyle='#5b7894';ctx.font='10px "IBM Plex Mono",monospace';ctx.textAlign='center';
+  ctx.strokeStyle='oklch(0.85 0.005 110)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.top+ch*i/4;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();ctx.fillStyle='oklch(0.55 0.005 110)';ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='right';ctx.fillText(Math.round(maxVal*(4-i)/4),pad.left-6,y+4);}
+  ctx.fillStyle='oklch(0.55 0.005 110)';ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';
   data.labels.forEach(function(l,i){ctx.fillText(l,pad.left+(cw/Math.max(1,n-1))*i,h-8);});
   function drawLine(arr,color,isFill){
     if(arr.length<2)return;ctx.beginPath();
     arr.forEach(function(v,i){const x=pad.left+(cw/Math.max(1,n-1))*i,y=pad.top+ch*(1-v/maxVal);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
-    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
-    if(isFill){ctx.lineTo(pad.left+cw,pad.top+ch);ctx.lineTo(pad.left,pad.top+ch);ctx.closePath();ctx.fillStyle=color.replace(')',',0.08)').replace('rgb','rgba');ctx.fill();}
-    arr.forEach(function(v,i){const x=pad.left+(cw/Math.max(1,n-1))*i,y=pad.top+ch*(1-v/maxVal);ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+    if(isFill){ctx.lineTo(pad.left+cw,pad.top+ch);ctx.lineTo(pad.left,pad.top+ch);ctx.closePath();const fc=color.replace(')',',0.06)').replace('oklch','oklch');ctx.fillStyle='oklch(0.52 0.04 160 / 0.06)';ctx.fill();}
+    arr.forEach(function(v,i){const x=pad.left+(cw/Math.max(1,n-1))*i,y=pad.top+ch*(1-v/maxVal);ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
   }
-  drawLine(data.passed,'#30d158',true);drawLine(data.failed,'#ff453a',false);drawLine(data.items,'#64d2ff',false);
-  var legends=[{label:'通过',color:'#30d158'},{label:'失败',color:'#ff453a'},{label:'条目',color:'#64d2ff'}];
-  var lx=pad.left;legends.forEach(function(lg){ctx.fillStyle=lg.color;ctx.fillRect(lx,6,10,3);ctx.fillStyle='#9bb3cd';ctx.font='10px "Space Grotesk",sans-serif';ctx.textAlign='left';ctx.fillText(lg.label,lx+14,10);lx+=56;});
+  drawLine(data.passed,'oklch(0.52 0.04 160)',true);drawLine(data.failed,'oklch(0.48 0.07 22)',false);drawLine(data.items,'oklch(0.38 0.006 110)',false);
+  var legends=[{label:'通过',color:'oklch(0.52 0.04 160)'},{label:'失败',color:'oklch(0.48 0.07 22)'},{label:'条目',color:'oklch(0.38 0.006 110)'}];
+  var lx=pad.left;legends.forEach(function(lg){ctx.fillStyle=lg.color;ctx.fillRect(lx,6,10,2);ctx.fillStyle='oklch(0.55 0.005 110)';ctx.font='10px "Noto Sans SC",sans-serif';ctx.textAlign='left';ctx.fillText(lg.label,lx+14,10);lx+=56;});
 }
 
 function drawRadarChart(domainData){
@@ -552,19 +538,19 @@ function drawRadarChart(domainData){
   ctx.clearRect(0,0,260,260);
   [0.25,0.5,0.75,1].forEach(function(pct){
     ctx.beginPath();for(let i=0;i<=n;i++){const angle=(Math.PI*2/n)*i-Math.PI/2;const x=cx+Math.cos(angle)*maxR*pct;const y=cy+Math.sin(angle)*maxR*pct;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
-    ctx.closePath();ctx.strokeStyle='rgba(100,180,255,0.1)';ctx.lineWidth=1;ctx.stroke();
+    ctx.closePath();ctx.strokeStyle='oklch(0.85 0.005 110)';ctx.lineWidth=1;ctx.stroke();
   });
-  for(let i=0;i<n;i++){const angle=(Math.PI*2/n)*i-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(angle)*maxR,cy+Math.sin(angle)*maxR);ctx.strokeStyle='rgba(100,180,255,0.08)';ctx.stroke();}
+  for(let i=0;i<n;i++){const angle=(Math.PI*2/n)*i-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(angle)*maxR,cy+Math.sin(angle)*maxR);ctx.strokeStyle='oklch(0.85 0.005 110)';ctx.stroke();}
   ctx.beginPath();
   values.forEach(function(v,i){const angle=(Math.PI*2/n)*i-Math.PI/2;const r=(v/maxVal)*maxR;const x=cx+Math.cos(angle)*r;const y=cy+Math.sin(angle)*r;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
-  ctx.closePath();const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR);grad.addColorStop(0,'rgba(100,210,255,0.25)');grad.addColorStop(1,'rgba(48,209,88,0.15)');ctx.fillStyle=grad;ctx.fill();ctx.strokeStyle='rgba(100,210,255,0.7)';ctx.lineWidth=2;ctx.stroke();
+  ctx.closePath();ctx.fillStyle='oklch(0.52 0.04 160 / 0.08)';ctx.fill();ctx.strokeStyle='oklch(0.52 0.04 160 / 0.5)';ctx.lineWidth=1.5;ctx.stroke();
   values.forEach(function(v,i){
     const angle=(Math.PI*2/n)*i-Math.PI/2;const r=(v/maxVal)*maxR;
     const x=cx+Math.cos(angle)*r;const y=cy+Math.sin(angle)*r;
-    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#64d2ff';ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle='oklch(0.52 0.04 160)';ctx.fill();
     const lx=cx+Math.cos(angle)*(maxR+16);const ly=cy+Math.sin(angle)*(maxR+16);
-    ctx.font='10px "Space Grotesk",sans-serif';ctx.fillStyle='#9bb3cd';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(domains[i],lx,ly);
-    if(v>0){ctx.font='10px "IBM Plex Mono",monospace';ctx.fillStyle='#64d2ff';ctx.fillText(v,lx,ly+12);}
+    ctx.font='10px "Noto Sans SC",sans-serif';ctx.fillStyle='oklch(0.55 0.005 110)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(domains[i],lx,ly);
+    if(v>0){ctx.font='10px "JetBrains Mono",monospace';ctx.fillStyle='oklch(0.52 0.04 160)';ctx.fillText(v,lx,ly+12);}
   });
 }
 
@@ -579,29 +565,30 @@ function renderHeatmap(){
   });});
   const maxCount=Math.max(1,...cells.map(function(c){return c.count}));
   let html='<div style="display:flex;gap:4px;margin-bottom:6px;padding-left:64px">';
-  severities.forEach(function(s){html+='<span style="flex:1;text-align:center;font-size:9px;color:var(--evo-text3);text-transform:uppercase">'+sevLabel(s)+'</span>';});
+  severities.forEach(function(s){html+='<span style="flex:1;text-align:center;font-size:9px;color:var(--text-3);text-transform:uppercase;font-family:var(--font-mono)">'+sevLabel(s)+'</span>';});
   html+='</div>';
   domains.forEach(function(d){
     html+='<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px">';
-    html+='<span style="width:60px;font-size:9px;color:var(--evo-text3);text-align:right;padding-right:4px;font-family:var(--evo-mono)">'+d+'</span>';
+    html+='<span style="width:60px;font-size:9px;color:var(--text-3);text-align:right;padding-right:4px;font-family:var(--font-mono)">'+d+'</span>';
     severities.forEach(function(s){
       const cell=cells.find(function(c){return c.domain===d&&c.severity===s});
       const count=cell?cell.count:0;const intensity=count/maxCount;
-      let color;if(intensity===0)color='rgba(100,180,255,0.05)';else if(intensity<=0.25)color='rgba(100,210,255,0.2)';else if(intensity<=0.5)color='rgba(48,209,88,0.4)';else if(intensity<=0.75)color='rgba(255,159,10,0.6)';else color='rgba(255,55,95,0.8)';
-      html+='<div style="flex:1;height:28px;border-radius:5px;background:'+color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--evo-mono);color:'+(count>0?'#fff':'transparent')+';transition:all 0.2s;cursor:default" title="'+d+' / '+sevLabel(s)+': '+count+' 条">'+(count||'')+'</div>';
+      let color;if(intensity===0)color='var(--kabe)';else if(intensity<=0.25)color='oklch(0.52 0.04 160 / 0.15)';else if(intensity<=0.5)color='oklch(0.52 0.04 160 / 0.3)';else if(intensity<=0.75)color='oklch(0.56 0.05 70 / 0.4)';else color='oklch(0.48 0.07 22 / 0.5)';
+      html+='<div style="flex:1;height:26px;background:'+color+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--font-mono);color:'+(count>0?'var(--sumi)':'transparent')+';transition:background .2s;cursor:default" title="'+d+' / '+sevLabel(s)+': '+count+' 条">'+(count||'')+'</div>';
     });html+='</div>';
   });
   container.innerHTML=html;
 }
 
+const AGENT_SEALS={chief_director:'监',system_architect:'构',marine_researcher:'研',dev_lead:'导',code_writer:'码',qa_engineer:'测',doc_writer:'文'};
 const AGENTS=[
-  {id:'chief_director',icon:'👔',name:'项目总监',role:'Chief Director'},
-  {id:'system_architect',icon:'🏗',name:'架构师',role:'System Architect'},
-  {id:'marine_researcher',icon:'🌊',name:'海洋研究员',role:'Marine Researcher'},
-  {id:'dev_lead',icon:'💻',name:'开发主管',role:'Dev Lead'},
-  {id:'code_writer',icon:'⌨️',name:'代码开发',role:'Code Writer'},
-  {id:'qa_engineer',icon:'🧪',name:'测试工程师',role:'QA Engineer'},
-  {id:'doc_writer',icon:'📝',name:'文档工程师',role:'Doc Writer'}
+  {id:'chief_director',name:'项目总监',role:'Chief Director'},
+  {id:'system_architect',name:'架构师',role:'System Architect'},
+  {id:'marine_researcher',name:'海洋研究员',role:'Marine Researcher'},
+  {id:'dev_lead',name:'开发主管',role:'Dev Lead'},
+  {id:'code_writer',name:'代码开发',role:'Code Writer'},
+  {id:'qa_engineer',name:'测试工程师',role:'QA Engineer'},
+  {id:'doc_writer',name:'文档工程师',role:'Doc Writer'}
 ];
 
 function renderAgentFeed(){
@@ -615,16 +602,19 @@ function renderAgentFeed(){
   });
   if(!activities.length){AGENTS.forEach(function(a){activities.push({agent:a,task:'空闲 — 等待演进任务',time:null,status:'idle'});});}
   $('agent-count').textContent=activities.filter(function(a){return a.status==='active'}).length+' 活跃 / '+AGENTS.length+' 总计';
-  feed.innerHTML=activities.slice(0,10).map(function(a){return '<div class="agent-item"><div class="agent-avatar '+(a.status==='active'?'aa-active':'')+'">'+a.agent.icon+'</div><div class="agent-info"><div class="agent-name">'+esc(a.agent.name)+' <span style="color:var(--evo-text3);font-size:11px;font-weight:400">'+esc(a.agent.role)+'</span></div><div class="agent-task">'+esc(a.task)+'</div><div class="agent-time">'+(a.time?fmtTime(a.time):'—')+'</div></div><span class="agent-status as-'+a.status+'">'+(a.status==='active'?'● 活跃':a.status==='error'?'● 异常':'○ 空闲')+'</span></div>';}).join('');
+  feed.innerHTML=activities.slice(0,10).map(function(a){
+    const seal=AGENT_SEALS[a.agent.id]||'员';
+    return '<div class="agent-item"><div class="agent-avatar"><span class="seal" style="margin:0">'+seal+'</span></div><div class="agent-info"><div class="agent-name">'+esc(a.agent.name)+' <span style="color:var(--text-3);font-size:11px;font-weight:400">'+esc(a.agent.role)+'</span></div><div class="agent-task">'+esc(a.task)+'</div><div class="agent-time">'+(a.time?fmtTime(a.time):'—')+'</div></div><span class="agent-status as-'+a.status+'">'+(a.status==='active'?'活跃':a.status==='error'?'异常':'空闲')+'</span></div>';
+  }).join('');
 }
 
 function renderRules(rules,auditDetails){
-  if(!rules||!rules.length){$('rules-grid').innerHTML='<div class="empty-state"><div class="icon">📋</div><p>无审查规则</p></div>';$('rules-count').textContent='';return;}
+  if(!rules||!rules.length){$('rules-grid').innerHTML='<div class="empty-state"><p>无审查规则</p></div>';$('rules-count').textContent='';return;}
   $('rules-count').textContent=rules.length+' 条规则';
   const resultMap={};(auditDetails||[]).forEach(function(d){resultMap[d.rule]=d;});
   $('rules-grid').innerHTML=rules.map(function(r){
-    const res=resultMap[r.id];let resultIcon='';if(res)resultIcon=res.passed?'✅':(res.status==='skip'?'⏭️':'❌');
-    return '<div class="rule-card"><div class="rc-result">'+resultIcon+'</div><div class="rc-header"><span class="rc-id">'+esc(r.id)+'</span>'+sevChip(r.severity)+'</div><div class="rc-title">'+esc(r.title)+'</div><div class="rc-desc">'+esc(r.description)+'</div><div class="rc-meta">'+domainChip(r.domain)+'<span style="font-size:11px;color:var(--evo-text3)">→ '+esc(r.target_channel)+'</span></div>'+(r.reference?'<div style="margin-top:6px;font-size:10px;color:var(--evo-text3);font-family:var(--evo-mono)">'+esc(r.reference)+'</div>':'')+(res&&!res.passed?'<div class="rc-fail-detail">'+esc(res.detail||res.reason)+'</div>':'')+(res&&res.passed?'<div class="rc-pass-detail">'+esc(res.detail)+'</div>':'')+'</div>';
+    const res=resultMap[r.id];let resultMark='';if(res)resultMark=res.passed?'<span style="color:var(--koke)">通</span>':(res.status==='skip'?'<span style="color:var(--sumi-3)">略</span>':'<span style="color:var(--shu)">否</span>');
+    return '<div class="rule-card"><div class="rc-result">'+resultMark+'</div><div class="rc-header"><span class="rc-id">'+esc(r.id)+'</span>'+sevChip(r.severity)+'</div><div class="rc-title">'+esc(r.title)+'</div><div class="rc-desc">'+esc(r.description)+'</div><div class="rc-meta">'+domainChip(r.domain)+'<span style="font-size:11px;color:var(--text-3)">'+esc(r.target_channel)+'</span></div>'+(r.reference?'<div style="margin-top:6px;font-size:10px;color:var(--text-3);font-family:var(--font-mono)">'+esc(r.reference)+'</div>':'')+(res&&!res.passed?'<div class="rc-fail-detail">'+esc(res.detail||res.reason)+'</div>':'')+(res&&res.passed?'<div class="rc-pass-detail">'+esc(res.detail)+'</div>':'')+'</div>';
   }).join('');
 }
 
@@ -642,16 +632,16 @@ function setFilter(status){_statusFilter=status;renderStatusTabs();renderItems()
 function renderItems(){
   let items=_allItems;if(_statusFilter)items=items.filter(function(i){return i.status===_statusFilter});
   $('items-count').textContent=items.length+' / '+_allItems.length;
-  if(!items.length){$('items-container').innerHTML='<div class="empty-state" style="padding:40px"><div class="icon">📦</div><p>'+(_allItems.length===0?'暂无演进条目 — 运行审查以发现系统改进点':'当前筛选无匹配条目')+'</p>'+(_allItems.length===0?'<button class="btn btn-primary" onclick="runAudit()">🔍 运行审查</button>':'')+'</div>';return;}
-  $('items-container').innerHTML='<div style="overflow-x:auto"><table class="evo-table"><thead><tr><th>ID</th><th>标题</th><th>域</th><th>严重度</th><th>状态</th><th>目标</th><th>分配</th><th>验证</th><th></th></tr></thead><tbody>'+items.map(function(i){return '<tr onclick="showDetail(\''+esc(i.id)+'\')"><td style="font-family:var(--evo-mono);font-size:12px;color:var(--evo-cyan)">'+esc(i.id)+'</td><td><strong>'+esc(i.title)+'</strong></td><td>'+domainChip(i.audit_domain)+'</td><td>'+sevChip(i.severity)+'</td><td>'+statusBadge(i.status)+'</td><td style="font-family:var(--evo-mono);font-size:11px;color:var(--evo-text2)">'+esc(i.target_channel)+'</td><td style="font-size:12px;color:var(--evo-text2)">'+esc(i.assigned_agent||'—')+'</td><td>'+(i.verify_result==='passed'?'<span style="color:var(--evo-green)">✅</span>':i.verify_result==='failed'?'<span style="color:var(--evo-red)">❌</span>':'<span style="color:var(--evo-text3)">—</span>')+'</td><td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showDetail(\''+esc(i.id)+'\')">详情</button></td></tr>';}).join('')+'</tbody></table></div>';
+  if(!items.length){$('items-container').innerHTML='<div class="empty-state" style="padding:40px"><p>'+(_allItems.length===0?'暂无演进条目 — 运行审查以发现系统改进点':'当前筛选无匹配条目')+'</p>'+(_allItems.length===0?'<button class="btn btn-primary" onclick="runAudit()"><span class="seal">査</span> 运行审查</button>':'')+'</div>';return;}
+  $('items-container').innerHTML='<div style="overflow-x:auto"><table class="evo-table"><thead><tr><th>ID</th><th>标题</th><th>域</th><th>严重度</th><th>状态</th><th>目标</th><th>分配</th><th>验证</th><th></th></tr></thead><tbody>'+items.map(function(i){return '<tr onclick="showDetail(\''+esc(i.id)+'\')"><td style="font-family:var(--font-mono);font-size:12px;color:var(--koke)">'+esc(i.id)+'</td><td><strong>'+esc(i.title)+'</strong></td><td>'+domainChip(i.audit_domain)+'</td><td>'+sevChip(i.severity)+'</td><td>'+statusBadge(i.status)+'</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-2)">'+esc(i.target_channel)+'</td><td style="font-size:12px;color:var(--text-2)">'+esc(i.assigned_agent||'—')+'</td><td>'+(i.verify_result==='passed'?'<span style="color:var(--koke)">通</span>':i.verify_result==='failed'?'<span style="color:var(--shu)">否</span>':'<span style="color:var(--text-3)">—</span>')+'</td><td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();showDetail(\''+esc(i.id)+'\')">详情</button></td></tr>';}).join('')+'</tbody></table></div>';
 }
 
 function renderTimeline(){
   const tl=$('audit-timeline');
-  if(!_auditHistory.length){tl.innerHTML='<div style="color:var(--evo-text3);font-size:13px;padding:8px">暂无审查记录。运行审查后将显示历史时间线。</div>';return;}
+  if(!_auditHistory.length){tl.innerHTML='<div style="color:var(--text-3);font-size:13px;padding:8px">暂无审查记录。</div>';return;}
   tl.innerHTML=_auditHistory.map(function(h){
     const cls=h.failed>0?'tl-fail':'tl-pass';
-    return '<div class="tl-item '+cls+'"><div class="tl-time">'+fmtTime(h.time)+'</div><div class="tl-title">审查 #'+h.run+' — '+h.passed+' 通过, '+h.failed+' 未通过, '+h.skipped+' 跳过</div><div class="tl-detail">'+(h.newItems>0?'新建 '+h.newItems+' 条演进项':'全部规则通过 ✅')+'</div></div>';
+    return '<div class="tl-item '+cls+'"><div class="tl-time">'+fmtTime(h.time)+'</div><div class="tl-title">审查 #'+h.run+' — '+h.passed+' 通过, '+h.failed+' 未通过, '+h.skipped+' 跳过</div><div class="tl-detail">'+(h.newItems>0?'新建 '+h.newItems+' 条演进项':'全部规则通过')+'</div></div>';
   }).join('');
 }
 
@@ -660,9 +650,6 @@ function updateButtons(){
   $('btn-verify').disabled=!_allItems.some(function(i){return i.status==='verify_pending'});
 }
 
-// ══════════════════════════════════════════════════════
-// Phase 3: Compliance Rating Panel (DNV CII)
-// ══════════════════════════════════════════════════════
 let _ratingData=null;
 async function loadRatingPanel(){
   _ratingData=await api('/compliance-rating');
@@ -672,7 +659,7 @@ async function loadRatingPanel(){
   $('rating-score').textContent=s;
   $('rating-label').textContent={A:'Major Superior — 全面优秀',B:'Minor Superior — 良好',C:'Moderate — 基本合规',D:'Minor Inferior — 需纠正计划',E:'Inferior — 需紧急干预'}[r]||r;
   const trend=_ratingData.trend||[];
-  if(trend.length>=2){const last=trend[trend.length-1].score,prev=trend[trend.length-2].score;const d=last-prev;$('rating-trend-arrow').textContent=d>0?'▲ +'+d.toFixed(1):d<0?'▼ '+d.toFixed(1):'━ 稳定';$('rating-trend-arrow').style.color=d>0?'var(--evo-green)':d<0?'var(--evo-red)':'var(--evo-text3)';}
+  if(trend.length>=2){const last=trend[trend.length-1].score,prev=trend[trend.length-2].score;const d=last-prev;$('rating-trend-arrow').textContent=d>0?'▲ +'+d.toFixed(1):d<0?'▼ '+d.toFixed(1):'━ 稳定';$('rating-trend-arrow').style.color=d>0?'var(--koke)':d<0?'var(--shu)':'var(--text-3)';}
 }
 async function loadDomainScores(){
   const rr=await api('/compliance-rating/calculate',{method:'POST'});
@@ -682,17 +669,14 @@ async function loadDomainScores(){
   let html='';
   Object.entries(ds).forEach(function(e){
     const k=e[0],v=e[1],label=DOMAIN_LABELS[k]||k,sc=v.score||0,rt=v.rating||'C';
-    const color=rt==='A'?'var(--evo-green)':rt==='B'?'var(--evo-cyan)':rt==='C'?'var(--evo-yellow)':rt==='D'?'var(--evo-orange)':'var(--evo-red)';
-    html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--evo-text2)">'+esc(label)+'</span><span style="color:'+color+';font-family:var(--evo-mono);font-weight:600">'+rt+' '+sc+'</span></div><div class="domain-score-bar"><div class="domain-score-fill" style="width:'+sc+'%;background:'+color+'"></div></div></div>';
+    const color=rt==='A'?'var(--koke)':rt==='B'?'var(--koke)':rt==='C'?'var(--kitsune)':rt==='D'?'var(--kitsune)':'var(--shu)';
+    html+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text-2)">'+esc(label)+'</span><span style="color:'+color+';font-family:var(--font-mono);font-weight:600">'+rt+' '+sc+'</span></div><div class="domain-score-bar"><div class="domain-score-fill" style="width:'+sc+'%;background:'+color+'"></div></div></div>';
   });
   $('domain-scores-container').innerHTML=html;
 }
 
-// ══════════════════════════════════════════════════════
-// Phase 3: Zone Management Panel (Wärtsilä)
-// ══════════════════════════════════════════════════════
 async function simZone(lat,lon){
-  toast('模拟位置: '+lat.toFixed(1)+'°N, '+lon.toFixed(1)+'°E');
+  toast('模拟位置: '+lat.toFixed(1)+'N, '+lon.toFixed(1)+'E');
   await api('/zones/update-position?lat='+lat+'&lon='+lon,{method:'POST'});
   await loadZonePanel();await loadAuditTrail();
 }
@@ -704,35 +688,29 @@ async function loadZonePanel(){
   $('zone-count').textContent=activeIds.size+' 活跃 / '+zones.length+' 总计';
   $('zone-panel').innerHTML=zones.map(function(z){
     const isActive=activeIds.has(z.id);
-    return '<div class="zone-card '+(isActive?'zone-active':'')+'"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:13px;font-weight:600">'+esc(z.name)+'</span><span class="zone-type-badge zt-'+z.zone_type+'">'+z.zone_type+'</span></div><div style="font-size:11px;color:var(--evo-text2);margin-bottom:4px">'+esc(z.description)+'</div><div style="font-size:10px;color:var(--evo-text3);font-family:var(--evo-mono)">'+z.activated_rule_ids.length+' 规则 · '+esc(z.extra_requirements||'')+'</div>'+(isActive?'<div style="margin-top:6px;font-size:10px;color:var(--evo-green);font-weight:600">● 当前在此区域内</div>':'')+'</div>';
+    return '<div class="zone-card '+(isActive?'zone-active':'')+'"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:13px;font-weight:600">'+esc(z.name)+'</span><span class="zone-type-badge zt-'+z.zone_type+'">'+z.zone_type+'</span></div><div style="font-size:11px;color:var(--text-2);margin-bottom:4px">'+esc(z.description)+'</div><div style="font-size:10px;color:var(--text-3);font-family:var(--font-mono)">'+z.activated_rule_ids.length+' 规则 · '+esc(z.extra_requirements||'')+'</div>'+(isActive?'<div style="margin-top:6px;font-size:10px;color:var(--koke);font-weight:600">当前在此区域内</div>':'')+'</div>';
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════
-// Phase 3: Escalation Dashboard (DNV SEEMP Part III)
-// ══════════════════════════════════════════════════════
 async function loadEscalation(){
   const esc_data=await api('/escalation');
   if(!esc_data)return;
   $('esc-count').textContent=esc_data.escalated_count+' 条需关注';
   if(!esc_data.escalated_count){
-    $('escalation-panel').innerHTML='<div style="text-align:center;padding:24px;color:var(--evo-green)"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:13px;font-weight:600">所有规则正常</div><div style="font-size:11px;color:var(--evo-text3);margin-top:4px">无连续失败需要升级处理</div></div>';
+    $('escalation-panel').innerHTML='<div style="text-align:center;padding:24px;color:var(--koke)"><div style="font-family:var(--font-serif);font-size:24px;margin-bottom:8px;font-weight:900">正</div><div style="font-size:13px;font-weight:600">所有规则正常</div><div style="font-size:11px;color:var(--text-3);margin-top:4px">无连续失败需要升级处理</div></div>';
     return;
   }
-  const ESC_ICONS={corrective:'🟡',review:'🟠',hold:'🔴'};
+  const ESC_SEALS={corrective:'正',review:'審',hold:'止'};
   const ESC_LABELS={corrective:'需纠正行动计划',review:'需管理层审查',hold:'暂停相关操作'};
   let html='';
   Object.entries(esc_data.rules).forEach(function(e){
     const rid=e[0],info=e[1];
-    const cls='esc-'+info.level.replace('corrective','corrective').replace('review','review').replace('hold','hold');
-    html+='<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(100,180,255,0.05)"><span style="font-size:16px">'+(ESC_ICONS[info.level]||'⚪')+'</span><div style="flex:1"><div style="font-size:13px;font-weight:600" class="'+cls+'">'+esc(rid)+'</div><div style="font-size:11px;color:var(--evo-text2)">'+(ESC_LABELS[info.level]||info.label)+'</div></div><span style="font-family:var(--evo-mono);font-size:11px;color:var(--evo-text3)">连续 '+info.consecutive_failures+' 次</span></div>';
+    const cls='esc-'+info.level;
+    html+='<div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--kabe)"><span class="seal '+(info.level==='hold'?'seal-shu':info.level==='review'?'seal-kitsune':'')+'" style="font-size:12px;padding:2px 6px">'+(ESC_SEALS[info.level]||'—')+'</span><div style="flex:1"><div style="font-size:13px;font-weight:600" class="'+cls+'">'+esc(rid)+'</div><div style="font-size:11px;color:var(--text-2)">'+(ESC_LABELS[info.level]||info.label)+'</div></div><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3)">连续 '+info.consecutive_failures+' 次</span></div>';
   });
   $('escalation-panel').innerHTML=html;
 }
 
-// ══════════════════════════════════════════════════════
-// Phase 3: Dual Checklist (ClassNK)
-// ══════════════════════════════════════════════════════
 let _checklistData=null;
 async function loadChecklist(){
   _checklistData=await api('/checklist');
@@ -743,23 +721,21 @@ function showChecklist(level){
   $('cl-company-btn').className='btn btn-'+(level==='company'?'primary':'ghost')+' btn-sm';
   $('cl-ship-btn').className='btn btn-'+(level==='ship'?'primary':'ghost')+' btn-sm';
   const data=level==='company'?_checklistData.company_checklist:_checklistData.ship_checklist;
-  if(!data){$('checklist-content').innerHTML='<div style="color:var(--evo-text3);padding:16px;text-align:center">无数据</div>';return;}
+  if(!data){$('checklist-content').innerHTML='<div style="color:var(--text-3);padding:16px;text-align:center">无数据</div>';return;}
   const items=data.items||[];
-  $('checklist-content').innerHTML='<div style="font-size:12px;color:var(--evo-text2);margin-bottom:8px;padding:0 4px">'+esc(data.label)+' — '+items.length+' 项</div>'+items.map(function(it){
-    return '<div style="display:flex;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid rgba(100,180,255,0.04);font-size:12px"><span style="font-family:var(--evo-mono);color:var(--evo-cyan);font-size:10px;min-width:80px">'+esc(it.id)+'</span><span style="flex:1;color:var(--evo-text)">'+esc(it.title)+'</span>'+sevChip(it.severity)+'</div>';
+  $('checklist-content').innerHTML='<div style="font-size:12px;color:var(--text-2);margin-bottom:8px;padding:0 4px">'+esc(data.label)+' — '+items.length+' 项</div>'+items.map(function(it){
+    return '<div style="display:flex;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--kabe);font-size:12px"><span style="font-family:var(--font-mono);color:var(--koke);font-size:10px;min-width:80px">'+esc(it.id)+'</span><span style="flex:1;color:var(--sumi)">'+esc(it.title)+'</span>'+sevChip(it.severity)+'</div>';
   }).join('');
 }
 
-// ══════════════════════════════════════════════════════
-// Phase 3: Audit Trail (NAPA Logbook)
-// ══════════════════════════════════════════════════════
 async function loadAuditTrail(){
   const trail=await api('/audit-trail?limit=30');
-  if(!trail||!trail.length){$('trail-panel').innerHTML='<div style="color:var(--evo-text3);padding:16px;text-align:center;font-size:12px">暂无审计轨迹。运行审查后将记录所有操作。</div>';return;}
-  const TRAIL_ICONS={audit_run:'🔍',dispatch:'📤',verify:'✅',escalation:'⚠️',escalation_reset:'✅',zone_enter:'🌍',zone_exit:'🚪',rating_change:'🏆'};
-  const TRAIL_BG={audit_run:'rgba(100,210,255,0.1)',escalation:'rgba(255,159,10,0.1)',rating_change:'rgba(48,209,88,0.1)',zone_enter:'rgba(100,210,255,0.08)',zone_exit:'rgba(100,180,255,0.05)'};
+  if(!trail||!trail.length){$('trail-panel').innerHTML='<div style="color:var(--text-3);padding:16px;text-align:center;font-size:12px">暂无审计轨迹。</div>';return;}
+  const TRAIL_SEALS={audit_run:'査',dispatch:'派',verify:'验',escalation:'升',escalation_reset:'正',zone_enter:'入',zone_exit:'出',rating_change:'評'};
+  const TRAIL_BG={audit_run:'oklch(0.52 0.04 160/.06)',escalation:'oklch(0.56 0.05 70/.06)',rating_change:'oklch(0.52 0.04 160/.06)'};
   $('trail-panel').innerHTML=trail.reverse().map(function(e){
-    return '<div class="trail-entry"><div class="trail-icon" style="background:'+(TRAIL_BG[e.event_type]||'rgba(100,180,255,0.06)')+'">'+( TRAIL_ICONS[e.event_type]||'📄')+'</div><div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--evo-text);font-weight:500">'+esc(e.detail||e.event_type)+'</div><div style="font-size:10px;color:var(--evo-text3);font-family:var(--evo-mono);margin-top:2px">'+fmtTime(e.timestamp)+(e.rule_id?' · '+e.rule_id:'')+(e.compliance_rating?' · 评级 '+e.compliance_rating:'')+'</div></div></div>';
+    const seal=TRAIL_SEALS[e.event_type]||'记';
+    return '<div class="trail-entry"><div class="trail-icon" style="background:'+(TRAIL_BG[e.event_type]||'var(--kabe)')+'"><span class="seal" style="margin:0;font-size:9px;padding:1px 3px">'+seal+'</span></div><div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--sumi);font-weight:500">'+esc(e.detail||e.event_type)+'</div><div style="font-size:10px;color:var(--text-3);font-family:var(--font-mono);margin-top:2px">'+fmtTime(e.timestamp)+(e.rule_id?' · '+e.rule_id:'')+(e.compliance_rating?' · 评级 '+e.compliance_rating:'')+'</div></div></div>';
   }).join('');
 }
 
@@ -774,22 +750,22 @@ function showDetail(itemId){
     '<div class="detail-row"><span class="lbl">参考标准</span><span class="val">'+esc(item.reference_standard||'—')+'</span></div>'+
     '<div class="detail-row"><span class="lbl">当前行为</span><span class="val">'+esc(item.current_behavior||'—')+'</span></div>'+
     '<div class="detail-row"><span class="lbl">期望行为</span><span class="val">'+esc(item.expected_behavior||'—')+'</span></div>'+
-    '<hr style="border-color:var(--evo-line);margin:16px 0">'+
+    '<hr style="border-color:var(--groove);margin:16px 0">'+
     '<div class="detail-row"><span class="lbl">分配 Agent</span><span class="val">'+esc(item.assigned_agent||'—')+'</span></div>'+
     '<div class="detail-row"><span class="lbl">Build Task</span><span class="val">'+esc(item.build_task_id||'—')+'</span></div>'+
     '<div class="detail-row"><span class="lbl">代码变更</span><span class="val">'+(item.code_changes&&item.code_changes.length?item.code_changes.map(function(c){return esc(c)}).join(', '):'—')+'</span></div>'+
     '<div class="detail-row"><span class="lbl">验证测试</span><span class="val">'+esc(item.verify_test_name||'—')+'</span></div>'+
-    '<div class="detail-row"><span class="lbl">验证结果</span><span class="val">'+(item.verify_result==='passed'?'<span style="color:var(--evo-green)">✅ 通过</span>':item.verify_result==='failed'?'<span style="color:var(--evo-red)">❌ 失败</span>':'—')+'</span></div>'+
+    '<div class="detail-row"><span class="lbl">验证结果</span><span class="val">'+(item.verify_result==='passed'?'<span style="color:var(--koke)">通过</span>':item.verify_result==='failed'?'<span style="color:var(--shu)">失败</span>':'—')+'</span></div>'+
     (item.verify_detail?'<div class="detail-row"><span class="lbl">验证详情</span><span class="val">'+esc(item.verify_detail)+'</span></div>':'')+
     '<div class="detail-row"><span class="lbl">重试次数</span><span class="val">'+(item.retry_count||0)+' / '+(item.max_retries||3)+'</span></div>'+
-    '<hr style="border-color:var(--evo-line);margin:16px 0">'+
+    '<hr style="border-color:var(--groove);margin:16px 0">'+
     '<div class="detail-row"><span class="lbl">发现时间</span><span class="val">'+fmtTime(item.discovered_at)+'</span></div>'+
     '<div class="detail-row"><span class="lbl">派发时间</span><span class="val">'+fmtTime(item.dispatched_at)+'</span></div>'+
     '<div class="detail-row"><span class="lbl">完成时间</span><span class="val">'+fmtTime(item.completed_at)+'</span></div>'+
     '<div class="detail-row"><span class="lbl">关闭时间</span><span class="val">'+fmtTime(item.closed_at)+'</span></div>'+
     '<div class="detail-actions"><button class="btn btn-ghost btn-sm" onclick="closeDetail()">关闭</button>'+
-    (item.status==='discovered'?'<button class="btn btn-primary btn-sm" onclick="dispatchItem(\''+esc(item.id)+'\')">📤 立即派发</button>':'')+
-    (item.status==='verify_pending'?'<button class="btn btn-accent btn-sm" onclick="verifyItem(\''+esc(item.id)+'\')">🧪 运行验证</button>':'')+
+    (item.status==='discovered'?'<button class="btn btn-primary btn-sm" onclick="dispatchItem(\''+esc(item.id)+'\')"><span class="seal seal-kitsune">派</span> 立即派发</button>':'')+
+    (item.status==='verify_pending'?'<button class="btn btn-accent btn-sm" onclick="verifyItem(\''+esc(item.id)+'\')"><span class="seal seal-koke">验</span> 运行验证</button>':'')+
     '</div>';
   $('detail-overlay').classList.add('open');
 }
@@ -804,66 +780,65 @@ async function loadAll(){
   renderHeroStats(st,summary);updatePipelineData(st);renderRules(rules,_lastAuditDetails);
   renderStatusTabs();renderItems();renderTimeline();renderAgentFeed();renderHeatmap();
   drawTrendChart();drawRadarChart(summary?.by_domain||{});updateButtons();
-  if(st){const badge=$('badge-text');if(st.health==='ok'){badge.textContent='运行中 · '+st.audit_rules_count+' 规则 · '+st.evolution_items_count+' 条目';}else{badge.textContent='⚠️ '+st.health;$('engine-badge').style.borderColor='rgba(255,159,10,0.3)';$('engine-badge').style.color='var(--evo-orange)';}}
-  // Phase 3 panels
+  if(st){const badge=$('badge-text');if(st.health==='ok'){badge.textContent='运行中 · '+st.audit_rules_count+' 规则 · '+st.evolution_items_count+' 条目';}else{badge.textContent=st.health;$('engine-badge').style.borderColor='oklch(0.56 0.05 70/.2)';$('engine-badge').style.color='var(--kitsune)';}}
   loadRatingPanel().catch(function(){});loadDomainScores().catch(function(){});
   loadZonePanel().catch(function(){});loadEscalation().catch(function(){});
   loadChecklist().catch(function(){});loadAuditTrail().catch(function(){});
 }
 
 async function runAudit(){
-  $('btn-audit').disabled=true;appendLog('▶ 开始运行审查...','log-info');toast('正在运行审查...');
+  $('btn-audit').disabled=true;appendLog('开始运行审查...','log-info');toast('正在运行审查...');
   const r=await api('/audit',{method:'POST'});$('btn-audit').disabled=false;
-  if(!r){appendLog('✖ 审查失败: 无法连接演进引擎','log-err');toast('审查失败');return;}
+  if(!r){appendLog('审查失败: 无法连接演进引擎','log-err');toast('审查失败');return;}
   _lastAuditDetails=r.details||[];
   _auditHistory.unshift({run:r.audit_run,passed:r.passed,failed:r.failed,skipped:r.skipped,newItems:(r.new_items_created||[]).length,time:new Date().toISOString()});
   _trendData.labels.push('#'+r.audit_run);_trendData.passed.push(r.passed||0);_trendData.failed.push(r.failed||0);_trendData.items.push((r.new_items_created||[]).length);
   if(_trendData.labels.length>12){_trendData.labels.shift();_trendData.passed.shift();_trendData.failed.shift();_trendData.items.shift();}
-  appendLog('━ 审查完成: '+r.rules_checked+' 规则 → '+r.passed+' 通过, '+r.failed+' 未通过, '+r.skipped+' 跳过',r.failed>0?'log-warn':'log-ok');
-  if(r.compliance_rating)appendLog('  🏆 合规评级: '+r.compliance_rating+' ('+Math.round(r.compliance_score||0)+' 分)',r.compliance_rating==='A'||r.compliance_rating==='B'?'log-ok':r.compliance_rating==='C'?'log-info':'log-warn');
-  if(r.new_items_created&&r.new_items_created.length){appendLog('  ⊕ 新建 '+r.new_items_created.length+' 条演进项: '+r.new_items_created.join(', '),'log-info');}
-  (r.details||[]).forEach(function(d){if(d.passed===true)appendLog('  ✓ '+d.rule+': '+d.detail,'log-ok');else if(d.passed===false)appendLog('  ✗ '+d.rule+': '+d.detail,'log-err');else appendLog('  ⊘ '+d.rule+': '+(d.reason||'skipped'),'log-warn');});
+  appendLog('审查完成: '+r.rules_checked+' 规则 → '+r.passed+' 通过, '+r.failed+' 未通过, '+r.skipped+' 跳过',r.failed>0?'log-warn':'log-ok');
+  if(r.compliance_rating)appendLog('  合规评级: '+r.compliance_rating+' ('+Math.round(r.compliance_score||0)+' 分)',r.compliance_rating==='A'||r.compliance_rating==='B'?'log-ok':r.compliance_rating==='C'?'log-info':'log-warn');
+  if(r.new_items_created&&r.new_items_created.length){appendLog('  新建 '+r.new_items_created.length+' 条演进项: '+r.new_items_created.join(', '),'log-info');}
+  (r.details||[]).forEach(function(d){if(d.passed===true)appendLog('  [通] '+d.rule+': '+d.detail,'log-ok');else if(d.passed===false)appendLog('  [否] '+d.rule+': '+d.detail,'log-err');else appendLog('  [略] '+d.rule+': '+(d.reason||'skipped'),'log-warn');});
   toast('审查完成: '+r.passed+' 通过, '+r.failed+' 未通过');await loadAll();
 }
 
 async function runDispatch(){
-  $('btn-dispatch').disabled=true;appendLog('▶ 派发所有待处理演进项...','log-info');
+  $('btn-dispatch').disabled=true;appendLog('派发所有待处理演进项...','log-info');
   const r=await api('/dispatch',{method:'POST'});$('btn-dispatch').disabled=false;
-  if(!r){appendLog('✖ 派发失败','log-err');toast('派发失败');return;}
-  appendLog('━ 已派发 '+r.count+' 条演进项给 Build 团队',r.count>0?'log-ok':'log-warn');toast('派发完成: '+r.count+' 条');await loadAll();
+  if(!r){appendLog('派发失败','log-err');toast('派发失败');return;}
+  appendLog('已派发 '+r.count+' 条演进项给 Build 团队',r.count>0?'log-ok':'log-warn');toast('派发完成: '+r.count+' 条');await loadAll();
 }
 
 async function runVerify(){
-  $('btn-verify').disabled=true;appendLog('▶ 运行验证...','log-info');
+  $('btn-verify').disabled=true;appendLog('运行验证...','log-info');
   const r=await api('/verify',{method:'POST'});$('btn-verify').disabled=false;
-  if(!r){appendLog('✖ 验证失败','log-err');toast('验证失败');return;}
+  if(!r){appendLog('验证失败','log-err');toast('验证失败');return;}
   const passed=(r.verified||[]).filter(function(v){return v.passed}).length;
   const failed=(r.verified||[]).filter(function(v){return!v.passed}).length;
-  appendLog('━ 验证完成: '+passed+' 通过, '+failed+' 未通过',failed>0?'log-warn':'log-ok');
-  (r.verified||[]).forEach(function(v){appendLog('  '+(v.passed?'✓':'✗')+' '+v.item_id+': '+v.detail+' (重试 '+v.retry_count+')',v.passed?'log-ok':'log-err');});
+  appendLog('验证完成: '+passed+' 通过, '+failed+' 未通过',failed>0?'log-warn':'log-ok');
+  (r.verified||[]).forEach(function(v){appendLog('  '+(v.passed?'[通]':'[否]')+' '+v.item_id+': '+v.detail+' (重试 '+v.retry_count+')',v.passed?'log-ok':'log-err');});
   toast('验证完成: '+passed+' 通过');await loadAll();
 }
 
 async function runFullCycle(){
   $('btn-cycle').disabled=true;appendLog('','');
-  appendLog('╔═══════════════════════════════════════════════════════╗','log-info');
-  appendLog('║  完整演进周期: 审查 → 派发 → 验证 → 关闭            ║','log-info');
-  appendLog('╚═══════════════════════════════════════════════════════╝','log-info');
+  appendLog('══════════════════════════════════════════','log-info');
+  appendLog('  完整演进周期: 审查 → 派发 → 验证 → 关闭','log-info');
+  appendLog('══════════════════════════════════════════','log-info');
   toast('正在运行完整演进周期...');
   const r=await api('/cycle',{method:'POST'});$('btn-cycle').disabled=false;
-  if(!r){appendLog('✖ 演进周期失败','log-err');toast('演进周期失败');return;}
+  if(!r){appendLog('演进周期失败','log-err');toast('演进周期失败');return;}
   const audit=r.audit||{};_lastAuditDetails=audit.details||[];
   _auditHistory.unshift({run:audit.audit_run,passed:audit.passed||0,failed:audit.failed||0,skipped:audit.skipped||0,newItems:(audit.new_items_created||[]).length,time:new Date().toISOString()});
   _trendData.labels.push('#'+(audit.audit_run||'?'));_trendData.passed.push(audit.passed||0);_trendData.failed.push(audit.failed||0);_trendData.items.push((audit.new_items_created||[]).length);
   if(_trendData.labels.length>12){_trendData.labels.shift();_trendData.passed.shift();_trendData.failed.shift();_trendData.items.shift();}
   appendLog('[审查] '+(audit.rules_checked||0)+' 规则 → '+(audit.passed||0)+' 通过, '+(audit.failed||0)+' 未通过',audit.failed>0?'log-warn':'log-ok');
-  (audit.details||[]).forEach(function(d){if(d.passed===true)appendLog('  ✓ '+d.rule+': '+d.detail,'log-ok');else if(d.passed===false)appendLog('  ✗ '+d.rule+': '+d.detail,'log-err');else appendLog('  ⊘ '+d.rule+': '+(d.reason||'skipped'),'log-warn');});
+  (audit.details||[]).forEach(function(d){if(d.passed===true)appendLog('  [通] '+d.rule+': '+d.detail,'log-ok');else if(d.passed===false)appendLog('  [否] '+d.rule+': '+d.detail,'log-err');else appendLog('  [略] '+d.rule+': '+(d.reason||'skipped'),'log-warn');});
   const dispatch=r.dispatch||{};appendLog('[派发] 已派发 '+(dispatch.count||0)+' 条给 Build 团队','log-info');
   const verify=r.verify||{};const vP=(verify.verified||[]).filter(function(v){return v.passed}).length;const vF=(verify.verified||[]).filter(function(v){return!v.passed}).length;
   appendLog('[验证] '+vP+' 通过, '+vF+' 未通过',vF>0?'log-warn':'log-ok');
   const closed=r.closed||[];appendLog('[关闭] '+closed.length+' 条演进项已关闭',closed.length>0?'log-ok':'log-info');
   const summary=r.summary||{};appendLog('[汇总] 总计 '+(summary.total_items||0)+' 条, 域: '+Object.entries(summary.by_domain||{}).map(function(e){return e[0]+':'+e[1]}).join(' '),'log-info');
-  appendLog('════════════════════════════════════════════════════════','log-info');
+  appendLog('══════════════════════════════════════════','log-info');
   toast('演进周期完成: '+(audit.rules_checked||0)+' 规则, '+closed.length+' 关闭');await loadAll();
 }
 
@@ -871,17 +846,17 @@ async function refreshAll(){toast('刷新中...');await loadAll();toast('已刷�
 function startAutoRefresh(){if(_refreshTimer)clearInterval(_refreshTimer);_refreshTimer=setInterval(function(){if(document.visibilityState==='visible')loadAll();},12000);}
 (async function init(){initPipeline();await loadAll();startAutoRefresh();let resizeTimer;window.addEventListener('resize',function(){clearTimeout(resizeTimer);resizeTimer=setTimeout(drawTrendChart,200);});})();
 </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="evolution"></script>
 <script src="/js/darwin-ratchet.js"></script>
 <script>
-// Darwin Ratchet 面板渲染
 const CAT_META = {
-  scene:   { icon:'🎨', color:'var(--evo-cyan)',   bg:'rgba(100,210,255,0.08)' },
-  ui:      { icon:'🟣', color:'var(--evo-purple)', bg:'rgba(191,90,242,0.08)' },
-  data:    { icon:'📊', color:'var(--evo-green)',  bg:'rgba(48,209,88,0.08)' },
-  physics: { icon:'⚙️', color:'var(--evo-orange)', bg:'rgba(255,159,10,0.08)' },
-  ai:      { icon:'🧠', color:'var(--evo-orange)', bg:'rgba(255,159,10,0.08)' },
-  safety:  { icon:'🚨', color:'var(--evo-red)',    bg:'rgba(255,69,58,0.08)' },
+  scene:   { seal:'景', color:'var(--koke)',    bg:'oklch(0.52 0.04 160 / 0.04)' },
+  ui:      { seal:'介', color:'var(--nezumi)',  bg:'var(--kabe)' },
+  data:    { seal:'数', color:'var(--koke)',    bg:'oklch(0.52 0.04 160 / 0.04)' },
+  physics: { seal:'理', color:'var(--kitsune)', bg:'oklch(0.56 0.05 70 / 0.04)' },
+  ai:      { seal:'智', color:'var(--kitsune)', bg:'oklch(0.56 0.05 70 / 0.04)' },
+  safety:  { seal:'安', color:'var(--shu)',     bg:'oklch(0.48 0.07 22 / 0.04)' },
 };
 
 function refreshDarwinPanel() {
@@ -899,36 +874,34 @@ function refreshDarwinPanel() {
   
   const tl = document.getElementById('darwin-timeline');
   if (!items.length) {
-    tl.innerHTML = '<div style="color:var(--evo-text3);text-align:center;padding:24px;font-size:12px;">暂无演化记录</div>';
+    tl.innerHTML = '<div style="color:var(--text-3);text-align:center;padding:24px;font-size:12px;">暂无演化记录</div>';
     return;
   }
-  // 按 generation 逆序
   const sorted = items.slice().sort((a,b) => (b.generation||0) - (a.generation||0));
   tl.innerHTML = sorted.map(it => {
     const cm = CAT_META[it.category] || CAT_META.ui;
-    const lockIcon = it.fitness === 'pass' ? '🔒' : it.fitness === 'reject' ? '❌' : '⏳';
-    const lockColor = it.fitness === 'pass' ? 'var(--evo-green)' : it.fitness === 'reject' ? 'var(--evo-red)' : 'var(--evo-yellow)';
+    const lockSeal = it.fitness === 'pass' ? '锁' : it.fitness === 'reject' ? '否' : '待';
+    const lockColor = it.fitness === 'pass' ? 'var(--koke)' : it.fitness === 'reject' ? 'var(--shu)' : 'var(--kitsune)';
     const ts = (it.createdAt || '').slice(0,19).replace('T',' ');
-    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:${cm.bg};border-left:3px solid ${cm.color};border-radius:8px;">
-      <div style="font-family:var(--evo-mono);font-size:11px;color:${cm.color};font-weight:700;min-width:56px;padding-top:2px;">#${String(it.generation).padStart(3,'0')}</div>
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:${cm.bg};border-left:2px solid ${cm.color};">
+      <div style="font-family:var(--font-mono);font-size:11px;color:${cm.color};font-weight:700;min-width:56px;padding-top:2px;">#${String(it.generation).padStart(3,'0')}</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-size:14px;">${cm.icon}</span>
-          <span style="font-size:13px;font-weight:600;color:var(--evo-text);">${it.title}</span>
-          <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.05);color:${cm.color};font-family:var(--evo-mono);text-transform:uppercase;">${it.category}</span>
+          <span class="seal" style="background:${cm.color};font-size:9px;padding:1px 4px">${cm.seal}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--sumi);">${it.title}</span>
+          <span style="font-size:10px;padding:1px 6px;background:var(--kabe);color:${cm.color};font-family:var(--font-mono);text-transform:uppercase;">${it.category}</span>
         </div>
-        <div style="font-size:12px;color:var(--evo-text2);margin-bottom:4px;">${it.description || '—'}</div>
-        <div style="font-size:10px;color:var(--evo-text3);font-family:var(--evo-mono);">${ts} · ID: ${it.id}</div>
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:4px;">${it.description || '—'}</div>
+        <div style="font-size:10px;color:var(--text-3);font-family:var(--font-mono);">${ts} · ID: ${it.id}</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:60px;">
-        <span style="font-size:16px;color:${lockColor};">${lockIcon}</span>
-        <span style="font-size:9px;color:${lockColor};text-transform:uppercase;letter-spacing:1px;font-weight:700;">${it.fitness}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:50px;">
+        <span class="seal" style="background:${lockColor};font-size:10px;padding:1px 5px">${lockSeal}</span>
+        <span style="font-size:9px;color:${lockColor};text-transform:uppercase;letter-spacing:1px;font-weight:700;font-family:var(--font-mono)">${it.fitness}</span>
       </div>
     </div>`;
   }).join('');
 }
 
-// 初始渲染 + 监听变化 + 定时刷新
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(refreshDarwinPanel, 100);
   if (window.Darwin && window.Darwin.onChange) window.Darwin.onChange(refreshDarwinPanel);

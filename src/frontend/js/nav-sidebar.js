@@ -7,28 +7,28 @@
   'use strict';
 
   const NAV_ITEMS = [
-    { id: 'captain',    icon: '⚓', label: '船长总览',   href: '/captain-cockpit-new.html' },
-    { id: 'navigation', icon: '🧭', label: '导航',   href: '/navigation.html' },
-    { id: 'dp',         icon: '📍', label: '动力定位',   href: '/dp-control.html' },
-    { id: 'thruster',   icon: '⚙',  label: '推进控制',   href: '/thruster-control.html' },
-    { id: 'monitor',    icon: '📡', label: '全船监控',   href: '/worldmonitor-map.html' },
-    { id: 'cms',        icon: '🔧', label: '设备健康',   href: '/cms-health.html' },
-    { id: 'hmi',        icon: '🖥',  label: '控制台',    href: '/hmi-console.html' },
-    { id: 'offshore',   icon: '🏗',  label: '海工作业',   href: '/offshore-ops.html' },
-    { id: 'weather',    icon: '🌊', label: '气象海洋',   href: '/weather-ocean.html' },
-    { id: 'crew',       icon: '👥', label: '船员管理',   href: '/crew-management.html' },
+    { id: 'captain',    icon: '⚓', label: 'nav.captain',    href: '/captain-cockpit-new.html' },
+    { id: 'navigation', icon: '航', label: 'nav.navigation', href: '/navigation.html' },
+    { id: 'dp',         icon: '定', label: 'nav.dp',         href: '/dp-control.html' },
+    { id: 'thruster',   icon: '推', label: 'nav.thruster',   href: '/thruster-control.html' },
+    { id: 'monitor',    icon: '监', label: 'nav.monitor',    href: '/worldmonitor-map.html' },
+    { id: 'cms',        icon: '健', label: 'nav.cms',        href: '/cms-health.html' },
+    { id: 'hmi',        icon: '台', label: 'nav.hmi',        href: '/hmi-console.html' },
+    { id: 'offshore',   icon: '工', label: 'nav.offshore',   href: '/offshore-ops.html' },
+    { id: 'weather',    icon: '海', label: 'nav.weather',    href: '/weather-ocean.html' },
+    { id: 'crew',       icon: '员', label: 'nav.crew',       href: '/crew-management.html' },
     { sep: true },
-    { id: 'sim',        icon: '🎮', label: '仿真训练',   href: '/sim-training.html' },
-    { id: 'energy',     icon: '⚡', label: '能效合规',   href: '/energy-compliance.html' },
-    { id: 'datacenter', icon: '⚛', label: '船载数据中心', href: '/marine-datacenter.html' },
-    { id: 'safety',     icon: '🛟', label: '安全应急',   href: '/safety-emergency.html' },
-    { id: 'shore',      icon: '🌐', label: '船岸协同',   href: '/ship-shore.html' },
+    { id: 'sim',        icon: '练', label: 'nav.sim',        href: '/sim-training.html' },
+    { id: 'energy',     icon: '能', label: 'nav.energy',     href: '/energy-compliance.html' },
+    { id: 'datacenter', icon: '数', label: 'nav.datacenter', href: '/marine-datacenter.html' },
+    { id: 'safety',     icon: '安', label: 'nav.safety',     href: '/safety-emergency.html' },
+    { id: 'shore',      icon: '岸', label: 'nav.shore',      href: '/ship-shore.html' },
     { sep: true },
-    { id: 'twin',       icon: '🚢', label: '数字孪生',   href: '/digital-twin.html' },
-    { id: 'agents',     icon: '🤖', label: '智能体',    href: '/agent-team-config.html' },
-    { id: 'evolution',  icon: '🔄', label: '系统演进',   href: '/system-evolution.html' },
-    { id: 'kb',         icon: '📚', label: '知识库',    href: '/knowledge-base.html' },
-    { id: 'llm-config', icon: '🧠', label: 'LLM 配置',  href: '/poseidon-config.html' },
+    { id: 'twin',       icon: '孪', label: 'nav.twin',       href: '/digital-twin.html' },
+    { id: 'agents',     icon: '智', label: 'nav.agents',     href: '/agent-team-config.html' },
+    { id: 'evolution',  icon: '演', label: 'nav.evolution',  href: '/system-evolution.html' },
+    { id: 'kb',         icon: '知', label: 'nav.kb',         href: '/knowledge-base.html' },
+    { id: 'llm-config', icon: '配', label: 'nav.llm-config', href: '/poseidon-config.html' },
   ];
 
   const THEMES = ['day', 'dusk', 'night', 'bright'];
@@ -54,6 +54,10 @@
     } else {
       setTheme('dusk');
     }
+  }
+
+  function _t(key) {
+    return (window.PX_I18N && window.PX_I18N.t) ? window.PX_I18N.t(key) : key;
   }
 
   function buildSidebar() {
@@ -85,7 +89,8 @@
       const a = document.createElement('a');
       a.className = 'ob-nav-item' + (item.id === activeId ? ' active' : '');
       a.href = item.href;
-      a.setAttribute('data-tooltip', item.label);
+      a.setAttribute('data-nav-i18n', item.label);
+      a.setAttribute('data-tooltip', _t(item.label));
 
       const icon = document.createElement('span');
       icon.className = 'ob-nav-icon';
@@ -94,7 +99,7 @@
 
       const label = document.createElement('span');
       label.className = 'ob-nav-label';
-      label.textContent = item.label;
+      label.textContent = _t(item.label);
 
       a.appendChild(icon);
       a.appendChild(label);
@@ -103,10 +108,37 @@
 
     sidebar.appendChild(items);
 
-    // Footer with theme switcher
+    // Footer with language toggle + theme switcher
     const footer = document.createElement('div');
     footer.className = 'ob-nav-footer';
 
+    // Language toggle button
+    const langWrap = document.createElement('div');
+    langWrap.style.cssText = 'padding: 4px 6px;';
+    const langBtn = document.createElement('button');
+    langBtn.className = 'ob-theme-btn';
+    langBtn.id = 'px-lang-btn';
+    langBtn.style.cssText = 'width:100%;font-size:11px;letter-spacing:1px;';
+    const curLang = (window.PX_I18N && window.PX_I18N.getLang) ? window.PX_I18N.getLang() : 'zh';
+    langBtn.textContent = curLang === 'zh' ? '中/EN' : 'EN/中';
+    langBtn.title = 'Switch Language';
+    langBtn.addEventListener('click', () => {
+      if (window.PX_I18N && window.PX_I18N.toggleLang) {
+        window.PX_I18N.toggleLang();
+        // Update sidebar labels
+        sidebar.querySelectorAll('[data-nav-i18n]').forEach(a => {
+          const key = a.getAttribute('data-nav-i18n');
+          const translated = _t(key);
+          a.setAttribute('data-tooltip', translated);
+          const lbl = a.querySelector('.ob-nav-label');
+          if (lbl) lbl.textContent = translated;
+        });
+      }
+    });
+    langWrap.appendChild(langBtn);
+    footer.appendChild(langWrap);
+
+    // Theme switcher
     const themeWrap = document.createElement('div');
     themeWrap.style.cssText = 'padding: 4px 6px;';
 
@@ -115,7 +147,7 @@
     themeSwitch.style.cssText = 'flex-direction: column;';
 
     const currentTheme = getCurrentTheme();
-    const themeLabels = { day: '☀️', dusk: '🌅', night: '🌙', bright: '💡' };
+    const themeLabels = { day: '日', dusk: '暮', night: '夜', bright: '明' };
 
     THEMES.forEach(t => {
       const btn = document.createElement('button');

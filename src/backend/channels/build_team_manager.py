@@ -3,10 +3,11 @@
 Build Agent Team Manager - 构建智能体团队管理器
 
 管理负责系统持续运维、优化、调整、测试、部署的智能体团队。
-团队成员：Researcher, Architect, Developer, Tester, Deployer
+团队成员：PM, Researcher, Architect, Developer, Tester, Deployer
 默认 LLM 后端：GitHub Copilot
 
 调度规则：
+  - PM:          每 10 分钟检查任务队列，分配任务给对应角色
   - Researcher:  每 15 分钟获取网络信息 → 反馈给 Architect
   - Architect:   每 30 分钟产出设计方案 → 分配给 Developer
   - Developer:   每 10 分钟汇报增量          → 通知 Tester
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 class AgentRole(str, Enum):
+    PM = "pm"
     RESEARCHER = "researcher"
     ARCHITECT = "architect"
     DEVELOPER = "developer"
@@ -122,6 +124,7 @@ class BuildTeamManagerChannel(MarineChannel):
 
     # 默认调度参数 (秒)
     SCHEDULE = {
+        AgentRole.PM: 10 * 60,
         AgentRole.RESEARCHER: 15 * 60,
         AgentRole.ARCHITECT: 30 * 60,
         AgentRole.DEVELOPER: 10 * 60,
@@ -159,6 +162,13 @@ class BuildTeamManagerChannel(MarineChannel):
 
     def _init_agents(self):
         definitions = [
+            {
+                "id": "build_pm",
+                "role": AgentRole.PM,
+                "name": "Project Manager Agent",
+                "description": "每 10 分钟检查任务队列，分配任务给对应角色，跟踪项目进度",
+                "schedule_interval_sec": self.SCHEDULE[AgentRole.PM],
+            },
             {
                 "id": "build_researcher",
                 "role": AgentRole.RESEARCHER,
@@ -258,7 +268,9 @@ class BuildTeamManagerChannel(MarineChannel):
         result: Dict[str, Any] = {"agent": agent.id, "role": agent.role.value, "time": now.isoformat()}
 
         try:
-            if agent.role == AgentRole.RESEARCHER:
+            if agent.role == AgentRole.PM:
+                result.update(self._run_pm(agent, now))
+            elif agent.role == AgentRole.RESEARCHER:
                 result.update(self._run_researcher(agent, now))
             elif agent.role == AgentRole.ARCHITECT:
                 result.update(self._run_architect(agent, now))
@@ -289,6 +301,53 @@ class BuildTeamManagerChannel(MarineChannel):
         return result
 
     # ── 各角色执行逻辑 ───────────────────────────────────────
+
+    def _run_pm(self, agent: BuildAgent, now: datetime) -> Dict[str, Any]:
+        """项目经理：检查任务队列，分配任务给对应角色，跟踪项目进度。"""
+        # 检查是否有待处理的任务
+        pending = list(agent.task_queue)
+        agent.task_queue = []
+
+        # 处理每个待处理任务
+        assigned = []
+        for task in pending:
+            # 解析任务类型，分配给对应角色
+            if "research" in task.lower() or "调研" in task or "研究" in task:
+                target = self.agents.get("build_researcher")
+            elif "architect" in task.lower() or "设计" in task or "架构" in task:
+                target = self.agents.get("build_architect")
+            elif "test" in task.lower() or "测试" in task or "qa" in task.lower():
+                target = self.agents.get("build_tester")
+            elif "deploy" in task.lower() or "部署" in task:
+                target = self.agents.get("build_deployer")
+            else:
+                # 默认分配给开发者
+                target = self.agents.get("build_developer")
+
+            if target:
+                target.task_queue.append(task)
+                assigned.append({"task": task, "assigned_to": target.id})
+
+        # 如果没有待处理任务，PM 主动检查项目状态
+        project_status = {
+            "total_agents": len(self.agents),
+            "agents_status": {
+                aid: {"state": a.state.value, "pending_tasks": len(a.task_queue)}
+                for aid, a in self.agents.items()
+            },
+            "total_code_lines": self.total_code_lines,
+            "total_test_cases": self.total_test_cases,
+            "total_deployments": self.total_deployments,
+            "issues_backlog": len(self.issue_backlog),
+        }
+
+        agent.kpi.deliverables += len(assigned)
+        return {
+            "action": "pm_dispatch",
+            "tasks_processed": len(pending),
+            "assigned": assigned,
+            "project_status": project_status,
+        }
 
     def _run_researcher(self, agent: BuildAgent, now: datetime) -> Dict[str, Any]:
         """研究员：从 marine_engineer 知识库获取研究信息."""

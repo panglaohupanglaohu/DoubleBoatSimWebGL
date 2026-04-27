@@ -1,77 +1,90 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="ob-title" content="推进控制">
-  <meta name="ob-subtitle" content="K-Thrust RCS — Thruster Remote Control System">
   <title>推进控制 — PoseidonX</title>
-  <link rel="stylesheet" href="/css/openbridge-theme.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-:root{--thr-bg:#060d1a;--thr-panel:rgba(10,22,45,0.92);--thr-glass:rgba(12,25,50,0.7);--thr-line:rgba(100,180,255,0.12);--thr-cyan:#64d2ff;--thr-green:#30d158;--thr-orange:#ff9f0a;--thr-red:#ff453a;--thr-blue:#007aff;--thr-text:#f0f6ff;--thr-text2:#9bb3cd;--thr-text3:#5b7894;--thr-mono:'SF Mono','Menlo',monospace;--thr-sans:-apple-system,'Segoe UI',sans-serif}
+:root{
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.006 110);
+  --hai:oklch(0.78 0.006 110);--nezumi:oklch(0.68 0.005 110);--sumi:oklch(0.18 0.008 110);
+  --koke:oklch(0.42 0.05 160);--shu:oklch(0.48 0.12 28);--kitsune:oklch(0.56 0.08 65);
+  --washi-dot:oklch(0.88 0.004 110);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--thr-sans);background:var(--thr-bg);color:var(--thr-text);min-height:100vh;padding:var(--ob-topbar-height,48px) 20px 20px 80px;overflow-x:hidden}
-.top-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;align-items:stretch}
-.readout{background:var(--thr-panel);border:1px solid var(--thr-line);border-radius:12px;padding:14px 18px;flex:1;min-width:140px;position:relative;overflow:hidden;transition:all .3s}
-.readout:hover{border-color:rgba(100,180,255,0.25);transform:translateY(-1px)}
+body{font-family:var(--font-sans);background:var(--shironeri);color:var(--sumi);min-height:100vh;padding:48px 20px 20px 80px;overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 20% 30%,var(--washi-dot) 0.5px,transparent 0.5px),
+  radial-gradient(circle at 60% 70%,var(--washi-dot) 0.3px,transparent 0.3px),
+  radial-gradient(circle at 80% 20%,var(--washi-dot) 0.4px,transparent 0.4px);
+  background-size:60px 60px,45px 45px,55px 55px;opacity:.4}
+.seal{font-family:var(--font-serif);font-size:13px;color:var(--shu);border:1.5px solid var(--shu);width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-2deg);flex-shrink:0}
+.top-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;align-items:stretch;position:relative;z-index:1}
+.readout{background:var(--shironeri);border:1px solid var(--kabe);padding:14px 18px;flex:1;min-width:140px;position:relative;overflow:hidden;transition:all .3s;box-shadow:2px 2px 0 var(--ishi)}
+.readout:hover{border-color:var(--hai);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ishi)}
 .readout::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.readout.r-cyan::before{background:linear-gradient(90deg,var(--thr-cyan),transparent)}
-.readout.r-green::before{background:linear-gradient(90deg,var(--thr-green),transparent)}
-.readout.r-orange::before{background:linear-gradient(90deg,var(--thr-orange),transparent)}
-.readout.r-blue::before{background:linear-gradient(90deg,var(--thr-blue),transparent)}
-.readout .r-label{font-size:10px;color:var(--thr-text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px}
-.readout .r-value{font-size:28px;font-weight:700;font-family:var(--thr-mono);line-height:1}
-.readout .r-unit{font-size:12px;color:var(--thr-text3);font-weight:400;margin-left:4px}
-.readout .r-sub{font-size:10px;color:var(--thr-text3);margin-top:4px;font-family:var(--thr-mono)}
-.link-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,var(--thr-blue),#5e5ce6);color:#fff;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;letter-spacing:.5px;transition:all .25s;box-shadow:0 4px 12px rgba(0,122,255,.3)}
-.link-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,122,255,.45)}
-.main-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.readout.r-cyan::before{background:var(--sumi)}
+.readout.r-green::before{background:var(--koke)}
+.readout.r-orange::before{background:var(--kitsune)}
+.readout.r-blue::before{background:var(--nezumi)}
+.readout .r-label{font-family:var(--font-mono);font-size:10px;color:var(--nezumi);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:6px}
+.readout .r-value{font-size:28px;font-weight:700;font-family:var(--font-mono);line-height:1}
+.readout .r-unit{font-size:12px;color:var(--nezumi);font-weight:400;margin-left:4px}
+.readout .r-sub{font-family:var(--font-mono);font-size:10px;color:var(--hai);margin-top:4px}
+.link-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--sumi);color:var(--shironeri);font-family:var(--font-sans);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;letter-spacing:.5px;transition:all .15s;box-shadow:2px 2px 0 var(--hai)}
+.link-btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--hai)}
+.main-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;position:relative;z-index:1}
 @media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
 .thrusters{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.thr-card{background:var(--thr-panel);border:1px solid var(--thr-line);border-radius:14px;padding:18px;display:flex;flex-direction:column;align-items:center;transition:all .3s;position:relative;overflow:hidden}
-.thr-card:hover{border-color:rgba(100,180,255,.25);transform:translateY(-2px)}
-.thr-card.thr-running{border-color:rgba(48,209,88,.3)}
-.thr-card.thr-running::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--thr-green),transparent);border-radius:14px 14px 0 0}
-.thr-card.thr-alarm{border-color:rgba(255,69,58,.3)}
-.thr-card.thr-alarm::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--thr-red),transparent);border-radius:14px 14px 0 0}
+.thr-card{background:var(--shironeri);border:1px solid var(--kabe);padding:18px;display:flex;flex-direction:column;align-items:center;transition:all .3s;position:relative;overflow:hidden;box-shadow:2px 2px 0 var(--ishi)}
+.thr-card:hover{border-color:var(--hai);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ishi)}
+.thr-card.thr-running{border-color:oklch(0.42 0.05 160 / .3)}
+.thr-card.thr-running::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--koke)}
+.thr-card.thr-alarm{border-color:oklch(0.48 0.12 28 / .3)}
+.thr-card.thr-alarm::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--shu)}
 .thr-header{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px}
-.thr-name{font-size:14px;font-weight:700}
-.thr-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
-.thr-badge.b-run{background:rgba(48,209,88,.15);color:var(--thr-green);border:1px solid rgba(48,209,88,.25)}
-.thr-badge.b-stop{background:rgba(100,180,255,.1);color:var(--thr-text3);border:1px solid rgba(100,180,255,.15)}
-.thr-badge.b-alarm{background:rgba(255,69,58,.15);color:var(--thr-red);border:1px solid rgba(255,69,58,.25)}
+.thr-name{font-family:var(--font-serif);font-size:14px;font-weight:700}
+.thr-badge{font-family:var(--font-mono);font-size:10px;font-weight:700;padding:3px 10px;text-transform:uppercase;letter-spacing:.5px}
+.thr-badge.b-run{background:oklch(0.42 0.05 160 / .1);color:var(--koke);border:1px solid oklch(0.42 0.05 160 / .2)}
+.thr-badge.b-stop{background:var(--ishi);color:var(--nezumi);border:1px solid var(--kabe)}
+.thr-badge.b-alarm{background:oklch(0.48 0.12 28 / .1);color:var(--shu);border:1px solid oklch(0.48 0.12 28 / .2)}
 .gauge-wrap{position:relative;width:100%;height:140px;margin:8px 0}
 .gauge-wrap canvas{width:100%;height:100%}
 .thr-rpm{text-align:center;margin:4px 0}
-.thr-rpm .rpm-val{font-size:32px;font-weight:700;font-family:var(--thr-mono)}
-.thr-rpm .rpm-unit{font-size:11px;color:var(--thr-text3)}
-.thr-stats{display:flex;justify-content:space-between;width:100%;font-size:12px;color:var(--thr-text2);margin-top:6px;padding-top:8px;border-top:1px solid rgba(100,180,255,.06)}
-.thr-stats .stat-val{font-family:var(--thr-mono);font-weight:600}
+.thr-rpm .rpm-val{font-size:32px;font-weight:700;font-family:var(--font-mono)}
+.thr-rpm .rpm-unit{font-family:var(--font-mono);font-size:11px;color:var(--nezumi)}
+.thr-stats{display:flex;justify-content:space-between;width:100%;font-size:12px;color:var(--nezumi);margin-top:6px;padding-top:8px;border-top:1px solid var(--ishi)}
+.thr-stats .stat-val{font-family:var(--font-mono);font-weight:600;color:var(--sumi)}
 .telegraph-btns{display:flex;gap:4px;margin-top:10px;width:100%}
-.telegraph-btns button{flex:1;padding:6px 2px;border:1px solid var(--thr-line);border-radius:8px;background:transparent;color:var(--thr-text3);font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--thr-sans);letter-spacing:.3px}
-.telegraph-btns button:hover{background:rgba(100,180,255,.08);color:var(--thr-cyan)}
-.telegraph-btns button.active{background:rgba(48,209,88,.15);color:var(--thr-green);border-color:rgba(48,209,88,.3)}
-.telegraph-btns button.active-stop{background:rgba(255,159,10,.12);color:var(--thr-orange);border-color:rgba(255,159,10,.25)}
+.telegraph-btns button{flex:1;padding:6px 2px;border:1px solid var(--kabe);background:var(--ishi);color:var(--nezumi);font-family:var(--font-mono);font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.3px;
+  box-shadow:1px 1px 0 var(--kabe)}
+.telegraph-btns button:hover{background:var(--kabe);color:var(--sumi);transform:translate(-1px,-1px);box-shadow:2px 2px 0 var(--kabe)}
+.telegraph-btns button.active{background:oklch(0.42 0.05 160 / .1);color:var(--koke);border-color:oklch(0.42 0.05 160 / .2)}
+.telegraph-btns button.active-stop{background:oklch(0.56 0.08 65 / .08);color:var(--kitsune);border-color:oklch(0.56 0.08 65 / .2)}
 .side-panel{display:flex;flex-direction:column;gap:14px}
-.panel-card{background:var(--thr-panel);border:1px solid var(--thr-line);border-radius:14px;padding:18px}
-.panel-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.panel-title .icon{font-size:16px}
-.tele-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(100,180,255,.05);font-size:13px}
+.panel-card{background:var(--shironeri);border:1px solid var(--kabe);padding:18px;box-shadow:2px 2px 0 var(--ishi)}
+.panel-title{font-family:var(--font-serif);font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.tele-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--ishi);font-size:13px}
 .tele-row:last-child{border-bottom:none}
-.tele-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.tele-dot.d-ahead{background:var(--thr-green);box-shadow:0 0 8px rgba(48,209,88,.4)}
-.tele-dot.d-stop{background:var(--thr-orange)}
-.tele-dot.d-astern{background:var(--thr-red)}
-.tele-label{flex:1;color:var(--thr-text2)}
-.tele-val{font-family:var(--thr-mono);font-size:12px;font-weight:600;color:var(--thr-text)}
+.tele-dot{width:8px;height:8px;flex-shrink:0}
+.tele-dot.d-ahead{background:var(--koke)}
+.tele-dot.d-stop{background:var(--kitsune)}
+.tele-dot.d-astern{background:var(--shu)}
+.tele-label{flex:1;color:var(--nezumi)}
+.tele-val{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--sumi)}
 .eng-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.eng-item{padding:10px;background:rgba(100,180,255,.03);border-radius:10px;border:1px solid rgba(100,180,255,.06)}
-.eng-item .eng-label{font-size:10px;color:var(--thr-text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.eng-item .eng-val{font-size:18px;font-weight:700;font-family:var(--thr-mono)}
-.eng-item .eng-unit{font-size:10px;color:var(--thr-text3);font-weight:400}
+.eng-item{padding:10px;background:var(--ishi);border:1px solid var(--kabe)}
+.eng-item .eng-label{font-family:var(--font-mono);font-size:10px;color:var(--nezumi);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.eng-item .eng-val{font-size:18px;font-weight:700;font-family:var(--font-mono)}
+.eng-item .eng-unit{font-family:var(--font-mono);font-size:10px;color:var(--nezumi);font-weight:400}
 .power-chart-wrap{height:120px;position:relative}
 .power-chart-wrap canvas{width:100%;height:100%}
   </style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 <div class="top-bar">
@@ -87,7 +100,7 @@ body{font-family:var(--thr-sans);background:var(--thr-bg);color:var(--thr-text);
   </div>
   <div class="side-panel">
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">📡</span> Telegraph 车钟</div>
+      <div class="panel-title"><span class="seal">鐘</span> Telegraph 车鐘</div>
       <div id="teleRows">
         <div class="tele-row"><span class="tele-dot d-ahead"></span><span class="tele-label">Port Main</span><span class="tele-val">FULL AHEAD</span></div>
         <div class="tele-row"><span class="tele-dot d-ahead"></span><span class="tele-label">Stbd Main</span><span class="tele-val">FULL AHEAD</span></div>
@@ -96,45 +109,46 @@ body{font-family:var(--thr-sans);background:var(--thr-bg);color:var(--thr-text);
       </div>
     </div>
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">🔧</span> 机舱综合状态</div>
+      <div class="panel-title"><span class="seal">舱</span> 机舱綜合狀态</div>
       <div class="eng-grid">
         <div class="eng-item"><div class="eng-label">燃油压力</div><div class="eng-val" id="e-fuel">4.2 <span class="eng-unit">bar</span></div></div>
         <div class="eng-item"><div class="eng-label">排气温度</div><div class="eng-val" id="e-exh">385 <span class="eng-unit">°C</span></div></div>
         <div class="eng-item"><div class="eng-label">振动水平</div><div class="eng-val" id="e-vib">2.1 <span class="eng-unit">mm/s</span></div></div>
-        <div class="eng-item"><div class="eng-label">舱底水位</div><div class="eng-val" id="e-bilge" style="color:var(--thr-green)">正常</div></div>
+        <div class="eng-item"><div class="eng-label">舱底水位</div><div class="eng-val" id="e-bilge" style="color:var(--koke)">正常</div></div>
       </div>
     </div>
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">📊</span> 功率趋势</div>
+      <div class="panel-title"><span class="seal">力</span> 功率趨勢</div>
       <div class="power-chart-wrap"><canvas id="powerChart"></canvas></div>
     </div>
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">📳</span> 振动频谱</div>
+      <div class="panel-title"><span class="seal">振</span> 振动频譜</div>
       <div class="power-chart-wrap"><canvas id="vibSpectrum"></canvas></div>
     </div>
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">🌡</span> 缸温分布</div>
+      <div class="panel-title"><span class="seal">缸</span> 缸溫分布</div>
       <div class="power-chart-wrap"><canvas id="cylTempChart"></canvas></div>
     </div>
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">🛢</span> 燃油流量</div>
+      <div class="panel-title"><span class="seal">油</span> 燃油流量</div>
       <div class="power-chart-wrap"><canvas id="fuelFlowChart"></canvas></div>
     </div>
     <div class="panel-card">
-      <div class="panel-title"><span class="icon">⚡</span> 能效指标</div>
+      <div class="panel-title"><span class="seal">效</span> 能效指标</div>
       <div class="eng-grid">
         <div class="eng-item"><div class="eng-label">SFOC</div><div class="eng-val" id="e-sfoc">182 <span class="eng-unit">g/kWh</span></div></div>
-        <div class="eng-item"><div class="eng-label">推进效率</div><div class="eng-val" id="e-eff" style="color:var(--thr-green)">87.2 <span class="eng-unit">%</span></div></div>
+        <div class="eng-item"><div class="eng-label">推进效率</div><div class="eng-val" id="e-eff" style="color:var(--koke)">87.2 <span class="eng-unit">%</span></div></div>
         <div class="eng-item"><div class="eng-label">总运行时</div><div class="eng-val" id="e-hrs">12480 <span class="eng-unit">h</span></div></div>
-        <div class="eng-item"><div class="eng-label">下次保养</div><div class="eng-val" id="e-maint" style="color:var(--thr-orange)">320 <span class="eng-unit">h</span></div></div>
+        <div class="eng-item"><div class="eng-label">下次保养</div><div class="eng-val" id="e-maint" style="color:var(--kitsune)">320 <span class="eng-unit">h</span></div></div>
       </div>
     </div>
   </div>
 </div>
 <script>
 'use strict';
+const WS={shironeri:'oklch(0.96 0.003 110)',ishi:'oklch(0.91 0.004 110)',kabe:'oklch(0.85 0.006 110)',hai:'oklch(0.78 0.006 110)',nezumi:'oklch(0.68 0.005 110)',sumi:'oklch(0.18 0.008 110)',koke:'oklch(0.42 0.05 160)',shu:'oklch(0.48 0.12 28)',kitsune:'oklch(0.56 0.08 65)'};
 const $=id=>document.getElementById(id);
-const THR_COLORS={running:'#30d158',standby:'#5b7894',alarm:'#ff453a'};
+const THR_COLORS={running:WS.koke,standby:WS.nezumi,alarm:WS.shu};
 const _powerHistory=[];
 for(let i=0;i<30;i++)_powerHistory.push(7500+Math.random()*800);
 
@@ -146,31 +160,23 @@ function drawGauge(canvas,rpm,maxRpm,loadPct,color){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   const cx=w/2,cy=h-10,radius=Math.min(w/2-10,h-20);
   const startAngle=Math.PI,endAngle=2*Math.PI;
-  // Background arc
   ctx.beginPath();ctx.arc(cx,cy,radius,startAngle,endAngle);
-  ctx.strokeStyle='rgba(100,180,255,0.08)';ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
-  // Value arc
+  ctx.strokeStyle=WS.kabe;ctx.lineWidth=12;ctx.lineCap='butt';ctx.stroke();
   const pct=Math.min(rpm/Math.max(1,maxRpm),1);
   const valAngle=startAngle+(endAngle-startAngle)*pct;
   if(pct>0){
     ctx.beginPath();ctx.arc(cx,cy,radius,startAngle,valAngle);
-    const grad=ctx.createLinearGradient(cx-radius,0,cx+radius,0);
-    grad.addColorStop(0,color+'80');grad.addColorStop(0.7,color);grad.addColorStop(1,pct>0.9?'#ff453a':color);
-    ctx.strokeStyle=grad;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();
-    // Glow
-    ctx.shadowColor=color;ctx.shadowBlur=15;ctx.beginPath();ctx.arc(cx,cy,radius,valAngle-0.02,valAngle);ctx.strokeStyle=color;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();ctx.shadowBlur=0;
+    ctx.strokeStyle=pct>0.9?WS.shu:color;ctx.lineWidth=12;ctx.lineCap='butt';ctx.stroke();
   }
-  // Scale marks
   for(let i=0;i<=10;i++){
     const a=startAngle+(endAngle-startAngle)*i/10;
     const x1=cx+Math.cos(a)*(radius+8),y1=cy+Math.sin(a)*(radius+8);
     const x2=cx+Math.cos(a)*(radius+14),y2=cy+Math.sin(a)*(radius+14);
-    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=i%5===0?'rgba(100,180,255,0.3)':'rgba(100,180,255,0.12)';ctx.lineWidth=i%5===0?2:1;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=i%5===0?WS.hai:WS.kabe;ctx.lineWidth=i%5===0?2:1;ctx.stroke();
   }
-  // Load percentage in center
-  ctx.font='700 11px -apple-system,sans-serif';ctx.fillStyle='rgba(155,179,205,0.7)';ctx.textAlign='center';
+  ctx.font='700 11px "Noto Sans SC",sans-serif';ctx.fillStyle=WS.nezumi;ctx.textAlign='center';
   ctx.fillText('LOAD',cx,cy-18);
-  ctx.font='700 20px "SF Mono","Menlo",monospace';ctx.fillStyle=color;
+  ctx.font='700 20px "JetBrains Mono",monospace';ctx.fillStyle=color;
   ctx.fillText(Math.round(loadPct)+'%',cx,cy+2);
 }
 
@@ -188,7 +194,6 @@ function renderThrusters(thrusters){
     card.innerHTML='<div class="thr-header"><span class="thr-name">'+(t.name||t.id)+'</span><span class="thr-badge '+badgeCls+'">'+status.toUpperCase()+'</span></div><div class="gauge-wrap"><canvas data-rpm="'+rpm+'" data-max="'+mx+'" data-load="'+pw+'" data-color="'+color+'"></canvas></div><div class="thr-rpm"><div class="rpm-val" style="color:'+color+'">'+Math.round(rpm)+'</div><div class="rpm-unit">RPM</div></div><div class="thr-stats"><span>功率 <span class="stat-val">'+pw+'%</span></span><span>温度 <span class="stat-val">'+(t.temp_motor||'—')+'°C</span></span></div><div class="telegraph-btns"><button data-tid="'+t.id+'" data-cmd="AHEAD" class="thr-cmd '+(status==='running'?'active':'')+'">AHEAD</button><button data-tid="'+t.id+'" data-cmd="STOP" class="thr-cmd '+(status!=='running'?'active-stop':'')+'">STOP</button><button data-tid="'+t.id+'" data-cmd="ASTERN" class="thr-cmd">ASTERN</button></div>';
     grid.appendChild(card);
   });
-  // Draw gauges
   grid.querySelectorAll('.gauge-wrap canvas').forEach(function(c){
     drawGauge(c,+c.dataset.rpm,+c.dataset.max,+c.dataset.load,c.dataset.color);
   });
@@ -206,33 +211,28 @@ function drawPowerChart(){
   const cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
   const data=_powerHistory;
   const maxV=Math.max(...data)*1.1,minV=Math.min(...data)*0.9;
-  // Grid lines
-  ctx.strokeStyle='rgba(100,180,255,0.06)';ctx.lineWidth=1;
+  ctx.strokeStyle=WS.ishi;ctx.lineWidth=1;
   for(let i=0;i<=3;i++){
     const y=pad.top+ch*i/3;
     ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();
-    ctx.fillStyle='#5b7894';ctx.font='9px "SF Mono",monospace';ctx.textAlign='right';
+    ctx.fillStyle=WS.nezumi;ctx.font='9px "JetBrains Mono",monospace';ctx.textAlign='right';
     ctx.fillText(Math.round(maxV-(maxV-minV)*i/3),pad.left-4,y+3);
   }
-  // Line
   ctx.beginPath();
   data.forEach(function(v,i){
     const x=pad.left+(cw/(data.length-1))*i;
     const y=pad.top+ch*(1-(v-minV)/(maxV-minV));
     if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
   });
-  ctx.strokeStyle='#64d2ff';ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
-  // Fill
+  ctx.strokeStyle=WS.koke;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
   const lastX=pad.left+cw,lastY=pad.top+ch*(1-(data[data.length-1]-minV)/(maxV-minV));
   ctx.lineTo(lastX,pad.top+ch);ctx.lineTo(pad.left,pad.top+ch);ctx.closePath();
   const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
-  grad.addColorStop(0,'rgba(100,210,255,0.15)');grad.addColorStop(1,'rgba(100,210,255,0)');
+  grad.addColorStop(0,'oklch(0.42 0.05 160 / .12)');grad.addColorStop(1,'oklch(0.42 0.05 160 / 0)');
   ctx.fillStyle=grad;ctx.fill();
-  // Current value dot
-  ctx.beginPath();ctx.arc(lastX,lastY,4,0,Math.PI*2);ctx.fillStyle='#64d2ff';ctx.fill();
-  ctx.beginPath();ctx.arc(lastX,lastY,8,0,Math.PI*2);ctx.fillStyle='rgba(100,210,255,0.2)';ctx.fill();
-  // Label
-  ctx.fillStyle='#5b7894';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.beginPath();ctx.arc(lastX,lastY,4,0,Math.PI*2);ctx.fillStyle=WS.koke;ctx.fill();
+  ctx.beginPath();ctx.arc(lastX,lastY,8,0,Math.PI*2);ctx.fillStyle='oklch(0.42 0.05 160 / .15)';ctx.fill();
+  ctx.fillStyle=WS.nezumi;ctx.font='9px "Noto Sans SC",sans-serif';ctx.textAlign='center';
   ctx.fillText('30s ago',pad.left,h-4);ctx.fillText('now',pad.left+cw,h-4);
 }
 
@@ -266,10 +266,8 @@ function fetchTCS(){
 }
 fetchTCS();setInterval(fetchTCS,3000);
 
-// WebSocket for real-time updates
 (function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onmessage=function(e){try{var d=JSON.parse(e.data);if(d.data&&d.data.engine){var en=d.data.engine;if(en.cooling_water_temp)$('r-cool').innerHTML=en.cooling_water_temp.toFixed(1)+'<span class="r-unit">°C</span>';}}catch(ex){}};ws.onclose=function(){setTimeout(cn,5000)};}catch(e){setTimeout(cn,5000);}}cn()})();
 
-// Initial power chart draw
 drawPowerChart();
 drawVibSpectrum();
 let _resizeTimer;window.addEventListener('resize',function(){clearTimeout(_resizeTimer);_resizeTimer=setTimeout(function(){drawPowerChart();drawVibSpectrum();fetchTCS();},200)});
@@ -284,49 +282,36 @@ function drawVibSpectrum(){
   ctx.clearRect(0,0,w,h);
   const pad={top:8,right:8,bottom:20,left:30};
   const cw=w-pad.left-pad.right,ch=h-pad.top-pad.bottom;
-  // 模拟振动频谱 (32 bars)
   const bars=32;
   const barW=cw/bars-2;
-  // 主频率成分 (基频 + 2倍频 + 叶频)
   const now=Date.now()*0.001;
   for(let i=0;i<bars;i++){
-    const freq=(i+1)*5; // 5Hz ~ 160Hz
     let amp=0.3+Math.random()*0.15;
-    // 主机基频峰值 (~25Hz)
     if(i>=4&&i<=6) amp=0.5+Math.sin(now*0.5)*0.15+Math.random()*0.1;
-    // 2倍频 (~50Hz)
     if(i>=9&&i<=11) amp=0.35+Math.sin(now*0.7)*0.1+Math.random()*0.08;
-    // 叶频 (~75Hz)
     if(i>=14&&i<=16) amp=0.25+Math.sin(now*0.3)*0.08;
     amp=Math.min(amp,1.0);
     const barH=ch*amp;
     const x=pad.left+i*(barW+2);
     const y=pad.top+ch-barH;
-    // 颜色渐变 (绿→黄→红)
     let color;
-    if(amp<0.4) color='rgba(48,209,88,0.8)';
-    else if(amp<0.65) color='rgba(100,210,255,0.8)';
-    else if(amp<0.8) color='rgba(255,214,10,0.8)';
-    else color='rgba(255,69,58,0.8)';
+    if(amp<0.4) color=WS.koke;
+    else if(amp<0.65) color=WS.koke;
+    else if(amp<0.8) color=WS.kitsune;
+    else color=WS.shu;
     ctx.fillStyle=color;
     ctx.fillRect(x,y,barW,barH);
-    // 微发光
-    ctx.fillStyle=color.replace('0.8','0.15');
-    ctx.fillRect(x,y-3,barW,3);
   }
-  // X 轴标签
-  ctx.fillStyle='#5b7894';ctx.font='8px monospace';ctx.textAlign='center';
+  ctx.fillStyle=WS.nezumi;ctx.font='8px "JetBrains Mono",monospace';ctx.textAlign='center';
   ['25','50','75','100','150'].forEach(function(f,i){
     ctx.fillText(f+'Hz',pad.left+cw*(i/4),h-4);
   });
-  // Y 轴
   ctx.textAlign='right';
   ctx.fillText('mm/s',pad.left-4,pad.top+8);
 }
-setInterval(drawVibSpectrum,200); // 5fps 更新频谱
+setInterval(drawVibSpectrum,200);
 
-// ══ 缸温分布图 ══
-const _cylTemps = [365, 372, 385, 378, 390, 368]; // 6缸初始温度
+const _cylTemps = [365, 372, 385, 378, 390, 368];
 function drawCylTempChart() {
     const canvas = $('cylTempChart'); if (!canvas) return;
     const ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio || 1;
@@ -340,33 +325,28 @@ function drawCylTempChart() {
     const bars = _cylTemps.length;
     const barW = cw / bars - 6;
     const maxT = 450, minT = 300;
-    const now = Date.now() * 0.001;
     
-    // 模拟温度波动
     for (let i = 0; i < bars; i++) {
         _cylTemps[i] += (Math.random() - 0.5) * 2;
         _cylTemps[i] = Math.max(340, Math.min(420, _cylTemps[i]));
     }
     const avg = _cylTemps.reduce((a, b) => a + b, 0) / bars;
     
-    // 平均温度参考线
     const avgY = pad.top + ch * (1 - (avg - minT) / (maxT - minT));
     ctx.setLineDash([4, 3]);
-    ctx.strokeStyle = 'rgba(100,210,255,0.3)';
+    ctx.strokeStyle = 'oklch(0.42 0.05 160 / .3)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pad.left, avgY); ctx.lineTo(pad.left + cw, avgY); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#5b7894'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+    ctx.fillStyle = WS.nezumi; ctx.font = '8px "JetBrains Mono",monospace'; ctx.textAlign = 'right';
     ctx.fillText(Math.round(avg) + '°', pad.left - 4, avgY + 3);
     
-    // 报警线 (400°C)
     const alarmY = pad.top + ch * (1 - (400 - minT) / (maxT - minT));
-    ctx.strokeStyle = 'rgba(255,69,58,0.3)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'oklch(0.48 0.12 28 / .3)'; ctx.lineWidth = 1;
     ctx.setLineDash([2, 2]);
     ctx.beginPath(); ctx.moveTo(pad.left, alarmY); ctx.lineTo(pad.left + cw, alarmY); ctx.stroke();
     ctx.setLineDash([]);
     
-    // 绘制各缸温度条
     for (let i = 0; i < bars; i++) {
         const t = _cylTemps[i];
         const barH = ch * ((t - minT) / (maxT - minT));
@@ -374,33 +354,29 @@ function drawCylTempChart() {
         const y = pad.top + ch - barH;
         const deviation = Math.abs(t - avg);
         let color;
-        if (deviation < 8) color = '#30d158';
-        else if (deviation < 15) color = '#facc15';
-        else color = '#ff453a';
+        if (deviation < 8) color = WS.koke;
+        else if (deviation < 15) color = WS.kitsune;
+        else color = WS.shu;
         
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.roundRect(x, y, barW, barH, [3, 3, 0, 0]);
         ctx.fill();
         
-        // 温度值
-        ctx.fillStyle = '#e0f0ff'; ctx.font = '700 9px monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = WS.sumi; ctx.font = '700 9px "JetBrains Mono",monospace'; ctx.textAlign = 'center';
         ctx.fillText(Math.round(t), x + barW / 2, y - 3);
         
-        // 缸号标签
-        ctx.fillStyle = '#5b7894'; ctx.font = '9px sans-serif';
+        ctx.fillStyle = WS.nezumi; ctx.font = '9px "Noto Sans SC",sans-serif';
         ctx.fillText('#' + (i + 1), x + barW / 2, h - 4);
     }
     
-    // Y轴标签
-    ctx.fillStyle = '#5b7894'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+    ctx.fillStyle = WS.nezumi; ctx.font = '8px "JetBrains Mono",monospace'; ctx.textAlign = 'right';
     ctx.fillText(maxT + '°C', pad.left - 2, pad.top + 8);
     ctx.fillText(minT + '°C', pad.left - 2, pad.top + ch);
 }
 setInterval(drawCylTempChart, 500);
 drawCylTempChart();
 
-// ══ 燃油流量趋势 ══
 const _fuelFlowHistory = [];
 for (let i = 0; i < 40; i++) _fuelFlowHistory.push(125 + Math.random() * 15);
 
@@ -415,23 +391,20 @@ function drawFuelFlowChart() {
     const pad = { top: 8, right: 8, bottom: 20, left: 36 };
     const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
     
-    // 添加新数据点
     _fuelFlowHistory.push(125 + Math.sin(Date.now() * 0.0005) * 8 + (Math.random() - 0.5) * 6);
     if (_fuelFlowHistory.length > 40) _fuelFlowHistory.shift();
     
     const data = _fuelFlowHistory;
     const maxV = Math.max(...data) * 1.05, minV = Math.min(...data) * 0.95;
     
-    // 网格线
-    ctx.strokeStyle = 'rgba(100,180,255,0.06)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = WS.ishi; ctx.lineWidth = 1;
     for (let i = 0; i <= 3; i++) {
         const y = pad.top + ch * i / 3;
         ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
-        ctx.fillStyle = '#5b7894'; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+        ctx.fillStyle = WS.nezumi; ctx.font = '8px "JetBrains Mono",monospace'; ctx.textAlign = 'right';
         ctx.fillText(Math.round(maxV - (maxV - minV) * i / 3), pad.left - 4, y + 3);
     }
     
-    // 填充区域
     ctx.beginPath();
     data.forEach(function(v, i) {
         const x = pad.left + (cw / (data.length - 1)) * i;
@@ -441,31 +414,29 @@ function drawFuelFlowChart() {
     const lastX = pad.left + cw;
     ctx.lineTo(lastX, pad.top + ch); ctx.lineTo(pad.left, pad.top + ch); ctx.closePath();
     const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
-    grad.addColorStop(0, 'rgba(255,159,10,0.2)'); grad.addColorStop(1, 'rgba(255,159,10,0)');
+    grad.addColorStop(0, 'oklch(0.56 0.08 65 / .15)'); grad.addColorStop(1, 'oklch(0.56 0.08 65 / 0)');
     ctx.fillStyle = grad; ctx.fill();
     
-    // 线条
     ctx.beginPath();
     data.forEach(function(v, i) {
         const x = pad.left + (cw / (data.length - 1)) * i;
         const y = pad.top + ch * (1 - (v - minV) / (maxV - minV));
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     });
-    ctx.strokeStyle = '#ff9f0a'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.strokeStyle = WS.kitsune; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
     
-    // 当前值点
     const lastY = pad.top + ch * (1 - (data[data.length - 1] - minV) / (maxV - minV));
-    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.fillStyle = '#ff9f0a'; ctx.fill();
-    ctx.beginPath(); ctx.arc(lastX, lastY, 8, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,159,10,0.2)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI * 2); ctx.fillStyle = WS.kitsune; ctx.fill();
+    ctx.beginPath(); ctx.arc(lastX, lastY, 8, 0, Math.PI * 2); ctx.fillStyle = 'oklch(0.56 0.08 65 / .15)'; ctx.fill();
     
-    // 标签
-    ctx.fillStyle = '#5b7894'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = WS.nezumi; ctx.font = '9px "Noto Sans SC",sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('2min ago', pad.left, h - 4); ctx.fillText('now', lastX, h - 4);
     ctx.fillText('L/h', pad.left + cw / 2, h - 4);
 }
 setInterval(drawFuelFlowChart, 1000);
 drawFuelFlowChart();
 </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="thruster"></script>
 </body>
 </html>

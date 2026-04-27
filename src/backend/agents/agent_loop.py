@@ -1,0 +1,240 @@
+"""Function-calling loop for Developer/QA agents.
+
+Drives a multi-turn conversation with DeepSeek V4 where each turn the model can
+call tools (read_file, grep, write_file, patch_file, run_python, run_pytest) to
+inspect and modify the codebase, then finishes with a `finish` tool call.
+
+This replaces the single-shot "emit a markdown blob with code fences" approach
+that produced hallucinated imports and truncated files.
+"""
+from __future__ import annotations
+
+import http.client
+import json
+import logging
+import ssl
+import time
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
+
+from .agent_toolbox import (
+    TOOL_SCHEMA,
+    dispatch_tool_call,
+    get_tools_for_role,
+)
+
+logger = logging.getLogger("AgentLoop")
+
+DEFAULT_MAX_ITERATIONS = 25
+DEFAULT_MAX_TOKENS = 65536
+DEFAULT_TEMPERATURE = 0.2
+
+
+class AgentLoop:
+    """Multi-turn function-calling driver against an OpenAI-compatible endpoint."""
+
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        api_base_url: str,
+        model: str,
+        role: str,
+        system_prompt: str,
+        max_iterations: int = DEFAULT_MAX_ITERATIONS,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE,
+        on_event: Optional[Any] = None,
+    ):
+        self.api_key = api_key
+        self.api_base_url = api_base_url.rstrip("/")
+        self.model = model
+        self.role = role
+        self.max_iterations = max_iterations
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.tools = get_tools_for_role(role)
+        self.messages: List[Dict[str, Any]] = [
+            {"role": "system", "content": system_prompt},
+        ]
+        self.on_event = on_event   # callable(event_type:str, payload:dict)
+        self.files_changed: List[str] = []
+        self.summary: str = ""
+        self.tool_call_log: List[Dict[str, Any]] = []
+
+    # ────────────────────────────────────────────────
+    # HTTP plumbing
+    # ────────────────────────────────────────────────
+    def _post_chat(self) -> Dict[str, Any]:
+        parsed = urlparse(self.api_base_url)
+        host = parsed.hostname or "api.deepseek.com"
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        path = (parsed.path or "").rstrip("/") + "/chat/completions"
+        ctx = ssl.create_default_context() if parsed.scheme == "https" else None
+        conn_cls = http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
+        conn = conn_cls(host, port, context=ctx, timeout=300) if ctx \
+            else conn_cls(host, port, timeout=300)
+
+        body = {
+            "model": self.model,
+            "messages": self.messages,
+            "tools": self.tools,
+            "tool_choice": "auto",
+            "max_tokens": self.max_tokens,
+            "temperature": self.temperature,
+            "stream": False,
+        }
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        conn.request("POST", path, body=json.dumps(body), headers=headers)
+        resp = conn.getresponse()
+        raw = resp.read().decode("utf-8", errors="replace")
+        conn.close()
+        if resp.status >= 400:
+            raise RuntimeError(f"LLM HTTP {resp.status}: {raw[:500]}")
+        return json.loads(raw)
+
+    # ────────────────────────────────────────────────
+    # Loop
+    # ────────────────────────────────────────────────
+    def run(self, user_prompt: str) -> Dict[str, Any]:
+        """Run the agent loop. Returns {ok, summary, files_changed, iterations, log}."""
+        self.messages.append({"role": "user", "content": user_prompt})
+        self._emit("loop_start", {"role": self.role, "tools": [t["function"]["name"] for t in self.tools]})
+
+        for it in range(self.max_iterations):
+            t0 = time.time()
+            try:
+                resp = self._post_chat()
+            except Exception as e:
+                logger.exception("[AgentLoop] HTTP error on iteration %d", it)
+                self._emit("error", {"iteration": it, "error": str(e)})
+                return {
+                    "ok": False, "error": str(e),
+                    "summary": self.summary, "files_changed": self.files_changed,
+                    "iterations": it, "log": self.tool_call_log,
+                }
+
+            choice = (resp.get("choices") or [{}])[0]
+            msg = choice.get("message", {}) or {}
+            content = msg.get("content") or ""
+            tool_calls = msg.get("tool_calls") or []
+            finish_reason = choice.get("finish_reason", "")
+
+            self._emit("model_turn", {
+                "iteration": it,
+                "elapsed": round(time.time() - t0, 2),
+                "content_chars": len(content),
+                "tool_call_count": len(tool_calls),
+                "finish_reason": finish_reason,
+            })
+
+            # Append assistant turn
+            assistant_msg: Dict[str, Any] = {"role": "assistant", "content": content}
+            if tool_calls:
+                assistant_msg["tool_calls"] = tool_calls
+            self.messages.append(assistant_msg)
+
+            # No tool calls → model is done talking
+            if not tool_calls:
+                if not self.summary and content:
+                    self.summary = content[:1000]
+                self._emit("loop_end", {"reason": "no_tool_call", "iteration": it})
+                return {
+                    "ok": True, "summary": self.summary,
+                    "files_changed": self.files_changed,
+                    "iterations": it + 1, "log": self.tool_call_log,
+                    "final_message": content,
+                }
+
+            # Process each tool call
+            finished = False
+            for tc in tool_calls:
+                tc_id = tc.get("id", "")
+                fn = tc.get("function", {}) or {}
+                name = fn.get("name", "")
+                args_raw = fn.get("arguments", "") or "{}"
+                self._emit("tool_call", {"name": name, "args": args_raw[:500]})
+
+                if name == "finish":
+                    try:
+                        a = json.loads(args_raw or "{}")
+                        self.summary = a.get("summary", "")
+                        for fc in a.get("files_changed") or []:
+                            if fc not in self.files_changed:
+                                self.files_changed.append(fc)
+                    except Exception:
+                        self.summary = args_raw[:500]
+                    self.messages.append({
+                        "role": "tool", "tool_call_id": tc_id, "name": name,
+                        "content": json.dumps({"ok": True, "ack": "finished"}),
+                    })
+                    self.tool_call_log.append({"name": name, "args": args_raw, "ok": True})
+                    finished = True
+                    continue
+
+                result = dispatch_tool_call(name, args_raw)
+                # Track writes
+                if name in ("write_file", "patch_file") and result.get("ok"):
+                    try:
+                        a = json.loads(args_raw or "{}")
+                        path = a.get("path", "")
+                        if path and path not in self.files_changed:
+                            self.files_changed.append(path)
+                    except Exception:
+                        pass
+
+                self.tool_call_log.append({
+                    "name": name, "args": args_raw[:1000],
+                    "ok": bool(result.get("ok")),
+                    "summary": self._summarize_result(name, result),
+                })
+                self._emit("tool_result", {
+                    "name": name, "ok": bool(result.get("ok")),
+                    "summary": self.tool_call_log[-1]["summary"],
+                })
+                self.messages.append({
+                    "role": "tool", "tool_call_id": tc_id, "name": name,
+                    "content": json.dumps(result, ensure_ascii=False)[:32_000],
+                })
+
+            if finished:
+                self._emit("loop_end", {"reason": "finish_called", "iteration": it})
+                return {
+                    "ok": True, "summary": self.summary,
+                    "files_changed": self.files_changed,
+                    "iterations": it + 1, "log": self.tool_call_log,
+                }
+
+        # Hit iteration cap
+        self._emit("loop_end", {"reason": "iteration_cap", "iteration": self.max_iterations})
+        return {
+            "ok": False, "error": f"iteration cap hit ({self.max_iterations})",
+            "summary": self.summary, "files_changed": self.files_changed,
+            "iterations": self.max_iterations, "log": self.tool_call_log,
+        }
+
+    def _summarize_result(self, name: str, result: Dict[str, Any]) -> str:
+        if not result.get("ok"):
+            return f"FAIL: {result.get('error','')[:120]}"
+        if name == "read_file":
+            return f"{result.get('total_lines', '?')} lines, {len(result.get('content',''))} chars"
+        if name == "grep":
+            return f"{len(result.get('hits', []))} hits"
+        if name == "list_files":
+            return f"{len(result.get('files', []))} files"
+        if name in ("write_file", "patch_file"):
+            return f"{result.get('bytes', result.get('new_bytes', 0))} bytes"
+        if name in ("run_python", "run_pytest"):
+            ec = result.get("exit_code")
+            return f"exit={ec}, {result.get('elapsed_sec','?')}s"
+        return "ok"
+
+    def _emit(self, kind: str, payload: Dict[str, Any]):
+        if self.on_event:
+            try:
+                self.on_event(kind, payload)
+            except Exception:
+                pass

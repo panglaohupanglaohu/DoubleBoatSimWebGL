@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="ob-title" content="设备健康">
+    <meta name="ob-subtitle" content="PoseidonX CMS — 状态监测系统">
+    <title>设备健康 — PoseidonX</title>
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <style>
+        body{margin:0;padding:var(--ob-topbar-height,48px) 24px 24px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,sans-serif);}
+        .cms-layout{display:grid;grid-template-columns:280px 1fr;gap:20px;}
+        .dev-tree{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;max-height:calc(100vh - 80px);overflow-y:auto;}
+        .dev-tree h3{font-size:14px;font-weight:600;margin:0 0 12px;}
+        .tree-group{margin-bottom:14px;}
+        .tree-group-title{font-size:12px;font-weight:600;color:var(--ob-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+        .tree-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:var(--ob-radius-sm);cursor:pointer;font-size:13px;}
+        .tree-item:hover{background:var(--ob-bg-section);}
+        .tree-item.selected{background:var(--ob-accent,oklch(0.52 0.04 160));color: oklch(0.18 0.008 110);}
+        .stat-bar{display:flex;gap:12px;margin-bottom:16px;}
+        .stat-item{flex:1;background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:14px;text-align:center;}
+        .stat-num{font-size:28px;font-weight:700;}
+        .stat-label{font-size:11px;color:var(--ob-text-tertiary);margin-top:2px;}
+        .trend-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+        .trend-card{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;}
+        .trend-card h4{margin:0 0 8px;font-size:13px;font-weight:600;}
+        .trend-card canvas{width:100%;height:120px;display:block;}
+        .detail-readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+        .bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+        .maint-card,.score-card{background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;}
+        .maint-card h4,.score-card h4{margin:0 0 10px;font-size:13px;font-weight:600;}
+        .scores{display:flex;gap:20px;justify-content:center;padding:10px 0;}
+        .score-ring{text-align:center;}
+        .score-ring .val{font-size:30px;font-weight:700;}
+        .score-ring .lbl{font-size:11px;color:var(--ob-text-tertiary);margin-top:2px;}
+    </style>
+</head>
+<body>
+    <div class="cms-layout">
+        <div class="dev-tree">
+            <h3>设备树 Equipment Tree</h3>
+            <div class="tree-group">
+                <div class="tree-group-title">推进系统 Propulsion</div>
+                <div class="tree-item selected"><span class="ob-dot ob-dot-ok"></span>主机 #1 ME</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>主机 #2 ME</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>齿轮箱 Gearbox</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-warning"></span>艘推 Bow Thr</div>
+            </div>
+            <div class="tree-group">
+                <div class="tree-group-title">辅机 Auxiliary</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>发电机 #1 DG</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>发电机 #2 DG</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-warning"></span>发电机 #3 DG</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>应急发电机 EDG</div>
+            </div>
+            <div class="tree-group">
+                <div class="tree-group-title">甲板设备 Deck</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>锚机 Windlass</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>起重机 #1 Crane</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-alarm"></span>起重机 #2 Crane</div>
+            </div>
+            <div class="tree-group">
+                <div class="tree-group-title">HVAC</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>主空调 Main AC</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>机舱通风 ER Vent</div>
+            </div>
+            <div class="tree-group">
+                <div class="tree-group-title">泵组 Pumps</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>冷却水泵 CW Pump</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>燃油泵 FO Pump</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-warning"></span>压载泵 Ballast Pump</div>
+                <div class="tree-item"><span class="ob-dot ob-dot-ok"></span>舱底泵 Bilge Pump</div>
+            </div>
+        </div>
+        <div class="cms-right">
+            <div class="stat-bar">
+                <div class="stat-item"><div class="stat-num">128</div><div class="stat-label"> 总设备</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:var(--ob-running)">121</div><div class="stat-label">正常</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:var(--ob-warning)">5</div><div class="stat-label">注意</div></div>
+                <div class="stat-item"><div class="stat-num" style="color:var(--ob-alarm)">2</div><div class="stat-label">警告</div></div>
+                <div class="stat-item"><div class="stat-num">0</div><div class="stat-label">告警</div></div>
+            </div>
+            <div class="trend-cards">
+                <div class="trend-card"><h4>主机 #1 振动趋势</h4><canvas id="cvVib" height="120"></canvas></div>
+                <div class="trend-card"><h4>轴承温度趋势</h4><canvas id="cvTemp" height="120"></canvas></div>
+            </div>
+            <div class="detail-readouts">
+                <div class="ob-readout"><span class="ob-readout-label">振动</span><span class="ob-readout-value">2.1</span><span class="ob-readout-unit">mm/s</span></div>
+                <div class="ob-readout"><span class="ob-readout-label">轴承温度</span><span class="ob-readout-value">68.4</span><span class="ob-readout-unit">°C</span></div>
+                <div class="ob-readout"><span class="ob-readout-label">滑油温度</span><span class="ob-readout-value">54.2</span><span class="ob-readout-unit">°C</span></div>
+                <div class="ob-readout"><span class="ob-readout-label">运行时间</span><span class="ob-readout-value">12,480</span><span class="ob-readout-unit">hrs</span></div>
+            </div>
+            <div class="bottom-row">
+                <div class="maint-card">
+                    <h4>维护计划 Maintenance Schedule</h4>
+                    <table class="ob-table">
+                        <thead><tr><th>设备</th><th>项目</th><th>到期</th><th>状态</th></tr></thead>
+                        <tbody>
+                            <tr><td>主机 #1</td><td>滑油更换</td><td>2026-04-15</td><td><span class="ob-badge ob-badge-warning">即将</span></td></tr>
+                            <tr><td>发电机 #3</td><td>气缸检查</td><td>2026-04-08</td><td><span class="ob-badge ob-badge-alarm">逾期</span></td></tr>
+                            <tr><td>起重机 #2</td><td>钢丝绳更换</td><td>2026-04-20</td><td><span class="ob-badge ob-badge-neutral">计划中</span></td></tr>
+                            <tr><td>压载泵</td><td>机封检查</td><td>2026-05-01</td><td><span class="ob-badge ob-badge-ok">正常</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="score-card">
+                    <h4>健康评分 Health Score</h4>
+                    <div class="scores">
+                        <div class="score-ring"><div class="val" style="color:var(--ob-running)">94</div><div class="lbl">推进系统</div></div>
+                        <div class="score-ring"><div class="val" style="color:var(--ob-warning)">78</div><div class="lbl">辅机系统</div></div>
+                        <div class="score-ring"><div class="val" style="color:var(--ob-running)">91</div><div class="lbl">甲板设备</div></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Agent System Health Panel (collapsed by default, click to expand) -->
+            <div class="bottom-row" style="margin-top:16px">
+                <div class="maint-card" id="agent-status-panel" style="cursor:pointer" onclick="this.classList.toggle('expanded')">
+                    <h4 style="margin:0;display:flex;align-items:center;gap:8px;user-select:none">🤖 Agent 系统状态 <span id="agent-toggle" style="font-size:11px;color:var(--ob-text-tertiary);transition:transform .2s">▶</span></h4>
+                    <div id="agent-status-body" style="display:none;margin-top:10px">
+                        <div id="sys-health-status" style="font-size:13px;padding:8px 0"><span style="color:var(--ob-text-tertiary)">加载中...</span></div>
+                        <div id="sys-diag" style="font-size:12px;color:var(--ob-text-secondary);margin-top:8px"></div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                #agent-status-panel.expanded #agent-status-body{display:block!important}
+                #agent-status-panel.expanded #agent-toggle{transform:rotate(90deg)}
+            </style>
+            <!-- AI Chat Panel -->
+            <div style="margin-top:16px;background:var(--ob-bg-card);border:1px solid var(--ob-border);border-radius:var(--ob-radius-lg);padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <h4 style="margin:0">💬 AI 设备健康助手</h4>
+                    <span style="font-size:10px;color:var(--ob-accent,oklch(0.52 0.04 160));background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);border-radius:4px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;font-family:monospace;">
+                        <span id="chatModelDot" style="width:7px;height:7px;border-radius:50%;background:oklch(0.55 0.005 110);display:inline-block;transition:background .3s"></span>
+                        <span id="chatModelName">—</span>
+                    </span>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:10px">
+                    <select id="chatAgentSelect" style="flex:1;font-size:12px;font-family:monospace;padding:5px 8px;background:var(--ob-bg-section,rgba(0,0,0,.15));color:var(--ob-text-primary);border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);outline:none;cursor:pointer;" title="选择对话智能体">
+                        <option value="ship_navigator">Navigator (OOW)</option>
+                    </select>
+                </div>
+                <div id="chatMessages" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;margin-bottom:10px;padding-right:4px;">
+                    <div style="padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;border-left:3px solid var(--ob-accent,oklch(0.52 0.04 160));background:var(--ob-bg-section,rgba(0,0,0,.05));">CMS 设备健康 AI 助手已就绪 — 可咨询设备维保、振动分析、健康评分等问题。</div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <input type="text" id="chatInput" placeholder="咨询设备健康、维保计划..." style="flex:1;background:var(--ob-bg-section,rgba(0,0,0,.15));border:1px solid var(--ob-border);border-radius:var(--ob-radius-sm);padding:7px 10px;color:var(--ob-text-primary);font-size:12px;outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
+                    <button onclick="sendChat()" style="background:rgba(79,195,247,.12);border:1px solid rgba(79,195,247,.3);border-radius:var(--ob-radius-sm);color:var(--ob-accent,oklch(0.52 0.04 160));padding:6px 14px;cursor:pointer;font-size:14px;font-weight:700;">↵</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    const A='/api/v1/agent-config';
+
+    // ── Equipment data registry for tree item click ──
+    var equipmentDB={
+        '主机 #1 ME':{id:'ME-1',vib:[1.8,1.9,2.0,1.7,2.1,2.3,2.0,1.9,2.2,2.1,2.4,2.1,1.8,2.0,2.1,2.3,2.5,2.2,2.0,2.1],temp:[62,63,64,65,64,66,67,68,67,66,68,69,68,67,68,69,70,68,67,68],vibVal:'2.1',tempVal:'68.4',oilTemp:'54.2',hours:'12,480',vibThresh:4.5,tempThresh:85,trendTitle:'主机 #1'},
+        '主机 #2 ME':{id:'ME-2',vib:[2.0,2.1,1.9,2.2,2.0,1.8,2.3,2.1,2.0,1.9,2.1,2.2,2.0,1.8,2.1,2.3,2.2,2.0,1.9,2.1],temp:[60,61,62,63,62,64,65,66,65,64,66,67,66,65,66,67,68,66,65,66],vibVal:'2.1',tempVal:'66.0',oilTemp:'52.8',hours:'11,920',vibThresh:4.5,tempThresh:85,trendTitle:'主机 #2'},
+        '齿轮箱 Gearbox':{id:'GB-1',vib:[0.8,0.9,1.0,0.7,1.1,1.3,1.0,0.9,1.2,1.1,1.4,1.1,0.8,1.0,1.1,1.3,1.5,1.2,1.0,1.1],temp:[55,56,57,58,57,59,60,61,60,59,61,62,61,60,61,62,63,61,60,61],vibVal:'1.1',tempVal:'61.0',oilTemp:'48.5',hours:'12,480',vibThresh:3.0,tempThresh:75,trendTitle:'齿轮箱'},
+        '艘推 Bow Thr':{id:'BT-1',vib:[2.5,2.6,2.8,3.0,2.7,2.9,3.1,2.8,2.6,2.9,3.2,3.0,2.7,2.8,3.0,3.3,3.1,2.9,2.7,3.0],temp:[45,46,47,48,47,49,50,51,50,49,51,52,51,50,51,52,53,51,50,51],vibVal:'3.0',tempVal:'51.0',oilTemp:'40.2',hours:'3,210',vibThresh:5.0,tempThresh:70,trendTitle:'艏推'},
+        '发电机 #1 DG':{id:'DG-1',vib:[1.5,1.6,1.4,1.7,1.5,1.3,1.8,1.6,1.5,1.4,1.6,1.7,1.5,1.3,1.6,1.8,1.7,1.5,1.4,1.6],temp:[70,71,72,73,72,74,75,76,75,74,76,77,76,75,76,77,78,76,75,76],vibVal:'1.6',tempVal:'76.0',oilTemp:'58.3',hours:'9,840',vibThresh:4.0,tempThresh:90,trendTitle:'发电机 #1'},
+        '发电机 #2 DG':{id:'DG-2',vib:[1.4,1.5,1.3,1.6,1.4,1.2,1.7,1.5,1.4,1.3,1.5,1.6,1.4,1.2,1.5,1.7,1.6,1.4,1.3,1.5],temp:[68,69,70,71,70,72,73,74,73,72,74,75,74,73,74,75,76,74,73,74],vibVal:'1.5',tempVal:'74.0',oilTemp:'56.1',hours:'10,200',vibThresh:4.0,tempThresh:90,trendTitle:'发电机 #2'},
+        '发电机 #3 DG':{id:'DG-3',vib:[2.2,2.4,2.6,2.8,2.5,2.7,2.9,2.6,2.4,2.7,3.0,2.8,2.5,2.6,2.8,3.1,2.9,2.7,2.5,2.8],temp:[74,75,76,77,76,78,79,80,79,78,80,81,80,79,80,81,82,80,79,80],vibVal:'2.8',tempVal:'80.0',oilTemp:'61.5',hours:'8,560',vibThresh:4.0,tempThresh:90,trendTitle:'发电机 #3'},
+        '应急发电机 EDG':{id:'EDG-1',vib:[0.6,0.7,0.5,0.8,0.6,0.4,0.9,0.7,0.6,0.5,0.7,0.8,0.6,0.4,0.7,0.9,0.8,0.6,0.5,0.7],temp:[40,41,42,43,42,44,45,46,45,44,46,47,46,45,46,47,48,46,45,46],vibVal:'0.7',tempVal:'46.0',oilTemp:'35.8',hours:'320',vibThresh:4.0,tempThresh:90,trendTitle:'应急发电机'},
+        '锚机 Windlass':{id:'WL-1',vib:[1.0,1.1,0.9,1.2,1.0,0.8,1.3,1.1,1.0,0.9,1.1,1.2,1.0,0.8,1.1,1.3,1.2,1.0,0.9,1.1],temp:[35,36,37,38,37,39,40,41,40,39,41,42,41,40,41,42,43,41,40,41],vibVal:'1.1',tempVal:'41.0',oilTemp:'30.2',hours:'1,840',vibThresh:5.0,tempThresh:60,trendTitle:'锚机'},
+        '起重机 #1 Crane':{id:'CR-1',vib:[1.8,1.9,1.7,2.0,1.8,1.6,2.1,1.9,1.8,1.7,1.9,2.0,1.8,1.6,1.9,2.1,2.0,1.8,1.7,1.9],temp:[42,43,44,45,44,46,47,48,47,46,48,49,48,47,48,49,50,48,47,48],vibVal:'1.9',tempVal:'48.0',oilTemp:'36.5',hours:'2,640',vibThresh:5.0,tempThresh:65,trendTitle:'起重机 #1'},
+        '起重机 #2 Crane':{id:'CR-2',vib:[3.5,3.7,3.9,4.1,3.8,4.0,4.2,3.9,3.7,4.0,4.3,4.1,3.8,3.9,4.1,4.4,4.2,4.0,3.8,4.1],temp:[50,51,52,53,52,54,55,56,55,54,56,57,56,55,56,57,58,56,55,56],vibVal:'4.1',tempVal:'56.0',oilTemp:'44.3',hours:'2,640',vibThresh:5.0,tempThresh:65,trendTitle:'起重机 #2'},
+        '主空调 Main AC':{id:'AC-1',vib:[0.3,0.4,0.2,0.5,0.3,0.1,0.6,0.4,0.3,0.2,0.4,0.5,0.3,0.1,0.4,0.6,0.5,0.3,0.2,0.4],temp:[22,23,24,25,24,26,27,28,27,26,28,29,28,27,28,29,30,28,27,28],vibVal:'0.4',tempVal:'28.0',oilTemp:'—',hours:'6,120',vibThresh:2.0,tempThresh:40,trendTitle:'主空调'},
+        '机舱通风 ER Vent':{id:'ERV-1',vib:[0.5,0.6,0.4,0.7,0.5,0.3,0.8,0.6,0.5,0.4,0.6,0.7,0.5,0.3,0.6,0.8,0.7,0.5,0.4,0.6],temp:[30,31,32,33,32,34,35,36,35,34,36,37,36,35,36,37,38,36,35,36],vibVal:'0.6',tempVal:'36.0',oilTemp:'—',hours:'12,480',vibThresh:3.0,tempThresh:50,trendTitle:'机舱通风'},
+        '冷却水泵 CW Pump':{id:'CWP-1',vib:[1.2,1.3,1.1,1.4,1.2,1.0,1.5,1.3,1.2,1.1,1.3,1.4,1.2,1.0,1.3,1.5,1.4,1.2,1.1,1.3],temp:[38,39,40,41,40,42,43,44,43,42,44,45,44,43,44,45,46,44,43,44],vibVal:'1.3',tempVal:'44.0',oilTemp:'—',hours:'10,560',vibThresh:4.0,tempThresh:60,trendTitle:'冷却水泵'},
+        '燃油泵 FO Pump':{id:'FOP-1',vib:[1.0,1.1,0.9,1.2,1.0,0.8,1.3,1.1,1.0,0.9,1.1,1.2,1.0,0.8,1.1,1.3,1.2,1.0,0.9,1.1],temp:[42,43,44,45,44,46,47,48,47,46,48,49,48,47,48,49,50,48,47,48],vibVal:'1.1',tempVal:'48.0',oilTemp:'38.6',hours:'8,400',vibThresh:4.0,tempThresh:65,trendTitle:'燃油泵'},
+        '压载泵 Ballast Pump':{id:'BP-1',vib:[2.4,2.5,2.7,2.9,2.6,2.8,3.0,2.7,2.5,2.8,3.1,2.9,2.6,2.7,2.9,3.2,3.0,2.8,2.6,2.9],temp:[44,45,46,47,46,48,49,50,49,48,50,51,50,49,50,51,52,50,49,50],vibVal:'2.9',tempVal:'50.0',oilTemp:'37.2',hours:'5,280',vibThresh:4.0,tempThresh:65,trendTitle:'压载泵'},
+        '舱底泵 Bilge Pump':{id:'BLP-1',vib:[0.8,0.9,0.7,1.0,0.8,0.6,1.1,0.9,0.8,0.7,0.9,1.0,0.8,0.6,0.9,1.1,1.0,0.8,0.7,0.9],temp:[36,37,38,39,38,40,41,42,41,40,42,43,42,41,42,43,44,42,41,42],vibVal:'0.9',tempVal:'42.0',oilTemp:'—',hours:'4,200',vibThresh:4.0,tempThresh:60,trendTitle:'舱底泵'}
+    };
+
+    // ── Equipment tree click handler ──
+    (function(){
+        var treeItems=document.querySelectorAll('.tree-item');
+        treeItems.forEach(function(item){
+            item.addEventListener('click',function(){
+                // Update selection
+                treeItems.forEach(function(t){t.classList.remove('selected');});
+                item.classList.add('selected');
+                // Find equipment data by text content
+                var devName=item.textContent.trim();
+                var eq=equipmentDB[devName];
+                if(!eq)return;
+                // Update trend chart titles
+                var trendCards=document.querySelectorAll('.trend-card h4');
+                if(trendCards[0])trendCards[0].textContent=eq.trendTitle+' 振动趋势';
+                if(trendCards[1])trendCards[1].textContent=eq.trendTitle+' 温度趋势';
+                // Redraw charts
+                drawTrend('cvVib',eq.vib,eq.vibThresh,'rgba(0,176,240,1)');
+                drawTrend('cvTemp',eq.temp,eq.tempThresh,'rgba(255,170,0,1)');
+                // Update readout values
+                var readouts=document.querySelectorAll('.ob-readout .ob-readout-value');
+                if(readouts[0])readouts[0].textContent=eq.vibVal;
+                if(readouts[1])readouts[1].textContent=eq.tempVal;
+                if(readouts[2])readouts[2].textContent=eq.oilTemp;
+                if(readouts[3])readouts[3].textContent=eq.hours;
+                // Also try to fetch real data from API
+                fetch('/api/v1/cms/vibration-data?device_id='+eq.id).then(function(r){return r.json();}).then(function(d){
+                    if(d&&d.data){drawTrend('cvVib',d.data.map(function(p){return p.value;}),d.threshold||eq.vibThresh,'rgba(0,176,240,1)');}
+                }).catch(function(){});
+                fetch('/api/v1/cms/temperature-data?device_id='+eq.id).then(function(r){return r.json();}).then(function(d){
+                    if(d&&d.data){drawTrend('cvTemp',d.data.map(function(p){return p.value;}),d.threshold||eq.tempThresh,'rgba(255,170,0,1)');}
+                }).catch(function(){});
+            });
+        });
+    })();
+
+    (function(){
+        function drawTrend(id,data,threshold,color){
+            var cv=document.getElementById(id);if(!cv)return;
+            var ctx=cv.getContext('2d');var W=cv.width=cv.offsetWidth;var H=cv.height=120;
+            var max=Math.max.apply(null,data)*1.3;
+            ctx.clearRect(0,0,W,H);
+            var ty=H-(threshold/max)*H;
+            ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(255,60,60,0.6)';ctx.lineWidth=1;
+            ctx.beginPath();ctx.moveTo(0,ty);ctx.lineTo(W,ty);ctx.stroke();ctx.setLineDash([]);
+            ctx.fillStyle='rgba(255,60,60,0.5)';ctx.font='10px sans-serif';
+            ctx.fillText('阈值 '+threshold,W-60,ty-4);
+            ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
+            for(var i=0;i<data.length;i++){var x=i/(data.length-1)*W;var y=H-(data[i]/max)*H;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+            ctx.stroke();ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+            ctx.fillStyle=color.replace('1)','0.08)');ctx.fill();
+        }
+        // Make drawTrend globally accessible for tree clicks
+        window.drawTrend=drawTrend;
+        var vib=[1.8,1.9,2.0,1.7,2.1,2.3,2.0,1.9,2.2,2.1,2.4,2.1,1.8,2.0,2.1,2.3,2.5,2.2,2.0,2.1];
+        var temp=[62,63,64,65,64,66,67,68,67,66,68,69,68,67,68,69,70,68,67,68];
+        drawTrend('cvVib',vib,4.5,'rgba(0,176,240,1)');
+        drawTrend('cvTemp',temp,85,'rgba(255,170,0,1)');
+
+        // Fetch real trend data from CMS API
+        function fetchCMSTrends(){
+            Promise.all([
+                fetch('/api/v1/cms/vibration-data?device_id=ME-1').then(function(r){return r.json();}).catch(function(){return null;}),
+                fetch('/api/v1/cms/temperature-data?device_id=ME-1').then(function(r){return r.json();}).catch(function(){return null;})
+            ]).then(function(results){
+                var vibData=results[0],tempData=results[1];
+                if(vibData&&vibData.data){
+                    vib=vibData.data.map(function(d){return d.value;});
+                    drawTrend('cvVib',vib,vibData.threshold||4.5,'rgba(0,176,240,1)');
+                }
+                if(tempData&&tempData.data){
+                    temp=tempData.data.map(function(d){return d.value;});
+                    drawTrend('cvTemp',temp,tempData.threshold||85,'rgba(255,170,0,1)');
+                }
+            });
+        }
+        fetchCMSTrends();setInterval(fetchCMSTrends,30000);
+
+        // ── Dynamic system health from API ──
+        async function loadSystemHealth(){
+            try{
+                const[health,diag]=await Promise.all([
+                    fetch(`${A}/health`).then(r=>r.ok?r.json():null).catch(()=>null),
+                    fetch(`${A}/diagnostics`).then(r=>r.ok?r.json():null).catch(()=>null)
+                ]);
+                const statusEl=document.getElementById('sys-health-status');
+                if(!statusEl)return;
+                if(!health){statusEl.innerHTML='<span style="color:var(--ob-alarm)">后端连接失败</span>';return;}
+                const st=health.status||'unknown';
+                const cls=st==='ok'||st==='healthy'?'ob-dot-ok':st==='degraded'?'ob-dot-warning':'ob-dot-alarm';
+                let html=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="ob-dot ${cls}"></span><b>系统: ${st}</b></div>`;
+                if(health.channels){
+                    html+=`<div style="font-size:12px;color:var(--ob-text-secondary)">Channels: ${health.channels.ok||0}/${health.channels.total||0} 正常</div>`;
+                }
+                if(health.uptime_seconds){
+                    const hrs=Math.floor(health.uptime_seconds/3600);
+                    const mins=Math.floor((health.uptime_seconds%3600)/60);
+                    html+=`<div style="font-size:12px;color:var(--ob-text-tertiary);margin-top:2px">运行时间: ${hrs}h ${mins}m</div>`;
+                }
+                statusEl.innerHTML=html;
+
+                // Diagnostics
+                const diagEl=document.getElementById('sys-diag');
+                if(diagEl&&diag){
+                    let dhtml='';
+                    if(diag.agent_team){
+                        const at=diag.agent_team;
+                        dhtml+=`<div style="margin-bottom:8px"><b>Agent 团队:</b> ${at.team_count||0} 团队, ${at.agent_count||0} Agent</div>`;
+                    }
+                    if(diag.tools){dhtml+=`<div style="margin-bottom:8px"><b>工具:</b> ${diag.tools.count||0} 个</div>`}
+                    if(diag.skills){dhtml+=`<div style="margin-bottom:8px"><b>技能:</b> ${diag.skills.count||0} 个</div>`}
+                    if(diag.sessions){dhtml+=`<div><b>会话:</b> ${diag.sessions.active||0} 活跃</div>`}
+                    diagEl.innerHTML=dhtml||'<span style="color:var(--ob-text-tertiary)">诊断数据不可用</span>';
+                }
+
+
+            }catch(e){console.warn('Health fetch failed:',e)}
+        }
+        loadSystemHealth();
+        setInterval(loadSystemHealth,30000);
+    })();
+
+    // ── AI Chat with localStorage persistence ──
+    (function(){
+        var CHAT_STORAGE_KEY='cms_chatHistory';
+        var chatSessionId=localStorage.getItem('cms_chatSessionId');
+        if(!chatSessionId){chatSessionId='cms-'+Math.random().toString(36).slice(2,10);localStorage.setItem('cms_chatSessionId',chatSessionId);}
+        var selectedAgentId=localStorage.getItem('cms_chatAgentId')||'ship_navigator';
+        var agentModelCache={};
+
+        function saveChatHistory(){
+            var msgs=document.getElementById('chatMessages');
+            if(!msgs)return;
+            var items=[];
+            for(var i=0;i<msgs.children.length;i++){
+                items.push(msgs.children[i].outerHTML);
+            }
+            try{localStorage.setItem(CHAT_STORAGE_KEY,JSON.stringify(items.slice(-50)));}catch(e){}
+        }
+        function restoreChatHistory(){
+            try{
+                var saved=JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY)||'[]');
+                if(saved.length===0)return;
+                var msgs=document.getElementById('chatMessages');
+                if(!msgs)return;
+                msgs.innerHTML='';
+                saved.forEach(function(html){var d=document.createElement('div');d.innerHTML=html;if(d.firstChild)msgs.appendChild(d.firstChild);});
+                msgs.scrollTop=msgs.scrollHeight;
+            }catch(e){}
+        }
+        restoreChatHistory();
+
+        function escapeHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+        async function fetchAgentModelInfo(aid){
+            if(agentModelCache[aid])return agentModelCache[aid];
+            try{
+                var r=await fetch(A+'/agents/'+aid+'/model-status');
+                if(!r.ok){agentModelCache[aid]={model_name:'',active:false};return agentModelCache[aid];}
+                var d=await r.json();
+                agentModelCache[aid]={model_name:d.model_name||d.model_id||'',active:!!d.active};
+                return agentModelCache[aid];
+            }catch(_){agentModelCache[aid]={model_name:'',active:false};return agentModelCache[aid];}
+        }
+
+        function updateModelDisplay(aid){
+            var dot=document.getElementById('chatModelDot');
+            var name=document.getElementById('chatModelName');
+            var info=agentModelCache[aid]||{model_name:'—',active:false};
+            name.textContent=info.model_name||'—';
+            dot.style.background=info.active?'oklch(0.52 0.04 160)':'oklch(0.55 0.005 110)';
+            dot.style.boxShadow=info.active?'0 0 8px rgba(72,187,120,.6)':'none';
+            dot.title=info.active?'LLM 可用':'LLM 不可用';
+        }
+
+        async function loadChatAgents(){
+            var sel=document.getElementById('chatAgentSelect');
+            var teams=['build_system'];
+            var opts='';
+            for(var i=0;i<teams.length;i++){
+                try{
+                    var r=await fetch(A+'/teams/'+teams[i]+'/agents');
+                    if(!r.ok)continue;
+                    var agents=await r.json();
+                    for(var j=0;j<agents.length;j++){
+                        var a=agents[j];
+                        var aid=a.agent_id||a.id;
+                        var selected=aid===selectedAgentId?' selected':'';
+                        var info=await fetchAgentModelInfo(aid);
+                        var label=a.name+' ('+a.role+')';
+                        if(info.active&&info.model_name){
+                            label+=' ✦ '+info.model_name;
+                        }
+                        var color=info.active?'color:oklch(0.52 0.04 160);font-weight:600':'color:var(--ob-text-tertiary)';
+                        opts+='<option value="'+aid+'" style="'+color+'"'+selected+'>'+label+'</option>';
+                    }
+                }catch(_){}
+            }
+            if(opts)sel.innerHTML=opts;
+            updateModelDisplay(selectedAgentId);
+        }
+        loadChatAgents();
+
+        document.getElementById('chatAgentSelect').addEventListener('change',function(){
+            selectedAgentId=this.value;
+            localStorage.setItem('cms_chatAgentId',selectedAgentId);
+            updateModelDisplay(selectedAgentId);
+        });
+
+        function addMsg(text,cls){
+            var ts=new Date().toISOString().slice(11,19);
+            var msgs=document.getElementById('chatMessages');
+            var div=document.createElement('div');
+            var borderColor=cls==='user'?'oklch(0.56 0.05 70)':cls==='danger'?'var(--ob-alarm,oklch(0.48 0.07 22))':'var(--ob-accent,oklch(0.52 0.04 160))';
+            var bg=cls==='user'?'rgba(246,173,85,.06)':cls==='danger'?'rgba(245,101,101,.06)':'var(--ob-bg-section,rgba(0,0,0,.05))';
+            div.style.cssText='padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5;border-left:3px solid '+borderColor+';background:'+bg+';word-break:break-word;';
+            div.innerHTML=escapeHtml(text).replace(/\n/g,'<br>')+'<div style="font-size:9px;color:var(--ob-text-tertiary);margin-top:4px;text-align:right">'+ts+'</div>';
+            msgs.appendChild(div);
+            msgs.scrollTop=msgs.scrollHeight;
+            while(msgs.children.length>50)msgs.removeChild(msgs.firstChild);
+            saveChatHistory();
+        }
+
+        window.sendChat=function(){
+            var input=document.getElementById('chatInput');
+            var msg=input.value.trim();
+            if(!msg)return;
+            input.value='';
+            addMsg(msg,'user');
+            fetch('/api/v1/bridge-chat/send',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({message:msg,session_id:chatSessionId,agent_id:selectedAgentId})
+            }).then(function(r){
+                if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.slice(0,120))});
+                return r.json();
+            }).then(function(d){
+                addMsg(d.reply||'无应答',d.urgency==='critical'?'danger':'');
+                if(d.source==='agent_llm'){
+                    document.getElementById('chatModelName').textContent=d.model||'LLM';
+                    var dot=document.getElementById('chatModelDot');
+                    dot.style.background='oklch(0.52 0.04 160)';
+                    dot.style.boxShadow='0 0 8px rgba(72,187,120,.6)';
+                }
+                if(d.task_id){addMsg('✅ 任务已创建 (ID: '+d.task_id+')','');}
+            }).catch(function(err){addMsg('通信错误: '+(err.message||'网络不可达'),'danger');});
+        };
+    })();
+    </script>
+    <script src="/js/nav-sidebar.js" data-active="cms"></script>
+    <script>(function(){var ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=function(){setTimeout(cn,5000);};}catch(e){setTimeout(cn,5000);}}cn();})();</script>
+</body>
+</html>

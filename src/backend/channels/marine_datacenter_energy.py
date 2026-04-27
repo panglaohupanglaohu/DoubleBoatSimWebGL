@@ -353,10 +353,13 @@ class MarineDataCenterEnergyChannel(MarineChannel):
                     "insight": "设备视角 — 推理节点功耗占比最高, DVFS 节能潜力 8-15%"}
 
         if perspective == DCPerspective.FACILITY:
-            crac = sum(d.actual_power_kw for d in self.devices.values() if "crac" in d.device_id)
-            ups = sum(d.actual_power_kw for d in self.devices.values() if "ups" in d.device_id)
+            crac = sum(d.actual_power_kw for d in self.devices.values()
+                       if getattr(d, 'device_type', '') == 'CRAC' or 'ac-' in d.device_id)
+            ups = sum(d.actual_power_kw for d in self.devices.values()
+                      if getattr(d, 'device_type', '') == 'UPS' or 'ups' in d.device_id)
             it = sum(d.actual_power_kw for d in self.devices.values()
-                     if not any(k in d.device_id for k in ["crac", "ups"]))
+                     if getattr(d, 'device_type', '') not in ('CRAC', 'UPS', 'PDU')
+                     and not any(k in d.device_id for k in ['ac-', 'ups', 'pdu']))
             total = crac + ups + it
             pue = (total / it) if it > 0 else 0
             return {"perspective": "facility",
@@ -506,6 +509,12 @@ class MarineDataCenterEnergyChannel(MarineChannel):
         if len(self.pue_history) > 720:   # keep ~6h at 30s resolution
             self.pue_history = self.pue_history[-720:]
 
+    def _record_pue(self, pue: float):
+        """Append a PUE snapshot without creating a full event."""
+        self.pue_history.append({"ts": time.time(), "pue": pue})
+        if len(self.pue_history) > 720:
+            self.pue_history = self.pue_history[-720:]
+
     # ── Time-series ──
     def get_pue_history(self, limit: int = 240) -> List[Dict[str, float]]:
         if not self.pue_history:
@@ -515,14 +524,58 @@ class MarineDataCenterEnergyChannel(MarineChannel):
                                 for i in range(10)]
         return self.pue_history[-limit:]
 
+    def pue_statistics(self) -> Dict[str, Any]:
+        """PUE 统计: min/max/avg/std + 趋势方向 + 改善幅度."""
+        import math
+        hist = self.get_pue_history(limit=720)
+        values = [p["pue"] for p in hist]
+        n = len(values)
+        if n == 0:
+            return {"ok": False, "reason": "no history"}
+        avg = sum(values) / n
+        variance = sum((v - avg) ** 2 for v in values) / n
+        std = math.sqrt(variance)
+        # Simple linear trend: slope of PUE over time
+        if n >= 2:
+            x_avg = (n - 1) / 2
+            y_avg = avg
+            num = sum((i - x_avg) * (values[i] - y_avg) for i in range(n))
+            den = sum((i - x_avg) ** 2 for i in range(n))
+            slope = num / den if den > 0 else 0.0
+            trend = "improving" if slope < -0.0001 else "stable" if abs(slope) < 0.0001 else "degrading"
+        else:
+            slope = 0.0
+            trend = "insufficient_data"
+        improvement = round(self.baseline_pue - self.current_pue, 4)
+        progress_pct = round(
+            100 * improvement / max(self.baseline_pue - self.target_pue, 0.01), 1)
+        return {
+            "ok": True,
+            "sample_count": n,
+            "min_pue": round(min(values), 3),
+            "max_pue": round(max(values), 3),
+            "avg_pue": round(avg, 3),
+            "std_pue": round(std, 4),
+            "current_pue": self.current_pue,
+            "baseline_pue": self.baseline_pue,
+            "target_pue": self.target_pue,
+            "improvement": improvement,
+            "progress_pct": progress_pct,
+            "trend": trend,
+            "slope_per_sample": round(slope, 6),
+        }
+
     # ── Energy Sankey (flow data) ──
     def energy_sankey(self) -> Dict[str, Any]:
         """Sankey 流图: 输入电网 → IT/CRAC/UPS-loss → 工作/排热/光伏回流."""
         devices = list(self.devices.values())
-        crac_kw = sum(d.actual_power_kw for d in devices if "crac" in d.device_id)
-        ups_kw = sum(d.actual_power_kw for d in devices if "ups" in d.device_id)
+        crac_kw = sum(d.actual_power_kw for d in devices
+                      if getattr(d, 'device_type', '') == 'CRAC' or 'ac-' in d.device_id)
+        ups_kw = sum(d.actual_power_kw for d in devices
+                     if getattr(d, 'device_type', '') == 'UPS' or 'ups' in d.device_id)
         it_kw = sum(d.actual_power_kw for d in devices
-                    if not any(k in d.device_id for k in ["crac", "ups"]))
+                    if getattr(d, 'device_type', '') not in ('CRAC', 'UPS', 'PDU')
+                    and not any(k in d.device_id for k in ['ac-', 'ups', 'pdu']))
         total_in = round(it_kw + crac_kw + ups_kw, 2)
         # Heat output ≈ 95% of IT consumed becomes heat that needs to be removed
         heat_out = round(it_kw * 0.95, 2)
@@ -677,6 +730,15 @@ class MarineDataCenterEnergyChannel(MarineChannel):
                 "generated_at": time.time()}
 
     # ── Forecast (24h PUE projection) ──
+    def simulate_tick(self) -> Dict[str, Any]:
+        """触发一次时序 tick: 随机抖动 PUE + 写入历史, 用于演示动态曲线."""
+        import random
+        noise = random.gauss(0, 0.005)
+        self.current_pue = round(max(self.target_pue * 0.95,
+                                     self.current_pue + noise), 3)
+        self._record_pue(self.current_pue)
+        return {"ok": True, "pue": self.current_pue, "ts": time.time()}
+
     def forecast_pue(self, hours: int = 24, sample_step_min: int = 30) -> Dict[str, Any]:
         """简单 24 小时 PUE 预测 (基于负载日变化 + 已应用策略).
 
@@ -1165,6 +1227,95 @@ class MarineDataCenterEnergyChannel(MarineChannel):
             "current_pue": self.current_pue,
             "evolution_round": self._evolution_round,
             "generated_at": time.time(),
+        }
+
+    # ── Efficiency Score ──
+    def efficiency_score(self) -> Dict[str, Any]:
+        """综合效率评分 0-100, 融合 PUE/策略/遗产/传感器健康/技能."""
+        # PUE score: 100 when current_pue == target_pue, 0 when == baseline
+        pue_range = max(self.baseline_pue - self.target_pue, 0.01)
+        pue_improvement = self.baseline_pue - self.current_pue
+        pue_score = min(100, max(0, round(100 * pue_improvement / pue_range)))
+
+        # Policy adoption score
+        total_pol = max(len(self.policies), 1)
+        applied_pol = sum(1 for p in self.policies.values() if p.applied)
+        policy_score = round(100 * applied_pol / total_pol)
+
+        # Heritage (evolution maturity)
+        heritage_score = min(100, len(self.heritage) * 10)  # 10 per heritage entry
+
+        # Sensor health
+        now = time.time()
+        online = sum(1 for s in self.sensors.values() if (now - s.last_seen) < 300)
+        total_sens = max(len(self.sensors), 1)
+        sensor_score = round(100 * online / total_sens)
+
+        # Skill confidence
+        if self.skills:
+            avg_conf = sum(s.confidence for s in self.skills.values()) / len(self.skills)
+            skill_score = round(avg_conf * 100)
+        else:
+            skill_score = 0
+
+        # Weighted composite
+        composite = round(
+            0.35 * pue_score +
+            0.20 * policy_score +
+            0.15 * heritage_score +
+            0.15 * sensor_score +
+            0.15 * skill_score
+        )
+        grade = (
+            "S" if composite >= 90 else
+            "A" if composite >= 75 else
+            "B" if composite >= 60 else
+            "C" if composite >= 40 else
+            "D"
+        )
+        return {
+            "ok": True,
+            "composite": composite,
+            "grade": grade,
+            "breakdown": {
+                "pue": pue_score,
+                "policy_adoption": policy_score,
+                "heritage_maturity": heritage_score,
+                "sensor_health": sensor_score,
+                "skill_confidence": skill_score,
+            },
+            "weights": {"pue": 0.35, "policy": 0.20, "heritage": 0.15,
+                        "sensor": 0.15, "skill": 0.15},
+        }
+
+    def dashboard_summary(self) -> Dict[str, Any]:
+        """一站式仪表盘汇总: KPIs + 效率 + 最新遗产 + 最新事件 + 建议."""
+        status = self.get_status()
+        eff = self.efficiency_score()
+        latest_heritage = self.heritage[-3:] if self.heritage else []
+        latest_events = self.events[-5:] if self.events else []
+        top_recs = self.recommend_actions(top_n=3)
+        return {
+            "ok": True,
+            "kpis": {
+                "current_pue": status["current_pue"],
+                "baseline_pue": status["baseline_pue"],
+                "target_pue": status["target_pue"],
+                "pue_progress_pct": status["pue_progress_pct"],
+                "device_count": status["device_count"],
+                "sensor_count": status["sensor_count"],
+                "heritage_count": status["heritage_count"],
+                "evolution_round": status["evolution_round"],
+                "saving_kwh_day": status["saving_kwh_day"],
+            },
+            "efficiency": eff,
+            "latest_heritage": [
+                {"title": h.title, "delta_pue": h.delta_pue,
+                 "category": h.category, "locked_at": h.locked_at}
+                for h in latest_heritage
+            ],
+            "latest_events": latest_events,
+            "top_recommendations": top_recs,
         }
 
     # ── Status ──

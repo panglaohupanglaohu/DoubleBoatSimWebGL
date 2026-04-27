@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Demo B · Field.io 运动诗学</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   Field.io — 运动诗学 · 算法美学
+   哲学：代码即设计师
+   色彩：深空底 #0a0a0f + 几何粒子 + 单accent #00FFAA
+   排版：等宽 + 无衬线，数据即诗
+   特征：Voronoi, 生成图形, 动态编排, 技术美感
+   ═══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --void: #0a0a0f;
+  --surface: #111118;
+  --surface-2: #1a1a24;
+  --line: rgba(255,255,255,0.06);
+  --line-b: rgba(255,255,255,0.12);
+  --text: #e0e0e8;
+  --muted: #5a5a6e;
+  --accent: #00FFAA;
+  --accent-dim: rgba(0,255,170,0.08);
+  --accent-mid: rgba(0,255,170,0.20);
+  --magenta: #FF3D8E;
+  --blue: #3D7AFF;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--void);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ── Generative Background ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,255,170,0.04), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(61,122,255,0.03), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255,61,142,0.02), transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at 50% 50%, black 0%, transparent 80%);
+}
+
+.frame { max-width: 1400px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
+
+/* ── Topbar ── */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--line);
+}
+.topbar .brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--accent);
+}
+.topbar .brand .dim { color: var(--muted); }
+.topbar .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted); letter-spacing: 1px;
+}
+.topbar .meta .live {
+  display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent);
+  margin-right: 6px;
+  box-shadow: 0 0 8px var(--accent);
+  animation: glow-pulse 2s infinite;
+}
+@keyframes glow-pulse {
+  0%,100% { box-shadow: 0 0 8px var(--accent); }
+  50% { box-shadow: 0 0 20px var(--accent), 0 0 40px rgba(0,255,170,0.2); }
+}
+
+/* ── Hero ── */
+.hero {
+  padding: 80px 0 60px;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 60px;
+  align-items: end;
+}
+.hero h1 {
+  font-size: 56px; font-weight: 700;
+  line-height: 1.05; letter-spacing: -1px;
+}
+.hero h1 .glow {
+  color: var(--accent);
+  text-shadow: 0 0 30px rgba(0,255,170,0.3);
+}
+.hero h1 .sub-line {
+  display: block;
+  font-size: 18px; font-weight: 300;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--muted); margin-top: 16px;
+}
+.hero-right {
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+  border-left: 1px solid var(--line-b); padding-left: 32px;
+}
+.hero-right strong { color: var(--text); }
+
+/* ── Generative Orb (pure CSS) ── */
+.gen-orb-wrap {
+  display: flex; justify-content: center;
+  padding: 32px 0;
+}
+.gen-orb {
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent), var(--blue), var(--magenta), var(--accent));
+  filter: blur(30px);
+  opacity: 0.3;
+  animation: orb-spin 20s linear infinite;
+}
+@keyframes orb-spin { to { transform: rotate(360deg); } }
+
+/* ── KPI Bar — glassmorphic ── */
+.kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 32px 0;
+}
+.kpi-cell {
+  padding: 24px 16px;
+  background: var(--surface);
+  text-align: center;
+  position: relative;
+}
+.kpi-cell::after {
+  content: '';
+  position: absolute; bottom: 0; left: 20%; right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.kpi-cell:hover::after { opacity: 1; }
+.kpi-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+}
+.kpi-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px; font-weight: 700;
+  color: var(--text);
+  font-feature-settings: 'tnum';
+}
+.kpi-val .unit { font-size: 12px; color: var(--muted); margin-left: 2px; }
+.kpi-delta { font-size: 10px; margin-top: 4px; }
+.kpi-delta.good { color: var(--accent); }
+.kpi-delta.warn { color: var(--magenta); }
+
+/* ── Viewport — Algorithm Canvas ── */
+.viewport {
+  position: relative;
+  aspect-ratio: 16/7;
+  background: var(--surface);
+  border: 1px solid var(--line-b);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 40px 0;
+}
+.viewport .algo-grid {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(0,255,170,0.06) 1px, transparent 1px),
+    radial-gradient(circle, rgba(61,122,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px, 60px 60px;
+  background-position: 0 0, 30px 30px;
+}
+.viewport .vp-label {
+  position: absolute; top: 16px; left: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--accent); opacity: 0.7;
+}
+.viewport .center-vis {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+/* Voronoi-like CSS shape */
+.voronoi-shape {
+  width: 300px; height: 300px;
+  position: relative;
+}
+.voronoi-shape .cell {
+  position: absolute;
+  border: 1px solid rgba(0,255,170,0.15);
+  border-radius: 30% 70% 40% 60%;
+  animation: morph 8s ease-in-out infinite alternate;
+}
+.voronoi-shape .cell:nth-child(1) {
+  inset: 10%; border-color: rgba(0,255,170,0.2);
+}
+.voronoi-shape .cell:nth-child(2) {
+  inset: 20%; border-color: rgba(61,122,255,0.2);
+  animation-delay: -2s;
+  border-radius: 60% 30% 70% 40%;
+}
+.voronoi-shape .cell:nth-child(3) {
+  inset: 30%; border-color: rgba(255,61,142,0.15);
+  animation-delay: -4s;
+  border-radius: 50% 50% 30% 70%;
+}
+.voronoi-shape .cell:nth-child(4) {
+  inset: 40%;
+  background: radial-gradient(circle, rgba(0,255,170,0.08), transparent);
+  border: none;
+}
+@keyframes morph {
+  0% { border-radius: 30% 70% 40% 60%; }
+  25% { border-radius: 60% 40% 70% 30%; }
+  50% { border-radius: 45% 55% 35% 65%; }
+  75% { border-radius: 70% 30% 55% 45%; }
+  100% { border-radius: 40% 60% 50% 50%; }
+}
+
+.viewport .vp-readout {
+  position: absolute; bottom: 16px; right: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted);
+  text-align: right; line-height: 2; letter-spacing: 1px;
+}
+
+/* ── Content Grid ── */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 40px 0;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.3s;
+}
+.card:hover { border-color: var(--accent-mid); }
+.card-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Device List (algorithmic) ── */
+.dev-list { display: flex; flex-direction: column; gap: 2px; }
+.dev-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px 60px 60px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  border-radius: 6px;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.dev-row:hover { background: var(--accent-dim); }
+.dev-row .did { color: var(--accent); font-weight: 600; }
+.dev-row .dtype { color: var(--muted); font-size: 10px; }
+.dev-row .dval { color: var(--text); font-weight: 600; text-align: right; }
+.dev-row .dtemp { color: var(--muted); text-align: right; }
+.status-pip {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+}
+.status-pip.ok { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.status-pip.warn { background: #FFB020; box-shadow: 0 0 6px #FFB020; }
+.status-pip.crit { background: var(--magenta); box-shadow: 0 0 6px var(--magenta); }
+
+/* ── Anomaly Stream ── */
+.anom-stream { display: flex; flex-direction: column; gap: 12px; }
+.anom-item {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid var(--muted);
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.anom-item:hover { background: rgba(255,255,255,0.04); }
+.anom-item.critical { border-left-color: var(--magenta); }
+.anom-item.high { border-left-color: #FFB020; }
+.anom-item.medium { border-left-color: var(--blue); }
+.anom-sev {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.anom-item.critical .anom-sev { color: var(--magenta); }
+.anom-item.high .anom-sev { color: #FFB020; }
+.anom-item.medium .anom-sev { color: var(--blue); }
+.anom-desc { font-size: 12px; line-height: 1.7; color: var(--text); }
+.anom-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted); margin-top: 6px;
+}
+
+/* ── PUE Chart ── */
+.chart-section {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+.chart-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.chart-header h3 {
+  font-size: 14px; font-weight: 600; letter-spacing: 1px;
+}
+.chart-legend {
+  display: flex; gap: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted);
+}
+.leg-line {
+  display: inline-block; width: 16px; height: 2px;
+  vertical-align: middle; margin-right: 6px; border-radius: 1px;
+}
+.chart-canvas {
+  width: 100%; height: 200px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+/* Simulated waveform lines */
+.chart-canvas .wave {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 60%;
+  background: linear-gradient(0deg,
+    rgba(0,255,170,0.06) 0%,
+    rgba(0,255,170,0.02) 50%,
+    transparent 100%);
+  clip-path: polygon(
+    0% 70%, 5% 55%, 10% 60%, 15% 45%, 20% 50%,
+    25% 35%, 30% 40%, 35% 30%, 40% 38%, 45% 28%,
+    50% 35%, 55% 25%, 60% 32%, 65% 22%, 70% 30%,
+    75% 25%, 80% 35%, 85% 30%, 90% 40%, 95% 35%, 100% 45%,
+    100% 100%, 0% 100%
+  );
+}
+.chart-canvas .target-line {
+  position: absolute; top: 35%;
+  left: 0; right: 0;
+  border-top: 1px dashed rgba(255,61,142,0.4);
+}
+.chart-canvas .target-label {
+  position: absolute; top: 33%; right: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--magenta); opacity: 0.6;
+}
+
+/* ── AI Insight ── */
+.insight-section {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 40px;
+}
+.insight-viz {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.insight-ring {
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.insight-ring::before {
+  content: '';
+  position: absolute; inset: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  border-top-color: transparent;
+  animation: ring-spin 6s linear infinite;
+}
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+.insight-ring .score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 48px; font-weight: 700;
+  color: var(--accent);
+}
+.insight-ring .score-label {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 2px; text-transform: uppercase;
+  position: absolute; bottom: -28px;
+}
+.insight-body {
+  font-size: 13px; line-height: 1.8; color: var(--muted);
+}
+.insight-body strong { color: var(--text); }
+.insight-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.rec-list {
+  list-style: none; margin-top: 24px;
+}
+.rec-list li {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  border-left: 2px solid var(--line);
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+.rec-list li:hover { border-left-color: var(--accent); }
+.rec-list .rn {
+  color: var(--accent); font-weight: 700; margin-right: 8px;
+}
+
+/* ── Energy Flow ── */
+.flow-section {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+.flow-bar {
+  display: flex; align-items: center;
+  gap: 0;
+  margin-top: 24px;
+}
+.flow-node {
+  flex: 1;
+  padding: 24px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: center;
+  position: relative;
+}
+.flow-node:first-child { border-radius: 8px 0 0 8px; }
+.flow-node:last-child { border-radius: 0 8px 8px 0; }
+.flow-node .fn-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted);
+}
+.flow-node .fn-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px; font-weight: 700;
+  color: var(--text); margin-top: 8px;
+  font-feature-settings: 'tnum';
+}
+.flow-node .fn-unit {
+  font-size: 10px; color: var(--muted);
+}
+.flow-node.primary { border-color: var(--accent); }
+.flow-node.primary .fn-val { color: var(--accent); text-shadow: 0 0 20px rgba(0,255,170,0.3); }
+.flow-connector {
+  width: 32px; height: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+  position: relative;
+}
+.flow-connector::after {
+  content: '›';
+  position: absolute; right: -4px; top: -8px;
+  color: var(--accent); font-size: 16px;
+}
+
+/* ── Ratchet ── */
+.ratchet-section {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+.ratchet-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 16px; margin-top: 24px;
+}
+.ratchet-step {
+  padding: 28px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.ratchet-step:hover { border-color: var(--accent-mid); transform: translateY(-2px); }
+.ratchet-step.active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent-dim), var(--surface));
+  box-shadow: 0 0 30px rgba(0,255,170,0.1);
+}
+.ratchet-step .sn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px; font-weight: 700;
+  color: var(--line-b);
+}
+.ratchet-step.active .sn { color: var(--accent); text-shadow: 0 0 20px rgba(0,255,170,0.3); }
+.ratchet-step h4 {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-top: 12px;
+}
+.ratchet-step p {
+  font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.6;
+}
+
+/* ── Footer ── */
+.foot {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted); letter-spacing: 1.5px;
+}
+.foot .sig { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">POSEIDON<span class="dim">X</span> <span class="dim">// DATACENTER.TWIN</span></div>
+    <div class="meta"><span class="live"></span>LIVE SYNC · 12:04:32 UTC+8</div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <h1>
+        Digital<br/>Twin
+        <span class="glow">Engine</span>
+        <span class="sub-line">xFirst Principle · Generative Energy System</span>
+      </h1>
+    </div>
+    <div class="hero-right">
+      <strong>物理↔数字 1:1 映射</strong><br/>
+      每一台机柜、每一条母线、每一个传感器，都是算法模型中的精确节点。Three.js 实时渲染 8×8 机柜矩阵，GPU 热力场 IDW 插值，Voronoi 冷通道分区。Musk 五步法驱动能效持续优化。
+    </div>
+  </section>
+
+  <!-- Generative Orb -->
+  <div class="gen-orb-wrap">
+    <div class="gen-orb"></div>
+  </div>
+
+  <!-- KPI Bar -->
+  <section class="kpi-bar">
+    <div class="kpi-cell">
+      <div class="kpi-label">PUE</div>
+      <div class="kpi-val">1.18</div>
+      <div class="kpi-delta good">↓ 0.03</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">IT Load</div>
+      <div class="kpi-val">847<span class="unit">kW</span></div>
+      <div class="kpi-delta good">↓ 2.1%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Cooling</div>
+      <div class="kpi-val">142<span class="unit">kW</span></div>
+      <div class="kpi-delta good">↓ 5.8%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Temp</div>
+      <div class="kpi-val">24.3<span class="unit">°C</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Humidity</div>
+      <div class="kpi-val">48<span class="unit">%</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Devices</div>
+      <div class="kpi-val">64</div>
+      <div class="kpi-delta">8×8</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Anomaly</div>
+      <div class="kpi-val" style="color:var(--magenta)">3</div>
+      <div class="kpi-delta warn">1 CRIT</div>
+    </div>
+  </section>
+
+  <!-- 3D Viewport -->
+  <div class="viewport">
+    <div class="algo-grid"></div>
+    <div class="vp-label">THREE.JS · LIVE · 8×8 RACK · GPU HEAT FIELD</div>
+    <div class="center-vis">
+      <div class="voronoi-shape">
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+        <div class="cell"></div>
+      </div>
+    </div>
+    <div class="vp-readout">
+      ROOM 80×50×12<br/>
+      IDW INTERPOLATION<br/>
+      PDU WIRING VISIBLE<br/>
+      COLD/HOT AISLE FLOW
+    </div>
+  </div>
+
+  <!-- Device + Anomaly -->
+  <div class="content-grid">
+    <div class="card">
+      <div class="card-head">Device Matrix · 64 Racks</div>
+      <div class="dev-list">
+        <div class="dev-row"><span class="did">R1-01</span><span class="dtype">GPU</span><span class="dval">18.2 kW</span><span class="dtemp">67.3°C</span><span class="status-pip crit"></span></div>
+        <div class="dev-row"><span class="did">R1-02</span><span class="dtype">GPU</span><span class="dval">16.8 kW</span><span class="dtemp">52.1°C</span><span class="status-pip ok"></span></div>
+        <div class="dev-row"><span class="did">R2-01</span><span class="dtype">STO</span><span class="dval">4.5 kW</span><span class="dtemp">38.7°C</span><span class="status-pip ok"></span></div>
+        <div class="dev-row"><span class="did">R2-02</span><span class="dtype">NET</span><span class="dval">2.1 kW</span><span class="dtemp">34.2°C</span><span class="status-pip ok"></span></div>
+        <div class="dev-row"><span class="did">R3-01</span><span class="dtype">GPU</span><span class="dval">17.4 kW</span><span class="dtemp">58.9°C</span><span class="status-pip warn"></span></div>
+        <div class="dev-row"><span class="did">R3-02</span><span class="dtype">CPU</span><span class="dval">8.6 kW</span><span class="dtemp">45.0°C</span><span class="status-pip ok"></span></div>
+        <div class="dev-row"><span class="did">R4-01</span><span class="dtype">GPU</span><span class="dval">19.1 kW</span><span class="dtemp">71.2°C</span><span class="status-pip crit"></span></div>
+        <div class="dev-row"><span class="did">R4-02</span><span class="dtype">UPS</span><span class="dval">1.2 kW</span><span class="dtemp">29.8°C</span><span class="status-pip ok"></span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">Anomaly Stream</div>
+      <div class="anom-stream">
+        <div class="anom-item critical">
+          <div class="anom-sev">CRITICAL</div>
+          <div class="anom-desc">R4-01 温度超限 71.2°C — 冷通道回风受阻，建议检查 CRAH-04</div>
+          <div class="anom-meta">12:04:32 · z=3.8</div>
+        </div>
+        <div class="anom-item high">
+          <div class="anom-sev">HIGH</div>
+          <div class="anom-desc">R1-01 功耗持续高位 18.2kW — GPU 利用率 98%</div>
+          <div class="anom-meta">12:01:15 · z=2.9</div>
+        </div>
+        <div class="anom-item medium">
+          <div class="anom-sev">MEDIUM</div>
+          <div class="anom-desc">PDU-B2 相位不平衡 L1/L2 差异 8.3A</div>
+          <div class="anom-meta">11:58:40 · z=2.1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUE Chart -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h3>PUE · 24h History + Forecast</h3>
+      <div class="chart-legend">
+        <span><span class="leg-line" style="background:var(--accent)"></span>Actual</span>
+        <span><span class="leg-line" style="background:var(--blue)"></span>Forecast</span>
+        <span><span class="leg-line" style="background:var(--magenta);height:1px;border-top:1px dashed var(--magenta)"></span>Target</span>
+      </div>
+    </div>
+    <div class="chart-canvas">
+      <div class="wave"></div>
+      <div class="target-line"></div>
+      <div class="target-label">PUE 1.20</div>
+    </div>
+  </section>
+
+  <!-- AI Insight -->
+  <section class="insight-section">
+    <div class="insight-viz">
+      <div class="insight-ring">
+        <div class="score">AI</div>
+        <div class="score-label">Insight Engine</div>
+      </div>
+    </div>
+    <div class="insight-body">
+      <div class="insight-tag">Energy Optimization</div>
+      <p>
+        <strong>当前 PUE 1.18，处于优秀水平</strong>。主要能耗集中在 Row 1/Row 4 GPU 集群，冷通道热岛效应显著。建议迁移 R4-01 负载至低温区 R6，调高 CRAH-04 风速至 85%，启用液冷辅助。预计 PUE 可降至 1.15，年节省 ¥48 万。
+      </p>
+      <ul class="rec-list">
+        <li><span class="rn">01</span>迁移 R4-01 GPU → R6-03（降温 12°C）</li>
+        <li><span class="rn">02</span>CRAH-04 风速 65% → 85%</li>
+        <li><span class="rn">03</span>启用液冷辅助回路（PUE ↓ 0.03）</li>
+        <li><span class="rn">04</span>PDU-B2 回路负载再平衡</li>
+        <li><span class="rn">05</span>夜间关闭 UPS-02 旁路（省 1.8kW）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Energy Flow -->
+  <section class="flow-section">
+    <div class="card-head">Energy Flow</div>
+    <div class="flow-bar">
+      <div class="flow-node"><div class="fn-name">Grid</div><div class="fn-val">998</div><div class="fn-unit">kW</div></div>
+      <div class="flow-connector"></div>
+      <div class="flow-node"><div class="fn-name">UPS</div><div class="fn-val">982</div><div class="fn-unit">kW · η98.4%</div></div>
+      <div class="flow-connector"></div>
+      <div class="flow-node"><div class="fn-name">PDU</div><div class="fn-val">968</div><div class="fn-unit">kW</div></div>
+      <div class="flow-connector"></div>
+      <div class="flow-node primary"><div class="fn-name">IT Load</div><div class="fn-val">847</div><div class="fn-unit">kW</div></div>
+      <div class="flow-connector"></div>
+      <div class="flow-node"><div class="fn-name">Cooling</div><div class="fn-val">142</div><div class="fn-unit">kW</div></div>
+    </div>
+  </section>
+
+  <!-- Ratchet -->
+  <section class="ratchet-section">
+    <div class="card-head">Musk 五步法 · xFirst Principle</div>
+    <div class="ratchet-grid">
+      <div class="ratchet-step active">
+        <div class="sn">01</div>
+        <h4>Question</h4>
+        <p>质疑需求 — 真的需要这个制冷量吗？</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">02</div>
+        <h4>Delete</h4>
+        <p>删除冗余 — 去掉不必要的冷却回路</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">03</div>
+        <h4>Simplify</h4>
+        <p>简化系统 — 合并电力分配路径</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">04</div>
+        <h4>Accelerate</h4>
+        <p>加速迭代 — AI 预测 + 自动调节</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <span class="sig">POSEIDONX</span>
+    <span>DATACENTER TWIN · FIELD.IO 运动诗学</span>
+    <span>DEMO B</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Demo D · 深海墨境 · Deep Sea Ink Realm</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   深海墨境 · Deep Sea Ink Realm
+   ─────────────────────────────────────────────────────────────
+   设计哲学融合：
+   - Neo Shen 东方光影诗 (#20) — 水墨晕染数字化、柔金光晕、大气纵深
+   - Territory Studio FUI (#16) — 可信的未来界面、多层数据叠加、全息投影感
+   - Takram 日式思辨 (#17) — 图表即艺术、谦逊的精致、概念原型的优雅
+   ─────────────────────────────────────────────────────────────
+   品牌基因：PoseidonX — 海洋 + 数据 + 东方
+   色彩：深海墨 #0C1017 → 远山青 #1B2838 + 柔金 #D4A855 + 青瓷 #7EC8C8
+   排版：Noto Serif SC (display/诗意) + 思源黑体 (数据/功能)
+   签名细节：水墨粒子背景 — 每次加载都不同的生成图形
+   ─────────────────────────────────────────────────────────────
+   反 AI slop 检查清单：
+   ✅ 无紫渐变 · ✅ 无 emoji 装饰 · ✅ 无圆角+左border accent
+   ✅ oklch 色彩定义 · ✅ 「」中文引号 · ✅ text-wrap: pretty
+   ✅ 单一签名细节做到120% (水墨粒子)
+   ═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root {
+  /* ── 深海墨色阶 (oklch) ── */
+  --abyss:    oklch(0.10 0.02 240);   /* #0C1017 深渊 */
+  --deep:     oklch(0.16 0.03 230);   /* #1B2838 深海 */
+  --mid:      oklch(0.22 0.03 225);   /* #2A3A4E 中层 */
+  --shallow:  oklch(0.30 0.03 220);   /* #3D5068 浅层 */
+
+  /* ── 点睛色 ── */
+  --gold:     oklch(0.75 0.12 80);    /* #D4A855 柔金 — 只用于最重要的一处 */
+  --gold-dim: oklch(0.75 0.12 80 / 0.08);
+  --gold-mid: oklch(0.75 0.12 80 / 0.20);
+  --celadon:  oklch(0.78 0.08 180);   /* #7EC8C8 青瓷 — 数据/状态 */
+  --celadon-dim: oklch(0.78 0.08 180 / 0.08);
+  --coral:    oklch(0.65 0.15 25);    /* 珊瑚 — 仅用于 critical 状态 */
+  --amber:    oklch(0.75 0.12 70);    /* 琥珀 — 仅用于 warning */
+
+  /* ── 文字层 ── */
+  --text:     oklch(0.88 0.02 220);   /* 近白微蓝 */
+  --text-2:   oklch(0.60 0.03 220);   /* 中灰 */
+  --text-3:   oklch(0.40 0.02 220);   /* 暗灰 */
+
+  /* ── 边界 ── */
+  --line:     oklch(0.25 0.02 230 / 0.5);
+  --line-glow: oklch(0.78 0.08 180 / 0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--abyss);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════════════════
+   签名细节 · 水墨粒子场 (120% 做到极致)
+   SVG feTurbulence 生成的水墨质感
+   每次加载 seed 随机 — 每次都不同
+   ════════════════════════════════════════════ */
+.ink-field {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+}
+/* 深海光柱 — 从上方透下来的微光 */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 40% 60% at 30% 10%, oklch(0.78 0.08 180 / 0.03), transparent),
+    radial-gradient(ellipse 30% 50% at 70% 15%, oklch(0.75 0.12 80 / 0.02), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 90%, oklch(0.10 0.02 240 / 0.5), transparent);
+  pointer-events: none; z-index: 0;
+}
+/* 水平波纹 — 深海洋流感 */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  opacity: 0.03;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 80px,
+    oklch(0.78 0.08 180 / 0.3) 80px,
+    oklch(0.78 0.08 180 / 0.3) 81px
+  );
+  mask-image: linear-gradient(180deg, transparent, black 30%, black 70%, transparent);
+}
+
+.frame {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 48px;
+  position: relative; z-index: 1;
+}
+
+/* ════════════════════════════════════════════
+   顶栏 · 谦逊但有信息密度
+   ════════════════════════════════════════════ */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 32px 0 28px;
+  border-bottom: 1px solid var(--line);
+}
+.topbar .brand {
+  display: flex; align-items: center; gap: 16px;
+}
+.topbar .sigil {
+  width: 36px; height: 36px;
+  border: 1px solid var(--gold-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 18px; font-weight: 700;
+  color: var(--gold);
+  /* 不用 border-radius — 方印，东方感 */
+}
+.topbar .wordmark {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 3px; color: var(--text-2);
+}
+.topbar .wordmark strong { color: var(--text); font-weight: 600; }
+.topbar .status {
+  display: flex; align-items: center; gap: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-3); letter-spacing: 1px;
+}
+.live-pip {
+  width: 6px; height: 6px;
+  background: var(--celadon);
+  box-shadow: 0 0 8px var(--celadon), 0 0 20px oklch(0.78 0.08 180 / 0.3);
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--celadon); }
+  50% { opacity: 0.5; box-shadow: 0 0 4px var(--celadon); }
+}
+
+/* ════════════════════════════════════════════
+   英雄区 · 诗意的标题 + 功能的副文案
+   ════════════════════════════════════════════ */
+.hero {
+  padding: 80px 0 60px;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 60px;
+  align-items: end;
+}
+.hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 200;
+  line-height: 1.2;
+}
+.hero-title .line-1 {
+  font-size: 52px;
+  letter-spacing: 6px;
+  color: var(--text);
+}
+.hero-title .line-2 {
+  font-size: 52px;
+  letter-spacing: 6px;
+  color: var(--celadon);
+}
+.hero-title .line-en {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 400;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-top: 20px;
+}
+.hero-right {
+  border-left: 1px solid var(--line);
+  padding-left: 32px;
+}
+.hero-right .principle {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 2;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.hero-right .principle em {
+  font-style: normal;
+  color: var(--gold);
+}
+.hero-divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--line) 15%,
+    var(--gold-mid) 50%,
+    var(--line) 85%,
+    transparent);
+}
+
+/* ════════════════════════════════════════════
+   KPI 仪表带 · Territory FUI 风格
+   扫描线动画 + 等宽数字
+   ════════════════════════════════════════════ */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin: 32px 0;
+  background: var(--line);
+}
+.kpi {
+  padding: 24px 16px;
+  background: var(--deep);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+/* FUI 扫描线 */
+.kpi::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--celadon), transparent);
+  animation: scan 4s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes scan {
+  0% { opacity: 0; transform: translateY(0); }
+  50% { opacity: 0.6; transform: translateY(60px); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.kpi-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 400;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.kpi-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px; font-weight: 600;
+  color: var(--text);
+  font-feature-settings: 'tnum';
+  line-height: 1;
+}
+.kpi-val .unit {
+  font-size: 11px; font-weight: 400; color: var(--text-3); margin-left: 2px;
+}
+.kpi-delta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; margin-top: 6px; color: var(--text-3);
+}
+.kpi-delta.good { color: var(--celadon); }
+.kpi-delta.warn { color: var(--coral); }
+
+/* ════════════════════════════════════════════
+   3D 视口 · 深海之窗
+   全宽出血 + 角落坐标标注（Territory FUI）
+   ════════════════════════════════════════════ */
+.viewport-section {
+  margin: 40px -48px;
+  position: relative;
+}
+.viewport {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  background: linear-gradient(180deg, var(--abyss), oklch(0.08 0.02 240));
+  position: relative;
+  overflow: hidden;
+}
+/* 深海散焦光斑 */
+.viewport .caustics {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 25% 35% at 25% 30%, oklch(0.78 0.08 180 / 0.04), transparent),
+    radial-gradient(ellipse 20% 30% at 75% 50%, oklch(0.75 0.12 80 / 0.03), transparent);
+  animation: caustics-drift 12s ease-in-out infinite alternate;
+}
+@keyframes caustics-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-20px, 10px); }
+}
+/* FUI 角标 */
+.viewport .corner {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px;
+  color: oklch(0.78 0.08 180 / 0.4);
+}
+.viewport .corner.tl { top: 16px; left: 20px; }
+.viewport .corner.tr { top: 16px; right: 20px; text-align: right; }
+.viewport .corner.bl { bottom: 16px; left: 20px; }
+.viewport .corner.br { bottom: 16px; right: 20px; text-align: right; line-height: 1.8; }
+/* FUI 十字准星 */
+.viewport .crosshair {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px; height: 60px;
+  pointer-events: none;
+}
+.viewport .crosshair::before,
+.viewport .crosshair::after {
+  content: '';
+  position: absolute;
+  background: oklch(0.78 0.08 180 / 0.15);
+}
+.viewport .crosshair::before {
+  top: 0; left: 50%; width: 1px; height: 100%;
+  transform: translateX(-0.5px);
+}
+.viewport .crosshair::after {
+  top: 50%; left: 0; width: 100%; height: 1px;
+  transform: translateY(-0.5px);
+}
+/* 中心大字 — 水墨意境 */
+.viewport .center-art {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.viewport .center-art .kanji {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 140px; font-weight: 900;
+  color: oklch(0.20 0.03 230);
+  letter-spacing: 20px;
+  line-height: 1;
+  text-shadow: 0 0 60px oklch(0.78 0.08 180 / 0.08);
+  user-select: none;
+}
+.viewport .center-art .sub-en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 6px;
+  text-transform: uppercase;
+  color: oklch(0.50 0.05 220);
+  margin-top: 16px;
+}
+/* 图层控制区域 placeholder */
+.viewport .layer-panel {
+  position: absolute; left: 16px; top: 48px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.viewport .layer-btn {
+  padding: 5px 12px;
+  background: oklch(0.10 0.02 240 / 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  cursor: pointer;
+  display: flex; justify-content: space-between; gap: 16px;
+  min-width: 180px;
+  transition: border-color 0.2s;
+}
+.viewport .layer-btn:hover { border-color: var(--celadon); color: var(--celadon); }
+.viewport .layer-btn .swatch {
+  display: inline-block; width: 8px; height: 8px;
+}
+
+/* ════════════════════════════════════════════
+   双栏内容 · 设备 + 异常
+   ════════════════════════════════════════════ */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  margin: 40px 0;
+}
+.content-panel {
+  background: var(--deep);
+  padding: 32px;
+}
+.panel-head {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--celadon);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.panel-head .badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); letter-spacing: 1px;
+}
+
+/* 设备表 — Takram 式精确 */
+.dev-table { width: 100%; border-collapse: collapse; }
+.dev-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 400;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-3);
+  text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.dev-table td {
+  padding: 10px 8px;
+  font-size: 12px;
+  border-bottom: 1px solid oklch(0.20 0.02 230 / 0.3);
+  font-feature-settings: 'tnum';
+  transition: background 0.15s;
+}
+.dev-table tr { cursor: pointer; }
+.dev-table tr:hover td { background: var(--celadon-dim); }
+.dev-table .id-col {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600; color: var(--celadon); letter-spacing: 0.5px;
+}
+.dev-table .val-col {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+.pip {
+  display: inline-block; width: 6px; height: 6px;
+}
+.pip.ok { background: var(--celadon); box-shadow: 0 0 4px var(--celadon); }
+.pip.warn { background: var(--amber); box-shadow: 0 0 4px var(--amber); }
+.pip.crit { background: var(--coral); box-shadow: 0 0 4px var(--coral); }
+
+/* 异常流 — FUI 风格 */
+.anom-stream { display: flex; flex-direction: column; gap: 12px; }
+.anom-item {
+  padding: 16px 20px;
+  background: oklch(0.12 0.02 240);
+  border-left: 2px solid var(--text-3);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.anom-item:hover { background: oklch(0.14 0.02 240); }
+.anom-item.critical { border-left-color: var(--coral); }
+.anom-item.high { border-left-color: var(--amber); }
+.anom-item.medium { border-left-color: var(--celadon); }
+.anom-sev {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.anom-item.critical .anom-sev { color: var(--coral); }
+.anom-item.high .anom-sev { color: var(--amber); }
+.anom-item.medium .anom-sev { color: var(--celadon); }
+.anom-desc { font-size: 12px; line-height: 1.7; color: var(--text); }
+.anom-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); margin-top: 6px;
+}
+
+/* ════════════════════════════════════════════
+   PUE 趋势 · 图表即艺术（Takram）
+   ════════════════════════════════════════════ */
+.chart-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--line);
+}
+.chart-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 20px;
+}
+.chart-header h3 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px; font-weight: 400;
+  letter-spacing: 2px;
+}
+.chart-legend {
+  display: flex; gap: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); letter-spacing: 1px;
+}
+.leg-mark {
+  display: inline-block; width: 16px; height: 2px;
+  vertical-align: middle; margin-right: 6px;
+}
+.chart-canvas {
+  width: 100%; height: 200px;
+  background: var(--deep);
+  border: 1px solid var(--line);
+  position: relative; overflow: hidden;
+}
+/* 水墨波形 — 区别于普通折线图 */
+.chart-canvas .ink-wave {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 65%;
+  background: linear-gradient(0deg,
+    oklch(0.78 0.08 180 / 0.06) 0%,
+    oklch(0.78 0.08 180 / 0.02) 40%,
+    transparent 100%);
+  clip-path: polygon(
+    0% 80%, 3% 65%, 7% 70%, 10% 55%, 14% 58%,
+    18% 45%, 22% 48%, 26% 38%, 30% 42%, 34% 35%,
+    38% 40%, 42% 30%, 46% 36%, 50% 28%, 54% 33%,
+    58% 25%, 62% 30%, 66% 22%, 70% 28%, 74% 20%,
+    78% 26%, 82% 32%, 86% 28%, 90% 35%, 94% 30%, 100% 38%,
+    100% 100%, 0% 100%
+  );
+}
+/* 预测区 — 虚化 */
+.chart-canvas .forecast-zone {
+  position: absolute; top: 0; bottom: 0; right: 0; width: 35%;
+  background: repeating-linear-gradient(
+    90deg,
+    oklch(0.75 0.12 80 / 0.03),
+    oklch(0.75 0.12 80 / 0.03) 3px,
+    transparent 3px,
+    transparent 8px
+  );
+}
+.chart-canvas .target-line {
+  position: absolute; top: 30%; left: 0; right: 0;
+  border-top: 1px dashed oklch(0.75 0.12 80 / 0.3);
+}
+.chart-canvas .target-text {
+  position: absolute; top: 28%; right: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--gold); opacity: 0.6; letter-spacing: 1px;
+}
+
+/* ════════════════════════════════════════════
+   AI 洞察 · 东方哲思式呈现
+   ════════════════════════════════════════════ */
+.insight-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.insight-seal {
+  display: flex; flex-direction: column;
+  align-items: center; padding-top: 20px;
+}
+/* 方印 — 东方的 badge */
+.seal-box {
+  width: 120px; height: 120px;
+  border: 2px solid var(--gold-mid);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.seal-box::before {
+  content: '';
+  position: absolute; inset: 6px;
+  border: 1px solid oklch(0.75 0.12 80 / 0.1);
+}
+.seal-box .char {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 56px; font-weight: 900;
+  color: var(--gold);
+  line-height: 1;
+}
+.seal-label {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; font-weight: 300;
+  letter-spacing: 4px;
+  color: var(--text-3);
+  margin-top: 20px;
+}
+
+.insight-body { padding-top: 8px; }
+.insight-tag {
+  display: inline-block;
+  padding: 4px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  border: 1px solid var(--gold-mid);
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.insight-body p {
+  font-size: 14px; line-height: 2;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.insight-body p strong { color: var(--text); font-weight: 500; }
+.rec-list {
+  list-style: none; margin-top: 28px;
+}
+.rec-list li {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  border-left: 1px solid var(--line);
+  margin-bottom: 6px;
+  color: var(--text-2);
+  line-height: 1.7;
+  transition: border-color 0.2s, color 0.2s;
+}
+.rec-list li:hover { border-left-color: var(--gold); color: var(--text); }
+.rec-list .rn {
+  font-family: 'Noto Serif SC', serif;
+  color: var(--gold); font-weight: 600; margin-right: 8px;
+  font-size: 11px;
+}
+
+/* ════════════════════════════════════════════
+   能量流 · FUI 管道图
+   ════════════════════════════════════════════ */
+.flow-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--line);
+}
+.flow-bar {
+  display: flex; align-items: center; gap: 0;
+  margin-top: 28px;
+}
+.flow-node {
+  flex: 1;
+  padding: 24px 12px;
+  background: var(--deep);
+  border: 1px solid var(--line);
+  text-align: center;
+  position: relative;
+}
+.flow-node:first-child { border-radius: 2px 0 0 2px; }
+.flow-node:last-child { border-radius: 0 2px 2px 0; }
+.flow-node .fn-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-3);
+}
+.flow-node .fn-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px; font-weight: 600;
+  color: var(--text); margin-top: 8px;
+  font-feature-settings: 'tnum';
+}
+.flow-node .fn-unit { font-size: 9px; color: var(--text-3); }
+.flow-node.primary {
+  border-color: var(--gold-mid);
+  background: linear-gradient(135deg, var(--gold-dim), var(--deep));
+}
+.flow-node.primary .fn-val { color: var(--gold); }
+.flow-pipe {
+  width: 24px; height: 1px;
+  background: linear-gradient(90deg, var(--celadon), var(--gold));
+  position: relative;
+}
+.flow-pipe::before {
+  content: '';
+  position: absolute; right: -3px; top: -3px;
+  width: 7px; height: 7px;
+  border-right: 1px solid var(--celadon);
+  border-top: 1px solid var(--celadon);
+  transform: rotate(45deg);
+}
+
+/* ════════════════════════════════════════════
+   棘轮循环 · 四步永不回退
+   ════════════════════════════════════════════ */
+.ratchet-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--line);
+}
+.ratchet-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; margin-top: 28px;
+  background: var(--line);
+}
+.ratchet-step {
+  padding: 28px 20px;
+  background: var(--deep);
+  position: relative;
+}
+.ratchet-step.active {
+  background: linear-gradient(135deg, var(--gold-dim), var(--deep));
+}
+.ratchet-step .sn {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 40px; font-weight: 200;
+  color: var(--text-3);
+  line-height: 1;
+}
+.ratchet-step.active .sn { color: var(--gold); }
+.ratchet-step h4 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 2px;
+  margin-top: 12px; color: var(--text);
+}
+.ratchet-step p {
+  font-size: 11px; color: var(--text-3);
+  margin-top: 6px; line-height: 1.7;
+}
+
+/* ════════════════════════════════════════════
+   底栏 · 最小化存在
+   ════════════════════════════════════════════ */
+.foot {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text-3);
+}
+.foot .sig {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px; color: var(--gold);
+  letter-spacing: 3px;
+}
+</style>
+</head>
+<body>
+
+<!-- 水墨粒子背景 · SVG feTurbulence (seed 随机) -->
+<svg class="ink-field" width="100%" height="100%">
+  <defs>
+    <filter id="ink" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.003" numOctaves="4" seed="42" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="gray"/>
+      <feComponentTransfer in="gray" result="dimmed">
+        <feFuncA type="linear" slope="0.02" intercept="0"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="dimmed" mode="screen"/>
+    </filter>
+  </defs>
+  <rect width="100%" height="100%" filter="url(#ink)" fill="oklch(0.12 0.03 230)"/>
+</svg>
+
+<div class="frame">
+
+  <!-- ── 顶栏 ── -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="sigil">海</div>
+      <div class="wordmark"><strong>PoseidonX</strong> · 数据中心数字孪生</div>
+    </div>
+    <div class="status">
+      <span><span class="live-pip" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>LIVE SYNC</span>
+      <span>12:04:32 UTC+8</span>
+      <span>8×8 RACK MATRIX</span>
+    </div>
+  </header>
+
+  <!-- ── 英雄区 ── -->
+  <section class="hero">
+    <div>
+      <h1 class="hero-title">
+        <span class="line-1">物理 ↔ 数字</span><br/>
+        <span class="line-2">一一映射</span>
+        <span class="line-en">Digital Twin · xFirst Principle Energy Datacenter</span>
+      </h1>
+    </div>
+    <div class="hero-right">
+      <p class="principle">
+        机房是一个<em>活的有机体</em>。六十四台机柜是骨架，母线槽是血管，冷通道是呼吸，传感器是神经末梢。数字孪生不是监控屏——是让你<em>感受</em>这个有机体的脉搏。通过第一性原理棘轮，每一次呼吸都比上一次更高效。
+      </p>
+    </div>
+  </section>
+  <hr class="hero-divider"/>
+
+  <!-- ── KPI 仪表带 ── -->
+  <section class="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-label">PUE</div>
+      <div class="kpi-val">1.18</div>
+      <div class="kpi-delta good">↓ 0.03</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">IT Load</div>
+      <div class="kpi-val">847<span class="unit">kW</span></div>
+      <div class="kpi-delta good">↓ 2.1%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Cooling</div>
+      <div class="kpi-val">142<span class="unit">kW</span></div>
+      <div class="kpi-delta good">↓ 5.8%</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Temp</div>
+      <div class="kpi-val">24.3<span class="unit">°C</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Humidity</div>
+      <div class="kpi-val">48<span class="unit">%</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Devices</div>
+      <div class="kpi-val">64</div>
+      <div class="kpi-delta">8×8 Rack</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Anomaly</div>
+      <div class="kpi-val" style="color:var(--coral)">3</div>
+      <div class="kpi-delta warn">1 严重</div>
+    </div>
+  </section>
+
+  <!-- ── 3D 视口 · 深海之窗 ── -->
+  <section class="viewport-section">
+    <div class="viewport">
+      <div class="caustics"></div>
+      <div class="crosshair"></div>
+      <div class="center-art">
+        <div class="kanji">孪</div>
+        <div class="sub-en">Three.js · WebGL · Real-Time Digital Twin</div>
+      </div>
+      <div class="corner tl">数字孪生 · 自由轨道相机</div>
+      <div class="corner tr">THREE.JS v0.158<br/>GPU HEAT FIELD · IDW</div>
+      <div class="corner bl">LIVE · 8s REFRESH</div>
+      <div class="corner br">
+        ROOM 80×50×12 UNITS<br/>
+        PDU WIRING · BUSWAY<br/>
+        COLD / HOT AISLE · AIRFLOW
+      </div>
+      <!-- Layer Controls -->
+      <div class="layer-panel">
+        <button class="layer-btn"><span><span class="swatch" style="background:#444"></span> 机房外壳</span><span>S</span></button>
+        <button class="layer-btn"><span><span class="swatch" style="background:#5b7bb5"></span> 高架地板</span><span>F</span></button>
+        <button class="layer-btn"><span><span class="swatch" style="background:var(--celadon)"></span> 液冷管路</span><span>P</span></button>
+        <button class="layer-btn"><span><span class="swatch" style="background:#a78bfa"></span> 母线槽</span><span>B</span></button>
+        <button class="layer-btn"><span><span class="swatch" style="background:var(--celadon)"></span> 机柜 64</span><span>R</span></button>
+        <button class="layer-btn"><span><span class="swatch" style="background:#22d3ee"></span> 气流矢量</span><span>W</span></button>
+        <button class="layer-btn"><span><span class="swatch" style="background:var(--gold)"></span> 感官织网</span><span>N</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 设备 + 异常 ── -->
+  <div class="content-grid">
+    <div class="content-panel">
+      <div class="panel-head">
+        <span>设备矩阵 · 六十四台</span>
+        <span class="badge">SLIDE-1 SOURCE OF TRUTH</span>
+      </div>
+      <table class="dev-table">
+        <thead>
+          <tr><th>编号</th><th>类型</th><th>功耗</th><th>温度</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="id-col">R1-01</td><td>GPU Server</td><td class="val-col">18.2 kW</td><td>67.3°C</td><td><span class="pip crit"></span></td></tr>
+          <tr><td class="id-col">R1-02</td><td>GPU Server</td><td class="val-col">16.8 kW</td><td>52.1°C</td><td><span class="pip ok"></span></td></tr>
+          <tr><td class="id-col">R2-01</td><td>Storage</td><td class="val-col">4.5 kW</td><td>38.7°C</td><td><span class="pip ok"></span></td></tr>
+          <tr><td class="id-col">R2-02</td><td>Network</td><td class="val-col">2.1 kW</td><td>34.2°C</td><td><span class="pip ok"></span></td></tr>
+          <tr><td class="id-col">R3-01</td><td>GPU Server</td><td class="val-col">17.4 kW</td><td>58.9°C</td><td><span class="pip warn"></span></td></tr>
+          <tr><td class="id-col">R3-02</td><td>CPU Server</td><td class="val-col">8.6 kW</td><td>45.0°C</td><td><span class="pip ok"></span></td></tr>
+          <tr><td class="id-col">R4-01</td><td>GPU Server</td><td class="val-col">19.1 kW</td><td>71.2°C</td><td><span class="pip crit"></span></td></tr>
+          <tr><td class="id-col">R4-02</td><td>UPS</td><td class="val-col">1.2 kW</td><td>29.8°C</td><td><span class="pip ok"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="content-panel">
+      <div class="panel-head">
+        <span>异常指挥</span>
+        <span class="badge">ANOMALY COMMAND</span>
+      </div>
+      <div class="anom-stream">
+        <div class="anom-item critical">
+          <div class="anom-sev">严重 · CRITICAL</div>
+          <div class="anom-desc">R4-01 温度超限 71.2°C — 冷通道回风受阻，建议立即检查 CRAH-04 风机</div>
+          <div class="anom-meta">12:04:32 · z-score 3.8 · 影响范围 Row4</div>
+        </div>
+        <div class="anom-item high">
+          <div class="anom-sev">警告 · HIGH</div>
+          <div class="anom-desc">R1-01 功耗持续高位 18.2kW — GPU 利用率 98%，建议迁移部分负载</div>
+          <div class="anom-meta">12:01:15 · z-score 2.9</div>
+        </div>
+        <div class="anom-item medium">
+          <div class="anom-sev">提示 · MEDIUM</div>
+          <div class="anom-desc">PDU-B2 相位不平衡 — L1/L2 差异 8.3A，建议重新分配回路负载</div>
+          <div class="anom-meta">11:58:40 · z-score 2.1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PUE 趋势 ── -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h3>能效趋势 · 二十四小时</h3>
+      <div class="chart-legend">
+        <span><span class="leg-mark" style="background:var(--celadon)"></span>实际 PUE</span>
+        <span><span class="leg-mark" style="background:var(--gold)"></span>预测</span>
+        <span><span class="leg-mark" style="background:var(--text-3);height:1px;border-top:1px dashed var(--gold)"></span>目标 1.20</span>
+      </div>
+    </div>
+    <div class="chart-canvas">
+      <div class="ink-wave"></div>
+      <div class="forecast-zone"></div>
+      <div class="target-line"></div>
+      <div class="target-text">PUE 1.20 TARGET</div>
+    </div>
+  </section>
+
+  <!-- ── AI 洞察 ── -->
+  <section class="insight-section">
+    <div class="insight-seal">
+      <div class="seal-box">
+        <div class="char">智</div>
+      </div>
+      <div class="seal-label">人工智慧洞察</div>
+    </div>
+    <div class="insight-body">
+      <div class="insight-tag">Energy Optimization</div>
+      <p>
+        <strong>当前 PUE 为 1.18，处于优秀水平</strong>。主要能耗集中在第一排与第四排 GPU 集群，冷通道存在热岛效应。建议将 R4-01 负载迁移至低温区 R6，调高 CRAH-04 风速至 85%，启用液冷辅助回路。预计可将 PUE 降至 1.15，年节省约四十八万元电费。
+      </p>
+      <ul class="rec-list">
+        <li><span class="rn">壹</span>迁移 R4-01 GPU 负载至 R6-03（预计降温 12°C）</li>
+        <li><span class="rn">贰</span>CRAH-04 风速 65% → 85%（消除热岛效应）</li>
+        <li><span class="rn">叁</span>启用液冷辅助回路（PUE ↓ 0.03）</li>
+        <li><span class="rn">肆</span>PDU-B2 回路负载再平衡（降低谐波损耗 2.1%）</li>
+        <li><span class="rn">伍</span>夜间低负载时段关闭 UPS-02 旁路（省电 1.8kW）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 能量流 ── -->
+  <section class="flow-section">
+    <div class="panel-head">
+      <span>能量流 · 物理链路</span>
+      <span class="badge">GRID → IT LOAD → HEAT</span>
+    </div>
+    <div class="flow-bar">
+      <div class="flow-node"><div class="fn-name">市电输入</div><div class="fn-val">998</div><div class="fn-unit">kW</div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-node"><div class="fn-name">UPS</div><div class="fn-val">982</div><div class="fn-unit">kW · η98.4%</div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-node"><div class="fn-name">PDU</div><div class="fn-val">968</div><div class="fn-unit">kW</div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-node primary"><div class="fn-name">IT 负载</div><div class="fn-val">847</div><div class="fn-unit">kW</div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-node"><div class="fn-name">制冷</div><div class="fn-val">142</div><div class="fn-unit">kW</div></div>
+    </div>
+  </section>
+
+  <!-- ── 棘轮循环 ── -->
+  <section class="ratchet-section">
+    <div class="panel-head">
+      <span>无限棘轮 · 永不回退闭环</span>
+      <span class="badge">MUSK 五步法 · xFIRST PRINCIPLE</span>
+    </div>
+    <div class="ratchet-grid">
+      <div class="ratchet-step active">
+        <div class="sn">壹</div>
+        <h4>感知 · Sense</h4>
+        <p>IoT 传感器 + 边缘 PLC 采集全维度遥测</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">贰</div>
+        <h4>解析 · Analyze</h4>
+        <p>四视角 AI 并行评估 — 设备 / 设施 / 环境 / 流程</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">叁</div>
+        <h4>执行 · Actuate</h4>
+        <p>SBC + PLC 边缘 Agent 调节阀门、风机、负载</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">肆</div>
+        <h4>锁定 · Ratchet</h4>
+        <p>验证能耗下降 → 锁定基线 → 重训模型 → 永不回退</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 底栏 ── -->
+  <footer class="foot">
+    <span class="sig">PoseidonX</span>
+    <span>数据中心数字孪生 · 深海墨境</span>
+    <span>DEMO D · NEO SHEN × TERRITORY × TAKRAM</span>
+  </footer>
+
+</div>
+
+<script>
+// 水墨粒子 seed 随机化 — 让每次加载都是独特的水墨纹理
+document.querySelector('#ink feTurbulence')?.setAttribute('seed', Math.floor(Math.random()*9999));
+</script>
+
+</body>
+</html>

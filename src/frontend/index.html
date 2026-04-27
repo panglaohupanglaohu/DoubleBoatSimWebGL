@@ -1,52 +1,122 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PoseidonX — 深海远洋双体船舶智能综合信息系统</title>
-  <style>
-:root{--bg:#060d1a;--cyan:#64d2ff;--green:#30d158;--blue:#007aff;--purple:#bf5af2;--text:#f0f6ff;--text2:#9bb3cd;--text3:#5b7894;--line:rgba(100,180,255,0.12)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PoseidonX — 深海远洋双体船舶智能综合信息系统</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   PoseidonX 主页 · 侘寂橡膠 Wabi-Sabi Rubber
+   ═══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+:root{
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.005 110);
+  --hai:oklch(0.78 0.005 110);--nezumi:oklch(0.68 0.006 110);
+  --rubber:oklch(0.72 0.006 110);--rubber-hover:oklch(0.68 0.007 110);--rubber-press:oklch(0.64 0.007 110);
+  --sumi:oklch(0.18 0.008 110);--sumi-2:oklch(0.38 0.006 110);--sumi-3:oklch(0.55 0.005 110);
+  --koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);
+  --text:oklch(0.18 0.008 110);--text-2:oklch(0.42 0.006 110);--text-3:oklch(0.60 0.005 110);
+  --groove:oklch(0.82 0.004 110);--ridge:oklch(1.00 0 0 / 0.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-font-smoothing:antialiased}
+body{
+  font-family:'Noto Sans SC',sans-serif;background:var(--shironeri);color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow-x:hidden;position:relative;line-height:1.6;
+}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(oklch(0 0 0/0.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/0.008) 1px,transparent 1px);
+  background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
 canvas#bgCanvas{position:fixed;inset:0;z-index:0}
-.content{position:relative;z-index:1;text-align:center;padding:40px 20px;max-width:800px}
-.logo{font-size:64px;margin-bottom:16px;filter:drop-shadow(0 0 30px rgba(100,210,255,0.3))}
-h1{font-size:42px;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--green),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;letter-spacing:-1px}
-.subtitle{font-size:16px;color:var(--text2);margin-bottom:8px}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.25);margin-bottom:36px}
-.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--green)}50%{opacity:0.5;box-shadow:0 0 12px var(--green)}}
-.modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:32px;text-align:left}
-.mod{background:rgba(10,22,45,0.8);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:all .3s;text-decoration:none;color:var(--text);backdrop-filter:blur(12px)}
-.mod:hover{border-color:rgba(100,180,255,0.3);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
-.mod .m-icon{font-size:24px;margin-bottom:6px}
-.mod .m-name{font-size:14px;font-weight:700}
-.mod .m-desc{font-size:11px;color:var(--text3);margin-top:2px}
-.enter-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;border-radius:14px;background:linear-gradient(135deg,var(--blue),#5e5ce6);color:#fff;font-size:16px;font-weight:700;text-decoration:none;transition:all .3s;box-shadow:0 6px 24px rgba(0,122,255,0.35);letter-spacing:.5px}
-.enter-btn:hover{transform:translateY(-2px);box-shadow:0 10px 40px rgba(0,122,255,0.5)}
-.footer{color:var(--text3);font-size:11px;margin-top:32px}
-  </style>
+.frame{position:relative;z-index:1;text-align:center;padding:40px 32px;max-width:960px;width:100%}
+
+/* 方印 */
+.sigil{width:56px;height:56px;background:var(--sumi);display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Noto Serif SC',serif;font-size:30px;font-weight:900;color:var(--shironeri);margin-bottom:20px}
+h1{font-family:'Noto Serif SC',serif;font-size:48px;font-weight:200;color:var(--sumi);letter-spacing:6px;line-height:1.15;margin-bottom:6px}
+.subtitle{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:4px;text-transform:uppercase;margin-bottom:8px}
+.status{display:inline-flex;align-items:center;gap:8px;padding:5px 16px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--koke);
+  background:oklch(0.93 0.003 110);
+  box-shadow:inset 0 1px 4px oklch(0 0 0/0.05),0 1px 0 var(--ridge);margin-bottom:40px}
+.status .dot{width:6px;height:6px;background:var(--koke);animation:breath 3s ease-in-out infinite}
+@keyframes breath{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* 模块网格 */
+.modules{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:32px;text-align:left}
+.mod{
+  background:oklch(0.93 0.003 110);padding:20px 16px;cursor:pointer;
+  text-decoration:none;color:var(--text);position:relative;
+  box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5);
+  transition:all 0.08s ease-out;
+}
+.mod:hover{background:oklch(0.90 0.003 110);transform:translateY(-1px);box-shadow:0 4px 16px oklch(0 0 0/0.08)}
+.mod::after{content:'';position:absolute;bottom:0;left:12px;right:12px;height:1px;background:var(--groove)}
+.mod .m-seal{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:900;color:var(--sumi-3);margin-bottom:8px;display:block}
+.mod .m-name{font-family:'Noto Serif SC',serif;font-size:13px;font-weight:600;letter-spacing:1px;color:var(--sumi)}
+.mod .m-desc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-3);margin-top:4px;letter-spacing:0.5px}
+
+/* 橡膠入口按鈕 */
+.enter-btn{
+  display:inline-flex;align-items:center;gap:10px;padding:14px 40px;
+  background:var(--sumi);color:var(--shironeri);font-family:'JetBrains Mono',monospace;
+  font-size:12px;font-weight:600;letter-spacing:3px;text-transform:uppercase;text-decoration:none;
+  box-shadow:0 2px 5px oklch(0 0 0/0.15),inset 0 1px 0 oklch(1 0 0/0.08),inset 0 -1px 0 oklch(0 0 0/0.3);
+  background-image:radial-gradient(oklch(1 0 0/0.02) 1px,transparent 1px);background-size:3px 3px;
+  transition:all 0.08s ease-out;
+}
+.enter-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px oklch(0 0 0/0.18)}
+.enter-btn:active{transform:translateY(1px);box-shadow:inset 0 2px 5px oklch(0 0 0/0.3)}
+
+.divider{height:1px;border:none;background:var(--groove);margin:32px 0;width:100%}
+
+.foot{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-3);letter-spacing:2px;margin-top:24px}
+
+/* Language toggle */
+.lang-toggle{position:fixed;top:20px;right:24px;z-index:100;
+  padding:6px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  letter-spacing:1.5px;color:var(--sumi);background:oklch(0.93 0.003 110);
+  border:none;cursor:pointer;box-shadow:inset 0 1px 4px oklch(0 0 0/0.05),0 1px 0 var(--ridge);
+  transition:all 0.08s ease-out}
+.lang-toggle:hover{background:oklch(0.90 0.003 110);transform:translateY(-1px)}
+</style>
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 <canvas id="bgCanvas"></canvas>
-<div class="content">
-  <div class="logo">🔱</div>
+<button id="px-lang-btn" class="lang-toggle" onclick="PX_I18N.toggleLang()">中/EN</button>
+<div class="frame">
+  <div class="sigil">海</div>
   <h1>PoseidonX</h1>
   <div class="subtitle">深海远洋双体船舶智能综合信息系统</div>
-  <div class="badge"><span class="dot"></span> AI Native CPS · 53 Channels · 7 Agents</div>
+  <div class="status"><span class="dot"></span> AI NATIVE CPS · 53 CHANNELS · 7 AGENTS</div>
+
   <div class="modules">
-    <a href="/captain-cockpit-new.html" class="mod"><div class="m-icon">⚓</div><div class="m-name">船长中控台</div><div class="m-desc">智能驾驶舱总览</div></a>
-    <a href="/navigation-v3.html" class="mod"><div class="m-icon">🧭</div><div class="m-name">智能导航</div><div class="m-desc">ECDIS 海图与航路</div></a>
-    <a href="/dp-control.html" class="mod"><div class="m-icon">📍</div><div class="m-name">动力定位</div><div class="m-desc">DP 位置保持系统</div></a>
-    <a href="/thruster-control.html" class="mod"><div class="m-icon">⚙️</div><div class="m-name">推进控制</div><div class="m-desc">K-Thrust RCS 推进</div></a>
-    <a href="/safety-emergency.html" class="mod"><div class="m-icon">🔥</div><div class="m-name">安全应急</div><div class="m-desc">消防 · ESD · 救生</div></a>
-    <a href="/system-evolution.html" class="mod"><div class="m-icon">⚡</div><div class="m-name">系统演进</div><div class="m-desc">AI 自我演进引擎</div></a>
-    <a href="/energy-compliance.html" class="mod"><div class="m-icon">🌿</div><div class="m-name">能效合规</div><div class="m-desc">CII/EEXI 碳排放</div></a>
-    <a href="/hmi-console.html" class="mod"><div class="m-icon">💬</div><div class="m-name">AI 控制台</div><div class="m-desc">智能对话交互</div></a>
+    <a href="/captain-cockpit-new.html" class="mod"><span class="m-seal">舵</span><div class="m-name">船长中控台</div><div class="m-desc">Captain Cockpit</div></a>
+    <a href="/navigation-v3.html" class="mod"><span class="m-seal">航</span><div class="m-name">智能导航</div><div class="m-desc">ECDIS S-100 Nav</div></a>
+    <a href="/dp-control.html" class="mod"><span class="m-seal">定</span><div class="m-name">动力定位</div><div class="m-desc">DP Position Hold</div></a>
+    <a href="/thruster-control.html" class="mod"><span class="m-seal">推</span><div class="m-name">推进控制</div><div class="m-desc">K-Thrust RCS</div></a>
+    <a href="/safety-emergency.html" class="mod"><span class="m-seal">安</span><div class="m-name">安全应急</div><div class="m-desc">Fire · ESD · Rescue</div></a>
+    <a href="/energy-compliance.html" class="mod"><span class="m-seal">能</span><div class="m-name">能效合规</div><div class="m-desc">CII / EEXI / SEEMP</div></a>
+    <a href="/system-evolution.html" class="mod"><span class="m-seal">演</span><div class="m-name">系统演进</div><div class="m-desc">Ratchet Evolution</div></a>
+    <a href="/hmi-console.html" class="mod"><span class="m-seal">智</span><div class="m-name">AI 控制台</div><div class="m-desc">HMI Console</div></a>
+    <a href="/datacenter-digital-twin.html" class="mod"><span class="m-seal">孪</span><div class="m-name">数据中心孪生</div><div class="m-desc">DC Digital Twin</div></a>
+    <a href="/worldmonitor-ar-cas-pro.html" class="mod"><span class="m-seal">域</span><div class="m-name">态势感知</div><div class="m-desc">AR CAS WorldMonitor</div></a>
+    <a href="/ship-shore.html" class="mod"><span class="m-seal">岸</span><div class="m-name">船岸通信</div><div class="m-desc">Ship-Shore Link</div></a>
+    <a href="/weather-ocean.html" class="mod"><span class="m-seal">洋</span><div class="m-name">气象海况</div><div class="m-desc">Weather · Ocean</div></a>
+    <a href="/crew-management.html" class="mod"><span class="m-seal">员</span><div class="m-name">船员管理</div><div class="m-desc">Crew Management</div></a>
+    <a href="/cms-health.html" class="mod"><span class="m-seal">维</span><div class="m-name">设备健康</div><div class="m-desc">CMS Health Monitor</div></a>
+    <a href="/offshore-ops.html" class="mod"><span class="m-seal">作</span><div class="m-name">海上作业</div><div class="m-desc">Offshore Operations</div></a>
+    <a href="/sim-training.html" class="mod"><span class="m-seal">训</span><div class="m-name">仿真训练</div><div class="m-desc">Sim Training</div></a>
   </div>
-  <a href="/captain-cockpit-new.html" class="enter-btn">🚀 进入系统</a>
-  <div class="footer">PoseidonX v2.0 © 2026 — AI Native Maritime CPS · IMO MASS Compliant</div>
+
+  <a href="/captain-cockpit-new.html" class="enter-btn">进入系统</a>
+
+  <hr class="divider"/>
+  <div class="foot">POSEIDONX V2.0 © 2026 — AI NATIVE MARITIME CPS · IMO MASS COMPLIANT</div>
 </div>
+
 <script>
 (function(){
   const c=document.getElementById('bgCanvas'),ctx=c.getContext('2d');
@@ -54,24 +124,25 @@ h1{font-size:42px;font-weight:800;background:linear-gradient(135deg,var(--cyan),
   function resize(){c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
   resize();window.addEventListener('resize',resize);
   const particles=[];
-  for(let i=0;i<60;i++)particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+1,a:Math.random()*.3+.1});
+  for(let i=0;i<50;i++)particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15,r:Math.random()*1.2+0.4,a:Math.random()*.08+.03});
   function draw(){
     const w=window.innerWidth,h=window.innerHeight;
     ctx.clearRect(0,0,w,h);
     particles.forEach(p=>{
       p.x+=p.vx;p.y+=p.vy;
       if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(100,210,255,'+p.a+')';ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(90,85,78,'+p.a+')';ctx.fill();
     });
-    // Connection lines
     for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){
       const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<150){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle='rgba(100,180,255,'+(0.06*(1-d/150))+')';ctx.lineWidth=1;ctx.stroke();}
+      if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle='rgba(138,131,120,'+(0.04*(1-d/120))+')';ctx.lineWidth=0.5;ctx.stroke();}
     }}
     requestAnimationFrame(draw);
   }
   draw();
 })();
 </script>
+<script src="/js/i18n.js"></script>
 </body>
 </html>

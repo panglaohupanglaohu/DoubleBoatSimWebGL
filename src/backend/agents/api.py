@@ -2041,6 +2041,14 @@ import logging as _logging
 from collections import deque
 
 _harness_log = _logging.getLogger("workflow_harness")
+# Ensure harness messages reach stdout (uvicorn captures root logger)
+if not _harness_log.handlers:
+    _h = _logging.StreamHandler()
+    _h.setFormatter(_logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    _harness_log.addHandler(_h)
+    _harness_log.setLevel(_logging.INFO)
+    _harness_log.propagate = False
 
 _claude_sessions: Dict[str, Dict[str, Any]] = {}  # session_id -> {proc, lines, status, ...}
 
@@ -2050,6 +2058,124 @@ _HARNESS_MAX_RETRIES = 2     # Retry failed steps up to N times
 _HARNESS_RETRY_DELAY = 3     # Seconds between retries
 _HARNESS_STALL_SEC = 300     # Mark stalled if no output for N seconds (large models need time)
 _HARNESS_AUTO_ADVANCE = True # Auto-advance on step completion
+_PIPELINE_MAX_REWINDS = 2    # Max times to rewind develop→test→deploy with QA feedback
+
+
+def _rewind_pipeline_to_develop(task, wf: list, qa_reason: str, qa_report: str) -> bool:
+    """Rewind workflow back to the develop step with structured QA feedback.
+
+    Resets develop/test/deploy steps to 'pending', stores feedback in task.metadata,
+    so the next harness tick will re-run develop with the QA report visible in its prompt.
+
+    Enhanced: extracts structured failure data (file paths, line numbers, error types)
+    from the QA report so the developer gets actionable fix instructions.
+
+    Returns True if rewind succeeded, False if rewind cap exhausted.
+    """
+    md = task.metadata or {}
+    rewind_count = int(md.get("pipeline_rewinds", 0))
+    if rewind_count >= _PIPELINE_MAX_REWINDS:
+        _harness_log.warning(
+            f"[Harness] Rewind cap reached ({rewind_count}/{_PIPELINE_MAX_REWINDS}) "
+            f"for task {task.task_id} — giving up"
+        )
+        return False
+
+    rewind_count += 1
+
+    # ── Extract structured failure data from QA report ──
+    structured_failures = []
+    if qa_report:
+        import re as _re_rw
+        # Parse file-specific errors: patterns like "src/backend/foo.py: ImportError ..."
+        file_error_re = _re_rw.compile(
+            r"(?:❌|FAIL|BLOCKER|失败|错误)\s*[：:]*\s*"
+            r"(?:`?([^\s`]+\.\w{1,6})`?)"
+            r"(?:\s*(?:L|line|行)\s*(\d+))?"
+            r"[：:\s]+(.+?)(?:\n|$)",
+            _re_rw.MULTILINE | _re_rw.IGNORECASE,
+        )
+        for m in file_error_re.finditer(qa_report):
+            structured_failures.append({
+                "file": m.group(1),
+                "line": int(m.group(2)) if m.group(2) else None,
+                "error": m.group(3).strip()[:300],
+            })
+
+        # Parse pytest-style failures: "FAILED tests/unit/test_foo.py::test_bar - reason"
+        pytest_fail_re = _re_rw.compile(
+            r"FAILED\s+([\w/._]+)::(\w+)\s*[-–]\s*(.+?)(?:\n|$)",
+            _re_rw.MULTILINE,
+        )
+        for m in pytest_fail_re.finditer(qa_report):
+            structured_failures.append({
+                "file": m.group(1),
+                "test": m.group(2),
+                "error": m.group(3).strip()[:300],
+            })
+
+        # Parse SyntaxError / ImportError lines
+        syntax_re = _re_rw.compile(
+            r"(SyntaxError|ImportError|ModuleNotFoundError|NameError|AttributeError)"
+            r"[：:\s]+(.+?)(?:\n|$)",
+            _re_rw.MULTILINE,
+        )
+        for m in syntax_re.finditer(qa_report):
+            err = {"error_type": m.group(1), "detail": m.group(2).strip()[:300]}
+            # Avoid duplicates
+            if not any(sf.get("error", "").startswith(m.group(1)) for sf in structured_failures):
+                structured_failures.append(err)
+
+    md["pipeline_rewinds"] = rewind_count
+    md["qa_feedback"] = {
+        "iteration": rewind_count,
+        "reason": qa_reason,
+        "report": qa_report[:5000] if qa_report else "",
+        "structured_failures": structured_failures[:15],
+        "at": _time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    # Also try to include the test step's structured summary
+    test_step = next((s for s in wf if s.get("key") == "test"), None)
+    if test_step and test_step.get("_summary"):
+        ts = test_step["_summary"]
+        md["qa_feedback"]["verdict"] = ts.get("verdict", "FAIL")
+        md["qa_feedback"]["qa_checklist"] = ts.get("checklist", [])
+
+    # Reset develop / test / deploy steps so harness will re-execute them
+    rewindable = {"develop", "test", "deploy"}
+    for s in wf:
+        if s.get("key") in rewindable:
+            s["status"] = "pending"
+            s["session_id"] = None
+            s["_retries"] = 0
+            s["artifact"] = ""
+            s.pop("error", None)
+            s.pop("deploy_blocked", None)
+            s.pop("deploy_result", None)
+            s.pop("files_applied", None)
+            s.pop("smoke", None)
+            s.pop("deliverable_count", None)
+            s.pop("deliverable_paths", None)
+            s.pop("_summary", None)
+
+    # Re-activate develop step
+    for s in wf:
+        if s.get("key") == "develop":
+            s["status"] = "active"
+            break
+
+    task.metadata = md
+    task.metadata["workflow"] = wf
+    _harness_log.info(
+        f"[Harness] 🔁 Pipeline rewound to develop (iter {rewind_count}/{_PIPELINE_MAX_REWINDS}) "
+        f"for task {task.task_id}: {qa_reason} "
+        f"({len(structured_failures)} structured failure(s))"
+    )
+    return True
+
+
+
 
 # ── Workflow harness: monitors sessions and auto-advances steps ──
 _harness_threads: Dict[str, threading.Thread] = {}  # task_id -> monitor thread
@@ -2114,7 +2240,23 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                     except Exception as ex:
                         _harness_log.warning(f"[Harness] Could not auto-complete task: {ex}")
                         task.status = task.status.__class__("completed")
-                break
+                    break  # All done → exit harness loop
+                else:
+                    # No active step but pending steps remain → promote the first pending one.
+                    # This recovers from cases where a step's status got reset (rewind / race)
+                    # but no follow-up activation happened.
+                    pending = [s for s in wf if s.get("status") == "pending"]
+                    if pending:
+                        promoted = pending[0]
+                        promoted["status"] = "active"
+                        promoted["_active_since"] = _time.time()
+                        promoted["session_id"] = None
+                        task.metadata["workflow"] = wf
+                        _harness_log.warning(
+                            f"[Harness] No active step but {len(pending)} pending — "
+                            f"auto-promoting '{promoted.get('key')}' to active"
+                        )
+                    continue  # next poll cycle will pick it up
 
             sid = active_step.get("session_id")
             if not sid:
@@ -2153,9 +2295,12 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                                 active_step["error"] = f"Agent {aid} not found"
                                 task.metadata["workflow"] = wf
                         except Exception as ex:
-                            _harness_log.error("[Harness] Failed to late-start step %s: %s",
-                                               active_step["key"], ex)
+                            _harness_log.exception(
+                                "[Harness] Failed to late-start step %s: %s",
+                                active_step["key"], ex,
+                            )
                             active_step["status"] = "failed"
+                            active_step["error"] = f"late-start failed: {ex}"
                             task.metadata["workflow"] = wf
                     else:
                         _harness_log.warning("[Harness] Step %s has no agent_id — skipping",
@@ -2258,46 +2403,198 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                             task_id, step_key, art_text, deliverables or None,
                         )
 
+                        # ── Persist tool-call trace if this step ran in tool-loop mode ──
+                        if session.get("tool_loop_log") is not None:
+                            try:
+                                pdir_tt = _pipeline_dir(task_id)
+                                _os.makedirs(pdir_tt, exist_ok=True)
+                                idx_tt = _STEP_INDEX.get(step_key, "00")
+                                trace_path = _os.path.join(
+                                    pdir_tt, f"{idx_tt}_{step_key}_tool_trace.json",
+                                )
+                                import json as _json_tt
+                                with open(trace_path, "w", encoding="utf-8") as _tf:
+                                    _json_tt.dump({
+                                        "task_id": task_id, "step": step_key,
+                                        "role": active_step.get("agent_role", ""),
+                                        "ok": bool(session.get("loop_ok")),
+                                        "iterations": session.get("loop_iterations", 0),
+                                        "files_changed": session.get("files_changed", []),
+                                        "summary": session.get("loop_summary", ""),
+                                        "log": session.get("tool_loop_log", []),
+                                    }, _tf, ensure_ascii=False, indent=2)
+                                _harness_log.info(
+                                    f"[Harness] Tool-trace persisted: {trace_path}"
+                                )
+                            except Exception as _terr:
+                                _harness_log.debug(f"[Harness] tool-trace save skipped: {_terr}")
+
                         if deliverables:
                             active_step["deliverable_count"] = len(deliverables)
                             active_step["deliverable_paths"] = [d["path"] for d in deliverables]
                             _harness_log.info(
                                 f"[Harness] Step {step_key}: {len(deliverables)} code deliverables saved"
                             )
+
+                            # Per-agent workspace isolation: also drop a copy in
+                            # the agent's private deliverables dir for traceability
+                            try:
+                                agent_id = active_step.get("agent_id") or active_step.get("assignee") or ""
+                                if team_id and agent_id:
+                                    _save_deliverables_to_workspace(
+                                        task_id, team_id, agent_id, deliverables,
+                                    )
+                            except Exception as ws_err:
+                                _harness_log.debug(f"[Harness] per-agent ws save skipped: {ws_err}")
+
+                            # Pre-deploy smoke check (so QA step sees real signal)
+                            if step_key == "develop":
+                                try:
+                                    smoke = _smoke_check_pipeline_code(task_id, step_key)
+                                    active_step["smoke"] = smoke
+                                    n_fail = sum(1 for s in smoke if not s.get("syntax_ok"))
+                                    if n_fail:
+                                        session["lines"].append(
+                                            f"\n🔥 冒烟测试: {n_fail}/{len(smoke)} 文件存在语法/导入问题 (详见 apply_report.json)\n"
+                                        )
+                                    _harness_log.info(
+                                        f"[Harness] Smoke: {len(smoke)-n_fail}/{len(smoke)} OK"
+                                    )
+                                except Exception as smoke_err:
+                                    _harness_log.warning(f"[Harness] smoke check failed: {smoke_err}")
                     except Exception as pipe_err:
                         _harness_log.error(f"[Harness] Pipeline save error: {pipe_err}")
+
+                # ── Extract structured summary for downstream agents ──
+                if has_content and step_key:
+                    try:
+                        art_path_s = active_step.get("artifact", "")
+                        summary_text = ""
+                        if art_path_s and _os.path.isfile(art_path_s):
+                            with open(art_path_s, "r", encoding="utf-8") as _sf:
+                                summary_text = _sf.read()
+                        else:
+                            summary_text = "".join(list(session.get("lines", [])))
+                        _step_deliverables = active_step.get("deliverable_paths", [])
+                        _step_smoke = active_step.get("smoke")
+                        _step_summary = _extract_step_summary(
+                            task_id, step_key, summary_text,
+                            deliverables=[{"path": p} for p in _step_deliverables] if _step_deliverables else None,
+                            smoke_results=_step_smoke,
+                        )
+                        active_step["_summary"] = _step_summary
+                        _harness_log.info(
+                            f"[Harness] Step summary extracted for {step_key}: "
+                            f"{len(_step_summary.get('decisions', []))} decisions, "
+                            f"{len(_step_summary.get('files_changed', []))} files"
+                        )
+                    except Exception as sum_err:
+                        _harness_log.debug(f"[Harness] Summary extraction skipped: {sum_err}")
 
                 # ── Deploy step: apply code from developer's pipeline output ──
                 if step_key == "deploy":
                     try:
-                        # Apply developer step's code to project
-                        dev_result = _apply_code_from_pipeline(task_id, "develop")
-                        dev_applied = len(dev_result.get("applied", []))
+                        # ── QA Gate: refuse to apply if test step verdict is FAIL ──
+                        gate_blocked = False
+                        gate_reason = ""
+                        try:
+                            # Check the test step's status in workflow first
+                            test_step_obj = next((s for s in wf if s.get("key") == "test"), None)
+                            if test_step_obj and test_step_obj.get("status") == "failed":
+                                gate_blocked = True
+                                gate_reason = (
+                                    f"Test 步骤失败 ({test_step_obj.get('error','no session/output')})"
+                                )
 
-                        # Also apply deployer's own code (blue-green new files)
-                        deploy_result = _apply_code_from_pipeline(task_id, "deploy")
-                        deploy_applied = len(deploy_result.get("applied", []))
+                            pdir_g = _pipeline_dir(task_id)
+                            test_idx = _STEP_INDEX.get("test", "05")
+                            test_md = _os.path.join(pdir_g, f"{test_idx}_test.md")
+                            if _os.path.isfile(test_md):
+                                test_text = open(test_md, "r", encoding="utf-8").read()
+                                # Block if QA explicitly said FAIL or BLOCKER
+                                tl = test_text.lower()
+                                # Look for "## 验证结论" then "FAIL"
+                                import re as _re_g
+                                verdict_m = _re_g.search(
+                                    r"##\s*验证结论[\s\S]{0,200}?\b(fail|失败|blocked)\b",
+                                    test_text, _re_g.IGNORECASE,
+                                )
+                                blocker_m = _re_g.search(r"\bblocker\b", test_text, _re_g.IGNORECASE)
+                                if verdict_m and not gate_blocked:
+                                    gate_blocked = True
+                                    gate_reason = "QA 验证结论 = FAIL"
+                                elif blocker_m and "blocker" not in tl.split("##")[0] and not gate_blocked:
+                                    # only treat BLOCKER as gate if it's in body (not echo of the prompt)
+                                    gate_blocked = True
+                                    gate_reason = "QA 报告含 BLOCKER 级别问题"
+                        except Exception as gerr:
+                            _harness_log.debug(f"[Harness] QA gate check skipped: {gerr}")
 
-                        total_applied = dev_applied + deploy_applied
-                        total_skipped = (len(dev_result.get("skipped", []))
-                                        + len(deploy_result.get("skipped", [])))
-                        total_failed = (len(dev_result.get("failed", []))
-                                       + len(deploy_result.get("failed", [])))
+                        if gate_blocked:
+                            active_step["files_applied"] = 0
+                            active_step["deploy_blocked"] = gate_reason
+                            session["lines"].append(
+                                f"\n🛑 部署已被 QA 阻断: {gate_reason}\n"
+                            )
+                            _harness_log.warning(
+                                f"[Harness] Deploy BLOCKED by QA gate for task {task_id}: {gate_reason}"
+                            )
 
-                        active_step["files_applied"] = total_applied
-                        active_step["deploy_result"] = {
-                            "developer": dev_result,
-                            "deployer": deploy_result,
-                        }
-                        session["lines"].append(
-                            f"\n📦 部署结果: {total_applied} 文件已应用 "
-                            f"(开发: {dev_applied}, 蓝绿: {deploy_applied}), "
-                            f"{total_skipped} 跳过, {total_failed} 失败\n"
-                        )
-                        _harness_log.info(
-                            f"[Harness] Deploy: {total_applied} applied "
-                            f"(dev={dev_applied}, deploy={deploy_applied})"
-                        )
+                            # ── Phase 4: try to rewind to develop with QA feedback ──
+                            qa_report_text = ""
+                            try:
+                                pdir_g2 = _pipeline_dir(task_id)
+                                test_idx2 = _STEP_INDEX.get("test", "05")
+                                test_md2 = _os.path.join(pdir_g2, f"{test_idx2}_test.md")
+                                if _os.path.isfile(test_md2):
+                                    qa_report_text = open(test_md2, "r", encoding="utf-8").read()
+                            except Exception:
+                                pass
+
+                            if _rewind_pipeline_to_develop(task, wf, gate_reason, qa_report_text):
+                                session["lines"].append(
+                                    f"\n🔁 自动回滚到 develop 步骤，附带 QA 反馈，重新开发...\n"
+                                )
+                                # Skip rest of deploy handling — pipeline is now back at develop
+                                continue
+                            else:
+                                session["lines"].append(
+                                    f"   重试上限已达 ({_PIPELINE_MAX_REWINDS})，停止管线。\n"
+                                    f"   代码保留在管线工作区，不会写入项目代码库。\n"
+                                )
+                                # Mark as failed so workflow stops cleanly
+                                sess_status = "failed"
+                                session["status"] = "failed"
+                                session["error"] = f"QA gate: {gate_reason}"
+                        else:
+                            # Apply developer step's code to project
+                            dev_result = _apply_code_from_pipeline(task_id, "develop")
+                            dev_applied = len(dev_result.get("applied", []))
+
+                            # Also apply deployer's own code (blue-green new files)
+                            deploy_result = _apply_code_from_pipeline(task_id, "deploy")
+                            deploy_applied = len(deploy_result.get("applied", []))
+
+                            total_applied = dev_applied + deploy_applied
+                            total_skipped = (len(dev_result.get("skipped", []))
+                                            + len(deploy_result.get("skipped", [])))
+                            total_failed = (len(dev_result.get("failed", []))
+                                           + len(deploy_result.get("failed", [])))
+
+                            active_step["files_applied"] = total_applied
+                            active_step["deploy_result"] = {
+                                "developer": dev_result,
+                                "deployer": deploy_result,
+                            }
+                            session["lines"].append(
+                                f"\n📦 部署结果: {total_applied} 文件已应用 "
+                                f"(开发: {dev_applied}, 蓝绿: {deploy_applied}), "
+                                f"{total_skipped} 跳过, {total_failed} 失败\n"
+                            )
+                            _harness_log.info(
+                                f"[Harness] Deploy: {total_applied} applied "
+                                f"(dev={dev_applied}, deploy={deploy_applied})"
+                            )
                     except Exception as dpex:
                         _harness_log.error(f"[Harness] Deploy apply error: {dpex}")
 
@@ -2329,15 +2626,33 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
 
                 if sess_status == "completed":
                     active_step["status"] = "completed"
-                    # Write success handoff MD for next agent
-                    _write_handoff(task_id, active_step["key"], {
+                    # Build structured handoff payload with summary data
+                    _handoff_payload = {
                         "step": active_step["key"],
                         "label": active_step.get("label", ""),
                         "agent_role": active_step.get("agent_role", ""),
                         "status": "completed",
                         "artifact": active_step.get("artifact", ""),
-                        "output_summary": "".join(list(session.get("lines", []))[-20:])[:2000],
-                    }, from_agent=active_step.get("agent_id", ""),
+                    }
+                    # Include structured summary if available
+                    _step_sum = active_step.get("_summary", {})
+                    if _step_sum:
+                        _handoff_payload["decisions"] = _step_sum.get("decisions", [])
+                        _handoff_payload["files_changed"] = _step_sum.get("files_changed", [])
+                        # develop→test: include verification checklist
+                        if active_step["key"] == "develop":
+                            _handoff_payload["verify_checklist"] = _step_sum.get("verify_checklist", [])
+                            _handoff_payload["smoke"] = _step_sum.get("smoke", {})
+                        # test→deploy: include verdict and blockers
+                        elif active_step["key"] == "test":
+                            _handoff_payload["verdict"] = _step_sum.get("verdict", "UNKNOWN")
+                            _handoff_payload["checklist"] = _step_sum.get("checklist", [])
+                    else:
+                        _handoff_payload["output_summary"] = "".join(
+                            list(session.get("lines", []))[-20:]
+                        )[:2000]
+                    _write_handoff(task_id, active_step["key"], _handoff_payload,
+                        from_agent=active_step.get("agent_id", ""),
                        to_agent=wf[active_step["index"] + 1]["agent_id"] if active_step["index"] + 1 < len(wf) else "(end)")
 
                 # Auto-advance to next step
@@ -2388,13 +2703,21 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                         agent = tm.get_agent(team_id, next_step["agent_id"])
                         if agent:
                             new_sid = str(_uuid.uuid4())[:12]
-                            step_prompt = _build_step_prompt(task, next_step, wf)
-                            _harness_log.info(
-                                f"[Harness] Auto-advancing: step {active_step['key']} → "
-                                f"{next_step['key']} (agent: {agent.name}, session: {new_sid})"
-                            )
-                            _start_claude_session(new_sid, step_prompt, cfg, agent, task_id)
-                            next_step["session_id"] = new_sid
+                            try:
+                                step_prompt = _build_step_prompt(task, next_step, wf)
+                                _harness_log.info(
+                                    f"[Harness] Auto-advancing: step {active_step['key']} → "
+                                    f"{next_step['key']} (agent: {agent.name}, session: {new_sid})"
+                                )
+                                _start_claude_session(new_sid, step_prompt, cfg, agent, task_id)
+                                next_step["session_id"] = new_sid
+                            except Exception as start_err:
+                                _harness_log.exception(
+                                    f"[Harness] Failed to start session for step "
+                                    f"{next_step['key']}: {start_err}"
+                                )
+                                next_step["status"] = "failed"
+                                next_step["error"] = f"session start failed: {start_err}"
                         else:
                             _harness_log.warning(
                                 f"[Harness] Agent '{next_step['agent_id']}' not found in team "
@@ -2463,7 +2786,7 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                     break
 
         except Exception as ex:
-            _harness_log.error(f"[Harness] Error monitoring task {task_id}: {ex}")
+            _harness_log.exception(f"[Harness] Error monitoring task {task_id}: {ex}")
             continue
 
     # Cleanup
@@ -2807,61 +3130,337 @@ def _save_step_to_pipeline(task_id: str, step_key: str, content: str,
         return out_path
 
 
-def _get_prior_steps_from_pipeline(task_id: str, current_step_key: str) -> str:
-    """Read all prior step outputs from the pipeline workspace for prompt inclusion.
+# ── Step Summary Extraction ─────────────────────────────────────
+# After each step completes, extract a structured summary (decisions,
+# conclusions, file changes, checklist) so downstream agents receive
+# compressed context instead of raw LLM dumps.
 
-    Returns formatted string of all completed prior steps' artifacts.
+def _extract_step_summary(task_id: str, step_key: str, raw_text: str,
+                           deliverables: list = None,
+                           smoke_results: list = None) -> Dict[str, Any]:
+    """Extract a structured summary from a completed step's raw output.
+
+    Produces a JSON summary saved as NN_stepkey_summary.json in the pipeline
+    workspace. Downstream agents read these summaries instead of raw artifacts,
+    keeping the context window compact and signal-rich.
+
+    Returns the summary dict.
+    """
+    import re as _re_s
+    import json as _json_s
+
+    summary: Dict[str, Any] = {
+        "step": step_key,
+        "task_id": task_id,
+        "timestamp": _time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "char_count": len(raw_text),
+    }
+
+    # ── Extract key decisions / conclusions ──
+    # Look for markdown headings containing decision/conclusion keywords
+    decisions = []
+    conclusion_patterns = [
+        _re_s.compile(r"^#{1,3}\s*(?:结论|决定|方案|建议|结果|验证结论|总结|Summary|Conclusion|Decision|Result)[^\n]*\n([\s\S]*?)(?=^#{1,3}\s|\Z)", _re_s.MULTILINE),
+        _re_s.compile(r"^(?:[-*]\s*)?(?:结论|决策|方案选择|最终方案)[：:]\s*(.+)$", _re_s.MULTILINE),
+    ]
+    for pat in conclusion_patterns:
+        for m in pat.finditer(raw_text):
+            text = m.group(1).strip()[:1500]
+            if text and len(text) > 10:
+                decisions.append(text)
+    summary["decisions"] = decisions[:5]  # Cap at 5 key decisions
+
+    # ── Extract file change list (for develop/deploy steps) ──
+    files_changed = []
+    if deliverables:
+        files_changed = [d["path"] for d in deliverables]
+    else:
+        # Try to parse from text: look for file paths in bullet lists
+        file_path_re = _re_s.compile(
+            r"[-*]\s*`?(src/[^\s`]+\.\w{1,6})`?", _re_s.MULTILINE
+        )
+        files_changed = list(set(m.group(1) for m in file_path_re.finditer(raw_text)))
+    summary["files_changed"] = files_changed[:30]
+
+    # ── Extract verification checklist (for test/QA steps) ──
+    if step_key == "test":
+        checklist = []
+        # Parse PASS/FAIL verdict
+        verdict_match = _re_s.search(
+            r"验证结论\s*(PASS|FAIL|pass|fail)", raw_text, _re_s.IGNORECASE
+        )
+        summary["verdict"] = verdict_match.group(1).upper() if verdict_match else "UNKNOWN"
+
+        # Parse BLOCKER items
+        blocker_re = _re_s.compile(
+            r"(?:BLOCKER|blocker|阻塞)[：:\s]+(.+?)(?:\n|$)", _re_s.MULTILINE
+        )
+        for m in blocker_re.finditer(raw_text):
+            checklist.append({"severity": "BLOCKER", "detail": m.group(1).strip()[:300]})
+
+        # Parse import/test failures
+        fail_re = _re_s.compile(
+            r"(?:❌|FAILED|FAIL|失败)[：:\s]+(.+?)(?:\n|$)", _re_s.MULTILINE
+        )
+        for m in fail_re.finditer(raw_text):
+            detail = m.group(1).strip()[:300]
+            if detail and detail not in [c["detail"] for c in checklist]:
+                checklist.append({"severity": "FAIL", "detail": detail})
+
+        summary["checklist"] = checklist[:20]
+
+    # ── Smoke test results ──
+    if smoke_results:
+        smoke_fails = [s for s in smoke_results if not s.get("syntax_ok")]
+        summary["smoke"] = {
+            "total": len(smoke_results),
+            "passed": len(smoke_results) - len(smoke_fails),
+            "failed": len(smoke_fails),
+            "failures": [
+                {"path": s["path"], "errors": s.get("errors", [])}
+                for s in smoke_fails
+            ],
+        }
+
+    # ── Role-specific summaries ──
+    if step_key == "pm_decompose":
+        # Extract task decomposition items
+        task_items = _re_s.findall(
+            r"^(?:[-*]|\d+[.)]\s)\s*(.{10,200})$", raw_text, _re_s.MULTILINE
+        )
+        summary["subtasks"] = task_items[:15]
+
+    elif step_key == "research":
+        # Extract key findings
+        findings = _re_s.findall(
+            r"^(?:[-*])\s*(?:发现|建议|注意|关键|Finding|Key)[：:\s]+(.+)$",
+            raw_text, _re_s.MULTILINE
+        )
+        summary["findings"] = [f.strip()[:300] for f in findings[:10]]
+
+    elif step_key == "architecture":
+        # Extract interface definitions / API specs
+        api_specs = _re_s.findall(
+            r"(?:接口|API|endpoint|路由)[：:\s]+(.+?)(?:\n|$)",
+            raw_text, _re_s.MULTILINE
+        )
+        summary["api_specs"] = [a.strip()[:300] for a in api_specs[:10]]
+
+    elif step_key in ("develop", "deploy"):
+        # Build a verification checklist for QA
+        verify_items = []
+        for fp in files_changed:
+            if fp.endswith(".py"):
+                verify_items.append(f"import check: `{fp}`")
+            elif fp.endswith((".html", ".js", ".mjs")):
+                verify_items.append(f"load check: `{fp}`")
+        summary["verify_checklist"] = verify_items[:20]
+
+    # ── Compact prose summary (first meaningful paragraph, capped) ──
+    # Skip code blocks and take first 800 chars of prose
+    prose_text = _re_s.sub(r"```[\s\S]*?```", "", raw_text)
+    prose_text = _re_s.sub(r"^#+\s.*$", "", prose_text, flags=_re_s.MULTILINE)
+    prose_lines = [l.strip() for l in prose_text.split("\n")
+                   if l.strip() and len(l.strip()) > 15]
+    summary["prose_summary"] = "\n".join(prose_lines[:15])[:2000]
+
+    # ── Persist summary to pipeline workspace ──
+    pdir = _pipeline_dir(task_id)
+    idx = _STEP_INDEX.get(step_key, "99")
+    summary_path = _os.path.join(pdir, f"{idx}_{step_key}_summary.json")
+    try:
+        with open(summary_path, "w", encoding="utf-8") as f:
+            _json_s.dump(summary, f, ensure_ascii=False, indent=2)
+        _harness_log.info(
+            "[Pipeline] Step summary saved: %s (%d decisions, %d files)",
+            summary_path, len(summary.get("decisions", [])),
+            len(summary.get("files_changed", [])),
+        )
+    except Exception as e:
+        _harness_log.warning("[Pipeline] Summary save failed: %s", e)
+
+    return summary
+
+
+def _format_step_summary_for_prompt(summary: Dict[str, Any], step_name: str,
+                                      step_idx: str) -> str:
+    """Format a step summary JSON into a concise prompt section."""
+    parts = [f"### 步骤 {step_idx}: {step_name}\n"]
+
+    # Prose summary (compact)
+    prose = summary.get("prose_summary", "")
+    if prose:
+        # Truncate to 1000 chars for non-adjacent steps
+        parts.append(prose[:1500] + "\n")
+
+    # Key decisions
+    decisions = summary.get("decisions", [])
+    if decisions:
+        parts.append("**关键决策:**\n")
+        for d in decisions[:3]:
+            parts.append(f"  - {d[:300]}\n")
+
+    # Files changed
+    files = summary.get("files_changed", [])
+    if files:
+        parts.append(f"**变更文件 ({len(files)}):**\n")
+        for fp in files[:15]:
+            parts.append(f"  - `{fp}`\n")
+
+    # Subtasks (PM step)
+    subtasks = summary.get("subtasks", [])
+    if subtasks:
+        parts.append("**子任务拆解:**\n")
+        for st in subtasks[:8]:
+            parts.append(f"  - {st}\n")
+
+    # Findings (research step)
+    findings = summary.get("findings", [])
+    if findings:
+        parts.append("**关键发现:**\n")
+        for f in findings[:5]:
+            parts.append(f"  - {f}\n")
+
+    # API specs (architecture step)
+    specs = summary.get("api_specs", [])
+    if specs:
+        parts.append("**接口规范:**\n")
+        for s in specs[:5]:
+            parts.append(f"  - {s}\n")
+
+    # Verify checklist (develop step → for QA)
+    verify = summary.get("verify_checklist", [])
+    if verify:
+        parts.append("**待验证清单 (QA 必检):**\n")
+        for v in verify[:15]:
+            parts.append(f"  - [ ] {v}\n")
+
+    # QA verdict + checklist (test step)
+    verdict = summary.get("verdict")
+    if verdict:
+        parts.append(f"**QA 验证结论: {verdict}**\n")
+    checklist = summary.get("checklist", [])
+    if checklist:
+        for c in checklist[:10]:
+            parts.append(f"  - [{c['severity']}] {c['detail']}\n")
+
+    # Smoke results
+    smoke = summary.get("smoke")
+    if smoke:
+        parts.append(
+            f"**冒烟测试:** {smoke['passed']}/{smoke['total']} 通过\n"
+        )
+        for sf in smoke.get("failures", [])[:5]:
+            parts.append(f"  🔥 `{sf['path']}`: {'; '.join(sf['errors'][:2])}\n")
+
+    parts.append("\n")
+    return "".join(parts)
+
+
+def _get_prior_steps_from_pipeline(task_id: str, current_step_key: str) -> str:
+    """Build context from prior steps using incremental summaries.
+
+    Strategy:
+    - For N-1 (immediately prior step): include FULL raw output (up to budget)
+    - For N-2 and earlier: use compressed summaries from _summary.json
+    - This ensures the immediately relevant context is rich while older context
+      is compact, keeping total token usage manageable.
     """
     pdir = _pipeline_dir(task_id)
     current_idx = _STEP_INDEX.get(current_step_key, "99")
 
     parts = []
-    _MAX_PER_STEP = 50_000
-    _MAX_TOTAL = 150_000
+    _MAX_FULL_STEP = 40_000    # Budget for the immediately prior step (full text)
+    _MAX_SUMMARY_STEP = 4_000  # Budget per older step (summary only)
+    _MAX_TOTAL = 80_000        # Total budget (down from 150K raw dumps)
     total_chars = 0
 
-    # Scan pipeline dir for numbered step files/dirs
+    # Collect all prior step entries
     entries = sorted(_os.listdir(pdir))
+    prior_entries = []
     for entry in entries:
-        if entry.startswith("_"):
+        if entry.startswith("_") or entry.endswith("_summary.json") or entry.endswith("_tool_trace.json"):
             continue
-        # Get step index from name (e.g., "01_pm_decompose" → "01")
         entry_idx = entry[:2] if len(entry) > 2 and entry[2] == "_" else ""
         if not entry_idx or entry_idx >= current_idx:
-            continue  # Skip current and future steps
+            continue
+        prior_entries.append((entry_idx, entry))
+
+    if not prior_entries:
+        return ""
+
+    # The last entry is the immediately prior step — gets full text
+    immediately_prior_idx = prior_entries[-1][0]
+
+    for entry_idx, entry in prior_entries:
+        if total_chars >= _MAX_TOTAL:
+            parts.append("(后续步骤产出因 token 预算已省略)\n")
+            break
 
         abs_entry = _os.path.join(pdir, entry)
         step_name = entry[3:] if len(entry) > 3 else entry
+        # Strip .md extension from step_name for display
+        if step_name.endswith(".md"):
+            step_name = step_name[:-3]
+
+        is_immediately_prior = (entry_idx == immediately_prior_idx)
+
+        # ── Try summary first (for non-adjacent steps) ──
+        if not is_immediately_prior:
+            summary_path = _os.path.join(pdir, f"{entry_idx}_{step_name}_summary.json")
+            if _os.path.isfile(summary_path):
+                try:
+                    import json as _json_r
+                    with open(summary_path, "r", encoding="utf-8") as f:
+                        summary = _json_r.load(f)
+                    chunk = _format_step_summary_for_prompt(summary, step_name, entry_idx)
+                    if len(chunk) > _MAX_SUMMARY_STEP:
+                        chunk = chunk[:_MAX_SUMMARY_STEP] + "\n...(摘要截断)\n"
+                    total_chars += len(chunk)
+                    parts.append(chunk)
+                    continue  # Summary found, skip raw text
+                except Exception:
+                    pass  # Fall through to raw text
+
+        # ── Full text for immediately prior step, or fallback for older steps ──
+        budget = _MAX_FULL_STEP if is_immediately_prior else _MAX_SUMMARY_STEP
+        remaining = _MAX_TOTAL - total_chars
+        budget = min(budget, remaining)
+        if budget < 200:
+            parts.append("(后续步骤产出因 token 预算已省略)\n")
+            break
 
         if _os.path.isfile(abs_entry) and entry.endswith(".md"):
-            # Simple text step
             try:
                 with open(abs_entry, "r", encoding="utf-8") as f:
-                    content = f.read(_MAX_PER_STEP)
-                remaining = _MAX_TOTAL - total_chars
-                if remaining <= 0:
-                    parts.append("(后续步骤产出因 token 预算已省略)\n")
-                    break
-                if len(content) > remaining:
-                    content = content[:remaining] + "\n...(截断)\n"
+                    content = f.read(budget)
+                if len(content) >= budget:
+                    content = content[:budget] + "\n...(截断)\n"
                 total_chars += len(content)
-                parts.append(f"### 步骤 {entry_idx}: {step_name}\n\n{content}\n")
+                label = "(完整产出)" if is_immediately_prior else "(摘要不可用，使用原文)"
+                parts.append(f"### 步骤 {entry_idx}: {step_name} {label}\n\n{content}\n")
             except Exception:
                 pass
 
         elif _os.path.isdir(abs_entry):
             # Code step with subdirectory
-            summary_path = _os.path.join(abs_entry, "summary.md")
-            if _os.path.isfile(summary_path):
+            step_parts = []
+
+            # Summary.md (the LLM prose)
+            summary_md = _os.path.join(abs_entry, "summary.md")
+            if _os.path.isfile(summary_md):
                 try:
-                    with open(summary_path, "r", encoding="utf-8") as f:
-                        summary = f.read(min(_MAX_PER_STEP, _MAX_TOTAL - total_chars))
+                    with open(summary_md, "r", encoding="utf-8") as f:
+                        summary = f.read(budget)
+                    if len(summary) >= budget:
+                        summary = summary[:budget] + "\n...(截断)\n"
+                    label = "(完整产出)" if is_immediately_prior else ""
+                    step_parts.append(f"### 步骤 {entry_idx}: {step_name} {label}\n\n{summary}\n")
                     total_chars += len(summary)
-                    parts.append(f"### 步骤 {entry_idx}: {step_name} (摘要)\n\n{summary}\n")
                 except Exception:
                     pass
 
-            # List code deliverables
+            # Code deliverables list (always include, compact)
             code_dir = _os.path.join(abs_entry, "code")
             if _os.path.isdir(code_dir):
                 code_files = []
@@ -2870,14 +3469,135 @@ def _get_prior_steps_from_pipeline(task_id: str, current_step_key: str) -> str:
                         rel = _os.path.relpath(_os.path.join(dp, fn), code_dir)
                         code_files.append(rel)
                 if code_files:
-                    parts.append(f"📦 代码交付物 ({len(code_files)} 文件):\n")
+                    chunk = f"📦 代码交付物 ({len(code_files)} 文件):\n"
                     for cf in code_files:
-                        parts.append(f"  - `{cf}`\n")
-                    parts.append("\n")
+                        chunk += f"  - `{cf}`\n"
+                    chunk += "\n"
+                    step_parts.append(chunk)
+                    total_chars += len(chunk)
+
+            # Apply / smoke-test report (always include, compact and actionable)
+            apply_report = _os.path.join(abs_entry, "apply_report.json")
+            if _os.path.isfile(apply_report):
+                try:
+                    import json as _json_ar
+                    with open(apply_report, "r", encoding="utf-8") as f:
+                        rep = _json_ar.load(f)
+                    chunk = "🔬 自动落地与冒烟测试结果:\n"
+                    chunk += (f"  applied: {len(rep.get('applied', []))} / "
+                              f"skipped: {len(rep.get('skipped', []))} / "
+                              f"failed: {len(rep.get('failed', []))}\n")
+                    for sk in rep.get("skipped", []):
+                        chunk += f"  ⚠️ skipped {sk['path']}: {sk.get('reason','')}\n"
+                    for fl in rep.get("failed", []):
+                        chunk += f"  ❌ failed {fl['path']}: {fl.get('error','')}\n"
+                    for sm in rep.get("smoke", []):
+                        if not sm.get("syntax_ok"):
+                            chunk += (f"  🔥 smoke FAIL {sm['path']}: "
+                                      f"{'; '.join(sm.get('errors', []))}\n")
+                    chunk += "\n"
+                    step_parts.append(chunk)
+                    total_chars += len(chunk)
+                except Exception:
+                    pass
+
+            parts.extend(step_parts)
 
     if not parts:
         return ""
-    return "## 前序步骤的产出 (管线共享工作区)\n\n" + "".join(parts)
+    return "## 前序步骤的产出 (递进式摘要)\n\n" + "".join(parts)
+
+
+def _smoke_check_pipeline_code(task_id: str, step_key: str) -> List[Dict[str, Any]]:
+    """Run syntax & basic import checks on staged code in the pipeline workspace.
+
+    Operates on storage/pipeline_runs/{task_id}/{idx}_{step_key}/code/ WITHOUT
+    copying into the project. Used after develop saves so QA gets concrete signal.
+
+    Also persists apply_report.json (just the smoke section) for prompt context.
+    """
+    pdir = _pipeline_dir(task_id)
+    idx = _STEP_INDEX.get(step_key, "99")
+    step_dir = _os.path.join(pdir, f"{idx}_{step_key}")
+    code_dir = _os.path.join(step_dir, "code")
+    smoke: List[Dict[str, Any]] = []
+    if not _os.path.isdir(code_dir):
+        return smoke
+
+    for dirpath, _, filenames in _os.walk(code_dir):
+        for fn in filenames:
+            abs_src = _os.path.join(dirpath, fn)
+            rel = _os.path.relpath(abs_src, code_dir)
+            check = {"path": rel, "syntax_ok": True, "errors": []}
+
+            try:
+                src = open(abs_src, "r", encoding="utf-8").read()
+            except Exception as e:
+                check["syntax_ok"] = False
+                check["errors"].append(f"read error: {e}")
+                smoke.append(check)
+                continue
+
+            if rel.endswith(".py"):
+                import ast as _ast
+                try:
+                    _ast.parse(src, filename=abs_src)
+                except SyntaxError as e:
+                    check["syntax_ok"] = False
+                    check["errors"].append(f"SyntaxError L{e.lineno}: {e.msg}")
+                if check["syntax_ok"] and "/channels/" in rel:
+                    import importlib.util as _ilu
+                    mod_name = "_smoke_" + _os.path.splitext(_os.path.basename(rel))[0]
+                    try:
+                        spec = _ilu.spec_from_file_location(mod_name, abs_src)
+                        if spec and spec.loader:
+                            mod = _ilu.module_from_spec(spec)
+                            spec.loader.exec_module(mod)
+                    except Exception as e:
+                        check["syntax_ok"] = False
+                        check["errors"].append(
+                            f"ImportError: {type(e).__name__}: {str(e)[:200]}"
+                        )
+
+            elif rel.endswith((".js", ".mjs")):
+                if src.count("{") != src.count("}"):
+                    check["syntax_ok"] = False
+                    check["errors"].append(
+                        f"brace mismatch: {{{src.count('{')} vs }}{src.count('}')}"
+                    )
+                if src.count("(") != src.count(")"):
+                    check["syntax_ok"] = False
+                    check["errors"].append(
+                        f"paren mismatch: ({src.count('(')} vs ){src.count(')')}"
+                    )
+
+            if not check["syntax_ok"]:
+                _harness_log.warning("[Smoke] FAIL %s: %s", rel, "; ".join(check["errors"]))
+            smoke.append(check)
+
+    # Persist as apply_report.json (so prompt context picks it up)
+    try:
+        report_path = _os.path.join(step_dir, "apply_report.json")
+        # If file already exists (e.g. deploy already ran), merge smoke section
+        existing = {}
+        if _os.path.isfile(report_path):
+            try:
+                import json as _json
+                with open(report_path, "r", encoding="utf-8") as f:
+                    existing = _json.load(f)
+            except Exception:
+                existing = {}
+        existing.setdefault("applied", [])
+        existing.setdefault("skipped", [])
+        existing.setdefault("failed", [])
+        existing["smoke"] = smoke
+        import json as _json
+        with open(report_path, "w", encoding="utf-8") as f:
+            _json.dump(existing, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+    return smoke
 
 
 def _apply_code_from_pipeline(task_id: str, step_key: str) -> Dict[str, Any]:
@@ -2919,6 +3639,31 @@ def _apply_code_from_pipeline(task_id: str, step_key: str) -> Dict[str, Any]:
             try:
                 new_content = open(abs_src, "r", encoding="utf-8").read()
 
+                # Shrink-replace guard: refuse to overwrite an existing file
+                # with content that is dramatically smaller (likely an LLM
+                # "from scratch" rewrite that drops most of the original).
+                # Threshold: new < 50% of existing AND existing > 2KB.
+                if _os.path.isfile(target):
+                    try:
+                        existing_size = _os.path.getsize(target)
+                    except OSError:
+                        existing_size = 0
+                    if existing_size > 2048 and len(new_content) < existing_size * 0.5:
+                        result["skipped"].append({
+                            "path": rel,
+                            "reason": (
+                                f"shrink-replace guard: new {len(new_content)}B "
+                                f"< 50% of existing {existing_size}B "
+                                f"(LLM likely emitted a stub rewrite)"
+                            ),
+                        })
+                        _harness_log.warning(
+                            "[Pipeline] SKIP shrink-replace: %s "
+                            "(new=%dB existing=%dB)",
+                            rel, len(new_content), existing_size,
+                        )
+                        continue
+
                 # Backup existing file
                 if _os.path.isfile(target):
                     import shutil
@@ -2940,6 +3685,65 @@ def _apply_code_from_pipeline(task_id: str, step_key: str) -> Dict[str, Any]:
         "[Pipeline] Apply result: %d applied, %d skipped, %d failed",
         len(result["applied"]), len(result["skipped"]), len(result["failed"]),
     )
+
+    # ── Post-apply smoke checks: syntax + import probe ──
+    # Provides concrete signal for the QA step instead of LLM rubber-stamping.
+    smoke = []
+    for entry in result["applied"]:
+        rel = entry["path"]
+        target = _os.path.join(project_root, rel)
+        check = {"path": rel, "syntax_ok": True, "errors": []}
+
+        if rel.endswith(".py"):
+            import ast as _ast
+            try:
+                src = open(target, "r", encoding="utf-8").read()
+                _ast.parse(src, filename=target)
+            except SyntaxError as e:
+                check["syntax_ok"] = False
+                check["errors"].append(f"SyntaxError L{e.lineno}: {e.msg}")
+            # Best-effort import probe (channels/* only)
+            if check["syntax_ok"] and "/channels/" in rel:
+                import importlib.util as _ilu
+                mod_name = "_smoke_" + _os.path.splitext(_os.path.basename(rel))[0]
+                try:
+                    spec = _ilu.spec_from_file_location(mod_name, target)
+                    if spec and spec.loader:
+                        mod = _ilu.module_from_spec(spec)
+                        spec.loader.exec_module(mod)
+                except Exception as e:
+                    check["errors"].append(f"ImportError: {type(e).__name__}: {str(e)[:200]}")
+
+        elif rel.endswith((".js", ".mjs")):
+            # Minimal sanity: braces & parens balance
+            try:
+                src = open(target, "r", encoding="utf-8").read()
+                if src.count("{") != src.count("}"):
+                    check["errors"].append(
+                        f"brace mismatch: {{{src.count('{')} vs }}{src.count('}')}"
+                    )
+                if src.count("(") != src.count(")"):
+                    check["errors"].append(
+                        f"paren mismatch: ({src.count('(')} vs ){src.count(')')}"
+                    )
+            except Exception as e:
+                check["errors"].append(f"read error: {e}")
+
+        if check["errors"]:
+            check["syntax_ok"] = False
+            _harness_log.warning("[Pipeline] Smoke FAIL %s: %s", rel, "; ".join(check["errors"]))
+        smoke.append(check)
+    result["smoke"] = smoke
+
+    # Persist smoke report next to the code/ dir for QA to consume
+    try:
+        report_path = _os.path.join(pdir, f"{idx}_{step_key}", "apply_report.json")
+        import json as _json
+        with open(report_path, "w", encoding="utf-8") as f:
+            _json.dump(result, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
     return result
 
 
@@ -3112,12 +3916,15 @@ def _extract_code_deliverables(text: str) -> List[Dict[str, str]]:
     deliverables: List[Dict[str, str]] = []
 
     # Split into segments around fenced code blocks
-    # Match: ```lang ... ``` with content
+    # Match: ```lang ... ``` with content.
+    # CRITICAL: anchor opening AND closing fence to start-of-line so indented
+    # code blocks inside echoed prompts (e.g. "  ```js" in a quoted prompt) do
+    # not swallow real code fences across hundreds of lines.
     fence_pattern = _re_mod.compile(
-        r"```(\w*)([ \t]+[^\n]*)?\n"     # Opening fence with optional lang + metadata
-        r"(.*?)"                          # Code content (non-greedy)
-        r"\n```",                         # Closing fence
-        _re_mod.DOTALL,
+        r"^```(\w*)([ \t]+[^\n]*)?\n"     # Opening fence at line start
+        r"(.*?)"                           # Code content (non-greedy)
+        r"\n^```\s*$",                     # Closing fence at line start
+        _re_mod.DOTALL | _re_mod.MULTILINE,
     )
 
     for m in fence_pattern.finditer(text):
@@ -3391,44 +4198,53 @@ _STEP_PROMPTS: Dict[str, str] = {
         "前端: src/frontend/ (HTML + JS)\n"
     ),
     "develop": (
-        "你是开发工程师。请根据架构设计实现以下任务:\n\n"
+        "你是开发工程师 (DeepSeek V4 + 工具循环模式)。\n"
+        "你**已经被赋予真正的工具能力**: read_file / grep / list_files / write_file / patch_file / run_python。\n"
+        "禁止凭空想象 — 所有写代码前必须先用工具读真实代码。\n\n"
         "## 任务\n{title}\n{description}\n\n"
         "{prev_artifacts}"
-        "## 要求\n"
-        "1. 严格按照架构师的设计方案进行编码\n"
-        "2. 参考上方 📂 项目上下文 中的原始文件内容，在其基础上修改\n"
-        "3. 遵循项目编码规范 (Channel 继承 MarineChannel, 新参数有默认值)\n\n"
-        "## ⚠️ 代码输出格式 (必须严格遵守)\n"
-        "你的代码将被自动提取，保存到管线共享工作区，最终自动应用到项目代码库。\n"
-        "**每个代码块必须在 fence 行标注目标文件路径**，格式如下:\n\n"
-        "```python // src/backend/channels/foo.py\n"
-        "# 完整的文件内容\n"
-        "```\n\n"
-        "```html // src/frontend/bar.html\n"
-        "<!-- 完整的文件内容 -->\n"
-        "```\n\n"
-        "**规则**:\n"
-        "- 路径必须是 📂 项目上下文 中列出的**实际文件路径**\n"
-        "- 每个代码块输出该文件的**完整内容** (不要省略未修改的部分)\n"
-        "- 不要使用 `...existing code...` 或 `// 省略`\n"
-        "- 如果修改多个文件，每个文件用独立的代码块\n"
-        "- 只输出需要变更的文件，不变的文件不要输出\n\n"
+        "## 推荐工作流（严格遵守）\n"
+        "**Step 1 · 侦察**: \n"
+        "  - 用 `list_files(path='src/backend/channels')` 看现有 Channel 模块\n"
+        "  - 用 `grep(pattern='class MarineChannel', include='src/backend/**/*.py')` 找基类定义\n"
+        "  - 用 `read_file(path='src/backend/channels/marine_base.py')` 读完整接口规范\n"
+        "  - 找到任何要继承的基类 / 要调用的函数，**先 grep 再 read**，不要靠记忆\n\n"
+        "**Step 2 · 验证假设**: 用 `run_python` 跑一段 import 代码，确认 import 路径正确\n"
+        "  示例: `run_python(code='from channels.marine_base import ChannelPriority; print(list(ChannelPriority))')`\n\n"
+        "**Step 3 · 编码**: \n"
+        "  - 新功能 → `write_file` 创建新模块（推荐放在 src/backend/channels/ 或 src/frontend/digital-twin/）\n"
+        "  - 改现有大文件 → 用 `patch_file(path, search, replace)` 精准修改\n"
+        "  - **禁止** write_file 覆盖 >200 行的现有文件 (会被 shrink-guard 拒绝)\n\n"
+        "**Step 4 · 自检**: \n"
+        "  - Python: `run_python(code='from channels.your_new_module import YourClass; YourClass()')`\n"
+        "  - 通过则继续；失败则修复后再次验证\n\n"
+        "**Step 5 · 完成**: 调用 `finish(summary='...', files_changed=[...])`\n\n"
+        "## 工程规范\n"
+        "- 所有 Channel 必须 `from channels.marine_base import MarineChannel, ChannelPriority, ChannelStatus` 然后 `class X(MarineChannel)`\n"
+        "- ChannelPriority 只有 P0 / P1 / P2，**没有 P3**\n"
+        "- 必须实现 `process_event()` 和 `get_status()`\n"
+        "- 新参数必须有默认值（向后兼容）\n\n"
         "项目根目录: {working_dir}\n"
-        "后端: src/backend/ (Python FastAPI)\n"
-        "前端: src/frontend/ (HTML + JS)\n"
     ),
     "test": (
-        "你是 QA 测试工程师。请验证以下任务的实现:\n\n"
+        "你是 QA 测试工程师 (DeepSeek V4 + 工具循环模式)。\n"
+        "你**已经被赋予真正的测试工具能力**: read_file / grep / run_python / run_pytest。\n"
+        "禁止凭空判定 — 所有结论必须来自工具的真实输出。\n\n"
         "## 任务\n{title}\n{description}\n\n"
         "{prev_artifacts}"
-        "## 要求\n"
-        "1. 审查开发步骤的代码交付物(列在前序步骤产出中)\n"
-        "2. 检查代码逻辑正确性、边界条件、异常处理\n"
-        "3. 如果发现问题，清晰描述问题和修复建议\n"
-        "4. 输出测试报告 (Markdown 格式)\n\n"
+        "## 推荐工作流（严格遵守）\n"
+        "**Step 1**: 用 grep / read_file 检查 Developer 写的新文件\n"
+        "**Step 2**: 对每个新 .py 文件，跑 `run_python(code='from <module> import <name>')` 验证 import 通\n"
+        "**Step 3**: 对涉及到的 channel，跑 `run_python(code='from channels.X import Y; obj=Y(); print(obj.process_event({{}}))')` 测试核心方法\n"
+        "**Step 4**: 跑 `run_pytest(target='-k <module-name>')` 看相关测试是否通过\n"
+        "**Step 5**: 调用 finish 给出结论：\n"
+        "  - summary 必须以 `## 验证结论 PASS` 或 `## 验证结论 FAIL` 结尾\n"
+        "  - files_changed 通常为空（QA 不写代码）\n\n"
+        "## 判定标准\n"
+        "- import 失败 → BLOCKER → FAIL\n"
+        "- 单元测试失败 → BLOCKER → FAIL\n"
+        "- 仅 lint/style 问题 → MINOR → PASS\n\n"
         "项目根目录: {working_dir}\n"
-        "后端: src/backend/ (Python FastAPI)\n"
-        "前端: src/frontend/ (HTML + JS)\n"
     ),
     "document": (
         "你是文档工程师。请更新以下任务的相关文档:\n\n"
@@ -3480,6 +4296,7 @@ def _build_step_prompt(task, step: Dict, workflow: list) -> str:
     1. Pre-seeded project context (_context/ from pipeline workspace)
     2. All prior step outputs from pipeline workspace (full-team shared)
     3. Handoff files for inter-agent state
+    4. QA feedback (if pipeline was rewound after a failed test step)
     """
     working_dir = "/Users/panglaohu/Downloads/DoubleBoatClawSystem"
     key = step.get("key", "execute")
@@ -3491,6 +4308,58 @@ def _build_step_prompt(task, step: Dict, workflow: list) -> str:
     ))
 
     prev_parts = []
+
+    # ── 0. QA feedback from previous failed iteration (highest priority) ──
+    try:
+        qa_fb = (task.metadata or {}).get("qa_feedback") if hasattr(task, "metadata") else None
+        if qa_fb and key in ("develop", "test"):
+            iteration = qa_fb.get("iteration", 1)
+            fb_parts = [
+                f"## 🔁 上一轮 QA 反馈 (第 {iteration} 次重试)\n\n"
+                f"上一次开发产出**未通过 QA**，原因：\n\n"
+                f"> {qa_fb.get('reason', 'unspecified')}\n\n"
+            ]
+
+            # ── Structured failures: actionable file+line+error list ──
+            structured = qa_fb.get("structured_failures", [])
+            if structured:
+                fb_parts.append("### 🎯 具体失败清单 (必须逐条修复)\n\n")
+                for i, sf in enumerate(structured[:10], 1):
+                    if "file" in sf:
+                        line_str = f" L{sf['line']}" if sf.get("line") else ""
+                        test_str = f" :: {sf['test']}" if sf.get("test") else ""
+                        fb_parts.append(
+                            f"{i}. `{sf['file']}`{line_str}{test_str} — {sf.get('error', sf.get('detail', ''))}\n"
+                        )
+                    elif "error_type" in sf:
+                        fb_parts.append(
+                            f"{i}. **{sf['error_type']}**: {sf.get('detail', '')}\n"
+                        )
+                fb_parts.append("\n")
+
+            # QA checklist from structured summary
+            qa_checklist = qa_fb.get("qa_checklist", [])
+            if qa_checklist:
+                fb_parts.append("### QA 检查清单\n\n")
+                for item in qa_checklist[:10]:
+                    fb_parts.append(f"- [{item.get('severity', '?')}] {item.get('detail', '')}\n")
+                fb_parts.append("\n")
+
+            # Raw report as fallback (truncated)
+            report_text = qa_fb.get("report", "")
+            if report_text and not structured:
+                fb_parts.append(f"### QA 报告摘要\n\n```\n{report_text[:3000]}\n```\n\n")
+
+            fb_parts.append(
+                "### 必须修复\n"
+                "1. 仔细阅读上方失败清单，**逐条**修复列出的 BLOCKER\n"
+                "2. 不要重新发明轮子 — 用 read_file 看你之前写的代码，**只改坏的地方**\n"
+                "3. 修完后用 run_python / run_pytest **当场验证**\n"
+                "4. 验证通过再调用 finish\n\n"
+            )
+            prev_parts.append("".join(fb_parts))
+    except Exception:
+        pass
 
     # ── 1. Project context (pre-seeded file tree + relevant source files) ──
     try:
@@ -3533,13 +4402,28 @@ def _build_step_prompt(task, step: Dict, workflow: list) -> str:
 
     prev_artifacts = "\n".join(prev_parts) if prev_parts else ""
 
-    return template.format(
-        title=task.title,
-        description=task.description or "(无详细描述)",
-        working_dir=working_dir,
-        prev_artifacts=prev_artifacts,
-        label=step.get("label", key),
-    )
+    try:
+        return template.format(
+            title=task.title,
+            description=task.description or "(无详细描述)",
+            working_dir=working_dir,
+            prev_artifacts=prev_artifacts,
+            label=step.get("label", key),
+        )
+    except (IndexError, KeyError) as fmt_err:
+        # Literal `{` / `}` in template that wasn't escaped → log and fall back
+        _harness_log.exception(
+            "[Harness] _build_step_prompt template format error for step '%s': %s",
+            key, fmt_err,
+        )
+        # Fallback: return a minimal prompt so the pipeline doesn't deadlock
+        return (
+            f"# {step.get('label', key)}\n\n"
+            f"## 任务\n{task.title}\n{task.description or ''}\n\n"
+            f"{prev_artifacts}\n\n"
+            f"⚠️ 模板渲染失败 ({fmt_err}); 使用降级 prompt。\n"
+            f"项目根目录: {working_dir}\n"
+        )
 
 
 def _resolve_claude_path(configured: str) -> str:
@@ -3654,8 +4538,9 @@ def _start_claude_session(session_id: str, prompt: str, cfg: Dict, agent, task_i
     working_dir = cfg.get("working_directory", "") or "/Users/panglaohu/Downloads/DoubleBoatClawSystem"
     auto_test = cfg.get("auto_test", True)
     use_direct_api = _should_use_direct_api(agent.role)
-    # Direct API is fast (streaming); CLI needs more time for tool use
-    default_timeout = 300 if use_direct_api else 600
+    # Direct API streams 64K tokens — needs much longer than the old 300s
+    # CLI tool use can be slower still
+    default_timeout = 1200 if use_direct_api else 1800
     timeout_sec = cfg.get("session_timeout", default_timeout)
 
     full_prompt = (
@@ -3696,22 +4581,60 @@ def _start_claude_session(session_id: str, prompt: str, cfg: Dict, agent, task_i
     session["lines"].append(f"{'─'*60}\n")
 
     def _run():
-        if use_direct_api:
-            # Text-only roles → fast streaming via DeepSeek OpenAI-compatible API
-            api_key, api_base_url, model = _get_deepseek_credentials()
-            if api_key:
-                session["lines"].append(f"⚡ 使用 DeepSeek API 直连 (快速模式)...\n\n")
-                _run_openai_compatible(
-                    session, full_prompt, timeout_sec,
-                    api_key=api_key, api_base_url=api_base_url, model=model,
-                )
+        try:
+            # Roles that benefit from real tool access (read/write/exec the codebase)
+            _TOOL_ROLES = ("developer", "code_writer", "qa_engineer", "qa", "tester",
+                           "build_developer", "build_tester", "deployer", "build_deployer")
+            if agent.role in _TOOL_ROLES:
+                api_key, api_base_url, model = _get_deepseek_credentials()
+                if api_key:
+                    session["lines"].append(
+                        f"🛠 使用 DeepSeek V4 工具循环模式 (read/grep/write/exec)...\n\n"
+                    )
+                    _run_tool_loop(
+                        session, full_prompt, agent.role,
+                        api_key=api_key, api_base_url=api_base_url, model=model,
+                        max_tokens=int(cfg.get("max_tokens", 65536)),
+                        temperature=float(cfg.get("temperature", 0.2)),
+                        max_iterations=int(cfg.get("max_iterations", 25)),
+                    )
+                    return  # tool-loop handles its own status
+
+            if use_direct_api:
+                # Text-only roles → fast streaming via DeepSeek OpenAI-compatible API
+                api_key, api_base_url, model = _get_deepseek_credentials()
+                if api_key:
+                    session["lines"].append(f"⚡ 使用 DeepSeek V4 直连 (64K 输出, 流式)...\n\n")
+                    # Pull per-task overrides if any (model_pool defaults to 65536/0.2)
+                    _max_tok = int(cfg.get("max_tokens", 65536))
+                    _temp = float(cfg.get("temperature", 0.2))
+                    _run_openai_compatible(
+                        session, full_prompt, timeout_sec,
+                        api_key=api_key, api_base_url=api_base_url, model=model,
+                        max_tokens=_max_tok, temperature=_temp,
+                    )
+                else:
+                    session["lines"].append(f"⚠️ DeepSeek 凭据未找到，回退到 Claude CLI...\n\n")
+                    _run_claude_cli_direct(session, full_prompt, working_dir, timeout_sec, cfg)
             else:
-                session["lines"].append(f"⚠️ DeepSeek 凭据未找到，回退到 Claude CLI...\n\n")
+                # Code-editing roles → Claude Code CLI (tool access)
+                session["lines"].append(f"⏳ 正在启动 Claude Code CLI...\n\n")
                 _run_claude_cli_direct(session, full_prompt, working_dir, timeout_sec, cfg)
-        else:
-            # Code-editing roles → Claude Code CLI (tool access)
-            session["lines"].append(f"⏳ 正在启动 Claude Code CLI...\n\n")
-            _run_claude_cli_direct(session, full_prompt, working_dir, timeout_sec, cfg)
+        except Exception as run_err:
+            import traceback as _tb
+            err_text = f"{run_err.__class__.__name__}: {run_err}"
+            session["status"] = "failed"
+            session["exit_code"] = 1
+            session["error"] = err_text
+            session["lines"].append(
+                f"\n💥 _run 抛出未捕获异常: {err_text}\n"
+                f"{_tb.format_exc()[:2000]}\n"
+            )
+            _harness_log.exception(
+                "[Session] %s _run() crashed for role=%s: %s",
+                session_id, agent.role, run_err,
+            )
+            return
 
         # Final validation: ensure session is properly marked
         final_status = session.get("status", "running")
@@ -3864,12 +4787,107 @@ def _run_claude_cli(session: Dict[str, Any], prompt: str, working_dir: str,
     _run_claude_cli_direct(session, prompt, working_dir, timeout_sec, cfg)
 
 
+def _run_tool_loop(
+    session: Dict[str, Any], prompt: str, role: str,
+    *, api_key: str, api_base_url: str, model: str,
+    max_tokens: int = 65536, temperature: float = 0.2,
+    max_iterations: int = 25,
+) -> None:
+    """Drive a function-calling agent loop. Lets Developer/QA agents read, write,
+    and execute the codebase via tool calls instead of single-shot text completion.
+    """
+    try:
+        from agents.agent_loop import AgentLoop
+    except ImportError:
+        from .agent_loop import AgentLoop  # type: ignore
+
+    session["lines"].append(f"🔗 API: {api_base_url}\n模型: {model}\n角色: {role}\n")
+    session["lines"].append(f"{'─'*60}\n\n")
+
+    def on_event(kind: str, payload: Dict[str, Any]):
+        if kind == "tool_call":
+            session["lines"].append(
+                f"🔧 调用工具: {payload['name']}({payload['args'][:160]})\n"
+            )
+        elif kind == "tool_result":
+            ok = "✅" if payload.get("ok") else "❌"
+            session["lines"].append(
+                f"   {ok} {payload['name']}: {payload['summary']}\n"
+            )
+        elif kind == "model_turn":
+            session["lines"].append(
+                f"\n🧠 turn#{payload['iteration']} "
+                f"({payload['elapsed']}s, {payload['content_chars']}字, "
+                f"{payload['tool_call_count']}个工具调用)\n"
+            )
+        elif kind == "loop_end":
+            session["lines"].append(
+                f"\n🏁 循环结束: {payload.get('reason')} (turn #{payload.get('iteration')})\n"
+            )
+        elif kind == "loop_start":
+            session["lines"].append(
+                f"🚀 工具集: {', '.join(payload['tools'])}\n\n"
+            )
+        elif kind == "error":
+            session["lines"].append(f"💥 错误: {payload.get('error','')}\n")
+
+    system = (
+        f"你是 PoseidonX 的 {role} agent。你拥有工具调用能力，"
+        f"必须使用工具读真实代码、写真实文件、跑真实测试。"
+        "禁止凭空想象 import 路径、类名、属性。"
+        "工作流程：\n"
+        "1. 先用 list_files / grep / read_file 探索项目结构和现有 API\n"
+        "2. 用 run_python 验证你的设想（如导入是否能成功）\n"
+        "3. 用 write_file 创建新文件，或 patch_file 修改现有文件\n"
+        "4. 修改后用 run_python 或 run_pytest 验证\n"
+        "5. 全部完成后调用 finish 工具，附上 summary 和 files_changed\n"
+        "重要：禁止整文件覆盖大文件（>200行），改用新建模块或 patch_file。"
+    )
+
+    loop = AgentLoop(
+        api_key=api_key, api_base_url=api_base_url, model=model,
+        role=role, system_prompt=system,
+        max_iterations=max_iterations,
+        max_tokens=max_tokens, temperature=temperature,
+        on_event=on_event,
+    )
+    result = loop.run(prompt)
+
+    session["tool_loop_log"] = result.get("log", [])
+    session["files_changed"] = result.get("files_changed", [])
+    session["loop_summary"] = result.get("summary", "")
+    session["loop_ok"] = bool(result.get("ok"))
+    session["loop_iterations"] = result.get("iterations", 0)
+
+    if result.get("ok"):
+        session["lines"].append(
+            f"\n✅ 完成 ({result['iterations']} 轮迭代)\n"
+            f"修改文件 {len(result['files_changed'])} 个: "
+            f"{', '.join(result['files_changed'])[:200]}\n"
+            f"\n📋 总结:\n{result.get('summary', '')[:1500]}\n"
+        )
+        session["status"] = "completed"
+        session["exit_code"] = 0
+    else:
+        session["lines"].append(
+            f"\n❌ 失败: {result.get('error','')}\n"
+            f"已完成 {result['iterations']} 轮迭代\n"
+        )
+        session["status"] = "failed"
+        session["exit_code"] = 1
+        session["error"] = result.get("error", "")
+
+
 def _run_openai_compatible(
     session: Dict[str, Any], prompt: str, timeout_sec: int,
     *, api_key: str, api_base_url: str, model: str,
-    max_tokens: int = 8192, temperature: float = 0.2,
+    max_tokens: int = 65536, temperature: float = 0.2,
 ) -> None:
-    """Call any OpenAI-compatible API (DeepSeek, OpenAI, etc.) with streaming + retry."""
+    """Call any OpenAI-compatible API (DeepSeek V4, OpenAI, etc.) with streaming + retry.
+
+    DeepSeek V4 supports 64K output tokens / 128K context. We default to 64K so
+    Developer/Architect agents can emit complete files without truncation.
+    """
     import json as _json
     import http.client
     import ssl
@@ -4272,6 +5290,33 @@ async def get_claude_session(session_id: str) -> Dict[str, Any]:
         "line_count": len(clean_lines),
         "elapsed": round(_time.time() - s["started_at"], 1),
     }
+
+
+@router.get(
+    "/tasks/{task_id}/tool-trace",
+    summary="Get all tool-call traces for a task pipeline",
+)
+async def get_task_tool_traces(task_id: str) -> Dict[str, Any]:
+    """Return persisted tool-call traces (one JSON per step that ran in tool-loop mode)."""
+    pdir = _pipeline_dir(task_id)
+    if not _os.path.isdir(pdir):
+        return {"task_id": task_id, "traces": [], "count": 0}
+    import json as _json_tt
+    traces = []
+    try:
+        for name in sorted(_os.listdir(pdir)):
+            if not name.endswith("_tool_trace.json"):
+                continue
+            fp = _os.path.join(pdir, name)
+            try:
+                with open(fp, "r", encoding="utf-8") as f:
+                    data = _json_tt.load(f)
+                traces.append(data)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return {"task_id": task_id, "traces": traces, "count": len(traces)}
 
 
 @router.post(

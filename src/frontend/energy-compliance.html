@@ -1,69 +1,71 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="ob-title" content="能效合规">
 <meta name="ob-subtitle" content="K-Chief 700 Energy — EEXI/CII 能效管理">
 <title>能效合规 — PoseidonX</title>
-<link rel="stylesheet" href="/css/openbridge-theme.css">
+
 <style>
-:root{--en-glass:rgba(24,28,36,.72);--en-border:rgba(255,255,255,.08);--en-cyan:#22d3ee;--en-ok:#4ade80;--en-warn:#fbbf24;--en-alarm:#f87171;--en-blue:#60a5fa;--en-purple:#a78bfa;}
+:root{--en-glass:oklch(0.93 0.003 110);--en-border:var(--groove,oklch(0.82 0.004 110));--en-cyan:var(--koke,oklch(0.52 0.04 160));--en-ok:var(--koke,oklch(0.52 0.04 160));--en-warn:var(--kitsune,oklch(0.56 0.05 70));--en-alarm:var(--shu,oklch(0.48 0.07 22));--en-blue:var(--koke,oklch(0.52 0.04 160));--en-purple:var(--sumi-2,oklch(0.55 0.005 110));}
 *{box-sizing:border-box}
-body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif)}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--shironeri,oklch(0.96 0.003 110));color:var(--sumi,oklch(0.18 0.008 110));font-family:'Noto Sans SC',var(--ob-font,system-ui,sans-serif)}
 .energy-wrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100vh - 80px)}
 /* Rating Cards */
 .rating-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-.rating-card{background:var(--en-glass);backdrop-filter:blur(14px);border:1px solid var(--en-border);border-radius:14px;padding:20px 16px;text-align:center;position:relative;overflow:hidden;transition:transform .15s}
-.rating-card:hover{transform:translateY(-2px)}
-.rating-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.rating-card{background:var(--en-glass);border:1px solid var(--en-border);padding:20px 16px;text-align:center;position:relative;overflow:hidden;transition:transform .15s;box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5)}
+.rating-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px oklch(0 0 0/0.08)}
+.rating-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .rating-card:nth-child(1)::before{background:var(--en-blue)}
 .rating-card:nth-child(2)::before{background:var(--en-warn)}
 .rating-card:nth-child(3)::before{background:var(--en-cyan)}
 .rating-card:nth-child(4)::before{background:var(--en-ok)}
 .rating-card:nth-child(5)::before{background:var(--en-purple)}
 .rating-letter{font-size:52px;font-weight:900;line-height:1}
-.rating-name{font-size:11px;color:var(--ob-text-tertiary);margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
-.rating-desc{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
+.rating-name{font-size:11px;color:var(--sumi-2,oklch(0.38 0.006 110));margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.rating-desc{font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110));margin-top:2px}
 .r-blue{color:var(--en-blue)}
 .r-yellow{color:var(--en-warn)}
 .r-cyan{color:var(--en-cyan)}
 .r-green{color:var(--en-ok)}
 .r-purple{color:var(--en-purple)}
 /* CII Trajectory */
-.cii-panel{background:var(--en-glass);backdrop-filter:blur(14px);border:1px solid var(--en-border);border-radius:14px;padding:18px}
-.cii-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
-.cii-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--en-cyan)}
+.cii-panel{background:var(--en-glass);border:1px solid var(--en-border);padding:18px;box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5)}
+.cii-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px;color:var(--sumi)}
+.cii-panel h5::before{content:'';width:3px;height:12px;background:var(--en-cyan)}
 .cii-panel canvas{width:100%;height:180px;display:block}
 /* Mid Row */
 .mid-row{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
-.fuel-panel,.emit-panel{background:var(--en-glass);backdrop-filter:blur(14px);border:1px solid var(--en-border);border-radius:14px;padding:18px}
-.fuel-panel h5,.emit-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
-.fuel-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--en-blue)}
-.emit-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--en-warn)}
+.fuel-panel,.emit-panel{background:var(--en-glass);border:1px solid var(--en-border);padding:18px;box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5)}
+.fuel-panel h5,.emit-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px;color:var(--sumi)}
+.fuel-panel h5::before{content:'';width:3px;height:12px;background:var(--en-blue)}
+.emit-panel h5::before{content:'';width:3px;height:12px;background:var(--en-warn)}
 .fuel-panel canvas{width:100%;height:200px;display:block}
 /* Emission Items */
-.emit-item{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:12px;border-radius:10px;background:rgba(0,0,0,.1);border:1px solid var(--en-border)}
-.emit-icon{font-size:22px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.04)}
+.emit-item{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:12px;background:oklch(0.91 0.004 110);border:1px solid var(--en-border)}
+.emit-icon{font-size:22px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:oklch(0.96 0.003 110)}
 .emit-info{flex:1}
-.emit-info .name{font-size:13px;font-weight:600}
-.emit-info .desc{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
-.emit-val{font-size:18px;font-weight:700;text-align:right}
-.emit-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.06);margin-top:6px;overflow:hidden}
-.emit-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.emit-info .name{font-size:13px;font-weight:600;color:var(--sumi)}
+.emit-info .desc{font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110));margin-top:2px}
+.emit-val{font-size:18px;font-weight:700;text-align:right;color:var(--sumi)}
+.emit-bar{height:4px;background:oklch(0.85 0.005 110);margin-top:6px;overflow:hidden}
+.emit-bar-fill{height:100%;transition:width .5s}
 /* Doc Table */
-.doc-panel{background:var(--en-glass);backdrop-filter:blur(14px);border:1px solid var(--en-border);border-radius:14px;padding:18px}
-.doc-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
-.doc-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--en-ok)}
+.doc-panel{background:var(--en-glass);border:1px solid var(--en-border);padding:18px;box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5)}
+.doc-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px;color:var(--sumi)}
+.doc-panel h5::before{content:'';width:3px;height:12px;background:var(--en-ok)}
 .doc-table{width:100%;border-collapse:collapse;font-size:12px}
-.doc-table th{text-align:left;padding:8px 10px;color:var(--ob-text-tertiary);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--en-border)}
-.doc-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03)}
-.doc-table tr:hover td{background:rgba(255,255,255,.03)}
-.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
-.badge-ok{background:rgba(74,222,128,.12);color:var(--en-ok);border:1px solid rgba(74,222,128,.2)}
-.badge-warn{background:rgba(251,191,36,.12);color:var(--en-warn);border:1px solid rgba(251,191,36,.2)}
+.doc-table th{text-align:left;padding:8px 10px;color:var(--sumi-2);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--en-border)}
+.doc-table td{padding:8px 10px;border-bottom:1px solid oklch(0.85 0.005 110);color:var(--sumi)}
+.doc-table tr:hover td{background:oklch(0.91 0.004 110)}
+.badge{display:inline-flex;padding:3px 10px;font-size:10px;font-weight:600}
+.badge-ok{background:oklch(0.52 0.04 160 / .12);color:var(--en-ok);border:1px solid oklch(0.52 0.04 160 / .2)}
+.badge-warn{background:oklch(0.56 0.05 70 / .12);color:var(--en-warn);border:1px solid oklch(0.56 0.05 70 / .2)}
 @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}.pulse{animation:pulse 2s infinite}
 </style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 <div class="energy-wrap">
@@ -88,10 +90,10 @@ body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var
     </div>
     <div class="emit-panel">
         <h5>🌍 排放监测 Emissions Monitoring</h5>
-        <div class="emit-item"><div class="emit-icon">💨</div><div class="emit-info"><div class="name">CO₂ 二氧化碳</div><div class="desc">IMO DCS 年度申报</div><div class="emit-bar"><div class="emit-bar-fill" id="emCo2Bar" style="width:48%;background:var(--en-ok)"></div></div></div><div class="emit-val" style="color:var(--en-ok)" id="emCo2">3,842<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div></div></div>
-        <div class="emit-item"><div class="emit-icon">☁️</div><div class="emit-info"><div class="name">SOx 硫氧化物</div><div class="desc">MARPOL Annex VI 0.5% 限值</div><div class="emit-bar"><div class="emit-bar-fill" id="emSoxBar" style="width:32%;background:var(--en-warn)"></div></div></div><div class="emit-val" style="color:var(--en-warn)" id="emSox">12.4<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div></div></div>
-        <div class="emit-item"><div class="emit-icon">🔥</div><div class="emit-info"><div class="name">NOx 氮氧化物</div><div class="desc">Tier III ECA Compliance</div><div class="emit-bar"><div class="emit-bar-fill" id="emNoxBar" style="width:55%;background:var(--en-blue)"></div></div></div><div class="emit-val" style="color:var(--en-blue)" id="emNox">78.6<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div></div></div>
-        <div class="emit-item"><div class="emit-icon">⚫</div><div class="emit-info"><div class="name">PM 颗粒物</div><div class="desc">EU MRV 监测</div><div class="emit-bar"><div class="emit-bar-fill" style="width:22%;background:var(--en-purple)"></div></div></div><div class="emit-val" style="color:var(--en-purple)">4.8<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div></div></div>
+        <div class="emit-item"><div class="emit-icon">💨</div><div class="emit-info"><div class="name">CO₂ 二氧化碳</div><div class="desc">IMO DCS 年度申报</div><div class="emit-bar"><div class="emit-bar-fill" id="emCo2Bar" style="width:48%;background:var(--en-ok)"></div></div></div><div class="emit-val" style="color:var(--en-ok)" id="emCo2">3,842<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div></div></div>
+        <div class="emit-item"><div class="emit-icon">☁️</div><div class="emit-info"><div class="name">SOx 硫氧化物</div><div class="desc">MARPOL Annex VI 0.5% 限值</div><div class="emit-bar"><div class="emit-bar-fill" id="emSoxBar" style="width:32%;background:var(--en-warn)"></div></div></div><div class="emit-val" style="color:var(--en-warn)" id="emSox">12.4<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div></div></div>
+        <div class="emit-item"><div class="emit-icon">🔥</div><div class="emit-info"><div class="name">NOx 氮氧化物</div><div class="desc">Tier III ECA Compliance</div><div class="emit-bar"><div class="emit-bar-fill" id="emNoxBar" style="width:55%;background:var(--en-blue)"></div></div></div><div class="emit-val" style="color:var(--en-blue)" id="emNox">78.6<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div></div></div>
+        <div class="emit-item"><div class="emit-icon">⚫</div><div class="emit-info"><div class="name">PM 颗粒物</div><div class="desc">EU MRV 监测</div><div class="emit-bar"><div class="emit-bar-fill" style="width:22%;background:var(--en-purple)"></div></div></div><div class="emit-val" style="color:var(--en-purple)">4.8<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div></div></div>
     </div>
 </div>
 <!-- ═══ Compliance Documents ═══ -->
@@ -123,7 +125,7 @@ function drawCiiTrajectory(){
     const years=[2023,2024,2025,2026];
     const ciiVals=[5.8,5.2,4.6,4.21]; // Actual CII values
     // Rating thresholds (simplified)
-    const bands={A:{lo:0,hi:3.5,c:'rgba(74,222,128,.15)'},B:{lo:3.5,hi:4.5,c:'rgba(96,165,250,.12)'},C:{lo:4.5,hi:5.5,c:'rgba(251,191,36,.1)'},D:{lo:5.5,hi:6.5,c:'rgba(248,113,113,.08)'},E:{lo:6.5,hi:8,c:'rgba(248,113,113,.04)'}};
+    const bands={A:{lo:0,hi:3.5,c:'rgba(74,222,128,.15)'},B:{lo:3.5,hi:4.5,c:'rgba(96,165,250,.12)'},C:{lo:4.5,hi:5.5,c:'oklch(0.56 0.05 70 / .1)'},D:{lo:5.5,hi:6.5,c:'oklch(0.48 0.07 22 / .08)'},E:{lo:6.5,hi:8,c:'oklch(0.48 0.07 22 / .04)'}};
     const maxV=8,minV=0;
     const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
     ctx.clearRect(0,0,W,H);
@@ -131,24 +133,24 @@ function drawCiiTrajectory(){
     Object.entries(bands).forEach(([label,b])=>{
         const y1=pad.t+plotH*(1-b.hi/maxV),y2=pad.t+plotH*(1-b.lo/maxV);
         ctx.fillStyle=b.c;ctx.fillRect(pad.l,y1,plotW,y2-y1);
-        ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='10px system-ui';ctx.textAlign='right';
+        ctx.fillStyle='oklch(0.38 0.006 110)';ctx.font='10px system-ui';ctx.textAlign='right';
         ctx.fillText(label,pad.l-8,(y1+y2)/2+3);
     });
     // Grid
-    for(let i=0;i<=4;i++){const y=pad.t+plotH*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='10px monospace';ctx.textAlign='right';ctx.fillText((maxV-maxV*i/4).toFixed(1),pad.l-6,y+3);}
+    for(let i=0;i<=4;i++){const y=pad.t+plotH*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.strokeStyle='oklch(0.82 0.004 110)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='oklch(0.38 0.006 110)';ctx.font='10px monospace';ctx.textAlign='right';ctx.fillText((maxV-maxV*i/4).toFixed(1),pad.l-6,y+3);}
     // X axis
-    years.forEach((yr,i)=>{const x=pad.l+i/(years.length-1)*plotW;ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(yr,x,H-8);});
+    years.forEach((yr,i)=>{const x=pad.l+i/(years.length-1)*plotW;ctx.fillStyle='oklch(0.38 0.006 110)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(yr,x,H-8);});
     // Required line (declining)
     const reqVals=[6.0,5.6,5.2,4.8];
-    ctx.beginPath();ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(248,113,113,.5)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.setLineDash([6,4]);ctx.strokeStyle='oklch(0.48 0.07 22 / .5)';ctx.lineWidth=1.5;
     reqVals.forEach((v,i)=>{const x=pad.l+i/(years.length-1)*plotW,y=pad.t+plotH*(1-v/maxV);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(248,113,113,.5)';ctx.font='10px system-ui';ctx.fillText('Required',W-pad.r-5,pad.t+plotH*(1-reqVals[reqVals.length-1]/maxV)-6);
+    ctx.fillStyle='oklch(0.48 0.07 22 / .5)';ctx.font='10px system-ui';ctx.fillText('Required',W-pad.r-5,pad.t+plotH*(1-reqVals[reqVals.length-1]/maxV)-6);
     // Actual line
     const grad=ctx.createLinearGradient(pad.l,0,W-pad.r,0);grad.addColorStop(0,'rgba(34,211,238,.6)');grad.addColorStop(1,'rgba(74,222,128,.8)');
     ctx.beginPath();ctx.strokeStyle=grad;ctx.lineWidth=3;
     ciiVals.forEach((v,i)=>{const x=pad.l+i/(years.length-1)*plotW,y=pad.t+plotH*(1-v/maxV);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
     // Points
-    ciiVals.forEach((v,i)=>{const x=pad.l+i/(years.length-1)*plotW,y=pad.t+plotH*(1-v/maxV);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=i===ciiVals.length-1?'rgba(74,222,128,.9)':'rgba(34,211,238,.8)';ctx.fill();ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fillStyle=i===ciiVals.length-1?'rgba(74,222,128,.15)':'rgba(34,211,238,.1)';ctx.fill();ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(v.toFixed(1),x,y-12);});
+    ciiVals.forEach((v,i)=>{const x=pad.l+i/(years.length-1)*plotW,y=pad.t+plotH*(1-v/maxV);ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fillStyle=i===ciiVals.length-1?'rgba(74,222,128,.9)':'rgba(34,211,238,.8)';ctx.fill();ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fillStyle=i===ciiVals.length-1?'rgba(74,222,128,.15)':'rgba(34,211,238,.1)';ctx.fill();ctx.fillStyle='oklch(0.18 0.008 110)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(v.toFixed(1),x,y-12);});
 }
 
 // ── Fuel Chart ──
@@ -156,30 +158,32 @@ function drawFuelChart(){
     const cv=document.getElementById('fuelChart'),ctx=cv.getContext('2d');
     const W=cv.width=cv.offsetWidth,H=cv.height=200;
     const data=[320,285,310,295,340,360,330,315,290,305,335,350];
-    const months='1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月'.split(',');
+    const months_zh='1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月'.split(',');
+    const months_en='Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',');
+    const months=(window.PX_I18N&&PX_I18N.getLang()==='en')?months_en:months_zh;
     const max=Math.max(...data)*1.2,pad={l:45,r:10,t:15,b:30};
     const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
     const bw=plotW/data.length*0.6,gap=plotW/data.length;
     ctx.clearRect(0,0,W,H);
     // Grid
-    for(let i=0;i<=4;i++){const y=pad.t+plotH*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='10px monospace';ctx.textAlign='right';ctx.fillText(Math.round(max-max*i/4),pad.l-6,y+3);}
+    for(let i=0;i<=4;i++){const y=pad.t+plotH*i/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.strokeStyle='oklch(1 0 0 / .04)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='oklch(1 0 0 / .2)';ctx.font='10px monospace';ctx.textAlign='right';ctx.fillText(Math.round(max-max*i/4),pad.l-6,y+3);}
     // Bars
     data.forEach((v,i)=>{
         const x=pad.l+i*gap+(gap-bw)/2,bh=(v/max)*plotH,y=pad.t+plotH-bh;
-        const grad=ctx.createLinearGradient(0,y,0,pad.t+plotH);grad.addColorStop(0,'rgba(96,165,250,.8)');grad.addColorStop(1,'rgba(96,165,250,.3)');
+        const grad=ctx.createLinearGradient(0,y,0,pad.t+plotH);grad.addColorStop(0,'oklch(0.52 0.04 160 / .8)');grad.addColorStop(1,'oklch(0.52 0.04 160 / .3)');
         ctx.fillStyle=grad;
         // Rounded top bar
         const cr=3;ctx.beginPath();ctx.moveTo(x+cr,y);ctx.lineTo(x+bw-cr,y);ctx.quadraticCurveTo(x+bw,y,x+bw,y+cr);ctx.lineTo(x+bw,pad.t+plotH);ctx.lineTo(x,pad.t+plotH);ctx.lineTo(x,y+cr);ctx.quadraticCurveTo(x,y,x+cr,y);ctx.closePath();ctx.fill();
         // Value
-        ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(v,x+bw/2,y-5);
+        ctx.fillStyle='oklch(0.18 0.008 110)';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(v,x+bw/2,y-5);
         // Month label
-        ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillText(months[i],x+bw/2,H-8);
+        ctx.fillStyle='oklch(0.38 0.006 110)';ctx.fillText(months[i],x+bw/2,H-8);
     });
     // Average line
     const avg=data.reduce((a,b)=>a+b)/data.length;
     const ay=pad.t+plotH-(avg/max)*plotH;
-    ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(251,191,36,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,ay);ctx.lineTo(W-pad.r,ay);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(251,191,36,.6)';ctx.font='10px system-ui';ctx.textAlign='left';ctx.fillText('avg: '+Math.round(avg)+' MT',pad.l+4,ay-5);
+    ctx.setLineDash([6,4]);ctx.strokeStyle='oklch(0.56 0.05 70 / .5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,ay);ctx.lineTo(W-pad.r,ay);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='oklch(0.56 0.05 70 / .6)';ctx.font='10px system-ui';ctx.textAlign='left';ctx.fillText('avg: '+Math.round(avg)+' MT',pad.l+4,ay-5);
 }
 
 drawCiiTrajectory();
@@ -200,9 +204,9 @@ function fetchEnergy(){
         }
         if(emit&&emit.emissions){
             const e=emit.emissions;
-            document.getElementById('emCo2').innerHTML=Number(e.co2_ytd_tonnes).toLocaleString()+'<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div>';
-            document.getElementById('emSox').innerHTML=e.sox_ytd_tonnes+'<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div>';
-            document.getElementById('emNox').innerHTML=e.nox_ytd_tonnes+'<div style="font-size:10px;color:var(--ob-text-tertiary)">t/yr</div>';
+            document.getElementById('emCo2').innerHTML=Number(e.co2_ytd_tonnes).toLocaleString()+'<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div>';
+            document.getElementById('emSox').innerHTML=e.sox_ytd_tonnes+'<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div>';
+            document.getElementById('emNox').innerHTML=e.nox_ytd_tonnes+'<div style="font-size:10px;color:var(--sumi-3,oklch(0.55 0.005 110))">t/yr</div>';
             document.getElementById('emCo2Bar').style.width=Math.min(100,e.co2_ytd_tonnes/8000*100)+'%';
             document.getElementById('emSoxBar').style.width=Math.min(100,e.sox_ytd_tonnes/30*100)+'%';
             document.getElementById('emNoxBar').style.width=Math.min(100,e.nox_ytd_tonnes/150*100)+'%';
@@ -214,6 +218,7 @@ fetchEnergy();setInterval(fetchEnergy,30000);
 // ── WebSocket ──
 (function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws/energy');ws.onclose=()=>setTimeout(cn,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(cn,5000);}}cn();})();
 </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="energy"></script>
 </body>
 </html>

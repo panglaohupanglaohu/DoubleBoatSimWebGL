@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PoseidonX — 深海远洋双体船舶智能综合信息系统</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+:root{--bg:oklch(0.96 0.003 110);--sumi:oklch(0.18 0.008 110);--koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);--text:oklch(0.18 0.008 110);--muted:oklch(0.55 0.005 110);--groove:oklch(0.82 0.004 110);--rubber:oklch(0.72 0.006 110)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(oklch(0 0 0/0.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/0.008) 1px,transparent 1px);
+  background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+canvas#bgCanvas{position:fixed;inset:0;z-index:0}
+.content{position:relative;z-index:1;text-align:center;padding:40px 20px;max-width:800px}
+.logo{font-size:48px;margin-bottom:16px;font-family:'Noto Serif SC',serif;color:var(--sumi);letter-spacing:4px}
+h1{font-size:42px;font-weight:900;font-family:'Noto Serif SC',serif;color:var(--sumi);margin-bottom:8px;letter-spacing:2px}
+.subtitle{font-size:14px;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;font-size:11px;font-weight:500;background:oklch(0.52 0.04 160/0.08);color:var(--koke);border:1px solid oklch(0.52 0.04 160/0.2);margin-bottom:36px;font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.badge .dot{width:8px;height:8px;background:var(--koke);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--koke)}50%{opacity:0.5;box-shadow:0 0 8px var(--koke)}}
+.modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:32px;text-align:left}
+.mod{background:oklch(0.93 0.003 110);border:1px solid var(--groove);padding:16px;cursor:pointer;transition:all .08s;text-decoration:none;color:var(--text);
+  box-shadow:inset 0 1px 3px oklch(0 0 0/0.03)}
+.mod:hover{border-color:var(--sumi);transform:translateY(-2px);box-shadow:0 4px 16px oklch(0 0 0/0.08)}
+.mod .m-icon{font-size:20px;margin-bottom:6px;font-family:'Noto Serif SC',serif}
+.mod .m-name{font-size:13px;font-weight:700;font-family:'Noto Serif SC',serif;letter-spacing:0.5px}
+.mod .m-desc{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px}
+.enter-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 36px;background:var(--sumi);color:oklch(0.96 0.003 110);font-size:14px;font-weight:700;text-decoration:none;transition:all .08s;letter-spacing:2px;font-family:'JetBrains Mono',monospace;
+  box-shadow:0 2px 5px oklch(0 0 0/0.12),inset 0 1px 0 oklch(1 0 0/0.06);
+  background-image:radial-gradient(oklch(1 0 0/0.02) 1px,transparent 1px);background-size:3px 3px}
+.enter-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px oklch(0 0 0/0.15)}
+.footer{color:var(--muted);font-size:10px;margin-top:32px;font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+  </style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="content">
+  <div class="logo">🔱</div>
+  <h1>PoseidonX</h1>
+  <div class="subtitle">深海远洋双体船舶智能综合信息系统</div>
+  <div class="badge"><span class="dot"></span> AI Native CPS · 53 Channels · 7 Agents</div>
+  <div class="modules">
+    <a href="/captain-cockpit-new.html" class="mod"><div class="m-icon">⚓</div><div class="m-name">船长中控台</div><div class="m-desc">智能驾驶舱总览</div></a>
+    <a href="/navigation-v3.html" class="mod"><div class="m-icon">🧭</div><div class="m-name">智能导航</div><div class="m-desc">ECDIS 海图与航路</div></a>
+    <a href="/dp-control.html" class="mod"><div class="m-icon">📍</div><div class="m-name">动力定位</div><div class="m-desc">DP 位置保持系统</div></a>
+    <a href="/thruster-control.html" class="mod"><div class="m-icon">⚙️</div><div class="m-name">推进控制</div><div class="m-desc">K-Thrust RCS 推进</div></a>
+    <a href="/safety-emergency.html" class="mod"><div class="m-icon">🔥</div><div class="m-name">安全应急</div><div class="m-desc">消防 · ESD · 救生</div></a>
+    <a href="/system-evolution.html" class="mod"><div class="m-icon">⚡</div><div class="m-name">系统演进</div><div class="m-desc">AI 自我演进引擎</div></a>
+    <a href="/energy-compliance.html" class="mod"><div class="m-icon">🌿</div><div class="m-name">能效合规</div><div class="m-desc">CII/EEXI 碳排放</div></a>
+    <a href="/hmi-console.html" class="mod"><div class="m-icon">💬</div><div class="m-name">AI 控制台</div><div class="m-desc">智能对话交互</div></a>
+  </div>
+  <a href="/captain-cockpit-new.html" class="enter-btn">🚀 进入系统</a>
+  <div class="footer">PoseidonX v2.0 © 2026 — AI Native Maritime CPS · IMO MASS Compliant</div>
+</div>
+<script>
+(function(){
+  const c=document.getElementById('bgCanvas'),ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  function resize(){c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  resize();window.addEventListener('resize',resize);
+  const particles=[];
+  for(let i=0;i<60;i++)particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.5+0.5,a:Math.random()*.12+.04});
+  function draw(){
+    const w=window.innerWidth,h=window.innerHeight;
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(90,85,78,'+p.a+')';ctx.fill();
+    });
+    for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<150){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle='rgba(138,131,120,'+(0.06*(1-d/150))+')';ctx.lineWidth=0.5;ctx.stroke();}
+    }}
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

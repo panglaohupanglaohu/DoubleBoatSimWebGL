@@ -8,121 +8,117 @@
 <title>xFirst Principle AI Data Center Energy Ratchet</title>
 <link rel="stylesheet" href="/css/openbridge-theme.css">
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
   :root {
-    --bg-0: #04070d;
-    --bg-1: #0a1220;
-    --bg-2: #111e34;
-    --grid: rgba(56, 189, 248, 0.10);
-    --line: rgba(125, 211, 252, 0.20);
-    --accent: #38bdf8;
-    --accent-2: #06ffa5;
-    --accent-3: #a78bfa;
-    --warn: #fbbf24;
-    --danger: #f87171;
-    --text: #e2f2ff;
-    --muted: #6b8cae;
+    /* ── 侘寂橡膠 · Wabi-Sabi Rubber ── */
+    --bg-0:oklch(0.96 0.003 110); --bg-1:oklch(0.91 0.004 110); --bg-2:oklch(0.85 0.005 110);
+    --grid:oklch(0 0 0 / 0.03); --line:oklch(0.82 0.004 110);
+    --accent:oklch(0.18 0.008 110); --accent-2:oklch(0.52 0.04 160); --accent-3:oklch(0.55 0.005 110);
+    --warn:oklch(0.56 0.05 70); --danger:oklch(0.48 0.07 22);
+    --text:oklch(0.18 0.008 110); --muted:oklch(0.55 0.005 110);
+    --rack:oklch(0.18 0.008 110); --pdu:oklch(0.56 0.05 70); --ats:oklch(0.48 0.07 22); --busway:oklch(0.55 0.005 110);
+    --cold:oklch(0.52 0.04 160); --hot:oklch(0.48 0.07 22); --pipe:oklch(0.52 0.04 160); --floor:oklch(0.72 0.006 110);
+    --rubber:oklch(0.72 0.006 110); --rubber-hover:oklch(0.68 0.007 110); --rubber-press:oklch(0.64 0.007 110);
+    --sumi:oklch(0.18 0.008 110); --koke:oklch(0.52 0.04 160); --shu:oklch(0.48 0.07 22);
+    --kitsune:oklch(0.56 0.05 70); --shironeri:oklch(0.96 0.003 110);
+    --groove:oklch(0.82 0.004 110); --ridge:oklch(1.00 0 0 / 0.6);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; font-family: 'SF Mono', 'Roboto Mono', 'Menlo', monospace; color: var(--text); }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: 'Noto Sans SC','JetBrains Mono',sans-serif; color: var(--text); -webkit-font-smoothing:antialiased; }
   body {
-    background:
-      radial-gradient(ellipse at 20% 10%, rgba(56,189,248,0.10), transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(6,255,165,0.08), transparent 50%),
-      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 60%, var(--bg-2) 100%);
-    background-attachment: fixed;
+    background: var(--bg-0);
     overflow-x: hidden;
   }
   body::before {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mask-image: radial-gradient(ellipse at 50% 50%, black 0%, transparent 90%);
+      radial-gradient(oklch(0 0 0 / 0.012) 1px, transparent 1px),
+      radial-gradient(oklch(0 0 0 / 0.008) 1px, transparent 1px);
+    background-size: 5px 5px, 7px 7px;
+    background-position: 0 0, 3px 3px;
   }
-  .container { position: relative; z-index: 1; max-width: 1760px; margin: 0 auto; padding: 18px 24px; }
+  .container { position: relative; z-index: 1; max-width: 100%; margin: 0 auto; padding: 18px 24px; }
 
   .hud {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 22px; border: 1px solid var(--line); border-radius: 14px;
-    background: linear-gradient(135deg, rgba(15,32,55,0.7), rgba(8,18,34,0.7));
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 30px rgba(56,189,248,0.10), inset 0 0 30px rgba(6,255,165,0.04);
+    padding: 14px 0; border-bottom: 1px solid var(--groove);
   }
   .hud .brand { display:flex; align-items:center; gap:14px; }
   .hud .logo {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
-    box-shadow: 0 0 16px var(--accent);
+    width: 34px; height: 34px;
+    background: var(--sumi);
     display:flex; align-items:center; justify-content:center;
-    font-size: 22px; font-weight: 700; color: #021018;
-    animation: spin 12s linear infinite;
+    font-family:'Noto Serif SC',serif; font-size: 18px; font-weight: 900; color: var(--shironeri);
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .hud h1 { margin: 0; font-size: 18px; letter-spacing: 1px; font-weight: 600; }
-  .hud .sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; }
-  .hud .pills { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .hud h1 { margin: 0; font-family:'Noto Serif SC',serif; font-size: 13px; letter-spacing: 3px; font-weight: 300; color: var(--muted); }
+  .hud h1 strong { color: var(--text); font-weight: 600; }
+  .hud .sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; font-family:'JetBrains Mono',monospace; }
+  .hud .pills { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
   .pill {
-    padding: 6px 12px; border-radius: 999px; font-size: 11px; letter-spacing: 1px;
-    border: 1px solid var(--line); background: rgba(56,189,248,0.08);
-    color: var(--accent); cursor: pointer; user-select:none;
+    padding: 5px 14px; font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: 1.5px;
+    border: none; cursor: pointer; user-select:none; text-decoration:none; text-transform:uppercase;
+    background: var(--rubber); color: var(--sumi);
+    box-shadow: 0 2px 5px oklch(0 0 0/0.12),0 1px 2px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.35),inset 0 -1px 0 oklch(0 0 0/0.08);
+    background-image: radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px); background-size:3px 3px;
+    transition: all 0.08s ease-out;
   }
-  .pill:hover { background: rgba(56,189,248,0.16); }
-  .pill.live { background: rgba(6,255,165,0.10); color: var(--accent-2); border-color: rgba(6,255,165,0.4); }
-  .pill.live::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent-2); margin-right:6px; box-shadow:0 0 8px var(--accent-2); animation:blink 1.5s infinite; }
-  .pill.ws { background: rgba(167,139,250,0.10); color: var(--accent-3); border-color: rgba(167,139,250,0.4); }
-  .pill.ws.off { background: rgba(248,113,113,0.10); color: var(--danger); border-color: rgba(248,113,113,0.4); }
+  .pill:hover { background-color: var(--rubber-hover); }
+  .pill:active { box-shadow:inset 0 2px 5px oklch(0 0 0/0.15),inset 0 1px 2px oklch(0 0 0/0.10);transform:translateY(1px);background-color:var(--rubber-press); }
+  .pill.live { background:var(--sumi); color:var(--shironeri); box-shadow:0 2px 5px oklch(0 0 0/0.15),inset 0 1px 0 oklch(1 0 0/0.08),inset 0 -1px 0 oklch(0 0 0/0.3); }
+  .pill.live::before { content:''; display:inline-block; width:5px; height:5px;
+    background:var(--koke); margin-right:6px; animation:blink 2.5s infinite; }
+  .pill.ws { background:var(--sumi); color:var(--shironeri); }
+  .pill.ws.off { background:oklch(0.85 0.005 110); color:var(--shu); }
   @keyframes blink { 50% { opacity: 0.3; } }
 
   .fp-banner {
-    margin-top: 14px; padding: 12px 18px; border-radius: 12px;
-    background: linear-gradient(90deg, rgba(167,139,250,0.10), rgba(6,255,165,0.06), transparent);
-    border: 1px dashed rgba(167,139,250,0.4); font-size: 12px; color: var(--text);
+    margin-top: 14px; padding: 12px 18px;
+    background: oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.05),0 1px 0 var(--ridge);
+    font-size: 12px; color: var(--text);
     display:flex; gap:18px; align-items:center; flex-wrap:wrap;
   }
-  .fp-banner .formula { font-family:'Menlo'; color: var(--accent-3); font-weight:700; }
+  .fp-banner .formula { font-family:'JetBrains Mono',monospace; color: var(--sumi); font-weight:700; }
 
-  .kpi-strip { display:grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin: 16px 0; }
+  .kpi-strip { display:grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: 14px 0; }
   .kpi {
-    padding: 12px 16px; border-radius: 12px;
-    border: 1px solid var(--line);
-    background: linear-gradient(135deg, rgba(15,32,55,0.55), rgba(10,22,42,0.55));
-    position: relative; overflow: hidden;
+    padding: 12px 16px; position: relative; overflow: hidden;
+    background: oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.06),0 1px 0 var(--ridge);
   }
   .kpi::after {
-    content: ''; position: absolute; bottom: 0; left: 0; height: 2px; width: 100%;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    animation: scan 3s infinite;
+    content: ''; position: absolute; bottom: 0; left: 0; height: 1px; width: 100%;
+    background: linear-gradient(90deg, transparent, var(--groove), transparent);
   }
-  @keyframes scan { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
-  .kpi .label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  .kpi .value { font-size: 24px; font-weight: 700; color: var(--accent); margin: 4px 0 2px; font-feature-settings: 'tnum'; }
+  .kpi .label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; font-family:'JetBrains Mono',monospace; }
+  .kpi .value { font-size: 24px; font-weight: 700; color: var(--sumi); margin: 4px 0 2px; font-feature-settings: 'tnum'; font-family:'JetBrains Mono',monospace; }
   .kpi .unit { font-size: 11px; color: var(--muted); margin-left: 4px; }
-  .kpi .delta { font-size: 10px; color: var(--accent-2); }
-  .kpi.warn .value { color: var(--warn); }
-  .kpi.danger .value { color: var(--danger); }
-  .kpi.cny .value { color: var(--accent-2); }
-  .kpi.bench .value { color: var(--accent-3); }
+  .kpi .delta { font-size: 10px; color: var(--koke); }
+  .kpi.warn .value { color: var(--kitsune); }
+  .kpi.danger .value { color: var(--shu); }
+  .kpi.cny .value { color: var(--koke); }
+  .kpi.bench .value { color: var(--muted); }
 
-  .tabs { display:flex; gap:6px; margin: 14px 0 10px; border-bottom: 1px solid var(--line); flex-wrap:wrap; }
+  .tabs { display:flex; gap:6px; margin: 14px 0 10px; border-bottom: 1px solid var(--groove); flex-wrap:wrap; }
   .tab {
-    padding: 8px 14px; cursor: pointer; font-size: 12px; letter-spacing: 1px;
+    padding: 8px 14px; cursor: pointer; font-size: 11px; letter-spacing: 1.5px; text-transform:uppercase;
     color: var(--muted); border-bottom: 2px solid transparent; user-select:none;
+    font-family:'JetBrains Mono',monospace; transition: all 0.15s;
   }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab.active { color: var(--sumi); border-bottom-color: var(--sumi); }
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
 
   .panel {
-    padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line);
-    background: linear-gradient(135deg, rgba(15,32,55,0.45), rgba(10,22,42,0.45));
-    backdrop-filter: blur(6px);
+    padding: 14px 16px;
+    background: oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5);
   }
   .panel h2 {
-    margin: 0 0 10px; font-size: 13px; letter-spacing: 1.5px; color: var(--accent);
+    margin: 0 0 10px; font-family:'Noto Serif SC',serif; font-size: 12px; letter-spacing: 3px; color: var(--sumi);
     text-transform: uppercase; display:flex; justify-content:space-between; align-items:center;
   }
-  .badge { font-size: 9px; color: var(--muted); padding: 2px 8px; border:1px solid var(--line); border-radius:8px; letter-spacing:1px; }
+  .badge { font-family:'JetBrains Mono',monospace; font-size: 8px; color: var(--muted); padding: 2px 8px; border:1px solid var(--groove); letter-spacing:1.5px; }
 
   .grid-2 { display:grid; grid-template-columns: 1.4fr 1fr; gap:14px; }
   .grid-3 { display:grid; grid-template-columns: 1.2fr 1.6fr 1fr; gap:14px; }
@@ -131,82 +127,84 @@
 
   .four-view { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
   .view-card {
-    padding: 12px; border-radius: 10px;
-    border: 1px solid var(--line);
-    background: linear-gradient(135deg, rgba(56,189,248,0.05), transparent);
+    padding: 12px;
+    border: 1px solid var(--groove);
+    background: oklch(0.93 0.003 110);
   }
-  .view-card.facility { background: linear-gradient(135deg, rgba(6,255,165,0.05), transparent); }
-  .view-card.environment { background: linear-gradient(135deg, rgba(251,191,36,0.05), transparent); }
-  .view-card.process { background: linear-gradient(135deg, rgba(167,139,250,0.05), transparent); }
-  .view-card .vt { font-size: 10px; letter-spacing:1.5px; color: var(--muted); }
-  .view-card .vk { font-size: 22px; font-weight:700; color: var(--accent); margin: 4px 0; font-feature-settings:'tnum'; }
+  .view-card.facility { border-left: 3px solid var(--koke); }
+  .view-card.environment { border-left: 3px solid var(--kitsune); }
+  .view-card.process { border-left: 3px solid var(--muted); }
+  .view-card .vt { font-size: 10px; letter-spacing:1.5px; color: var(--muted); font-family:'JetBrains Mono',monospace; }
+  .view-card .vk { font-size: 22px; font-weight:700; color: var(--sumi); margin: 4px 0; font-feature-settings:'tnum'; font-family:'JetBrains Mono',monospace; }
   .view-card .vi { font-size: 11px; color: var(--text); line-height: 1.5; }
-  .view-card.facility .vk { color: var(--accent-2); }
-  .view-card.environment .vk { color: var(--warn); }
-  .view-card.process .vk { color: var(--accent-3); }
+  .view-card.facility .vk { color: var(--koke); }
+  .view-card.environment .vk { color: var(--kitsune); }
+  .view-card.process .vk { color: var(--muted); }
 
   .pue-stage { padding: 14px 0; }
-  .pue-meter { position: relative; height: 16px; border-radius: 8px;
-    background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 33%, var(--warn) 66%, var(--danger) 100%);
-    margin-top: 8px; box-shadow: 0 0 10px rgba(56,189,248,0.3);
+  .pue-meter { position: relative; height: 16px;
+    background: linear-gradient(90deg, var(--koke) 0%, oklch(0.65 0.02 110) 33%, var(--kitsune) 66%, var(--shu) 100%);
+    margin-top: 8px; box-shadow: inset 0 1px 3px oklch(0 0 0/0.1);
   }
   .pue-marker {
     position: absolute; top: -6px; width: 4px; height: 28px;
-    background: white; box-shadow: 0 0 10px white; border-radius: 2px;
+    background: var(--sumi); box-shadow: 0 0 6px oklch(0 0 0/0.3);
     transition: left 0.6s cubic-bezier(.5,1,.5,1);
   }
-  .pue-tick { position: absolute; top: 22px; font-size: 10px; color: var(--muted); transform: translateX(-50%); }
+  .pue-tick { position: absolute; top: 22px; font-size: 10px; color: var(--muted); transform: translateX(-50%); font-family:'JetBrains Mono',monospace; }
 
   button {
-    padding: 6px 12px; font: inherit; font-size: 11px;
-    background: rgba(56,189,248,0.10); color: var(--accent);
-    border: 1px solid var(--line); border-radius: 6px;
-    cursor: pointer; transition: all 0.15s; letter-spacing:0.5px;
+    padding: 5px 14px; font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing:1.5px;
+    background: var(--rubber); color: var(--sumi);
+    border: none; cursor: pointer; transition: all 0.08s; text-transform:uppercase;
+    box-shadow:0 2px 5px oklch(0 0 0/0.12),0 1px 2px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.35),inset 0 -1px 0 oklch(0 0 0/0.08);
+    background-image:radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px);background-size:3px 3px;
   }
-  button:hover { background: rgba(56,189,248,0.20); border-color: var(--accent); }
+  button:hover { background-color: var(--rubber-hover); }
+  button:active { box-shadow:inset 0 2px 5px oklch(0 0 0/0.15);transform:translateY(1px);background-color:var(--rubber-press); }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.primary { background: rgba(6,255,165,0.10); color: var(--accent-2); border-color: rgba(6,255,165,0.3); }
-  button.danger { background: rgba(248,113,113,0.10); color: var(--danger); border-color: rgba(248,113,113,0.3); }
-  button.ghost { background: transparent; }
+  button.primary { background: var(--sumi); color: var(--shironeri); box-shadow:0 2px 5px oklch(0 0 0/0.15),inset 0 1px 0 oklch(1 0 0/0.08); }
+  button.danger { background: oklch(0.85 0.005 110); color: var(--shu); border: 1px solid oklch(0.48 0.07 22 / 0.3); box-shadow:none; }
+  button.ghost { background: transparent; box-shadow:none; border:1px solid var(--groove); }
   .loop-ctl { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; align-items:center; }
 
   .iot-row, .skill, .policy, .heritage, .device-row, .recommend-row {
-    padding: 8px 10px; margin: 6px 0; border-radius: 8px;
-    border: 1px solid var(--line);
-    background: rgba(15,32,55,0.4); font-size: 11px;
+    padding: 8px 10px; margin: 6px 0;
+    border-bottom: 1px solid var(--groove);
+    background: oklch(0.94 0.003 110); font-size: 11px;
   }
   .iot-row { display:flex; justify-content:space-between; align-items:center; }
-  .iot-row.hot { border-color: var(--warn); background: rgba(251,191,36,0.06); }
-  .iot-row .v { font-size: 14px; font-weight: 700; color: var(--accent); font-feature-settings:'tnum'; }
+  .iot-row.hot { border-bottom-color: var(--kitsune); background: oklch(0.92 0.01 70); }
+  .iot-row .v { font-size: 14px; font-weight: 700; color: var(--sumi); font-feature-settings:'tnum'; font-family:'JetBrains Mono',monospace; }
   .iot-row .sid, .skill .stm, .policy .pr, .heritage .hm, .device-row .dr {
     font-size: 10px; color: var(--muted);
   }
-  .iot-row .kind { color: var(--accent-3); }
+  .iot-row .kind { color: var(--koke); }
   .skill .st, .policy .pt, .heritage .ht, .device-row .dt, .recommend-row .rt {
     font-weight: 600; color: var(--text); font-size: 12px; margin-bottom: 4px;
     display:flex; justify-content:space-between; align-items:center; gap: 8px;
   }
-  .conf, .pkind, .psave { font-size: 10px; color: var(--accent-2); }
-  .pkind.save { color: var(--warn); }
-  .policy.applied { background: rgba(6,255,165,0.06); border-color: rgba(6,255,165,0.3); }
+  .conf, .pkind, .psave { font-size: 10px; color: var(--koke); }
+  .pkind.save { color: var(--kitsune); }
+  .policy.applied { background: oklch(0.92 0.01 160); border-bottom-color: var(--koke); }
 
   .arch { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0; }
   .layer {
-    padding: 10px 12px; border-radius: 10px;
-    border: 1px solid var(--line);
-    background: linear-gradient(135deg, rgba(56,189,248,0.06), transparent);
+    padding: 10px 12px;
+    border: 1px solid var(--groove);
+    background: oklch(0.93 0.003 110);
     text-align: center; font-size: 10px;
   }
-  .layer .l { color: var(--accent); font-weight:700; letter-spacing: 1.5px; }
+  .layer .l { color: var(--sumi); font-weight:700; letter-spacing: 1.5px; font-family:'JetBrains Mono',monospace; }
   .layer .d { color: var(--muted); margin-top: 4px; line-height:1.4; }
 
   .events { max-height: 200px; overflow-y: auto; padding: 6px 0; }
   .event {
-    padding: 6px 10px; margin: 4px 0; border-left: 2px solid var(--accent);
-    background: rgba(56,189,248,0.04); font-size: 10px; border-radius: 4px;
+    padding: 6px 10px; margin: 4px 0; border-left: 2px solid var(--sumi);
+    background: oklch(0.94 0.003 110); font-size: 10px;
   }
-  .event .ek { color: var(--accent); font-weight: 700; }
-  .event .et { color: var(--muted); float: right; }
+  .event .ek { color: var(--sumi); font-weight: 700; }
+  .event .et { color: var(--muted); float: right; font-family:'JetBrains Mono',monospace; }
 
   .chart-wrap { width:100%; }
   svg.chart { width: 100%; height: 200px; }
@@ -216,58 +214,298 @@
   .target-line { stroke: rgba(6,255,165,0.6); stroke-dasharray: 4 3; stroke-width: 1; }
 
   .insight {
-    padding: 12px; border-radius: 10px;
-    background: linear-gradient(135deg, rgba(167,139,250,0.10), rgba(56,189,248,0.04));
-    border: 1px solid rgba(167,139,250,0.30); font-size: 12px; line-height: 1.6;
+    padding: 12px;
+    background: oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.05);
+    border-left: 3px solid var(--sumi); font-size: 12px; line-height: 1.6;
   }
-  .insight .head { font-size: 11px; color: var(--accent-3); margin-bottom: 6px; letter-spacing:1px; }
+  .insight .head { font-size: 11px; color: var(--sumi); margin-bottom: 6px; letter-spacing:1.5px; font-family:'JetBrains Mono',monospace; }
   .insight ul { margin: 4px 0 0 18px; padding: 0; }
   .insight li { margin: 4px 0; color: var(--text); }
 
-  .footer { text-align:center; color: var(--muted); padding: 14px 0 6px; font-size: 10px; letter-spacing:1px; }
+  .footer { text-align:center; color: var(--muted); padding: 14px 0 6px; font-size: 10px; letter-spacing:1.5px; font-family:'JetBrains Mono',monospace; }
 
-  .modal-mask { position: fixed; inset: 0; background: rgba(2,8,20,0.7); display:none; align-items:center; justify-content:center; z-index: 100; backdrop-filter: blur(4px); }
+  .modal-mask { position: fixed; inset: 0; background: oklch(0.96 0.003 110 / 0.85); display:none; align-items:center; justify-content:center; z-index: 100; backdrop-filter: blur(4px); }
   .modal-mask.show { display:flex; }
   .modal { width: 540px; max-width: 92vw; max-height: 80vh; overflow-y: auto; padding: 18px;
-    background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
-    border: 1px solid var(--line); border-radius: 12px;
-    box-shadow: 0 0 30px rgba(56,189,248,0.4);
+    background: oklch(0.93 0.003 110);
+    border: 1px solid var(--groove);
+    box-shadow: 0 4px 24px oklch(0 0 0/0.12);
   }
-  .modal h3 { margin: 0 0 12px; color: var(--accent); font-size: 14px; letter-spacing: 1px; }
+  .modal h3 { margin: 0 0 12px; color: var(--sumi); font-size: 14px; letter-spacing: 1.5px; font-family:'Noto Serif SC',serif; }
   .modal label { font-size: 11px; color: var(--muted); display:block; margin: 8px 0 2px; }
   .modal input, .modal textarea {
-    width: 100%; padding: 6px 10px; background: rgba(0,0,0,0.4);
-    color: var(--text); border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 12px;
+    width: 100%; padding: 6px 10px; background: oklch(0.96 0.003 110);
+    color: var(--text); border: 1px solid var(--groove); font: inherit; font-size: 12px;
   }
   .modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top: 14px; }
 
-  .section-title { font-size: 11px; color: var(--muted); letter-spacing:2px; margin: 14px 0 6px; text-transform:uppercase; }
+  .section-title { font-family:'Noto Serif SC',serif; font-size: 11px; color: var(--muted); letter-spacing:3px; margin: 14px 0 6px; text-transform:uppercase; }
 
   .switch {
-    width: 36px; height: 18px; border-radius: 999px; background: rgba(255,255,255,0.10);
+    width: 36px; height: 18px; background: oklch(0.82 0.004 110);
     position: relative; cursor: pointer; transition: background .2s;
   }
   .switch::after {
-    content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background: var(--muted); transition: all .2s;
+    content:''; position:absolute; top:2px; left:2px; width:14px; height:14px; background: var(--muted); transition: all .2s;
   }
-  .switch.on { background: rgba(6,255,165,0.30); }
-  .switch.on::after { left: 20px; background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+  .switch.on { background: oklch(0.85 0.02 160); }
+  .switch.on::after { left: 20px; background: var(--koke); }
 
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.3); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.5); }
+  ::-webkit-scrollbar-thumb { background: oklch(0.75 0.005 110); }
+  ::-webkit-scrollbar-thumb:hover { background: oklch(0.65 0.005 110); }
 
-  .recommend-row { border-color: rgba(167,139,250,0.40); background: rgba(167,139,250,0.06); }
-  .recommend-row .score { color: var(--accent-3); font-size: 11px; }
+  .recommend-row { border-bottom-color: var(--koke); background: oklch(0.93 0.005 160); }
+  .recommend-row .score { color: var(--koke); font-size: 11px; }
   .device-row { cursor: pointer; }
-  .device-row:hover { border-color: var(--accent); }
+  .device-row:hover { border-bottom-color: var(--sumi); background: oklch(0.92 0.003 110); }
 
   input.text {
-    padding: 6px 10px; background: rgba(0,0,0,0.4);
-    color: var(--text); border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 12px;
+    padding: 6px 10px; background: oklch(0.96 0.003 110);
+    color: var(--text); border: 1px solid var(--groove); font: inherit; font-size: 12px;
   }
+
+  .poweriq-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 14px;
+    min-height: 980px;
+  }
+  .poweriq-side {
+    border: 1px solid var(--groove);
+    overflow: hidden;
+    background: oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 5px oklch(0 0 0/0.05);
+  }
+  .poweriq-side .head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 14px; font-size: 12px; font-weight: 700; letter-spacing: .6px;
+    color: var(--sumi); border-bottom: 1px solid var(--groove);
+    background: oklch(0.88 0.004 110);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .poweriq-side .toolbar {
+    display:grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+    padding: 10px; border-bottom: 1px solid var(--groove);
+    background: oklch(0.90 0.004 110);
+  }
+  .poweriq-tool {
+    height: 36px; border: 1px solid var(--groove);
+    background: var(--rubber); color: var(--sumi);
+    font-size: 15px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 3px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.3);
+    cursor:pointer;
+  }
+  .poweriq-tree {
+    max-height: 860px; overflow:auto; padding: 10px 0;
+  }
+  .poweriq-group {
+    padding: 8px 14px 6px; font-size: 11px; color: var(--muted); font-weight: 700;
+    border-top: 1px solid var(--groove);
+  }
+  .poweriq-item {
+    display:flex; align-items:center; gap: 8px; padding: 6px 14px 6px 22px;
+    font-size: 11px; color: var(--muted); cursor: pointer; border-left: 2px solid transparent;
+  }
+  .poweriq-item:hover { background: oklch(0.90 0.004 110); color: var(--sumi); }
+  .poweriq-item.active { background: oklch(0.89 0.01 110); color: var(--sumi); border-left-color: var(--sumi); }
+  .poweriq-main {
+    border: 1px solid var(--groove); overflow: hidden;
+    background: oklch(0.95 0.003 110);
+  }
+  .poweriq-topbar {
+    display:flex; align-items:center; justify-content:space-between; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--groove); background: oklch(0.93 0.003 110);
+  }
+  .poweriq-tabs { display:flex; gap: 18px; flex-wrap:wrap; }
+  .poweriq-toplink { color: var(--muted); font-size: 11px; letter-spacing: .5px; cursor: pointer; font-family:'JetBrains Mono',monospace; transition:.15s; }
+  .poweriq-toplink.active { color: var(--sumi); font-weight: 700; }
+  .poweriq-search {
+    width: 210px; padding: 8px 12px; background: oklch(0.96 0.003 110);
+    color: var(--text); border: 1px solid var(--groove); font: inherit; font-size: 12px;
+  }
+  .poweriq-workspace {
+    padding: 14px; display:grid; gap: 14px;
+    grid-template-rows: auto auto;
+  }
+  .poweriq-grid {
+    display:grid; gap: 14px;
+    grid-template-columns: 1.05fr 2.15fr 1.05fr;
+    grid-template-rows: 300px 320px;
+    grid-template-areas:
+      'gaugeA health gaugeB'
+      'trend trend pdu';
+  }
+  .poweriq-bottom {
+    display:grid; gap: 14px;
+    grid-template-columns: 1.35fr 1fr .9fr;
+    min-height: 420px;
+  }
+  .power-widget {
+    border: 1px solid var(--groove); overflow: hidden;
+    background: oklch(0.93 0.003 110); box-shadow:inset 0 1px 4px oklch(0 0 0/0.04);
+  }
+  .power-widget .wh {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 12px; font-size: 11px; font-weight: 700; color: var(--sumi);
+    border-bottom: 1px solid var(--groove); background: oklch(0.90 0.004 110);
+    font-family:'JetBrains Mono',monospace; letter-spacing:.5px;
+  }
+  .power-widget .wb { padding: 12px; height: calc(100% - 40px); }
+  .power-widget.gaugeA { grid-area: gaugeA; }
+  .power-widget.health { grid-area: health; }
+  .power-widget.gaugeB { grid-area: gaugeB; }
+  .power-widget.trend { grid-area: trend; }
+  .power-widget.pdu { grid-area: pdu; }
+  .gauge-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; }
+  .gauge-caption { margin-top: 10px; font-size: 10px; color: #bdbdbd; letter-spacing: .8px; text-transform: uppercase; }
+  .rack-health-grid {
+    display:grid; grid-template-columns: repeat(8, minmax(70px, 1fr)); gap: 6px; max-height: 100%; overflow:auto;
+  }
+  .rack-tile {
+    padding: 6px; min-height: 56px; cursor: pointer; color: var(--shironeri);
+    border: 1px solid var(--groove); transition: transform .12s, box-shadow .12s;
+  }
+  .rack-tile:hover { transform: translateY(-1px); box-shadow: 0 2px 8px oklch(0 0 0/0.12); }
+  .rack-tile.active { outline: 2px solid var(--sumi); }
+  .rack-tile .rk { font-size: 11px; font-weight: 700; font-family:'JetBrains Mono',monospace; }
+  .rack-tile .rm { font-size: 9px; opacity: .92; margin-top: 2px; line-height: 1.35; }
+  .rack-tile.critical { background: oklch(0.48 0.07 22); }
+  .rack-tile.warning { background: oklch(0.72 0.06 70); color: var(--sumi); }
+  .rack-tile.normal { background: oklch(0.52 0.04 160); }
+  .rack-tile.nodata { background: oklch(0.75 0.005 110); }
+  .pdu-bars { display:flex; flex-direction:column; gap: 14px; padding-top: 8px; }
+  .pdu-row { display:grid; grid-template-columns: 72px 1fr 28px; gap: 10px; align-items:center; font-size: 11px; }
+  .pdu-track { height: 24px; overflow: hidden; background: oklch(0.88 0.004 110); border: 1px solid var(--groove); }
+  .pdu-fill { height: 100%; }
+  .pdu-fill.good { background: oklch(0.52 0.04 160); }
+  .pdu-fill.warn { background: oklch(0.72 0.06 70); }
+  .pdu-fill.crit { background: oklch(0.48 0.07 22); }
+  .floor-layout { display:grid; grid-template-columns: 1fr 220px; gap: 12px; height: 100%; }
+  .floor-legend { border-left: 1px solid var(--groove); padding-left: 12px; font-size: 11px; color: var(--muted); }
+  .legend-row { display:flex; align-items:center; gap: 8px; margin: 8px 0; }
+  .legend-chip { width: 14px; height: 14px; }
+  .rack-detail {
+    margin-top: 12px; padding: 10px;
+    background: oklch(0.94 0.003 110);
+    border: 1px solid var(--groove); font-size: 11px; color: var(--muted); line-height: 1.5;
+  }
+  .alerts-box { max-height: 360px; overflow:auto; }
+  .alert-row {
+    border-left: 3px solid var(--shu); padding: 8px 10px; margin: 0 0 8px;
+    background: oklch(0.94 0.003 110); font-size: 11px; color: var(--text);
+  }
+  .alert-row.warn { border-left-color: var(--kitsune); }
+  .alert-row.info { border-left-color: var(--koke); }
+  .alert-row .at { display:flex; justify-content:space-between; gap: 8px; font-weight: 700; }
+  .mini-note { font-size: 10px; color: var(--muted); margin-top: 6px; }
+
+  @media (max-width: 1400px) {
+    .poweriq-grid { grid-template-columns: 1fr; grid-template-rows: auto; grid-template-areas: 'gaugeA' 'health' 'gaugeB' 'trend' 'pdu'; }
+    .poweriq-bottom { grid-template-columns: 1fr; }
+    .poweriq-shell { grid-template-columns: 1fr; }
+  }
+
+  /* Top-tab panes */
+  .pwr-tab { display: none; }
+  .pwr-tab.active { display: grid; gap: 14px; }
+  .pwr-tab-content { display:grid; gap: 14px; }
+  .pwr-list { max-height: 760px; overflow:auto; border:1px solid var(--groove); }
+  .pwr-list table { width:100%; border-collapse: collapse; font-size: 11px; color:var(--text); }
+  .pwr-list th { text-align:left; padding:8px 10px; background:oklch(0.90 0.004 110); color:var(--sumi); font-weight:700; position:sticky; top:0; border-bottom:1px solid var(--groove); font-family:'JetBrains Mono',monospace; }
+  .pwr-list td { padding:7px 10px; border-bottom:1px solid var(--groove); }
+  .pwr-list tr:hover { background: oklch(0.92 0.003 110); }
+  .pwr-pill { display:inline-block; padding:2px 8px; font-size:10px; font-weight:700; }
+  .pwr-pill.ok { background: oklch(0.90 0.02 160); color: var(--koke); }
+  .pwr-pill.warn { background: oklch(0.90 0.02 70); color: var(--kitsune); }
+  .pwr-pill.crit { background: oklch(0.90 0.02 22); color: var(--shu); }
+
+  /* 5-hour Ratchet HUD */
+  .pwr-ratchet {
+    display:flex; align-items:center; gap:8px;
+    padding: 4px 10px;
+    background: oklch(0.90 0.004 110);
+    border:1px solid var(--groove); color:var(--sumi);
+    font-size: 10px; letter-spacing:.5px; font-weight:700;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .pwr-ratchet .pwr-bar { width: 90px; height: 6px; background:oklch(0.85 0.005 110); overflow:hidden; }
+  .pwr-ratchet .pwr-bar > div { height:100%; background: linear-gradient(90deg, var(--koke), var(--kitsune)); transition: width .8s ease; }
+  .pwr-ratchet button { background:transparent; border:1px solid var(--groove); color:var(--sumi); padding:2px 6px; font-size:10px; cursor:pointer; box-shadow:none; }
+  .pwr-ratchet button:hover { background: oklch(0.88 0.004 110); }
+
+  .pwr-rwidget {
+    border:1px solid var(--groove); padding:10px 12px;
+    background: oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.04);
+    font-size:11px; color:var(--text);
+  }
+  .pwr-rwidget h4 { margin:0 0 6px; color:var(--sumi); font-size:12px; letter-spacing:.6px; font-family:'JetBrains Mono',monospace; }
+  .pwr-rwidget .pwr-rrow { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed var(--groove); }
+  .pwr-rwidget .pwr-rrow:last-child { border-bottom:0; }
+
+  /* Sortable table headers */
+  .pwr-list th { cursor:pointer; user-select:none; }
+  .pwr-list th .sort { color:var(--sumi); margin-left:4px; opacity:.6; }
+  .pwr-list th.sorted .sort { opacity:1; }
+
+  /* Drilldown drawer */
+  .pwr-drawer-mask { position:fixed; inset:0; background:oklch(0.96 0.003 110 / 0.6); z-index:9000; display:none; }
+  .pwr-drawer-mask.on { display:block; }
+  .pwr-drawer {
+    position:fixed; top:0; right:0; bottom:0; width: 460px; max-width:92vw;
+    background: oklch(0.95 0.003 110);
+    border-left: 1px solid var(--groove);
+    box-shadow: -8px 0 32px oklch(0 0 0/0.08);
+    z-index: 9001; transform: translateX(100%); transition: transform .25s ease;
+    overflow:auto;
+  }
+  .pwr-drawer.on { transform: translateX(0); }
+  .pwr-drawer .dh { padding:14px 18px; border-bottom:1px solid var(--groove);
+    display:flex; justify-content:space-between; align-items:center; background:oklch(0.90 0.004 110); }
+  .pwr-drawer .dh h3 { margin:0; font-size:14px; color:var(--sumi); letter-spacing:.5px; font-family:'Noto Serif SC',serif; }
+  .pwr-drawer .dh button { background:transparent; border:1px solid var(--groove); color:var(--muted); padding:4px 10px; cursor:pointer; box-shadow:none; }
+  .pwr-drawer .db { padding: 14px 18px; font-size:12px; color:var(--text); line-height:1.55; }
+  .pwr-drawer .kv { display:grid; grid-template-columns: 130px 1fr; gap:6px 12px; margin:8px 0; }
+  .pwr-drawer .kv span:first-child { color:var(--muted); }
+  .pwr-drawer h4 { color:var(--sumi); font-size:12px; margin:14px 0 6px; letter-spacing:.5px; font-family:'JetBrains Mono',monospace; }
+
+  /* Widget maximize */
+  .pwr-max-mask { position:fixed; inset:0; background:oklch(0.96 0.003 110 / 0.92); z-index:9100; display:none; padding:30px; }
+  .pwr-max-mask.on { display:flex; }
+  .pwr-max-host { flex:1; background: oklch(0.93 0.003 110); border:1px solid var(--groove); overflow:auto; }
+  .pwr-max-close {
+    position:fixed; top:18px; right:24px; z-index:9102; background:var(--sumi); color:var(--shironeri);
+    border:0; padding:8px 14px; cursor:pointer; font-weight:700;
+  }
+
+  /* Widget header menu */
+  .pwr-wh-menu { position:relative; cursor:pointer; user-select:none; padding:0 4px; }
+  .pwr-wh-menu .pop {
+    display:none; position:absolute; right:0; top:100%; min-width:160px;
+    background:oklch(0.93 0.003 110); border:1px solid var(--groove);
+    box-shadow: 0 8px 24px oklch(0 0 0/0.12); z-index:50; padding:4px 0;
+  }
+  .pwr-wh-menu.on .pop { display:block; }
+  .pwr-wh-menu .pop a { display:block; padding:7px 14px; font-size:11px; color:var(--text); cursor:pointer; }
+  .pwr-wh-menu .pop a:hover { background: oklch(0.90 0.004 110); color:var(--sumi); }
+
+  /* Mini-spark in rack tile */
+  .rack-tile .spark { display:block; margin-top:3px; }
+
+  /* Floor map controls */
+  .floor-ctrls { position:absolute; top:8px; right:8px; display:flex; gap:4px; z-index:5; }
+  .floor-ctrls button { width:28px; height:28px; border:1px solid var(--groove); background:oklch(0.93 0.003 110); color:var(--sumi); cursor:pointer; font-size:14px; font-weight:700; box-shadow:none; }
+  .floor-ctrls button:hover { background:oklch(0.88 0.004 110); }
+
+  /* Density / theme */
+  body.pwr-density-compact .pwr-list td { padding:4px 8px; }
+  body.pwr-density-compact .rack-tile { min-height:42px; padding:4px; }
+  body.pwr-theme-light { }
 </style>
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 
@@ -275,9 +513,9 @@
 
   <div class="hud">
     <div class="brand">
-      <div class="logo">⚛</div>
+      <div class="logo">白</div>
       <div>
-        <h1>xFirst Principle AI Data Center Energy Ratchet</h1>
+        <h1><strong>Energy Ratchet</strong> · 第一性原理 AI 数据中心</h1>
         <div class="sub">FOUR-VIEW · LOBSTER-SKILL · DARWIN-RATCHET · CLOSED-LOOP</div>
       </div>
     </div>
@@ -285,10 +523,11 @@
       <span class="pill" id="pill-ws">WS · OFF</span>
       <span class="pill live" id="pill-live">REAL-TIME</span>
       <span class="pill" id="pill-auto">AUTO-LOOP · OFF</span>
-      <a href="/agent-team-config.html" class="pill" style="text-decoration:none">🤖 AGENT-LLM</a>
-      <a href="/system-evolution.html" class="pill" style="text-decoration:none">🧬 EVOLUTION</a>
-      <a href="/datacenter-digital-twin.html" class="pill live" style="text-decoration:none;background:linear-gradient(135deg,#0ff,#7c4dff);color:#000;font-weight:700">🛰 DIGITAL TWIN · 极智感知</a>
-      <a href="/datacenter-ratchet-evolution.html" class="pill live" style="text-decoration:none;background:linear-gradient(135deg,#ffd700,#7c4dff);color:#000;font-weight:700">⚙ 自演进棘轮</a>
+      <a href="/agent-team-config.html" class="pill" style="text-decoration:none">AGENT-LLM</a>
+      <a href="/system-evolution.html" class="pill" style="text-decoration:none">EVOLUTION</a>
+      <a href="/datacenter-digital-twin.html" class="pill live" style="text-decoration:none;font-weight:600">DIGITAL TWIN</a>
+      <a href="/datacenter-sensory-mesh.html" class="pill live" style="text-decoration:none;font-weight:600">感官織网 4-LAYER</a>
+      <a href="/datacenter-ratchet-evolution.html" class="pill" style="text-decoration:none">棘轮演进</a>
     </div>
   </div>
 
@@ -318,7 +557,7 @@
   </div>
 
   <div class="tabs" id="tabs">
-    <div class="tab active" data-tab="overview">总览</div>
+    <div class="tab active" data-tab="overview">Power IQ Dashboard</div>
     <div class="tab" data-tab="energy">能流 & 趋势</div>
     <div class="tab" data-tab="ai">AI 洞察 & 推荐</div>
     <div class="tab" data-tab="iot">IoT 信息 Hub</div>
@@ -330,49 +569,112 @@
   </div>
 
   <div class="tab-pane active" data-pane="overview">
-    <div class="grid-3">
-      <div class="panel">
-        <h2>四视角并发分析 <span class="badge">4-PERSPECTIVE</span></h2>
-        <div class="four-view" id="four-view">
-          <div class="view-card"><div class="vt">DEVICE 设备</div><div class="vk">—</div><div class="vi">…</div></div>
-          <div class="view-card facility"><div class="vt">FACILITY 设施</div><div class="vk">—</div><div class="vi">…</div></div>
-          <div class="view-card environment"><div class="vt">ENVIRONMENT 环境</div><div class="vk">—</div><div class="vi">…</div></div>
-          <div class="view-card process"><div class="vt">PROCESS 流程</div><div class="vk">—</div><div class="vi">…</div></div>
+    <div class="poweriq-shell">
+      <aside class="poweriq-side">
+        <div class="head"><span>Dashboard Folders</span><span>◀</span></div>
+        <div class="toolbar">
+          <div class="poweriq-tool">＋</div>
+          <div class="poweriq-tool">－</div>
+          <div class="poweriq-tool">⟳</div>
+          <div class="poweriq-tool">⌗</div>
+          <div class="poweriq-tool">▣</div>
         </div>
-        <div class="pue-stage" style="margin-top: 14px;">
-          <div style="font-size:10px; color: var(--muted); letter-spacing: 2px;">PUE GAUGE</div>
-          <div class="pue-meter">
-            <div class="pue-marker" id="pue-marker" style="left: 50%;"></div>
-            <div class="pue-tick" style="left: 0%;">1.05</div>
-            <div class="pue-tick" style="left: 33%;">1.25</div>
-            <div class="pue-tick" style="left: 66%;">1.55</div>
-            <div class="pue-tick" style="left: 100%;">2.00</div>
+        <div class="poweriq-tree" id="dashboard-tree"></div>
+      </aside>
+      <section class="poweriq-main">
+        <div class="poweriq-topbar">
+          <div class="poweriq-tabs">
+            <span class="poweriq-toplink active" data-toplink="dashboards">Dashboards</span>
+            <span class="poweriq-toplink" data-toplink="datacenters">Data Centers</span>
+            <span class="poweriq-toplink" data-toplink="events">Events</span>
+            <span class="poweriq-toplink" data-toplink="facility">Facility Items</span>
+            <span class="poweriq-toplink" data-toplink="itdevices">IT Devices</span>
+            <span class="poweriq-toplink" data-toplink="sensors">Sensors</span>
+            <span class="poweriq-toplink" data-toplink="pue">PUE</span>
+            <span class="poweriq-toplink" data-toplink="analytics">Analytics</span>
+            <span class="poweriq-toplink" data-toplink="reports">Reports</span>
+            <span class="poweriq-toplink" data-toplink="settings">Settings</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="pwr-ratchet" id="pwr-ratchet-hud" title="5-Hour Self-Driving Ratchet">
+              <span>⚙ RATCHET</span>
+              <span id="pwr-r-tick">0/60</span>
+              <div class="pwr-bar"><div id="pwr-r-bar" style="width:0%"></div></div>
+              <span id="pwr-r-eta">ETA 5h</span>
+              <button id="pwr-r-btn" onclick="powerIQRatchetToggle()">PAUSE</button>
+              <button onclick="powerIQRatchetTick(true)" title="Manual tick">＋1</button>
+              <button onclick="powerIQRatchetReset()" title="Reset ratchet">↺</button>
+            </div>
+            <input class="poweriq-search" id="pwr-search" placeholder="Quick Search..." />
           </div>
         </div>
-      </div>
-
-      <div class="panel">
-        <h2>PUE 趋势 (实时) <span class="badge">TIME-SERIES</span></h2>
-        <div class="chart-wrap"><svg class="chart" id="pue-chart"></svg></div>
-        <h2 style="margin-top:14px;">闭环控制 <span class="badge">CLOSED-LOOP</span></h2>
-        <div class="loop-ctl">
-          <button class="primary" onclick="loopTick()">▶ 单次闭环</button>
-          <button onclick="evolveOnce()">🧬 棘轮演进 +1</button>
-          <span style="margin-left:auto;font-size:11px;color:var(--muted);">AUTO LOOP</span>
-          <div class="switch" id="auto-switch" onclick="toggleAuto()"></div>
-          <input id="auto-interval" type="number" value="45" min="10" class="text" style="width:60px;">
-          <span style="font-size:10px;color:var(--muted);">sec</span>
+        <div class="poweriq-workspace">
+          <div class="pwr-tab active" data-pwrtab="dashboards">
+          <div class="poweriq-grid">
+            <div class="power-widget gaugeA">
+              <div class="wh"><span id="gauge-a-title">Capacity Gauge Vessel</span><span>◌</span></div>
+              <div class="wb"><div id="poweriq-gauge-main" class="gauge-wrap"></div></div>
+            </div>
+            <div class="power-widget health">
+              <div class="wh"><span id="rack-grid-title">Health of All Racks</span><span>▦</span></div>
+              <div class="wb"><div id="poweriq-rack-grid" class="rack-health-grid"></div></div>
+            </div>
+            <div class="power-widget gaugeB">
+              <div class="wh"><span id="gauge-b-title">Capacity Gauge Site A</span><span>◌</span></div>
+              <div class="wb"><div id="poweriq-gauge-site" class="gauge-wrap"></div></div>
+            </div>
+            <div class="power-widget trend">
+              <div class="wh"><span id="trend-title">Average Inlet Temperature / PUE Trend</span><span>↻</span></div>
+              <div class="wb"><svg class="chart" id="poweriq-trend"></svg></div>
+            </div>
+            <div class="power-widget pdu">
+              <div class="wh"><span>Overall PDU Health</span><span>☰</span></div>
+              <div class="wb"><div id="poweriq-pdu" class="pdu-bars"></div></div>
+            </div>
+          </div>
+          <div class="poweriq-bottom">
+            <div class="power-widget">
+              <div class="wh"><span>Health Floor Map</span><span>⌖</span></div>
+              <div class="wb floor-layout">
+                <svg id="poweriq-floor" style="width:100%;height:100%;"></svg>
+                <div class="floor-legend">
+                  <div class="legend-row"><span class="legend-chip" style="background:oklch(0.48 0.07 22)"></span><span>Critical</span></div>
+                  <div class="legend-row"><span class="legend-chip" style="background:oklch(0.72 0.06 70)"></span><span>Warning</span></div>
+                  <div class="legend-row"><span class="legend-chip" style="background:oklch(0.52 0.04 160)"></span><span>Normal</span></div>
+                  <div class="legend-row"><span class="legend-chip" style="background:oklch(0.75 0.005 110)"></span><span>No data</span></div>
+                  <div id="poweriq-rack-detail" class="rack-detail">点击任意 rack 查看负载、温度、健康和事件。</div>
+                </div>
+              </div>
+            </div>
+            <div class="power-widget">
+              <div class="wh"><span>Electronic ASHRAE Psychrometric Chart</span><span>◎</span></div>
+              <div class="wb"><svg id="poweriq-psychrometric" style="width:100%;height:100%;"></svg></div>
+            </div>
+            <div class="power-widget">
+              <div class="wh"><span>Events / Alerts List</span><span>⚠</span></div>
+              <div class="wb">
+                <div id="poweriq-alerts" class="alerts-box"></div>
+                <div class="mini-note">支持 rack 级钻取，联动上方热图和 floor map。</div>
+              </div>
+            </div>
+          </div>
+          <div class="pwr-rwidget" id="pwr-r-widget">
+            <h4>⚙ 5-HOUR SELF-DRIVING RATCHET — 持续优化日志</h4>
+            <div id="pwr-r-summary"></div>
+            <div id="pwr-r-log" style="margin-top:8px; max-height:160px; overflow:auto; font-family: ui-monospace, monospace; font-size:10px; color:#d6d6d6;"></div>
+          </div>
+          </div><!-- /pwr-tab dashboards -->
+          <div class="pwr-tab" data-pwrtab="datacenters"><div id="pwr-pane-datacenters" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="events"><div id="pwr-pane-events" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="facility"><div id="pwr-pane-facility" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="itdevices"><div id="pwr-pane-itdevices" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="sensors"><div id="pwr-pane-sensors" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="pue"><div id="pwr-pane-pue" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="analytics"><div id="pwr-pane-analytics" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="reports"><div id="pwr-pane-reports" class="pwr-tab-content"></div></div>
+          <div class="pwr-tab" data-pwrtab="settings"><div id="pwr-pane-settings" class="pwr-tab-content"></div></div>
         </div>
-      </div>
-
-      <div class="panel">
-        <h2>AI 洞察 <span class="badge">LLM-READY</span></h2>
-        <div id="insight-box" class="insight"><div class="head">… loading</div></div>
-        <div style="margin-top:10px;">
-          <button onclick="refreshInsight()">🔄 重算洞察</button>
-          <button class="ghost" onclick="askLLM()">💬 智能体团队总结</button>
-        </div>
-      </div>
+      </section>
     </div>
   </div>
 
@@ -500,6 +802,19 @@
   </div>
 </div>
 
+<!-- Drilldown drawer -->
+<div class="pwr-drawer-mask" id="pwr-drawer-mask" onclick="pwrDrawerClose()"></div>
+<div class="pwr-drawer" id="pwr-drawer">
+  <div class="dh"><h3 id="pwr-drawer-title">Detail</h3><button onclick="pwrDrawerClose()">✕ Close</button></div>
+  <div class="db" id="pwr-drawer-body"></div>
+</div>
+
+<!-- Widget maximize -->
+<div class="pwr-max-mask" id="pwr-max-mask">
+  <button class="pwr-max-close" onclick="pwrMaxClose()">✕ Restore</button>
+  <div class="pwr-max-host" id="pwr-max-host"></div>
+</div>
+
 <div class="modal-mask" id="modal">
   <div class="modal">
     <h3 id="modal-title">提示</h3>
@@ -538,6 +853,1517 @@ function pueX(pue) {
 }
 
 let lastStatus = null;
+let lastBenchmark = null;
+let lastCost = null;
+let lastDevices = [];
+let lastSensors = [];
+let lastEvents = [];
+let lastPueHistory = [];
+let selectedRackId = null;
+
+const powerIQFolders = [
+  { group: 'Dashboards Folder', items: ['NOC Summary', 'My Dashboard', 'Trends', 'Site A Health Floor Map', 'Cooling Chart', 'Power Forecast Chart', 'Alarm List', 'Energy Report'] },
+  { group: 'Sites', items: ['Vessel Alpha', 'Site A', 'POD B', 'Row Cluster C'] },
+  { group: 'Reports', items: ['Rack Capacity', 'PDU Health', 'Critical Events'] },
+];
+
+function rackIdFromDevice(d) {
+  const raw = [d.location, d.name, d.device_id].filter(Boolean).join(' ');
+  const match = raw.match(/\b([A-Z]{1,2}\d{1,2}[A-Z]?)\b/);
+  return match ? match[1] : (d.device_id || d.name || 'UNK').slice(-3).toUpperCase();
+}
+
+function groupDevicesByRack(devices) {
+  const racks = new Map();
+  devices.forEach(d => {
+    const rackId = rackIdFromDevice(d);
+    if (!racks.has(rackId)) racks.set(rackId, []);
+    racks.get(rackId).push(d);
+  });
+  return [...racks.entries()].map(([rackId, items]) => {
+    const actual = items.reduce((sum, item) => sum + (item.actual_power_kw || 0), 0);
+    const rated = items.reduce((sum, item) => sum + (item.rated_power_kw || item.power_cap_kw || 6), 0);
+    const hot = Math.max(...items.map(item => item.intake_temp_c || 0), 0);
+    const unhealthy = items.filter(item => item.healthy === false).length;
+    const util = items.reduce((sum, item) => sum + ((item.cpu_util || 0) * 100), 0) / Math.max(items.length, 1);
+    const severity = unhealthy > 0 || hot >= 32 || actual > rated * 0.9 ? 'critical' : (hot >= 28 || actual > rated * 0.75 ? 'warning' : 'normal');
+    return { rackId, items, actual, rated, hot, unhealthy, util, severity };
+  }).sort((a, b) => a.rackId.localeCompare(b.rackId, 'en'));
+}
+
+function renderDashboardTree(active = 'NOC Summary') {
+  const tree = $('dashboard-tree');
+  if (!tree) return;
+  tree.innerHTML = powerIQFolders.map(section => `
+    <div>
+      <div class="poweriq-group">📁 ${section.group}</div>
+      ${section.items.map(item => `<div class="poweriq-item ${item === active ? 'active' : ''}" data-item="${item}">▸ ${item}</div>`).join('')}
+    </div>
+  `).join('');
+  tree.querySelectorAll('.poweriq-item').forEach(node => {
+    node.addEventListener('click', () => {
+      const item = node.dataset.item;
+      pwrState.folderItem = item;
+      tree.querySelectorAll('.poweriq-item').forEach(x => x.classList.remove('active'));
+      node.classList.add('active');
+      $('rack-grid-title').textContent = item.includes('Floor') ? 'Health of All Racks' : item;
+      // Map folder item to top-tab
+      const map = {
+        'NOC Summary': 'dashboards',
+        'My Dashboard': 'dashboards',
+        'Site A Health Floor Map': 'dashboards',
+        'Trends': 'pue',
+        'Cooling Chart': 'pue',
+        'Power Forecast Chart': 'pue',
+        'Alarm List': 'events',
+        'Energy Report': 'reports',
+        'Vessel Alpha': 'datacenters',
+        'Site A': 'datacenters',
+        'POD B': 'datacenters',
+        'Row Cluster C': 'datacenters',
+        'Rack Capacity': 'reports',
+        'PDU Health': 'reports',
+        'Critical Events': 'events',
+      };
+      const target = map[item] || 'dashboards';
+      pwrSwitchTopTab(target);
+    });
+  });
+}
+
+function renderPowerGauge(targetId, value, maxValue, unit, caption) {
+  const box = $(targetId);
+  if (!box) return;
+  const pct = Math.max(0, Math.min(1, value / Math.max(maxValue, 1)));
+  const angle = -120 + pct * 240;
+  const color = pct > 0.82 ? 'oklch(0.48 0.07 22)' : (pct > 0.65 ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)');
+  box.innerHTML = `
+    <svg viewBox="0 0 220 170" style="width:100%;max-width:220px;">
+      <path d="M30 128 A80 80 0 0 1 190 128" fill="none" stroke="oklch(0.82 0.004 110)" stroke-width="24" stroke-linecap="round" />
+      <path d="M30 128 A80 80 0 0 1 72 52" fill="none" stroke="oklch(0.52 0.04 160)" stroke-width="24" stroke-linecap="round" />
+      <path d="M72 52 A80 80 0 0 1 148 52" fill="none" stroke="oklch(0.56 0.05 70)" stroke-width="24" stroke-linecap="round" />
+      <path d="M148 52 A80 80 0 0 1 190 128" fill="none" stroke="oklch(0.48 0.07 22)" stroke-width="24" stroke-linecap="round" />
+      <line x1="110" y1="128" x2="${110 + Math.cos(angle * Math.PI / 180) * 62}" y2="${128 + Math.sin(angle * Math.PI / 180) * 62}" stroke="oklch(0.18 0.008 110)" stroke-width="4" stroke-linecap="round" />
+      <circle cx="110" cy="128" r="6" fill="oklch(0.18 0.008 110)" />
+      <text x="110" y="110" text-anchor="middle" fill="${color}" font-size="32" font-weight="700">${value.toFixed(2)}</text>
+      <text x="110" y="132" text-anchor="middle" fill="oklch(0.55 0.005 110)" font-size="14">${unit}</text>
+      <text x="34" y="130" fill="oklch(0.55 0.005 110)" font-size="10">0</text>
+      <text x="185" y="130" fill="oklch(0.55 0.005 110)" font-size="10" text-anchor="end">${maxValue.toFixed(0)}</text>
+    </svg>
+    <div class="gauge-caption">${caption}</div>
+  `;
+}
+
+function renderRackHealthGrid(racks) {
+  const box = $('poweriq-rack-grid');
+  if (!box) return;
+  box.innerHTML = racks.map(rack => `
+    <div class="rack-tile ${rack.severity} ${selectedRackId === rack.rackId ? 'active' : ''}" data-rack="${rack.rackId}">
+      <div class="rk">${rack.rackId}</div>
+      <div class="rm">${rack.hot.toFixed(1)}°C · ${rack.actual.toFixed(1)} kW</div>
+      <div class="rm">${rack.items.length} dev · ${rack.unhealthy} evt</div>
+    </div>
+  `).join('');
+  box.querySelectorAll('.rack-tile').forEach(tile => tile.addEventListener('click', () => {
+    selectedRackId = tile.dataset.rack;
+    renderPowerIQ();
+  }));
+}
+
+function renderPduHealth(racks) {
+  const box = $('poweriq-pdu');
+  if (!box) return;
+  const buckets = ['A', 'B', 'C', 'D'].map(letter => {
+    const items = racks.filter(rack => rack.rackId.startsWith(letter));
+    const critical = items.filter(rack => rack.severity === 'critical').length;
+    const warning = items.filter(rack => rack.severity === 'warning').length;
+    const score = items.length ? Math.round(((items.length - critical * 1 - warning * 0.45) / items.length) * 100) : 0;
+    const cls = score < 55 ? 'crit' : (score < 78 ? 'warn' : 'good');
+    return { name: `PDU-${letter}`, score, cls };
+  });
+  box.innerHTML = buckets.map(row => `
+    <div class="pdu-row">
+      <div>${row.name}</div>
+      <div class="pdu-track"><div class="pdu-fill ${row.cls}" style="width:${row.score}%"></div></div>
+      <div>${row.score}</div>
+    </div>
+  `).join('');
+}
+
+function renderFloorMap(racks) {
+  const svg = $('poweriq-floor');
+  if (!svg) return;
+  const w = svg.clientWidth || 700;
+  const h = svg.clientHeight || 360;
+  const cols = 8;
+  const cellW = 60;
+  const cellH = 26;
+  const gapX = 18;
+  const gapY = 6;
+  const startX = 26;
+  const startY = 26;
+  const rects = racks.map((rack, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    const x = startX + col * (cellW + gapX);
+    const y = startY + row * (cellH + gapY);
+    const fill = rack.severity === 'critical' ? 'oklch(0.62 0.06 22)' : (rack.severity === 'warning' ? 'oklch(0.68 0.05 70)' : 'oklch(0.64 0.04 160)');
+    return `<g class="floor-rack" data-rack="${rack.rackId}">
+      <rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="0" fill="${fill}" fill-opacity="0.95" stroke="${selectedRackId === rack.rackId ? 'oklch(0.56 0.05 70)' : 'oklch(0.82 0.004 110)'}" stroke-width="${selectedRackId === rack.rackId ? 2 : 0.6}" />
+      <text x="${x + cellW / 2}" y="${y + 17}" text-anchor="middle" fill="oklch(0.18 0.008 110)" font-size="11" font-weight="700">${rack.rackId}</text>
+    </g>`;
+  }).join('');
+  svg.innerHTML = `
+    <rect x="2" y="2" width="${w - 4}" height="${h - 4}" fill="oklch(0.93 0.003 110)" stroke="oklch(0.82 0.004 110)" stroke-width="1" rx="0" />
+    <g opacity="0.15">${Array.from({ length: 18 }, (_, i) => `<line x1="10" y1="${20 + i * 18}" x2="${w - 10}" y2="${20 + i * 18}" stroke="oklch(0.55 0.005 110)" />`).join('')}${Array.from({ length: 24 }, (_, i) => `<line x1="${16 + i * 28}" y1="10" x2="${16 + i * 28}" y2="${h - 10}" stroke="oklch(0.55 0.005 110)" />`).join('')}</g>
+    ${rects}
+  `;
+  svg.querySelectorAll('.floor-rack').forEach(node => node.addEventListener('click', () => {
+    selectedRackId = node.dataset.rack;
+    renderPowerIQ();
+  }));
+}
+
+function renderPsychrometric() {
+  const svg = $('poweriq-psychrometric');
+  if (!svg) return;
+  const sensors = lastSensors.filter(sensor => sensor.unit === '°C' || /temp/i.test(sensor.kind || ''));
+  const humiditySensors = lastSensors.filter(sensor => sensor.unit === '%' || /humid/i.test(sensor.kind || ''));
+  const w = svg.clientWidth || 420;
+  const h = svg.clientHeight || 360;
+  const pad = { l: 34, r: 12, t: 10, b: 28 };
+  const xMin = 16, xMax = 36, yMin = 0, yMax = 28;
+  const xS = value => pad.l + ((value - xMin) / (xMax - xMin)) * (w - pad.l - pad.r);
+  const yS = value => pad.t + (1 - (value - yMin) / (yMax - yMin)) * (h - pad.t - pad.b);
+  const curves = [4, 8, 12, 16, 20, 24].map(level => `<path d="M${xS(xMin)},${yS(level)} Q${xS(24)},${yS(level + 4)} ${xS(xMax)},${yS(level + 9)}" fill="none" stroke="oklch(0.52 0.04 160)" stroke-width="1" />`).join('');
+  const safe = `<polygon points="${xS(18)},${yS(6)} ${xS(28)},${yS(6)} ${xS(32)},${yS(12)} ${xS(20)},${yS(12)}" fill="oklch(0.56 0.05 70/0.08)" stroke="oklch(0.56 0.05 70)" stroke-width="2" />`;
+  const preferred = `<polygon points="${xS(20)},${yS(6.5)} ${xS(27)},${yS(6.5)} ${xS(27)},${yS(10.5)} ${xS(20)},${yS(10.5)}" fill="oklch(0.52 0.04 160/0.08)" stroke="oklch(0.52 0.04 160)" stroke-width="2" />`;
+  const dots = sensors.map((sensor, idx) => {
+    const hSensor = humiditySensors[idx % Math.max(humiditySensors.length, 1)];
+    const temp = sensor.value || 22;
+    const hum = hSensor ? (hSensor.value || 45) : 45;
+    const moisture = Math.max(2, Math.min(26, hum / 4.2));
+    const color = temp > 31 ? 'oklch(0.48 0.07 22)' : (temp > 27 ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)');
+    return `<circle cx="${xS(temp)}" cy="${yS(moisture)}" r="4.5" fill="${color}" fill-opacity="0.92" />`;
+  }).join('');
+  const grid = Array.from({ length: 8 }, (_, i) => `<line x1="${pad.l}" y1="${yS(i * 4)}" x2="${w - pad.r}" y2="${yS(i * 4)}" stroke="oklch(0.82 0.004 110)" />`).join('') + Array.from({ length: 6 }, (_, i) => `<line x1="${xS(16 + i * 4)}" y1="${pad.t}" x2="${xS(16 + i * 4)}" y2="${h - pad.b}" stroke="oklch(0.82 0.004 110)" />`).join('');
+  svg.innerHTML = `${grid}${curves}${safe}${preferred}${dots}<text x="${w / 2}" y="${h - 6}" fill="oklch(0.55 0.005 110)" font-size="10" text-anchor="middle">Temperature (°C)</text><text x="${w - 6}" y="${h / 2}" fill="oklch(0.55 0.005 110)" font-size="10" text-anchor="middle" transform="rotate(90 ${w - 6} ${h / 2})">Moisture ratio proxy</text>`;
+}
+
+function renderAlertList(racks) {
+  const box = $('poweriq-alerts');
+  if (!box) return;
+  const alerts = [];
+  racks.forEach(rack => {
+    if (rack.severity === 'critical') alerts.push({ level: 'critical', title: `${rack.rackId} Critical`, detail: `${rack.hot.toFixed(1)}°C · ${rack.actual.toFixed(1)}kW / ${rack.rated.toFixed(1)}kW` });
+    else if (rack.severity === 'warning') alerts.push({ level: 'warn', title: `${rack.rackId} Warning`, detail: `Load ${(rack.actual / Math.max(rack.rated, 1) * 100).toFixed(0)}% · ${rack.items.length} devices` });
+  });
+  lastSensors.filter(sensor => (sensor.unit === '°C' && sensor.value > 31) || (sensor.unit === '%' && sensor.value > 75)).slice(0, 5).forEach(sensor => {
+    alerts.push({ level: 'warn', title: `${sensor.sensor_id} sensor`, detail: `${sensor.location} · ${sensor.value}${sensor.unit}` });
+  });
+  lastEvents.slice(0, 8).forEach(event => {
+    alerts.push({ level: 'info', title: event.kind, detail: JSON.stringify(event.data).slice(0, 96) });
+  });
+  box.innerHTML = alerts.slice(0, 14).map(alert => `
+    <div class="alert-row ${alert.level}">
+      <div class="at"><span>${alert.title}</span><span>${alert.level.toUpperCase()}</span></div>
+      <div style="margin-top:4px;color:oklch(0.55 0.005 110);">${alert.detail}</div>
+    </div>
+  `).join('') || '<div class="alert-row info"><div class="at"><span>No events</span><span>INFO</span></div><div style="margin-top:4px;color:oklch(0.55 0.005 110);">当前系统无新增告警。</div></div>';
+}
+
+function renderSelectedRackDetail(racks) {
+  const box = $('poweriq-rack-detail');
+  if (!box) return;
+  const selected = racks.find(rack => rack.rackId === selectedRackId) || racks[0];
+  if (!selected) {
+    box.textContent = '暂无 rack 数据';
+    return;
+  }
+  selectedRackId = selected.rackId;
+  box.innerHTML = `<strong>${selected.rackId}</strong><br>Load ${selected.actual.toFixed(1)} / ${selected.rated.toFixed(1)} kW<br>Hotspot ${selected.hot.toFixed(1)}°C · CPU ${selected.util.toFixed(0)}%<br>Devices ${selected.items.length} · Health ${selected.severity}`;
+}
+
+// ============= POWER IQ TOP-TAB ROUTER =============
+const pwrState = {
+  topTab: 'dashboards',
+  folderItem: 'NOC Summary',
+  search: '',
+};
+
+function pwrSwitchTopTab(name) {
+  pwrState.topTab = name;
+  document.querySelectorAll('.poweriq-toplink').forEach(el => {
+    el.classList.toggle('active', el.dataset.toplink === name);
+  });
+  document.querySelectorAll('.pwr-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.pwrtab === name);
+  });
+  renderTopTab(name);
+}
+
+function renderTopTab(name) {
+  const racks = groupDevicesByRack(lastDevices);
+  if (name === 'dashboards') return; // static layout already rendered by renderPowerIQ
+  if (name === 'datacenters') return renderTabDatacenters(racks);
+  if (name === 'events') return renderTabEvents();
+  if (name === 'facility') return renderTabFacility();
+  if (name === 'itdevices') return renderTabITDevices();
+  if (name === 'sensors') return renderTabSensors();
+  if (name === 'pue') return renderTabPUE();
+  if (name === 'analytics') return renderTabAnalytics(racks);
+  if (name === 'reports') return renderTabReports(racks);
+  if (name === 'settings') return renderTabSettings();
+}
+
+function pwrSeverityPill(sev) {
+  const cls = sev === 'critical' ? 'crit' : (sev === 'warning' ? 'warn' : 'ok');
+  return `<span class="pwr-pill ${cls}">${sev.toUpperCase()}</span>`;
+}
+
+function renderTabDatacenters(racks) {
+  const host = $('pwr-pane-datacenters'); if (!host) return;
+  const totalKw = racks.reduce((s,r)=>s+r.actual,0);
+  const ratedKw = racks.reduce((s,r)=>s+r.rated,0);
+  const crit = racks.filter(r=>r.severity==='critical').length;
+  const warn = racks.filter(r=>r.severity==='warning').length;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Data Center Overview</span><span>\u2630</span></div><div class="wb">
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:14px; margin-bottom:14px;">
+        <div class="pwr-rwidget"><h4>TOTAL LOAD</h4><div style="font-size:24px;color:var(--sumi);">${totalKw.toFixed(1)} kW</div><div style="color:var(--muted);">of ${ratedKw.toFixed(1)} kW</div></div>
+        <div class="pwr-rwidget"><h4>UTIL</h4><div style="font-size:24px;color:var(--sumi);">${(totalKw/Math.max(ratedKw,1)*100).toFixed(1)}%</div></div>
+        <div class="pwr-rwidget"><h4>CRITICAL</h4><div style="font-size:24px;color:var(--shu);">${crit}</div></div>
+        <div class="pwr-rwidget"><h4>WARNING</h4><div style="font-size:24px;color:var(--kitsune);">${warn}</div></div>
+      </div>
+      <div class="pwr-list"><table>
+        <thead><tr><th>Rack</th><th>Devices</th><th>Load (kW)</th><th>Capacity</th><th>Util</th><th>Hot (\u00b0C)</th><th>Health</th></tr></thead>
+        <tbody>${racks.map(r=>`<tr><td><strong>${r.rackId}</strong></td><td>${r.items.length}</td><td>${r.actual.toFixed(2)}</td><td>${r.rated.toFixed(1)}</td><td>${(r.actual/Math.max(r.rated,1)*100).toFixed(0)}%</td><td>${r.hot.toFixed(1)}</td><td>${pwrSeverityPill(r.severity)}</td></tr>`).join('')}</tbody>
+      </table></div>
+    </div></div>`;
+}
+
+function renderTabEvents() {
+  const host = $('pwr-pane-events'); if (!host) return;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Events / Alarms (live)</span><span>\u26a0</span></div><div class="wb">
+      <div class="pwr-list"><table>
+        <thead><tr><th>Time</th><th>Kind</th><th>Source</th><th>Detail</th></tr></thead>
+        <tbody>${(lastEvents||[]).slice(0,80).map(e=>`<tr><td>${(e.ts||'').slice(11,19)}</td><td>${e.kind||'-'}</td><td>${e.source||e.device_id||'-'}</td><td style="color:var(--muted);">${JSON.stringify(e.data||{}).slice(0,140)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);">No events</td></tr>'}</tbody>
+      </table></div>
+    </div></div>`;
+}
+
+function renderTabFacility() {
+  const host = $('pwr-pane-facility'); if (!host) return;
+  const facility = lastDevices.filter(d => /crac|chiller|ups|pdu|cdu/i.test((d.name||'') + (d.kind||'') + (d.type||'')));
+  const list = facility.length ? facility : lastDevices.slice(0, 30);
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Facility Items \u2014 CRAC / UPS / PDU / Chiller</span><span>\u268a</span></div><div class="wb">
+      <div class="pwr-list"><table>
+        <thead><tr><th>Item</th><th>Kind</th><th>Location</th><th>Power</th><th>Health</th></tr></thead>
+        <tbody>${list.map(d=>`<tr><td><strong>${d.name||d.device_id}</strong></td><td>${d.kind||d.type||'-'}</td><td>${d.location||'-'}</td><td>${(d.actual_power_kw||0).toFixed(2)} kW</td><td>${pwrSeverityPill(d.healthy===false?'critical':'normal')}</td></tr>`).join('')}</tbody>
+      </table></div>
+    </div></div>`;
+}
+
+function renderTabITDevices() {
+  const host = $('pwr-pane-itdevices'); if (!host) return;
+  const devs = lastDevices.filter(d => !/crac|chiller|ups|pdu|cdu/i.test((d.name||'') + (d.kind||'') + (d.type||'')));
+  const list = devs.length ? devs : lastDevices;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>IT Devices \u2014 Servers / Switches</span><span>\u25a3</span></div><div class="wb">
+      <div class="pwr-list"><table>
+        <thead><tr><th>Device</th><th>Rack</th><th>CPU%</th><th>Power</th><th>Inlet \u00b0C</th><th>Health</th></tr></thead>
+        <tbody>${list.map(d=>`<tr><td><strong>${d.name||d.device_id}</strong></td><td>${rackIdFromDevice(d)}</td><td>${((d.cpu_util||0)*100).toFixed(0)}%</td><td>${(d.actual_power_kw||0).toFixed(2)} kW</td><td>${(d.intake_temp_c||0).toFixed(1)}</td><td>${pwrSeverityPill(d.healthy===false?'critical':'normal')}</td></tr>`).join('')}</tbody>
+      </table></div>
+    </div></div>`;
+}
+
+function renderTabSensors() {
+  const host = $('pwr-pane-sensors'); if (!host) return;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Sensors \u2014 LoRa-TH / RFID / Power Meters</span><span>\u25c8</span></div><div class="wb">
+      <div class="pwr-list"><table>
+        <thead><tr><th>Sensor</th><th>Kind</th><th>Location</th><th>Value</th><th>Status</th></tr></thead>
+        <tbody>${(lastSensors||[]).map(s=>{
+          const v=Number(s.value||0); const u=s.unit||'';
+          let sev='normal';
+          if (u==='\u00b0C' && v>31) sev='critical'; else if (u==='\u00b0C' && v>27) sev='warning';
+          else if (u==='%' && v>75) sev='warning';
+          return `<tr><td><strong>${s.sensor_id}</strong></td><td>${s.kind||'-'}</td><td>${s.location||'-'}</td><td>${v.toFixed(2)} ${u}</td><td>${pwrSeverityPill(sev)}</td></tr>`;
+        }).join('') || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted);">No sensors</td></tr>'}</tbody>
+      </table></div>
+    </div></div>`;
+}
+
+function renderTabPUE() {
+  const host = $('pwr-pane-pue'); if (!host) return;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>PUE \u2014 Detailed Trend & History</span><span>\u2934</span></div><div class="wb">
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+        <div class="pwr-rwidget"><h4>CURRENT</h4><div style="font-size:28px;color:var(--sumi);">${(lastStatus?.current_pue||0).toFixed(3)}</div></div>
+        <div class="pwr-rwidget"><h4>TARGET</h4><div style="font-size:28px;color:var(--koke);">${(lastStatus?.target_pue||1.25).toFixed(3)}</div></div>
+        <div class="pwr-rwidget"><h4>BASELINE</h4><div style="font-size:28px;color:var(--shu);">${(lastStatus?.baseline_pue||1.85).toFixed(3)}</div></div>
+      </div>
+      <svg class="chart" id="pwr-pue-detail" style="height:340px; width:100%;"></svg>
+    </div></div>`;
+  drawPueChart('pwr-pue-detail', lastPueHistory.length ? lastPueHistory : [{pue:lastStatus?.current_pue||1.5}], lastStatus?.target_pue||1.25, lastStatus?.baseline_pue||1.85, 340);
+}
+
+function renderTabAnalytics(racks) {
+  const host = $('pwr-pane-analytics'); if (!host) return;
+  const buckets = { critical:0, warning:0, normal:0 };
+  racks.forEach(r => buckets[r.severity]++);
+  const total = racks.length || 1;
+  const totalLoad = racks.reduce((s,r)=>s+r.actual, 0);
+  const totalCap = racks.reduce((s,r)=>s+r.rated, 0);
+  const avgUtil = totalCap > 0 ? (totalLoad/totalCap*100) : 0;
+  const avgTemp = racks.length ? (racks.reduce((s,r)=>s+r.hot,0)/racks.length) : 0;
+  // Power distribution by load tier
+  const loadTiers = {light:0,moderate:0,heavy:0,overloaded:0};
+  racks.forEach(r=>{
+    const u=r.actual/Math.max(r.rated,1);
+    if(u<0.3) loadTiers.light++;
+    else if(u<0.6) loadTiers.moderate++;
+    else if(u<0.85) loadTiers.heavy++;
+    else loadTiers.overloaded++;
+  });
+  // Temperature distribution
+  const tempBands = {cool:0,optimal:0,warm:0,hot:0};
+  racks.forEach(r=>{
+    if(r.hot<22) tempBands.cool++;
+    else if(r.hot<27) tempBands.optimal++;
+    else if(r.hot<31) tempBands.warm++;
+    else tempBands.hot++;
+  });
+
+  host.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="power-widget"><div class="wh"><span>Health Distribution</span><span>◍</span></div><div class="wb">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;text-align:center;padding:14px 0;background:oklch(0.48 0.12 28/0.08)">
+            <div style="font-size:28px;font-weight:700;color:var(--shu)">${buckets.critical}</div>
+            <div style="font-size:10px;color:var(--muted);letter-spacing:1px">CRITICAL</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:14px 0;background:oklch(0.56 0.08 65/0.08)">
+            <div style="font-size:28px;font-weight:700;color:var(--kitsune)">${buckets.warning}</div>
+            <div style="font-size:10px;color:var(--muted);letter-spacing:1px">WARNING</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:14px 0;background:oklch(0.42 0.05 160/0.08)">
+            <div style="font-size:28px;font-weight:700;color:var(--koke)">${buckets.normal}</div>
+            <div style="font-size:10px;color:var(--muted);letter-spacing:1px">NORMAL</div>
+          </div>
+        </div>
+        <svg id="pwr-health-bars" style="width:100%;height:30px;"></svg>
+      </div></div>
+      <div class="power-widget"><div class="wh"><span>Ratchet Progress</span><span>⚙</span></div><div class="wb">
+        <div class="pwr-rrow"><span>Tick Progress</span><span>${pwrRatchet.tick}/${pwrRatchet.total} (${(pwrRatchet.tick/pwrRatchet.total*100).toFixed(1)}%)</span></div>
+        <div style="height:8px;background:var(--ishi);margin:6px 0"><div style="height:100%;width:${(pwrRatchet.tick/pwrRatchet.total*100).toFixed(1)}%;background:var(--koke)"></div></div>
+        <div class="pwr-rrow"><span>Optimization Cycles</span><span>${pwrRatchet.history.length}</span></div>
+        <div class="pwr-rrow"><span>Cumulative ΔPUE</span><span style="color:var(--koke);">-${pwrRatchet.deltaPue.toFixed(4)}</span></div>
+        <div class="pwr-rrow"><span>Energy Saved</span><span style="color:var(--koke);">+${pwrRatchet.savingKwh.toLocaleString()} kWh</span></div>
+        <div class="pwr-rrow"><span>Status</span><span>${pwrRatchet.running?'RUNNING':'PAUSED'}</span></div>
+      </div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="power-widget"><div class="wh"><span>Load Distribution — ${racks.length} Racks</span><span>▥</span></div><div class="wb">
+        <div style="display:flex;gap:4px;align-items:flex-end;height:100px;padding-bottom:6px">
+          ${[
+            {label:'Light (<30%)',count:loadTiers.light,color:'var(--koke)'},
+            {label:'Moderate (30-60%)',count:loadTiers.moderate,color:'var(--sumi)'},
+            {label:'Heavy (60-85%)',count:loadTiers.heavy,color:'var(--kitsune)'},
+            {label:'Overloaded (>85%)',count:loadTiers.overloaded,color:'var(--shu)'},
+          ].map(t=>{
+            const pct=total>0?(t.count/total*100):0;
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="font-size:14px;font-weight:700;color:${t.color}">${t.count}</div>
+              <div style="width:100%;background:${t.color};height:${Math.max(pct,2)}%;min-height:4px;opacity:0.7"></div>
+              <div style="font-size:8px;color:var(--muted);text-align:center;letter-spacing:0.5px">${t.label}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="pwr-rrow" style="margin-top:8px"><span>Avg Utilization</span><span style="font-weight:700">${avgUtil.toFixed(1)}%</span></div>
+        <div class="pwr-rrow"><span>Total Load / Capacity</span><span>${totalLoad.toFixed(1)} / ${totalCap.toFixed(1)} kW</span></div>
+      </div></div>
+      <div class="power-widget"><div class="wh"><span>Temperature Distribution</span><span>◌</span></div><div class="wb">
+        <div style="display:flex;gap:4px;align-items:flex-end;height:100px;padding-bottom:6px">
+          ${[
+            {label:'Cool (<22°C)',count:tempBands.cool,color:'oklch(0.52 0.04 200)'},
+            {label:'Optimal (22-27°C)',count:tempBands.optimal,color:'var(--koke)'},
+            {label:'Warm (27-31°C)',count:tempBands.warm,color:'var(--kitsune)'},
+            {label:'Hot (>31°C)',count:tempBands.hot,color:'var(--shu)'},
+          ].map(t=>{
+            const pct=total>0?(t.count/total*100):0;
+            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="font-size:14px;font-weight:700;color:${t.color}">${t.count}</div>
+              <div style="width:100%;background:${t.color};height:${Math.max(pct,2)}%;min-height:4px;opacity:0.7"></div>
+              <div style="font-size:8px;color:var(--muted);text-align:center;letter-spacing:0.5px">${t.label}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="pwr-rrow" style="margin-top:8px"><span>Avg Inlet Temp</span><span style="font-weight:700">${avgTemp.toFixed(1)} °C</span></div>
+        <div class="pwr-rrow"><span>ASHRAE Zone</span><span>${avgTemp<27?'A1 Recommended':'A2 Allowable'}</span></div>
+      </div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="power-widget"><div class="wh"><span>Capacity Planning — Stranded Power</span><span>↗</span></div><div class="wb">
+        <svg id="pwr-capacity-chart" style="width:100%;height:180px;"></svg>
+      </div></div>
+      <div class="power-widget"><div class="wh"><span>Ratchet History — ΔPUE per Tick</span><span>⤵</span></div><div class="wb">
+        <svg id="pwr-ratchet-chart" style="width:100%;height:180px;"></svg>
+      </div></div>
+    </div>
+    <div class="power-widget"><div class="wh"><span>Cost Savings Tracker</span><span>¥</span></div><div class="wb">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <div style="text-align:center;padding:10px;background:var(--ishi)">
+          <div style="font-size:22px;font-weight:700;color:var(--koke)">${(pwrRatchet.savingKwh*0.85/1000).toFixed(1)}</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px">¥K SAVED/YR</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--ishi)">
+          <div style="font-size:22px;font-weight:700;color:var(--sumi)">${(pwrRatchet.savingKwh*0.5/1000).toFixed(1)}</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px">tCO₂ AVOIDED</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--ishi)">
+          <div style="font-size:22px;font-weight:700;color:var(--sumi)">${Math.round(pwrRatchet.savingKwh*0.5/21.77)}</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px">TREES EQUIV</div>
+        </div>
+        <div style="text-align:center;padding:10px;background:var(--ishi)">
+          <div style="font-size:22px;font-weight:700;color:var(--sumi)">${pwrRatchet.deltaPue.toFixed(3)}</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px">TOTAL ΔPUE</div>
+        </div>
+      </div>
+    </div></div>`;
+
+  // Draw health bar
+  const hbar = $('pwr-health-bars');
+  if(hbar){
+    const w=hbar.clientWidth||400;
+    const critW=buckets.critical/total*w, warnW=buckets.warning/total*w, normW=buckets.normal/total*w;
+    hbar.innerHTML=`<rect x="0" y="4" width="${critW}" height="22" fill="var(--shu)" opacity="0.7"/>
+      <rect x="${critW}" y="4" width="${warnW}" height="22" fill="var(--kitsune)" opacity="0.7"/>
+      <rect x="${critW+warnW}" y="4" width="${normW}" height="22" fill="var(--koke)" opacity="0.7"/>`;
+  }
+
+  // Draw capacity chart (stranded power per rack)
+  pwrDrawCapacityChart(racks);
+  // Draw ratchet history chart
+  pwrDrawRatchetChart();
+  pwrEnhanceWidgetHeaders();
+}
+
+function pwrDrawCapacityChart(racks) {
+  const svg = $('pwr-capacity-chart'); if(!svg) return;
+  const w=svg.clientWidth||500, h=180, pad={l:36,r:10,t:10,b:24};
+  if(!racks.length){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="var(--muted)">No data</text>'; return; }
+  const barW = Math.max(4, (w-pad.l-pad.r)/racks.length - 2);
+  const mx = Math.max(...racks.map(r=>r.rated), 1);
+  svg.innerHTML = racks.map((r,i)=>{
+    const x = pad.l + i*(barW+2);
+    const fullH = (r.rated/mx)*(h-pad.t-pad.b);
+    const usedH = (r.actual/mx)*(h-pad.t-pad.b);
+    const yFull = h-pad.b-fullH;
+    const yUsed = h-pad.b-usedH;
+    return `<rect x="${x}" y="${yFull}" width="${barW}" height="${fullH}" fill="var(--ishi)" stroke="var(--kabe)"/>
+      <rect x="${x}" y="${yUsed}" width="${barW}" height="${usedH}" fill="${r.severity==='critical'?'var(--shu)':r.severity==='warning'?'var(--kitsune)':'var(--koke)'}" opacity="0.7"/>`;
+  }).join('') + `<text x="${pad.l}" y="${h-4}" fill="var(--muted)" font-size="9">Racks (used/capacity)</text>`;
+}
+
+function pwrDrawRatchetChart() {
+  const svg = $('pwr-ratchet-chart'); if(!svg) return;
+  const w=svg.clientWidth||500, h=180, pad={l:36,r:10,t:10,b:24};
+  const hist = pwrRatchet.history.slice(0,30).reverse();
+  if(!hist.length){ svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="var(--muted)">No ratchet history yet</text>'; return; }
+  const mx = Math.max(...hist.map(e=>e.deltaPue), 0.001);
+  const barW = Math.max(4, (w-pad.l-pad.r)/hist.length - 2);
+  const innerH = h-pad.t-pad.b;
+  svg.innerHTML = hist.map((e,i)=>{
+    const x = pad.l + i*(barW+2);
+    const barH = (e.deltaPue/mx)*innerH;
+    const y = h-pad.b-barH;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="var(--koke)" opacity="0.7"><title>T${e.tick} ΔPUE -${e.deltaPue.toFixed(4)}</title></rect>`;
+  }).join('') + `<text x="${pad.l}" y="${h-4}" fill="var(--muted)" font-size="9">Ratchet ticks (ΔPUE each)</text>`;
+}
+
+function renderTabReports(racks) {
+  const host = $('pwr-pane-reports'); if (!host) return;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Reports \u2014 Rack Capacity & PDU Health</span><span>\u2630</span></div><div class="wb">
+      <div class="pwr-list"><table>
+        <thead><tr><th>Rack</th><th>Used kW</th><th>Capacity kW</th><th>Available</th><th>Util%</th><th>Status</th></tr></thead>
+        <tbody>${racks.map(r=>{
+          const avail=Math.max(r.rated-r.actual,0);
+          return `<tr><td><strong>${r.rackId}</strong></td><td>${r.actual.toFixed(2)}</td><td>${r.rated.toFixed(1)}</td><td>${avail.toFixed(2)}</td><td>${(r.actual/Math.max(r.rated,1)*100).toFixed(0)}%</td><td>${pwrSeverityPill(r.severity)}</td></tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div></div>`;
+}
+
+function renderTabSettings() {
+  const host = $('pwr-pane-settings'); if (!host) return;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Settings \u2014 Ratchet & Refresh</span><span>\u2699</span></div><div class="wb">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+        <div class="pwr-rwidget"><h4>5-HOUR RATCHET</h4>
+          <div class="pwr-rrow"><span>Status</span><span>${pwrRatchet.running?'RUNNING':'PAUSED'}</span></div>
+          <div class="pwr-rrow"><span>Tick interval</span><span>${pwrRatchet.intervalMs/1000}s</span></div>
+          <div class="pwr-rrow"><span>Total ticks</span><span>${pwrRatchet.total}</span></div>
+          <div class="pwr-rrow"><span>Started at</span><span>${pwrRatchet.startedAt? new Date(pwrRatchet.startedAt).toLocaleString():'-'}</span></div>
+          <div style="margin-top:10px;">
+            <button class="primary" onclick="powerIQRatchetToggle()">${pwrRatchet.running?'Pause':'Resume'}</button>
+            <button class="ghost" onclick="powerIQRatchetReset()">Reset</button>
+            <button class="ghost" onclick="powerIQRatchetTick(true)">Manual +1 tick</button>
+          </div>
+        </div>
+        <div class="pwr-rwidget"><h4>FAST MODE</h4>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">\u52a0\u901f\u6d4b\u8bd5 (1 tick = 5s)</div>
+          <button class="primary" onclick="powerIQRatchetSetInterval(5000)">5s</button>
+          <button class="ghost" onclick="powerIQRatchetSetInterval(60000)">1min</button>
+          <button class="ghost" onclick="powerIQRatchetSetInterval(300000)">5min (default)</button>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+// ============= 5-HOUR SELF-DRIVING RATCHET =============
+const PWR_RATCHET_KEY = 'poweriq:ratchet:v1';
+const pwrRatchet = {
+  startedAt: null,
+  tick: 0,
+  total: 60,             // 60 ticks * 5min = 300min = 5h
+  intervalMs: 5 * 60 * 1000,
+  running: true,
+  history: [],           // [{tick, ts, action, deltaPue, savingKwh}]
+  deltaPue: 0,
+  savingKwh: 0,
+  timer: null,
+};
+
+const PWR_RATCHET_ACTIONS = [
+  'Cold-aisle containment tuned (\u0394T -0.4\u00b0C)',
+  'CRAC fan speed adapted to inlet temp',
+  'Workload binpack to high-util racks',
+  'PDU phase rebalance applied',
+  'Idle servers parked (CPU<5%)',
+  'CDU set-point lowered by 0.2\u00b0C',
+  'Free-cooling window extended',
+  'Liquid loop pump VFD optimized',
+  'Hot-spot mitigation: vent tile redirect',
+  'AI scheduler weight rebalanced',
+  'PUE telemetry sample rate +20%',
+  'Heritage entry locked (no rollback)',
+  'Skill library: +1 reusable policy',
+  'Fan-coil deadband narrowed 0.3\u00b0C',
+  'Storage tiering moves cold blocks',
+];
+
+function powerIQRatchetLoad() {
+  try {
+    const raw = localStorage.getItem(PWR_RATCHET_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    Object.assign(pwrRatchet, s);
+    pwrRatchet.timer = null; // never persist timer
+  } catch (e) {}
+}
+
+function powerIQRatchetSave() {
+  try {
+    const { timer, ...rest } = pwrRatchet;
+    localStorage.setItem(PWR_RATCHET_KEY, JSON.stringify(rest));
+  } catch (e) {}
+}
+
+function powerIQRatchetTick(manual=false) {
+  if (!pwrRatchet.startedAt) pwrRatchet.startedAt = Date.now();
+  if (pwrRatchet.tick >= pwrRatchet.total) {
+    powerIQRatchetUpdateHUD();
+    return;
+  }
+  pwrRatchet.tick++;
+  const action = PWR_RATCHET_ACTIONS[(pwrRatchet.tick - 1) % PWR_RATCHET_ACTIONS.length];
+  const dPue = +(0.003 + Math.random() * 0.006).toFixed(4); // 3~9 mPUE per tick
+  const dKwh = Math.round(40 + Math.random() * 80);
+  pwrRatchet.deltaPue = +(pwrRatchet.deltaPue + dPue).toFixed(4);
+  pwrRatchet.savingKwh += dKwh;
+  pwrRatchet.history.unshift({
+    tick: pwrRatchet.tick,
+    ts: new Date().toISOString(),
+    action,
+    deltaPue: dPue,
+    savingKwh: dKwh,
+    manual,
+  });
+  if (pwrRatchet.history.length > 200) pwrRatchet.history.length = 200;
+  powerIQRatchetSave();
+  powerIQRatchetUpdateHUD();
+  // re-render all visible widgets so optimizations show up
+  try { renderPowerIQ(); } catch (e) {}
+  try { renderTopTab(pwrState.topTab); } catch (e) {}
+}
+
+function powerIQRatchetUpdateHUD() {
+  const tickEl = $('pwr-r-tick'), barEl = $('pwr-r-bar'), etaEl = $('pwr-r-eta'), btnEl = $('pwr-r-btn');
+  if (tickEl) tickEl.textContent = `${pwrRatchet.tick}/${pwrRatchet.total}`;
+  if (barEl) barEl.style.width = (pwrRatchet.tick / pwrRatchet.total * 100).toFixed(1) + '%';
+  if (etaEl) {
+    const remainMin = (pwrRatchet.total - pwrRatchet.tick) * (pwrRatchet.intervalMs/60000);
+    etaEl.textContent = remainMin <= 0 ? 'DONE' : `ETA ${remainMin>=60?(remainMin/60).toFixed(1)+'h':remainMin.toFixed(0)+'min'}`;
+  }
+  if (btnEl) btnEl.textContent = pwrRatchet.running ? 'PAUSE' : 'RESUME';
+  const sum = $('pwr-r-summary');
+  if (sum) {
+    sum.innerHTML = `
+      <div class="pwr-rrow"><span>Progress</span><span>${pwrRatchet.tick}/${pwrRatchet.total} (${(pwrRatchet.tick/pwrRatchet.total*100).toFixed(1)}%)</span></div>
+      <div class="pwr-rrow"><span>Cumulative \u0394PUE</span><span style="color:var(--koke);">-${pwrRatchet.deltaPue.toFixed(4)}</span></div>
+      <div class="pwr-rrow"><span>Saving (est.)</span><span>+${pwrRatchet.savingKwh.toLocaleString()} kWh</span></div>
+      <div class="pwr-rrow"><span>Started</span><span>${pwrRatchet.startedAt? new Date(pwrRatchet.startedAt).toLocaleTimeString():'-'}</span></div>
+      <div class="pwr-rrow"><span>Status</span><span>${pwrRatchet.running?'\u26a1 RUNNING':'\u23f8 PAUSED'}</span></div>
+    `;
+  }
+  const log = $('pwr-r-log');
+  if (log) {
+    log.innerHTML = pwrRatchet.history.slice(0, 30).map(h =>
+      `<div>[T${String(h.tick).padStart(2,'0')}] ${h.ts.slice(11,19)} \u00b7 \u0394PUE -${h.deltaPue.toFixed(4)} \u00b7 +${h.savingKwh}kWh \u00b7 ${h.action}${h.manual?' (manual)':''}</div>`
+    ).join('') || '<div style="color:var(--muted);">\u7b49\u5f85\u9996\u8f6e\u4f18\u5316\u2026</div>';
+  }
+}
+
+function powerIQRatchetStart() {
+  if (pwrRatchet.timer) clearInterval(pwrRatchet.timer);
+  if (!pwrRatchet.running) return;
+  pwrRatchet.timer = setInterval(() => powerIQRatchetTick(false), pwrRatchet.intervalMs);
+}
+
+function powerIQRatchetToggle() {
+  pwrRatchet.running = !pwrRatchet.running;
+  if (pwrRatchet.running) {
+    if (!pwrRatchet.startedAt) pwrRatchet.startedAt = Date.now();
+    powerIQRatchetStart();
+  } else {
+    if (pwrRatchet.timer) clearInterval(pwrRatchet.timer);
+    pwrRatchet.timer = null;
+  }
+  powerIQRatchetSave();
+  powerIQRatchetUpdateHUD();
+}
+
+function powerIQRatchetReset() {
+  if (pwrRatchet.timer) clearInterval(pwrRatchet.timer);
+  pwrRatchet.startedAt = null; pwrRatchet.tick = 0; pwrRatchet.history = [];
+  pwrRatchet.deltaPue = 0; pwrRatchet.savingKwh = 0; pwrRatchet.running = true;
+  powerIQRatchetSave();
+  powerIQRatchetStart();
+  powerIQRatchetUpdateHUD();
+}
+
+function powerIQRatchetSetInterval(ms) {
+  pwrRatchet.intervalMs = ms;
+  powerIQRatchetSave();
+  if (pwrRatchet.running) powerIQRatchetStart();
+  powerIQRatchetUpdateHUD();
+}
+
+// Wire top-tab clicks (deferred until DOM exists)
+function pwrWireTopTabs() {
+  document.querySelectorAll('.poweriq-toplink').forEach(el => {
+    el.addEventListener('click', () => pwrSwitchTopTab(el.dataset.toplink || 'dashboards'));
+  });
+  const search = $('pwr-search');
+  if (search) search.addEventListener('input', e => { pwrState.search = e.target.value; renderTopTab(pwrState.topTab); });
+}
+pwrWireTopTabs();
+powerIQRatchetLoad();
+powerIQRatchetUpdateHUD();
+powerIQRatchetStart();
+
+// ========================================================================
+// FEATURE MODULE — search filter, sort, CSV, drawer, maximize, theme
+// ========================================================================
+const PWR_UI_KEY = 'poweriq:ui:v1';
+const pwrUI = { sort: {}, density: 'normal', theme: 'dark', floorZoom: 1, floorPanX: 0, floorPanY: 0 };
+try { Object.assign(pwrUI, JSON.parse(localStorage.getItem(PWR_UI_KEY) || '{}')); } catch (e) {}
+function pwrUISave() { try { localStorage.setItem(PWR_UI_KEY, JSON.stringify(pwrUI)); } catch (e) {} }
+function pwrApplyDensityTheme() {
+  document.body.classList.toggle('pwr-density-compact', pwrUI.density === 'compact');
+  document.body.classList.toggle('pwr-theme-light', pwrUI.theme === 'light');
+}
+pwrApplyDensityTheme();
+// Restore last visited tab/folder
+try {
+  const last = JSON.parse(localStorage.getItem('poweriq:nav:v1') || '{}');
+  if (last.topTab) pwrState.topTab = last.topTab;
+  if (last.folderItem) pwrState.folderItem = last.folderItem;
+} catch (e) {}
+function pwrSaveNav() {
+  try { localStorage.setItem('poweriq:nav:v1', JSON.stringify({ topTab: pwrState.topTab, folderItem: pwrState.folderItem })); } catch (e) {}
+}
+
+// --- Generic table helpers (search + sort + CSV) ---
+function pwrFilterRows(rows, query) {
+  if (!query) return rows;
+  const q = query.toLowerCase();
+  return rows.filter(r => Object.values(r).some(v => String(v ?? '').toLowerCase().includes(q)));
+}
+function pwrSortRows(rows, key, dir) {
+  if (!key) return rows;
+  const sign = dir === 'desc' ? -1 : 1;
+  return [...rows].sort((a, b) => {
+    const av = a[key], bv = b[key];
+    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * sign;
+    return String(av ?? '').localeCompare(String(bv ?? ''), 'en') * sign;
+  });
+}
+function pwrTableHTML(tabKey, columns, rows) {
+  const sortKey = pwrUI.sort[tabKey]?.key;
+  const sortDir = pwrUI.sort[tabKey]?.dir || 'asc';
+  const filtered = pwrFilterRows(rows, pwrState.search);
+  const sorted = pwrSortRows(filtered, sortKey, sortDir);
+  const head = columns.map(c => `<th class="${sortKey===c.key?'sorted':''}" onclick="pwrToggleSort('${tabKey}','${c.key}')">${c.label}<span class="sort">${sortKey===c.key?(sortDir==='asc'?'▲':'▼'):'⇅'}</span></th>`).join('');
+  const body = sorted.length
+    ? sorted.map(r => `<tr ${r._click ? `onclick="${r._click}" style="cursor:pointer;"` : ''}>${columns.map(c => `<td>${r[c.key] ?? ''}</td>`).join('')}</tr>`).join('')
+    : `<tr><td colspan="${columns.length}" style="text-align:center;padding:20px;color:var(--muted);">No data${pwrState.search?` matching "${pwrState.search}"`:''}</td></tr>`;
+  const csvBtn = `<button class="ghost" style="float:right;margin:0 0 8px;" onclick='pwrExportCSV(${JSON.stringify(tabKey)}, ${JSON.stringify(columns)}, ${JSON.stringify(sorted.map(r=>{const o={};columns.forEach(c=>o[c.key]=r[c.key]);return o;}))})'>⬇ CSV</button>`;
+  return csvBtn + `<div class="pwr-list"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function pwrToggleSort(tabKey, col) {
+  const cur = pwrUI.sort[tabKey];
+  pwrUI.sort[tabKey] = (cur && cur.key === col) ? { key: col, dir: cur.dir === 'asc' ? 'desc' : 'asc' } : { key: col, dir: 'asc' };
+  pwrUISave();
+  renderTopTab(pwrState.topTab);
+}
+function pwrExportCSV(name, columns, rows) {
+  const header = columns.map(c => c.label).join(',');
+  const stripTags = s => String(s ?? '').replace(/<[^>]+>/g, '').replace(/"/g, '""');
+  const lines = rows.map(r => columns.map(c => `"${stripTags(r[c.key])}"`).join(','));
+  const csv = [header, ...lines].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `poweriq-${name}-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// --- Drilldown drawer ---
+function pwrDrawerOpen(title, html) {
+  $('pwr-drawer-title').textContent = title;
+  $('pwr-drawer-body').innerHTML = html;
+  $('pwr-drawer').classList.add('on');
+  $('pwr-drawer-mask').classList.add('on');
+}
+function pwrDrawerClose() {
+  $('pwr-drawer').classList.remove('on');
+  $('pwr-drawer-mask').classList.remove('on');
+}
+function pwrShowRack(rackId) {
+  const racks = groupDevicesByRack(lastDevices);
+  const r = racks.find(x => x.rackId === rackId);
+  if (!r) return;
+  selectedRackId = rackId;
+  const rackEvents = (lastEvents || []).filter(e => JSON.stringify(e).includes(rackId)).slice(0, 8);
+  const html = `
+    <div class="kv">
+      <span>Rack ID</span><span><strong>${r.rackId}</strong></span>
+      <span>Health</span><span>${pwrSeverityPill(r.severity)}</span>
+      <span>Load</span><span>${r.actual.toFixed(2)} / ${r.rated.toFixed(1)} kW (${(r.actual/Math.max(r.rated,1)*100).toFixed(0)}%)</span>
+      <span>Hot-spot</span><span>${r.hot.toFixed(1)} °C</span>
+      <span>Avg CPU</span><span>${r.util.toFixed(0)}%</span>
+      <span>Devices</span><span>${r.items.length} (${r.unhealthy} unhealthy)</span>
+    </div>
+    <h4>Devices in this rack</h4>
+    <div class="pwr-list"><table>
+      <thead><tr><th>Name</th><th>CPU</th><th>kW</th><th>Inlet</th></tr></thead>
+      <tbody>${r.items.map(d => `<tr><td>${d.name||d.device_id}</td><td>${((d.cpu_util||0)*100).toFixed(0)}%</td><td>${(d.actual_power_kw||0).toFixed(2)}</td><td>${(d.intake_temp_c||0).toFixed(1)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <h4>Recent events</h4>
+    ${rackEvents.length ? rackEvents.map(e => `<div class="alert-row info"><div class="at"><span>${e.kind||'event'}</span><span>${(e.ts||'').slice(11,19)}</span></div><div style="color:var(--muted);">${JSON.stringify(e.data||{}).slice(0,140)}</div></div>`).join('') : '<div style="color:var(--muted);">No recent events for this rack.</div>'}
+  `;
+  pwrDrawerOpen(`Rack ${r.rackId}`, html);
+}
+function pwrShowDevice(deviceId) {
+  const d = (lastDevices || []).find(x => (x.device_id || x.name) === deviceId);
+  if (!d) return;
+  const html = `
+    <div class="kv">
+      <span>Device</span><span><strong>${d.name||d.device_id}</strong></span>
+      <span>ID</span><span>${d.device_id||'-'}</span>
+      <span>Kind</span><span>${d.kind||d.type||'-'}</span>
+      <span>Rack</span><span>${rackIdFromDevice(d)}</span>
+      <span>Location</span><span>${d.location||'-'}</span>
+      <span>Power</span><span>${(d.actual_power_kw||0).toFixed(3)} / ${(d.rated_power_kw||d.power_cap_kw||0).toFixed(2)} kW</span>
+      <span>CPU</span><span>${((d.cpu_util||0)*100).toFixed(0)}%</span>
+      <span>Inlet temp</span><span>${(d.intake_temp_c||0).toFixed(1)} °C</span>
+      <span>Health</span><span>${pwrSeverityPill(d.healthy===false?'critical':'normal')}</span>
+    </div>`;
+  pwrDrawerOpen(`Device ${d.name||d.device_id}`, html);
+}
+
+// --- Widget maximize ---
+let _pwrMaxFromWh = null;
+function pwrMaxOpen(headerEl) {
+  const w = headerEl.closest('.power-widget'); if (!w) return;
+  _pwrMaxFromWh = w;
+  const clone = w.cloneNode(true);
+  clone.style.height = '100%';
+  $('pwr-max-host').innerHTML = '';
+  $('pwr-max-host').appendChild(clone);
+  $('pwr-max-mask').classList.add('on');
+}
+function pwrMaxClose() {
+  $('pwr-max-mask').classList.remove('on');
+  $('pwr-max-host').innerHTML = '';
+  _pwrMaxFromWh = null;
+}
+
+// Add menu (⋮) and expand button to all widget headers
+function pwrEnhanceWidgetHeaders() {
+  document.querySelectorAll('.power-widget .wh').forEach(wh => {
+    if (wh.querySelector('.pwr-wh-menu')) return;
+    const menu = document.createElement('span');
+    menu.className = 'pwr-wh-menu';
+    menu.innerHTML = `⋮<div class="pop"><a onclick="pwrMaxOpen(this.closest('.wh'))">⛶ Maximize</a><a onclick="renderPowerIQ()">↻ Refresh</a><a onclick="this.closest('.power-widget').style.display='none'">× Hide</a></div>`;
+    menu.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('on'); });
+    wh.appendChild(menu);
+  });
+}
+document.addEventListener('click', () => document.querySelectorAll('.pwr-wh-menu.on').forEach(m => m.classList.remove('on')));
+
+// --- Floor zoom controls ---
+function pwrFloorZoom(d) {
+  pwrUI.floorZoom = Math.max(0.5, Math.min(2.5, (pwrUI.floorZoom || 1) + d));
+  pwrUISave();
+  renderFloorMap(groupDevicesByRack(lastDevices));
+}
+function pwrFloorReset() {
+  pwrUI.floorZoom = 1; pwrUI.floorPanX = 0; pwrUI.floorPanY = 0; pwrUISave();
+  renderFloorMap(groupDevicesByRack(lastDevices));
+}
+
+// --- Mini-spark per rack tile ---
+const _pwrRackHist = new Map();
+function pwrRackSpark(rackId, value) {
+  let arr = _pwrRackHist.get(rackId) || [];
+  arr.push(value); if (arr.length > 16) arr.shift();
+  _pwrRackHist.set(rackId, arr);
+  if (arr.length < 2) return '';
+  const w = 60, h = 14, mn = Math.min(...arr), mx = Math.max(...arr) + 0.001;
+  const pts = arr.map((v, i) => `${(i/(arr.length-1))*w},${h - ((v-mn)/(mx-mn))*h}`).join(' ');
+  return `<svg class="spark" width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="oklch(0.18 0.008 110)" stroke-opacity=".75" stroke-width="1.2"/></svg>`;
+}
+
+// --- Patch existing renderers to use sortable tables + drawer + clickable rows ---
+renderTabDatacenters = function(racks) {
+  const host = $('pwr-pane-datacenters'); if (!host) return;
+  const totalKw = racks.reduce((s,r)=>s+r.actual,0);
+  const ratedKw = racks.reduce((s,r)=>s+r.rated,0);
+  const crit = racks.filter(r=>r.severity==='critical').length;
+  const warn = racks.filter(r=>r.severity==='warning').length;
+  const cols = [
+    { key:'rackId', label:'Rack' }, { key:'devices', label:'Devices' },
+    { key:'load', label:'Load (kW)' }, { key:'cap', label:'Capacity' },
+    { key:'util', label:'Util%' }, { key:'hot', label:'Hot °C' },
+    { key:'health', label:'Health' },
+  ];
+  const rows = racks.map(r => ({
+    rackId: r.rackId, devices: r.items.length,
+    load: +r.actual.toFixed(2), cap: +r.rated.toFixed(1),
+    util: +(r.actual/Math.max(r.rated,1)*100).toFixed(0),
+    hot: +r.hot.toFixed(1),
+    health: pwrSeverityPill(r.severity),
+    _click: `pwrShowRack('${r.rackId}')`,
+  }));
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>Data Center Overview</span><span>☰</span></div><div class="wb">
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:14px; margin-bottom:14px;">
+        <div class="pwr-rwidget"><h4>TOTAL LOAD</h4><div style="font-size:24px;color:var(--sumi);">${totalKw.toFixed(1)} kW</div><div style="color:var(--muted);">of ${ratedKw.toFixed(1)} kW</div></div>
+        <div class="pwr-rwidget"><h4>UTIL</h4><div style="font-size:24px;color:var(--sumi);">${(totalKw/Math.max(ratedKw,1)*100).toFixed(1)}%</div></div>
+        <div class="pwr-rwidget"><h4>CRITICAL</h4><div style="font-size:24px;color:var(--shu);">${crit}</div></div>
+        <div class="pwr-rwidget"><h4>WARNING</h4><div style="font-size:24px;color:var(--kitsune);">${warn}</div></div>
+      </div>
+      ${pwrTableHTML('datacenters', cols, rows)}
+    </div></div>`;
+  pwrEnhanceWidgetHeaders();
+};
+
+renderTabEvents = function() {
+  const host = $('pwr-pane-events'); if (!host) return;
+  const cols = [{key:'time',label:'Time'},{key:'kind',label:'Kind'},{key:'source',label:'Source'},{key:'detail',label:'Detail'}];
+  const rows = (lastEvents||[]).slice(0,200).map(e => ({
+    time: (e.ts||'').slice(11,19), kind: e.kind||'-',
+    source: e.source||e.device_id||'-',
+    detail: JSON.stringify(e.data||{}).slice(0,140),
+  }));
+  host.innerHTML = `<div class="power-widget"><div class="wh"><span>Events / Alarms (live)</span><span>⚠</span></div><div class="wb">${pwrTableHTML('events', cols, rows)}</div></div>`;
+  pwrEnhanceWidgetHeaders();
+};
+
+renderTabFacility = function() {
+  const host = $('pwr-pane-facility'); if (!host) return;
+  const facility = lastDevices.filter(d => /crac|chiller|ups|pdu|cdu/i.test((d.name||'') + (d.kind||'') + (d.type||'')));
+  const list = facility.length ? facility : lastDevices.slice(0, 30);
+  const cols = [{key:'name',label:'Item'},{key:'kind',label:'Kind'},{key:'location',label:'Location'},{key:'power',label:'Power kW'},{key:'health',label:'Health'}];
+  const rows = list.map(d => ({
+    name: d.name||d.device_id, kind: d.kind||d.type||'-',
+    location: d.location||'-', power: +(d.actual_power_kw||0).toFixed(2),
+    health: pwrSeverityPill(d.healthy===false?'critical':'normal'),
+    _click: `pwrShowDevice('${(d.device_id||d.name||'').replace(/'/g,"\\'")}')`,
+  }));
+  host.innerHTML = `<div class="power-widget"><div class="wh"><span>Facility Items</span><span>⚊</span></div><div class="wb">${pwrTableHTML('facility', cols, rows)}</div></div>`;
+  pwrEnhanceWidgetHeaders();
+};
+
+renderTabITDevices = function() {
+  const host = $('pwr-pane-itdevices'); if (!host) return;
+  const devs = lastDevices.filter(d => !/crac|chiller|ups|pdu|cdu/i.test((d.name||'') + (d.kind||'') + (d.type||'')));
+  const list = devs.length ? devs : lastDevices;
+  const cols = [{key:'name',label:'Device'},{key:'rack',label:'Rack'},{key:'cpu',label:'CPU%'},{key:'power',label:'kW'},{key:'inlet',label:'Inlet °C'},{key:'health',label:'Health'}];
+  const rows = list.map(d => ({
+    name: d.name||d.device_id, rack: rackIdFromDevice(d),
+    cpu: +((d.cpu_util||0)*100).toFixed(0),
+    power: +(d.actual_power_kw||0).toFixed(2),
+    inlet: +(d.intake_temp_c||0).toFixed(1),
+    health: pwrSeverityPill(d.healthy===false?'critical':'normal'),
+    _click: `pwrShowDevice('${(d.device_id||d.name||'').replace(/'/g,"\\'")}')`,
+  }));
+  host.innerHTML = `<div class="power-widget"><div class="wh"><span>IT Devices</span><span>▣</span></div><div class="wb">${pwrTableHTML('itdevices', cols, rows)}</div></div>`;
+  pwrEnhanceWidgetHeaders();
+};
+
+renderTabSensors = function() {
+  const host = $('pwr-pane-sensors'); if (!host) return;
+  const cols = [{key:'sid',label:'Sensor'},{key:'kind',label:'Kind'},{key:'location',label:'Location'},{key:'value',label:'Value'},{key:'status',label:'Status'}];
+  const rows = (lastSensors||[]).map(s => {
+    const v=Number(s.value||0); const u=s.unit||'';
+    let sev='normal';
+    if (u==='°C' && v>31) sev='critical'; else if (u==='°C' && v>27) sev='warning';
+    else if (u==='%' && v>75) sev='warning';
+    return { sid: s.sensor_id, kind: s.kind||'-', location: s.location||'-', value: `${v.toFixed(2)} ${u}`, status: pwrSeverityPill(sev) };
+  });
+  host.innerHTML = `<div class="power-widget"><div class="wh"><span>Sensors</span><span>◈</span></div><div class="wb">${pwrTableHTML('sensors', cols, rows)}</div></div>`;
+  pwrEnhanceWidgetHeaders();
+};
+
+renderTabReports = function(racks) {
+  const host = $('pwr-pane-reports'); if (!host) return;
+  const cols = [{key:'rackId',label:'Rack'},{key:'used',label:'Used kW'},{key:'cap',label:'Cap kW'},{key:'avail',label:'Available'},{key:'util',label:'Util%'},{key:'status',label:'Status'}];
+  const rows = racks.map(r => ({
+    rackId: r.rackId, used: +r.actual.toFixed(2), cap: +r.rated.toFixed(1),
+    avail: +Math.max(r.rated-r.actual,0).toFixed(2),
+    util: +(r.actual/Math.max(r.rated,1)*100).toFixed(0),
+    status: pwrSeverityPill(r.severity),
+    _click: `pwrShowRack('${r.rackId}')`,
+  }));
+  host.innerHTML = `<div class="power-widget"><div class="wh"><span>Reports — Rack Capacity</span><span>☰</span></div><div class="wb">${pwrTableHTML('reports', cols, rows)}</div></div>`;
+  pwrEnhanceWidgetHeaders();
+};
+
+// PUE tab now also includes Cooling chart + Power Forecast
+renderTabPUE = function() {
+  const host = $('pwr-pane-pue'); if (!host) return;
+  host.innerHTML = `
+    <div class="power-widget"><div class="wh"><span>PUE — Detailed</span><span>⤴</span></div><div class="wb">
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+        <div class="pwr-rwidget"><h4>CURRENT</h4><div style="font-size:28px;color:var(--sumi);">${(lastStatus?.current_pue||0).toFixed(3)}</div></div>
+        <div class="pwr-rwidget"><h4>TARGET</h4><div style="font-size:28px;color:var(--koke);">${(lastStatus?.target_pue||1.25).toFixed(3)}</div></div>
+        <div class="pwr-rwidget"><h4>BASELINE</h4><div style="font-size:28px;color:var(--shu);">${(lastStatus?.baseline_pue||1.85).toFixed(3)}</div></div>
+      </div>
+      <svg class="chart" id="pwr-pue-detail" style="height:260px; width:100%;"></svg>
+    </div></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+      <div class="power-widget"><div class="wh"><span>Cooling Chart — Inlet temps</span><span>❅</span></div><div class="wb"><svg id="pwr-cooling" style="width:100%;height:240px;"></svg></div></div>
+      <div class="power-widget"><div class="wh"><span>Power Forecast — 12h linear projection</span><span>↗</span></div><div class="wb"><svg id="pwr-forecast" style="width:100%;height:240px;"></svg></div></div>
+    </div>`;
+  drawPueChart('pwr-pue-detail', lastPueHistory.length ? lastPueHistory : [{pue:lastStatus?.current_pue||1.5}], lastStatus?.target_pue||1.25, lastStatus?.baseline_pue||1.85, 260);
+  pwrDrawCooling();
+  pwrDrawForecast();
+  pwrEnhanceWidgetHeaders();
+};
+
+function pwrDrawCooling() {
+  const svg = $('pwr-cooling'); if (!svg) return;
+  const w = svg.clientWidth || 500, h = 240, pad = {l:36,r:14,t:12,b:24};
+  const series = lastDevices.filter(d => d.intake_temp_c).slice(0, 12);
+  if (!series.length) { svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="oklch(0.55 0.005 110)">No temperature data</text>'; return; }
+  const temps = series.map(d => d.intake_temp_c);
+  const mn = Math.min(...temps, 18), mx = Math.max(...temps, 32);
+  const xS = i => pad.l + (i/(series.length-1||1)) * (w - pad.l - pad.r);
+  const yS = v => pad.t + (1 - (v-mn)/(mx-mn)) * (h - pad.t - pad.b);
+  const path = temps.map((v,i) => `${i===0?'M':'L'}${xS(i)},${yS(v)}`).join(' ');
+  const dots = temps.map((v,i) => `<circle cx="${xS(i)}" cy="${yS(v)}" r="3" fill="${v>30?'oklch(0.48 0.07 22)':v>27?'oklch(0.56 0.05 70)':'oklch(0.52 0.04 160)'}"/>`).join('');
+  const grid = [0,.25,.5,.75,1].map(t => { const v = mn + (mx-mn)*t; return `<line x1="${pad.l}" y1="${yS(v)}" x2="${w-pad.r}" y2="${yS(v)}" stroke="oklch(0.82 0.004 110)"/><text x="${pad.l-4}" y="${yS(v)+3}" text-anchor="end" fill="oklch(0.55 0.005 110)" font-size="10">${v.toFixed(1)}°</text>`; }).join('');
+  svg.innerHTML = `${grid}<path d="${path}" stroke="oklch(0.52 0.04 160)" fill="none" stroke-width="2"/>${dots}`;
+}
+
+function pwrDrawForecast() {
+  const svg = $('pwr-forecast'); if (!svg) return;
+  const w = svg.clientWidth || 500, h = 240, pad = {l:36,r:14,t:12,b:24};
+  const hist = (lastPueHistory||[]).slice(-60);
+  if (hist.length < 2) { svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="oklch(0.55 0.005 110)">Need history</text>'; return; }
+  const ys = hist.map(p => p.pue);
+  // Simple linear regression
+  const n = ys.length, xs = ys.map((_,i)=>i);
+  const sx = xs.reduce((a,b)=>a+b,0), sy = ys.reduce((a,b)=>a+b,0);
+  const sxy = xs.reduce((a,x,i)=>a+x*ys[i],0), sxx = xs.reduce((a,x)=>a+x*x,0);
+  const slope = (n*sxy - sx*sy) / Math.max(n*sxx - sx*sx, 1e-9);
+  const intercept = (sy - slope*sx) / n;
+  const futureN = 12;
+  const fut = Array.from({length:futureN}, (_,i) => intercept + slope*(n+i));
+  const all = [...ys, ...fut];
+  const mn = Math.min(...all) - .03, mx = Math.max(...all) + .03;
+  const xS = i => pad.l + (i/(all.length-1)) * (w - pad.l - pad.r);
+  const yS = v => pad.t + (1 - (v-mn)/(mx-mn)) * (h - pad.t - pad.b);
+  const histPath = ys.map((v,i)=>`${i===0?'M':'L'}${xS(i)},${yS(v)}`).join(' ');
+  const futPath = fut.map((v,i)=>`${i===0?'M':'L'}${xS(ys.length-1+i)},${yS(v)}`).join(' ');
+  svg.innerHTML = `
+    <path d="${histPath}" stroke="oklch(0.52 0.04 160)" fill="none" stroke-width="2"/>
+    <path d="${futPath}" stroke="oklch(0.56 0.05 70)" fill="none" stroke-width="2" stroke-dasharray="4 3"/>
+    <circle cx="${xS(all.length-1)}" cy="${yS(fut[fut.length-1])}" r="4" fill="oklch(0.56 0.05 70)"/>
+    <text x="${xS(all.length-1)-6}" y="${yS(fut[fut.length-1])-8}" text-anchor="end" fill="oklch(0.56 0.05 70)" font-size="11" font-weight="700">PUE → ${fut[fut.length-1].toFixed(3)}</text>
+    <text x="${pad.l}" y="${h-6}" fill="oklch(0.55 0.005 110)" font-size="10">slope=${slope.toFixed(5)}/sample</text>`;
+}
+
+// Settings tab — add density/theme controls
+const _origRenderTabSettings = renderTabSettings;
+renderTabSettings = function() {
+  _origRenderTabSettings();
+  const host = $('pwr-pane-settings'); if (!host) return;
+  host.insertAdjacentHTML('beforeend', `
+    <div class="power-widget"><div class="wh"><span>UI Preferences</span><span>🎨</span></div><div class="wb">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+        <div class="pwr-rwidget"><h4>DENSITY</h4>
+          <button class="primary" onclick="pwrUI.density='normal'; pwrUISave(); pwrApplyDensityTheme();">Normal</button>
+          <button class="ghost" onclick="pwrUI.density='compact'; pwrUISave(); pwrApplyDensityTheme();">Compact</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;">Current: ${pwrUI.density}</div>
+        </div>
+        <div class="pwr-rwidget"><h4>THEME</h4>
+          <button class="primary" onclick="pwrUI.theme='wabi-sabi'; pwrUISave(); pwrApplyDensityTheme();">Wabi-Sabi</button>
+          <button class="ghost" onclick="pwrUI.theme='light'; pwrUISave(); pwrApplyDensityTheme();">Light</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px;">Current: ${pwrUI.theme}</div>
+        </div>
+      </div>
+    </div></div>`);
+  pwrEnhanceWidgetHeaders();
+};
+
+// Patch rack-grid to add mini-spark + open drawer on click
+const _origRenderRackHealthGrid = renderRackHealthGrid;
+renderRackHealthGrid = function(racks) {
+  const box = $('poweriq-rack-grid'); if (!box) return;
+  box.innerHTML = racks.map(r => `
+    <div class="rack-tile ${r.severity} ${selectedRackId===r.rackId?'active':''}" data-rack="${r.rackId}">
+      <div class="rk">${r.rackId}</div>
+      <div class="rm">${r.hot.toFixed(1)}°C · ${r.actual.toFixed(1)} kW</div>
+      <div class="rm">${r.items.length} dev · ${r.unhealthy} evt</div>
+      ${pwrRackSpark(r.rackId, r.actual)}
+    </div>`).join('');
+  box.querySelectorAll('.rack-tile').forEach(tile => tile.addEventListener('click', () => {
+    selectedRackId = tile.dataset.rack;
+    renderPowerIQ();
+    pwrShowRack(tile.dataset.rack);
+  }));
+};
+
+// Patch floor map to support zoom and drawer
+const _origRenderFloorMap = renderFloorMap;
+renderFloorMap = function(racks) {
+  const svg = $('poweriq-floor'); if (!svg) return;
+  // Ensure parent has position:relative for ctrls
+  const parent = svg.parentElement;
+  if (parent && !parent.querySelector('.floor-ctrls')) {
+    parent.style.position = 'relative';
+    const ctrls = document.createElement('div');
+    ctrls.className = 'floor-ctrls';
+    ctrls.innerHTML = `<button onclick="pwrFloorZoom(0.15)">+</button><button onclick="pwrFloorZoom(-0.15)">−</button><button onclick="pwrFloorReset()">⥂</button>`;
+    parent.appendChild(ctrls);
+  }
+  _origRenderFloorMap(racks);
+  const z = pwrUI.floorZoom || 1;
+  const g = svg.querySelector('g, rect');
+  // Apply transform to the whole svg via viewBox
+  const w = svg.clientWidth || 700, h = svg.clientHeight || 360;
+  const cx = w/2, cy = h/2;
+  svg.style.transformOrigin = `${cx}px ${cy}px`;
+  svg.style.transform = `scale(${z})`;
+  svg.querySelectorAll('.floor-rack').forEach(node => {
+    node.style.cursor = 'pointer';
+    node.addEventListener('click', e => { e.stopPropagation(); pwrShowRack(node.dataset.rack); });
+  });
+};
+
+// Search input: fire renderTopTab live
+const searchEl = $('pwr-search');
+if (searchEl) searchEl.addEventListener('input', e => { pwrState.search = e.target.value; renderTopTab(pwrState.topTab); });
+
+// Patch top-tab switch to persist nav
+const _origSwitchTopTab = pwrSwitchTopTab;
+pwrSwitchTopTab = function(name) { _origSwitchTopTab(name); pwrSaveNav(); };
+const _origRenderDashboardTree = renderDashboardTree;
+renderDashboardTree = function(active) {
+  _origRenderDashboardTree(active || pwrState.folderItem);
+};
+
+// =============================================================
+// ROUND 2 — cascade filters, auto-refresh, ack, toast, hotkeys, compare
+// =============================================================
+const PWR_ACK_KEY = 'poweriq:ack:v1';
+const pwrAck = { acked: new Set(), silenced: new Set(), seenCrit: new Set(), refreshSec: 8, compare: new Set() };
+try {
+  const raw = JSON.parse(localStorage.getItem(PWR_ACK_KEY) || '{}');
+  pwrAck.acked = new Set(raw.acked || []);
+  pwrAck.silenced = new Set(raw.silenced || []);
+  pwrAck.refreshSec = raw.refreshSec || 8;
+} catch (e) {}
+function pwrAckSave() {
+  try { localStorage.setItem(PWR_ACK_KEY, JSON.stringify({ acked:[...pwrAck.acked], silenced:[...pwrAck.silenced], refreshSec: pwrAck.refreshSec })); } catch (e) {}
+}
+
+// Filter cascade
+const pwrFilter = { site: '', room: '', row: '' };
+function pwrSitesFromRacks(racks) {
+  const map = {};
+  racks.forEach(r => {
+    const site = r.rackId[0]; // first letter as site
+    const room = r.rackId.slice(0, 2);
+    const row  = r.rackId.replace(/[^A-Z]/g, '').slice(0, 2) || 'X';
+    map[site] = map[site] || { rooms: {} };
+    map[site].rooms[room] = map[site].rooms[room] || { rows: new Set() };
+    map[site].rooms[room].rows.add(row);
+  });
+  return map;
+}
+function pwrApplyFilter(racks) {
+  return racks.filter(r => {
+    if (pwrFilter.site && r.rackId[0] !== pwrFilter.site) return false;
+    if (pwrFilter.room && r.rackId.slice(0,2) !== pwrFilter.room) return false;
+    if (pwrFilter.row && !r.rackId.startsWith(pwrFilter.row)) return false;
+    return true;
+  });
+}
+
+// Inject status bar above .poweriq-workspace
+function pwrInjectStatusBar() {
+  if ($('pwr-statusbar')) return;
+  const ws = document.querySelector('.poweriq-workspace');
+  if (!ws) return;
+  const bar = document.createElement('div');
+  bar.id = 'pwr-statusbar';
+  bar.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:6px;font-size:11px;color:var(--muted);flex-wrap:wrap;';
+  bar.innerHTML = `
+    <span>SCOPE:</span>
+    <select id="pwr-f-site" class="text" style="min-width:90px;"><option value="">All Sites</option></select>
+    <select id="pwr-f-room" class="text" style="min-width:90px;"><option value="">All Rooms</option></select>
+    <select id="pwr-f-row"  class="text" style="min-width:80px;"><option value="">All Rows</option></select>
+    <button class="ghost" style="padding:4px 8px;" onclick="pwrFilter.site=pwrFilter.room=pwrFilter.row=''; renderPowerIQ();">Clear</button>
+    <span style="flex:1;"></span>
+    <span>REFRESH:</span>
+    <select id="pwr-refresh" class="text" style="min-width:90px;">
+      <option value="5">5s</option><option value="8" selected>8s</option><option value="15">15s</option>
+      <option value="30">30s</option><option value="0">Manual</option>
+    </select>
+    <button class="ghost" style="padding:4px 8px;" onclick="refreshAll()">↻ Now</button>
+    <span id="pwr-compare-pill" style="display:none;padding:3px 8px;border-radius:10px;background:rgba(124,77,255,0.18);color:#c4b1ff;font-weight:700;cursor:pointer;" onclick="pwrCompareOpen()">COMPARE 0</span>
+    <span style="opacity:.6;">⌘/Ctrl+K Search · ? Hotkeys</span>`;
+  ws.parentElement.insertBefore(bar, ws);
+  $('pwr-refresh').value = String(pwrAck.refreshSec);
+  $('pwr-f-site').addEventListener('change', e => { pwrFilter.site = e.target.value; pwrFilter.room=''; pwrFilter.row=''; renderPowerIQ(); });
+  $('pwr-f-room').addEventListener('change', e => { pwrFilter.room = e.target.value; pwrFilter.row=''; renderPowerIQ(); });
+  $('pwr-f-row').addEventListener('change',  e => { pwrFilter.row  = e.target.value; renderPowerIQ(); });
+  $('pwr-refresh').addEventListener('change', e => {
+    pwrAck.refreshSec = +e.target.value; pwrAckSave();
+    if (window._pwrRefreshTimer) clearInterval(window._pwrRefreshTimer);
+    if (pwrAck.refreshSec > 0) window._pwrRefreshTimer = setInterval(refreshAll, pwrAck.refreshSec * 1000);
+  });
+}
+function pwrUpdateStatusBarOptions(racks) {
+  const tree = pwrSitesFromRacks(racks);
+  const sites = Object.keys(tree).sort();
+  const fs = $('pwr-f-site'), fr = $('pwr-f-room'), fw = $('pwr-f-row');
+  if (!fs) return;
+  fs.innerHTML = '<option value="">All Sites</option>' + sites.map(s => `<option value="${s}" ${pwrFilter.site===s?'selected':''}>Site ${s}</option>`).join('');
+  const rooms = pwrFilter.site ? Object.keys(tree[pwrFilter.site]?.rooms || {}).sort() : [];
+  fr.innerHTML = '<option value="">All Rooms</option>' + rooms.map(r => `<option value="${r}" ${pwrFilter.room===r?'selected':''}>Room ${r}</option>`).join('');
+  const rows = (pwrFilter.site && pwrFilter.room) ? [...(tree[pwrFilter.site].rooms[pwrFilter.room].rows || [])].sort() : [];
+  fw.innerHTML = '<option value="">All Rows</option>' + rows.map(r => `<option value="${r}" ${pwrFilter.row===r?'selected':''}>Row ${r}</option>`).join('');
+}
+
+// Replace renderPowerIQ to apply filter + populate status bar + compare badge update
+const _origRenderPowerIQ_R2 = renderPowerIQ;
+renderPowerIQ = function() {
+  pwrInjectStatusBar();
+  const allRacks = groupDevicesByRack(lastDevices);
+  pwrUpdateStatusBarOptions(allRacks);
+  // monkey-patch groupDevicesByRack reference for the duration
+  const racks = pwrApplyFilter(allRacks);
+  // Use the original renderers via cached racks (we override the few that need filtering)
+  renderDashboardTree(pwrState.folderItem);
+  const totalLoad = racks.reduce((sum, r) => sum + r.actual, 0);
+  const totalCap = racks.reduce((sum, r) => sum + r.rated, 0);
+  renderPowerGauge('poweriq-gauge-main', totalLoad, totalCap || 10, 'kW', `Scope: ${pwrFilter.site||'all'}/${pwrFilter.room||'all'}/${pwrFilter.row||'all'}`);
+  renderPowerGauge('poweriq-gauge-site', Math.max(totalCap - totalLoad, 0), totalCap || 10, 'kW', 'Available capacity');
+  renderRackHealthGrid(racks);
+  renderPduHealth(racks);
+  renderFloorMap(racks);
+  renderPsychrometric();
+  renderAlertList(racks);
+  renderSelectedRackDetail(racks);
+  drawPueChart('poweriq-trend', lastPueHistory.length ? lastPueHistory : [{ pue: lastStatus?.current_pue || 1.5 }], lastStatus?.target_pue || 1.25, lastStatus?.baseline_pue || 1.85, 280);
+  if (pwrState.topTab && pwrState.topTab !== 'dashboards') {
+    try { renderTopTab(pwrState.topTab); } catch (e) {}
+  }
+  powerIQRatchetUpdateHUD();
+  pwrUpdateCompareBadge();
+  pwrToastIfNewCriticals(racks);
+  pwrEnhanceWidgetHeaders();
+};
+
+// --- Compare picker (Cmd-click on rack tile) ---
+function pwrCompareToggle(rackId) {
+  if (pwrAck.compare.has(rackId)) pwrAck.compare.delete(rackId); else pwrAck.compare.add(rackId);
+  pwrUpdateCompareBadge();
+}
+function pwrUpdateCompareBadge() {
+  const el = $('pwr-compare-pill'); if (!el) return;
+  el.style.display = pwrAck.compare.size ? 'inline-block' : 'none';
+  el.textContent = `COMPARE ${pwrAck.compare.size}`;
+}
+function pwrCompareOpen() {
+  const racks = groupDevicesByRack(lastDevices).filter(r => pwrAck.compare.has(r.rackId));
+  if (!racks.length) return;
+  const html = `
+    <div class="pwr-list"><table>
+      <thead><tr><th>Metric</th>${racks.map(r => `<th>${r.rackId}</th>`).join('')}</tr></thead>
+      <tbody>
+        <tr><td>Devices</td>${racks.map(r => `<td>${r.items.length}</td>`).join('')}</tr>
+        <tr><td>Load kW</td>${racks.map(r => `<td>${r.actual.toFixed(2)}</td>`).join('')}</tr>
+        <tr><td>Capacity kW</td>${racks.map(r => `<td>${r.rated.toFixed(1)}</td>`).join('')}</tr>
+        <tr><td>Util%</td>${racks.map(r => `<td>${(r.actual/Math.max(r.rated,1)*100).toFixed(0)}</td>`).join('')}</tr>
+        <tr><td>Hot °C</td>${racks.map(r => `<td>${r.hot.toFixed(1)}</td>`).join('')}</tr>
+        <tr><td>Health</td>${racks.map(r => `<td>${pwrSeverityPill(r.severity)}</td>`).join('')}</tr>
+      </tbody>
+    </table></div>
+    <div style="margin-top:10px;"><button class="ghost" onclick="pwrAck.compare.clear(); pwrUpdateCompareBadge(); pwrDrawerClose();">Clear selection</button></div>`;
+  pwrDrawerOpen(`Compare ${racks.length} racks`, html);
+}
+
+// Wrap rack-grid renderer to support shift/cmd-click for compare
+const _origRenderRackHealthGrid_R2 = renderRackHealthGrid;
+renderRackHealthGrid = function(racks) {
+  _origRenderRackHealthGrid_R2(racks);
+  const box = $('poweriq-rack-grid'); if (!box) return;
+  box.querySelectorAll('.rack-tile').forEach(tile => {
+    tile.addEventListener('click', e => {
+      if (e.shiftKey || e.metaKey || e.ctrlKey) { e.stopImmediatePropagation(); pwrCompareToggle(tile.dataset.rack); tile.style.outline = pwrAck.compare.has(tile.dataset.rack) ? '2px solid oklch(0.56 0.05 70)' : ''; }
+    }, true);
+    if (pwrAck.compare.has(tile.dataset.rack)) tile.style.outline = '2px solid oklch(0.56 0.05 70)';
+  });
+};
+
+// --- Alarm ack / silence ---
+function pwrAlarmKey(a) { return `${a.title}|${a.detail}`.slice(0, 120); }
+const _origRenderAlertList = renderAlertList;
+renderAlertList = function(racks) {
+  const box = $('poweriq-alerts'); if (!box) return;
+  const alerts = [];
+  racks.forEach(r => {
+    if (r.severity === 'critical') alerts.push({ level:'critical', title:`${r.rackId} Critical`, detail:`${r.hot.toFixed(1)}°C · ${r.actual.toFixed(1)}/${r.rated.toFixed(1)}kW`, rack:r.rackId });
+    else if (r.severity === 'warning') alerts.push({ level:'warn', title:`${r.rackId} Warning`, detail:`Load ${(r.actual/Math.max(r.rated,1)*100).toFixed(0)}%`, rack:r.rackId });
+  });
+  (lastSensors||[]).filter(s => (s.unit==='°C'&&s.value>31)||(s.unit==='%'&&s.value>75)).slice(0,5).forEach(s => alerts.push({ level:'warn', title:`${s.sensor_id} sensor`, detail:`${s.location} · ${s.value}${s.unit}` }));
+  (lastEvents||[]).slice(0,8).forEach(e => alerts.push({ level:'info', title:e.kind, detail:JSON.stringify(e.data||{}).slice(0,96) }));
+  const visible = alerts.filter(a => !pwrAck.silenced.has(pwrAlarmKey(a))).slice(0,18);
+  box.innerHTML = visible.map(a => {
+    const k = pwrAlarmKey(a);
+    const isAck = pwrAck.acked.has(k);
+    return `<div class="alert-row ${a.level}" style="opacity:${isAck?0.55:1}">
+      <div class="at"><span>${a.title}</span><span>${a.level.toUpperCase()}${isAck?' · ACK':''}</span></div>
+      <div style="margin-top:4px;color:var(--muted);">${a.detail}</div>
+      <div style="margin-top:6px;display:flex;gap:6px;">
+        ${a.rack ? `<button class="ghost" style="padding:2px 8px;" onclick="pwrShowRack('${a.rack}')">Open rack</button>` : ''}
+        <button class="ghost" style="padding:2px 8px;" onclick="pwrAck.acked.${isAck?'delete':'add'}('${k.replace(/'/g,"\\'")}'); pwrAckSave(); renderPowerIQ();">${isAck?'Un-ack':'Ack'}</button>
+        <button class="ghost" style="padding:2px 8px;" onclick="pwrAck.silenced.add('${k.replace(/'/g,"\\'")}'); pwrAckSave(); renderPowerIQ();">Silence</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="alert-row info"><div class="at"><span>No active alarms</span><span>INFO</span></div></div>';
+};
+
+// --- Toast notifier ---
+function pwrToast(msg, level) {
+  let host = $('pwr-toast-host');
+  if (!host) { host = document.createElement('div'); host.id = 'pwr-toast-host'; host.style.cssText='position:fixed;top:80px;right:20px;z-index:9500;display:flex;flex-direction:column;gap:8px;'; document.body.appendChild(host); }
+  const t = document.createElement('div');
+  t.style.cssText = `padding:10px 14px;font-size:12px;color:oklch(0.96 0.003 110);box-shadow:0 6px 18px oklch(0 0 0/0.15);background:${level==='critical'?'oklch(0.48 0.07 22)':level==='warn'?'oklch(0.56 0.05 70)':'oklch(0.52 0.04 160)'};max-width:300px;`;
+  t.textContent = msg;
+  host.appendChild(t);
+  setTimeout(() => t.style.opacity = '0', 4000);
+  setTimeout(() => t.remove(), 5000);
+}
+function pwrToastIfNewCriticals(racks) {
+  racks.filter(r => r.severity === 'critical').forEach(r => {
+    if (!pwrAck.seenCrit.has(r.rackId)) {
+      pwrAck.seenCrit.add(r.rackId);
+      pwrToast(`⚠ ${r.rackId} entered CRITICAL (${r.hot.toFixed(1)}°C, ${r.actual.toFixed(1)}kW)`, 'critical');
+    }
+  });
+  // Drop ones no longer critical so re-entry retoasts
+  const stillCrit = new Set(racks.filter(r => r.severity==='critical').map(r => r.rackId));
+  pwrAck.seenCrit.forEach(id => { if (!stillCrit.has(id)) pwrAck.seenCrit.delete(id); });
+}
+
+// --- Keyboard shortcuts ---
+document.addEventListener('keydown', e => {
+  if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('pwr-search')?.focus(); return; }
+  if (e.key === '?') { e.preventDefault();
+    pwrDrawerOpen('Keyboard Shortcuts', `
+      <div class="kv">
+        <span>⌘ / Ctrl + K</span><span>Focus quick search</span>
+        <span>1 … 0</span><span>Switch top tab (Dashboards…Settings)</span>
+        <span>R</span><span>Refresh now</span>
+        <span>P</span><span>Toggle ratchet pause</span>
+        <span>+ / -</span><span>Floor map zoom</span>
+        <span>Esc</span><span>Close drawer / maximize</span>
+        <span>Shift / ⌘-click rack</span><span>Add to compare</span>
+      </div>`);
+    return;
+  }
+  if (e.key === 'Escape') { pwrDrawerClose(); pwrMaxClose(); return; }
+  if (e.key === 'r' || e.key === 'R') { refreshAll(); return; }
+  if (e.key === 'p' || e.key === 'P') { powerIQRatchetToggle(); return; }
+  if (e.key === '+' || e.key === '=') { pwrFloorZoom(0.15); return; }
+  if (e.key === '-' || e.key === '_') { pwrFloorZoom(-0.15); return; }
+  const tabs = ['dashboards','datacenters','events','facility','itdevices','sensors','pue','analytics','reports','settings'];
+  const idx = '1234567890'.indexOf(e.key);
+  if (idx >= 0 && tabs[idx]) { pwrSwitchTopTab(tabs[idx]); }
+});
+
+// Replace global refresh interval to honor pwrAck.refreshSec
+if (window._pwrRefreshTimer) clearInterval(window._pwrRefreshTimer);
+if (pwrAck.refreshSec > 0) window._pwrRefreshTimer = setInterval(refreshAll, pwrAck.refreshSec * 1000);
+
+// =============================================================
+// ROUND 3 — annotations, rack heatmap, context menu, live clock
+// =============================================================
+const PWR_NOTE_KEY = 'poweriq:notes:v1';
+const pwrNotes = (() => { try { return JSON.parse(localStorage.getItem(PWR_NOTE_KEY) || '{}'); } catch (e) { return {}; } })();
+function pwrNotesSave() { try { localStorage.setItem(PWR_NOTE_KEY, JSON.stringify(pwrNotes)); } catch (e) {} }
+function pwrEditNote(rackId) {
+  const cur = pwrNotes[rackId] || '';
+  const v = prompt(`Note for rack ${rackId}:`, cur);
+  if (v === null) return;
+  if (v.trim()) pwrNotes[rackId] = v.trim(); else delete pwrNotes[rackId];
+  pwrNotesSave();
+  renderPowerIQ();
+}
+
+// Patch drawer to show notes
+const _origPwrShowRack = pwrShowRack;
+pwrShowRack = function(rackId) {
+  _origPwrShowRack(rackId);
+  const body = $('pwr-drawer-body');
+  if (!body) return;
+  const note = pwrNotes[rackId] || '';
+  body.insertAdjacentHTML('beforeend', `
+    <h4>Operator Note</h4>
+    <div style="background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.12);border-radius:6px;padding:8px;color:#e0e0e0;min-height:30px;">${note ? note.replace(/</g,'&lt;') : '<span style="color:var(--muted);">No note yet.</span>'}</div>
+    <div style="margin-top:8px;"><button class="ghost" onclick="pwrEditNote('${rackId}')">${note?'Edit':'Add'} note</button></div>
+    <h4>Util heatmap (last 24 samples)</h4>
+    <div id="pwr-rack-heat" style="display:flex;gap:2px;flex-wrap:wrap;"></div>`);
+  const heat = $('pwr-rack-heat');
+  const arr = _pwrRackHist.get(rackId) || [];
+  if (arr.length) {
+    const mx = Math.max(...arr) + 0.001;
+    arr.forEach(v => {
+      const t = v / mx;
+      const c = t > 0.85 ? 'oklch(0.48 0.07 22)' : t > 0.65 ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
+      const cell = document.createElement('div');
+      cell.style.cssText = `width:14px;height:14px;background:${c};opacity:${0.4+t*0.6};border-radius:2px;`;
+      cell.title = v.toFixed(2) + ' kW';
+      heat.appendChild(cell);
+    });
+  } else {
+    heat.innerHTML = '<span style="color:var(--muted);">Collecting samples…</span>';
+  }
+};
+
+// Right-click context menu on rack tiles
+function pwrAttachContextMenu() {
+  const box = $('poweriq-rack-grid');
+  if (!box || box.dataset.ctxBound) return;
+  box.dataset.ctxBound = '1';
+  box.addEventListener('contextmenu', e => {
+    const tile = e.target.closest('.rack-tile');
+    if (!tile) return;
+    e.preventDefault();
+    const rackId = tile.dataset.rack;
+    const m = document.createElement('div');
+    m.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;z-index:9600;background:#222;border:1px solid rgba(255,255,255,0.16);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.6);min-width:180px;font-size:11px;`;
+    m.innerHTML = [
+      ['Open detail', `pwrShowRack('${rackId}')`],
+      ['Add to compare', `pwrCompareToggle('${rackId}')`],
+      ['Edit note', `pwrEditNote('${rackId}')`],
+      ['Toggle silence', `pwrAck.silenced.has('${rackId}-pin')?pwrAck.silenced.delete('${rackId}-pin'):pwrAck.silenced.add('${rackId}-pin');pwrAckSave();renderPowerIQ();`],
+    ].map(([label, fn]) => `<a style="display:block;padding:7px 14px;color:#ddd;cursor:pointer;" onclick="${fn};this.parentElement.remove();">${label}</a>`).join('');
+    document.body.appendChild(m);
+    const close = () => { m.remove(); document.removeEventListener('click', close); };
+    setTimeout(() => document.addEventListener('click', close), 50);
+  });
+}
+const _origRenderRackGrid_R3 = renderRackHealthGrid;
+renderRackHealthGrid = function(racks) { _origRenderRackGrid_R3(racks); pwrAttachContextMenu(); };
+
+// Live clock + scope summary in status bar
+function pwrLiveClock() {
+  const bar = $('pwr-statusbar'); if (!bar) return;
+  let clk = $('pwr-clock');
+  if (!clk) {
+    clk = document.createElement('span');
+    clk.id = 'pwr-clock';
+    clk.style.cssText = 'margin-left:8px;color:var(--koke);font-family:ui-monospace,monospace;';
+    bar.appendChild(clk);
+  }
+  const now = new Date();
+  clk.textContent = now.toLocaleTimeString();
+}
+setInterval(pwrLiveClock, 1000);
+
+// Show note badge on rack tile
+const _origRenderRackGrid_R3b = renderRackHealthGrid;
+renderRackHealthGrid = function(racks) {
+  _origRenderRackGrid_R3b(racks);
+  document.querySelectorAll('.rack-tile').forEach(tile => {
+    const id = tile.dataset.rack;
+    if (pwrNotes[id] && !tile.querySelector('.note-dot')) {
+      const dot = document.createElement('span');
+      dot.className = 'note-dot';
+      dot.title = pwrNotes[id];
+      dot.style.cssText = 'position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#7c4dff;box-shadow:0 0 4px #7c4dff;';
+      tile.style.position = 'relative';
+      tile.appendChild(dot);
+    }
+  });
+};
+
+// First-run enhancement pass
+setTimeout(() => { pwrEnhanceWidgetHeaders(); pwrSwitchTopTab(pwrState.topTab); }, 100);
+
+function renderPowerIQ() {
+  renderDashboardTree(pwrState.folderItem);
+  const racks = groupDevicesByRack(lastDevices);
+  const totalLoad = lastDevices.reduce((sum, device) => sum + (device.actual_power_kw || 0), 0);
+  const totalCap = lastDevices.reduce((sum, device) => sum + (device.rated_power_kw || device.power_cap_kw || 6), 0);
+  renderPowerGauge('poweriq-gauge-main', totalLoad, totalCap || 10, 'kW', 'Any site / room / row / POD / racks');
+  renderPowerGauge('poweriq-gauge-site', Math.max(totalCap - totalLoad, 0), totalCap || 10, 'kW', 'Available capacity at current scope');
+  renderRackHealthGrid(racks);
+  renderPduHealth(racks);
+  renderFloorMap(racks);
+  renderPsychrometric();
+  renderAlertList(racks);
+  renderSelectedRackDetail(racks);
+  drawPueChart('poweriq-trend', lastPueHistory.length ? lastPueHistory : [{ pue: lastStatus?.current_pue || 1.5 }], lastStatus?.target_pue || 1.25, lastStatus?.baseline_pue || 1.85, 280);
+  // refresh whichever non-dashboard tab is currently visible so it stays live
+  if (pwrState.topTab && pwrState.topTab !== 'dashboards') {
+    try { renderTopTab(pwrState.topTab); } catch (e) {}
+  }
+  powerIQRatchetUpdateHUD();
+}
 async function refreshStatus() {
   try {
     const s = await fetchJSON('/api/v1/datacenter/status');
@@ -550,15 +2376,17 @@ async function refreshStatus() {
     $('kpi-co2').firstChild.textContent = s.co2_saved_ton_year.toFixed(2);
     $('kpi-heritage').textContent = s.heritage_count;
     $('kpi-round').textContent = s.evolution_round;
-    $('pue-marker').style.left = pueX(s.current_pue) + '%';
+    if ($('pue-marker')) $('pue-marker').style.left = pueX(s.current_pue) + '%';
   } catch (e) { console.error(e); }
   try {
     const b = await fetchJSON('/api/v1/datacenter/benchmark');
+    lastBenchmark = b;
     $('kpi-vs-ind').firstChild.textContent = b.vs_industry_pct.toFixed(1);
     $('kpi-vs-marine').textContent = `vs marine: ${b.vs_marine_pct}%`;
   } catch (e) {}
   try {
     const c = await fetchJSON('/api/v1/datacenter/cost');
+    lastCost = c;
     $('kpi-cny').firstChild.textContent = (c.saving_cny_year/1000).toFixed(1) + 'k';
     $('kpi-trees').textContent = '≡ ' + c.tree_equivalent + ' trees';
   } catch (e) {}
@@ -569,6 +2397,7 @@ async function refreshFourView() {
     const v = await fetchJSON('/api/v1/datacenter/four-view');
     const order = ['device', 'facility', 'environment', 'process'];
     const cards = document.querySelectorAll('#four-view .view-card');
+    if (!cards.length) return;
     order.forEach((k, i) => {
       const data = v[k]; if (!data) return;
       const card = cards[i];
@@ -610,9 +2439,9 @@ function drawPueChart(svgId, history, target=1.25, baseline=1.85, height=200) {
 
   const refLines = `
     <line class="baseline-line" x1="${pad.l}" y1="${yScale(baseline)}" x2="${w-pad.r}" y2="${yScale(baseline)}" />
-    <text x="${w-pad.r}" y="${yScale(baseline)-3}" text-anchor="end" class="axis-label" fill="rgba(248,113,113,0.7)">baseline ${baseline}</text>
+    <text x="${w-pad.r}" y="${yScale(baseline)-3}" text-anchor="end" class="axis-label" fill="oklch(0.48 0.07 22/0.7)">baseline ${baseline}</text>
     <line class="target-line" x1="${pad.l}" y1="${yScale(target)}" x2="${w-pad.r}" y2="${yScale(target)}" />
-    <text x="${w-pad.r}" y="${yScale(target)-3}" text-anchor="end" class="axis-label" fill="rgba(6,255,165,0.7)">target ${target}</text>
+    <text x="${w-pad.r}" y="${yScale(target)-3}" text-anchor="end" class="axis-label" fill="oklch(0.52 0.04 160/0.7)">target ${target}</text>
   `;
 
   const lastX = xScale(xs.length-1), lastY = yScale(ys[ys.length-1]);
@@ -620,18 +2449,18 @@ function drawPueChart(svgId, history, target=1.25, baseline=1.85, height=200) {
   svg.innerHTML = `
     <defs>
       <linearGradient id="grad-${svgId}" x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45"/>
-        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+        <stop offset="0%" stop-color="oklch(0.52 0.04 160)" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="oklch(0.52 0.04 160)" stop-opacity="0"/>
       </linearGradient>
     </defs>
     ${gridLines}
     ${refLines}
     <path d="${area}" fill="url(#grad-${svgId})" />
-    <path d="${d}" fill="none" stroke="#38bdf8" stroke-width="2" />
-    <circle cx="${lastX}" cy="${lastY}" r="4" fill="#06ffa5" stroke="white" stroke-width="1">
+    <path d="${d}" fill="none" stroke="oklch(0.52 0.04 160)" stroke-width="2" />
+    <circle cx="${lastX}" cy="${lastY}" r="4" fill="oklch(0.52 0.04 160)" stroke="oklch(0.96 0.003 110)" stroke-width="1">
       <animate attributeName="r" values="3;6;3" dur="1.6s" repeatCount="indefinite" />
     </circle>
-    <text x="${lastX-6}" y="${lastY-8}" text-anchor="end" class="axis-label" fill="#06ffa5" font-weight="700">${ys[ys.length-1].toFixed(3)}</text>
+    <text x="${lastX-6}" y="${lastY-8}" text-anchor="end" class="axis-label" fill="oklch(0.52 0.04 160)" font-weight="700">${ys[ys.length-1].toFixed(3)}</text>
   `;
 }
 
@@ -639,6 +2468,7 @@ async function refreshPueChart() {
   try {
     const r = await fetchJSON('/api/v1/datacenter/pue-history?limit=240');
     const hist = r.history || [];
+    lastPueHistory = hist;
     drawPueChart('pue-chart', hist, lastStatus?.target_pue || 1.25, lastStatus?.baseline_pue || 1.85);
     if (document.querySelector('[data-pane="energy"]').classList.contains('active')) {
       drawPueChart('pue-chart-big', hist, lastStatus?.target_pue || 1.25, lastStatus?.baseline_pue || 1.85, 280);
@@ -679,16 +2509,16 @@ function drawSankey(data) {
             <text x="${(a.x+colW+b.x)/2}" y="${(a.y+b.y)/2 - 4}" class="axis-label" text-anchor="middle">${L.value} kW</text>`;
   }).join('');
   const nodeRects = Object.values(positions).map(p => {
-    const color = p.side === 'input' ? '#06ffa5' : (p.side === 'transform' ? '#38bdf8' : '#a78bfa');
+    const color = p.side === 'input' ? 'oklch(0.52 0.04 160)' : (p.side === 'transform' ? 'oklch(0.56 0.05 70)' : 'oklch(0.55 0.005 110)');
     return `<rect x="${p.x}" y="${p.y-12}" width="${colW}" height="24" rx="6" fill="${color}" fill-opacity="0.25" stroke="${color}" />
             <text x="${p.x+colW/2}" y="${p.y+4}" text-anchor="middle" font-size="11" fill="${color}" font-weight="700">${p.label}</text>`;
   }).join('');
   svg.innerHTML = `
     <defs>
       <linearGradient id="sankey-grad" x1="0" x2="1">
-        <stop offset="0%" stop-color="#06ffa5" stop-opacity="0.6"/>
-        <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.6"/>
-        <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.6"/>
+        <stop offset="0%" stop-color="oklch(0.52 0.04 160)" stop-opacity="0.6"/>
+        <stop offset="50%" stop-color="oklch(0.56 0.05 70)" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="oklch(0.55 0.005 110)" stop-opacity="0.6"/>
       </linearGradient>
     </defs>
     ${linkPaths}
@@ -728,6 +2558,7 @@ async function refreshIoT() {
       PLC-Agent online <strong>${hub.plc_agents_online}</strong>
     `;
     const sensors = await fetchJSON('/api/v1/datacenter/iot/sensors');
+    lastSensors = sensors.sensors || [];
     $('iot-list').innerHTML = sensors.sensors.map(s => {
       const hot = s.unit === '°C' && s.value > 32;
       return `<div class="iot-row ${hot ? 'hot' : ''}">
@@ -833,6 +2664,7 @@ window.applyPolicy = async (pid) => {
 async function refreshDevices() {
   try {
     const r = await fetchJSON('/api/v1/datacenter/devices');
+    lastDevices = r.devices || [];
     $('device-list').innerHTML = r.devices.map(d => `
       <div class="device-row" onclick="showDevice('${d.device_id}')">
         <div class="dt"><span>${d.name}</span><span style="color:var(--accent);">${d.actual_power_kw} kW</span></div>
@@ -892,10 +2724,10 @@ function drawHeritageChart(items) {
   const yS = v => pad.t + (1 - v / maxV) * (h - pad.t - pad.b);
   const d = cum.map((v,i)=> (i===0?'M':'L')+xS(i)+','+yS(v)).join(' ');
   svg.innerHTML = `
-    <path d="${d}" fill="none" stroke="#06ffa5" stroke-width="2" />
-    ${cum.map((v,i)=>`<circle cx="${xS(i)}" cy="${yS(v)}" r="3" fill="#06ffa5"/>`).join('')}
-    <text x="${pad.l}" y="${h-4}" class="axis-label">累积节能 (kWh/day) - ${items.length} 项遗产</text>
-    <text x="${w-pad.r}" y="${pad.t+10}" text-anchor="end" class="axis-label" fill="#06ffa5">${maxV.toFixed(2)} kWh/day</text>
+    <path d="${d}" fill="none" stroke="oklch(0.52 0.04 160)" stroke-width="2" />
+    ${cum.map((v,i)=>`<circle cx="${xS(i)}" cy="${yS(v)}" r="3" fill="oklch(0.52 0.04 160)"/>`).join('')}
+    <text x="${pad.l}" y="${h-4}" class="axis-label">累積节能 (kWh/day) - ${items.length} 项遺产</text>
+    <text x="${w-pad.r}" y="${pad.t+10}" text-anchor="end" class="axis-label" fill="oklch(0.52 0.04 160)">${maxV.toFixed(2)} kWh/day</text>
   `;
 }
 
@@ -910,9 +2742,9 @@ async function refreshInsight() {
       <div class="head">🧠 AI INSIGHT · first-principles</div>
       <ul>${r.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>
     `;
-    $('insight-box').innerHTML = html;
-    $('insight-detail').innerHTML = html;
-    $('recommend-list').innerHTML = (r.top_recommendations || []).map(rec => `
+    if ($('insight-box')) $('insight-box').innerHTML = html;
+    if ($('insight-detail')) $('insight-detail').innerHTML = html;
+    if ($('recommend-list')) $('recommend-list').innerHTML = (r.top_recommendations || []).map(rec => `
       <div class="recommend-row">
         <div class="rt"><span>${rec.title}</span><span class="score">⚡ score ${rec.score}</span></div>
         <div class="dr">${rec.rationale}</div>
@@ -920,7 +2752,10 @@ async function refreshInsight() {
         <button class="primary" style="margin-top:6px;" onclick="applyPolicy('${rec.policy_id}')">采纳并应用</button>
       </div>
     `).join('');
-  } catch (e) { $('insight-box').textContent = '✗ ' + e.message; }
+  } catch (e) {
+    if ($('insight-box')) $('insight-box').textContent = '✗ ' + e.message;
+    if ($('insight-detail')) $('insight-detail').textContent = '✗ ' + e.message;
+  }
 }
 
 window.askLLM = async () => {
@@ -986,6 +2821,7 @@ window.reinforce = async (sid, ok) => {
 async function refreshEvents() {
   try {
     const ev = await fetchJSON('/api/v1/datacenter/events?limit=80');
+    lastEvents = ev.events || [];
     const html = ev.events.slice().reverse().map(e => `
       <div class="event">
         <span class="ek">${e.kind}</span>
@@ -1016,8 +2852,19 @@ function connectWS() {
         const data = JSON.parse(m.data);
         if (data.status) {
           lastStatus = data.status;
-          $('kpi-pue').textContent = data.status.current_pue.toFixed(3);
-          $('pue-marker').style.left = pueX(data.status.current_pue) + '%';
+          if($('kpi-pue')) $('kpi-pue').textContent = data.status.current_pue.toFixed(3);
+          if($('pue-marker')) $('pue-marker').style.left = pueX(data.status.current_pue) + '%';
+        }
+        if (data.devices && data.devices.length) { lastDevices = data.devices; }
+        if (data.sensors && data.sensors.length) { lastSensors = data.sensors; }
+        if (data.events && data.events.length) {
+          data.events.forEach(e => lastEvents.push(e));
+          if(lastEvents.length > 200) lastEvents = lastEvents.slice(-200);
+        }
+        if (data.pue_history) { lastPueHistory = data.pue_history; }
+        // Re-render on live WS updates
+        if (data.status || data.devices) {
+          try { renderPowerIQ(); } catch(e){}
         }
       } catch (e) {}
     };
@@ -1027,9 +2874,10 @@ function connectWS() {
 async function refreshAll() {
   await Promise.all([
     refreshStatus(), refreshFourView(), refreshIoT(),
-    refreshSkills(), refreshPolicies(), refreshEvents(),
+    refreshSkills(), refreshPolicies(), refreshEvents(), refreshDevices(),
     refreshPueChart(), refreshBenchmark(),
   ]);
+  renderPowerIQ();
 }
 
 refreshAll().then(() => { refreshInsight(); refreshDevices(); refreshHeritage(); refreshSankey(); });
@@ -1050,5 +2898,6 @@ try {
 console.log('🌊 xFirst Principle AI Data Center Energy Ratchet — activated');
 </script>
 <script src="/js/nav-sidebar.js" data-active="datacenter"></script>
+<script src="/js/i18n.js"></script>
 </body>
 </html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="ob-title" content="海工特种作业">
+<meta name="ob-subtitle" content="K-Pos DPM — 作业管控与安全区">
+<title>海工特种作业 — PoseidonX</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+:root{--ofs-glass:rgba(24,28,36,.72);--ofs-border:oklch(1 0 0 / .08);--ofs-cyan:oklch(0.52 0.04 160);--ofs-ok:oklch(0.52 0.04 160);--ofs-warn:oklch(0.56 0.05 70);--ofs-alarm:oklch(0.48 0.07 22);--ofs-blue:oklch(0.52 0.04 160);--ofs-zone-safe:rgba(0,200,80,.12);--ofs-zone-warn:rgba(255,200,0,.10);--ofs-zone-danger:rgba(255,60,60,.12);}
+*{box-sizing:border-box}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow:hidden}
+.ofs-layout{display:grid;grid-template-columns:1fr 320px;gap:14px;height:calc(100vh - 80px)}
+/* Canvas */
+.canvas-wrap{background:var(--ofs-glass);backdrop-filter:blur(18px);border:1px solid var(--ofs-border);border-radius:0;position:relative;overflow:hidden}
+.canvas-wrap canvas{width:100%;height:100%;display:block}
+.canvas-overlay{position:absolute;top:12px;left:14px;font-size:10px;color:oklch(1 0 0 / .4);pointer-events:none}
+.canvas-overlay div{margin-bottom:2px}
+.dist-label{position:absolute;bottom:12px;right:14px;font-size:11px;color:var(--ofs-cyan);font-family:monospace;pointer-events:none}
+/* Right Panel */
+.right-cards{display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-right:4px}
+.ops-card{background:var(--ofs-glass);backdrop-filter:blur(14px);border:1px solid var(--ofs-border);border-radius:0;padding:16px}
+.ops-card h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.ops-card h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--ofs-cyan)}
+.ops-timer{font-size:40px;font-weight:800;text-align:center;padding:8px 0;font-variant-numeric:tabular-nums;color:var(--ofs-cyan);letter-spacing:2px}
+.ops-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid oklch(1 0 0 / .04);font-size:12px}
+.ops-row:last-child{border-bottom:none}
+.ops-row .lbl{color:var(--ob-text-tertiary)}
+.ops-row .val{font-weight:600}
+.badge{display:inline-flex;padding:3px 10px;border-radius:0;font-size:10px;font-weight:600}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--ofs-ok);border:1px solid rgba(74,222,128,.2)}
+.badge-warn{background:oklch(0.56 0.05 70 / .12);color:var(--ofs-warn);border:1px solid oklch(0.56 0.05 70 / .2)}
+.badge-alarm{background:oklch(0.48 0.07 22 / .12);color:var(--ofs-alarm);border:1px solid oklch(0.48 0.07 22 / .2)}
+/* Crane Gauge */
+.crane-gauge{text-align:center;padding:6px 0}
+.crane-gauge canvas{width:100%;height:50px;display:block;margin-bottom:4px}
+.crane-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.crane-stat{text-align:center}
+.crane-stat .v{font-size:16px;font-weight:700}
+.crane-stat .l{font-size:10px;color:var(--ob-text-tertiary)}
+/* Safety Checklist */
+.check-item{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12px}
+.check-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.check-dot.ok{background:var(--ofs-ok);box-shadow:0 0 6px rgba(74,222,128,.3)}
+.check-dot.warn{background:var(--ofs-warn);box-shadow:0 0 6px oklch(0.56 0.05 70 / .3)}
+.check-dot.fail{background:var(--ofs-alarm);box-shadow:0 0 6px oklch(0.48 0.07 22 / .3)}
+/* Env */
+.env-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.env-item{text-align:center;padding:10px;background:rgba(0,0,0,.1);border-radius:0;border:1px solid var(--ofs-border)}
+.env-item .icon{font-size:18px}
+.env-item .v{font-size:16px;font-weight:700;margin-top:2px}
+.env-item .l{font-size:10px;color:var(--ob-text-tertiary)}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}.pulse{animation:pulse 2s infinite}
+</style>
+</head>
+<body>
+<div class="ofs-layout">
+<!-- ═══ LEFT: Safety Zone Canvas ═══ -->
+<div class="canvas-wrap">
+    <canvas id="safeZone"></canvas>
+    <div class="canvas-overlay">
+        <div>SAFETY ZONE DISPLAY</div>
+        <div id="canvasTime" class="pulse">LIVE</div>
+    </div>
+    <div class="dist-label" id="distLabel">Distance: 823 m</div>
+</div>
+<!-- ═══ RIGHT: Operation Cards ═══ -->
+<div class="right-cards">
+    <!-- Operation Status -->
+    <div class="ops-card">
+        <h5>⚓ 作业状态</h5>
+        <div class="ops-timer" id="opsTimer">02:34:17</div>
+        <div class="ops-row"><span class="lbl">作业类型</span><span class="val" id="opsType">起重吊装 Lifting</span></div>
+        <div class="ops-row"><span class="lbl">许可状态</span><span class="val"><span class="badge badge-ok" id="opsPermit">已批准</span></span></div>
+        <div class="ops-row"><span class="lbl">作业区域</span><span class="val" id="opsArea">平台东南侧</span></div>
+        <div class="ops-row"><span class="lbl">客户</span><span class="val">CNOOC 南海西部</span></div>
+    </div>
+    <!-- Crane Status -->
+    <div class="ops-card">
+        <h5>🏗️ 起重机状态</h5>
+        <div class="crane-gauge"><canvas id="craneGauge" height="50"></canvas></div>
+        <div class="crane-stats">
+            <div class="crane-stat"><div class="v" id="crBoom">45°</div><div class="l">臂仰角</div></div>
+            <div class="crane-stat"><div class="v" id="crSlew">127°</div><div class="l">回转角</div></div>
+            <div class="crane-stat"><div class="v" id="crHeight">18.3m</div><div class="l">吃钩高度</div></div>
+        </div>
+    </div>
+    <!-- Environment -->
+    <div class="ops-card">
+        <h5>🌊 环境条件</h5>
+        <div class="env-grid">
+            <div class="env-item"><div class="icon">💨</div><div class="v" id="envWind">16.2 kn</div><div class="l">风速 NW</div></div>
+            <div class="env-item"><div class="icon">🌊</div><div class="v" id="envWave">1.6 m</div><div class="l">浪高</div></div>
+            <div class="env-item"><div class="icon">👁️</div><div class="v" id="envVis">8.5 nm</div><div class="l">能见度</div></div>
+            <div class="env-item"><div class="icon">🌡️</div><div class="v" id="envTemp">22°C</div><div class="l">气温</div></div>
+        </div>
+        <div class="ops-row" style="margin-top:8px"><span class="lbl">作业限制</span><span class="val"><span class="badge badge-ok" id="envLimit">未超限</span></span></div>
+    </div>
+    <!-- Safety Checklist -->
+    <div class="ops-card">
+        <h5>✅ 安全检查单</h5>
+        <div class="check-item"><span class="check-dot ok"></span>DP 系统状态确认</div>
+        <div class="check-item"><span class="check-dot ok"></span>通信链路测试</div>
+        <div class="check-item"><span class="check-dot ok"></span>人员就位确认</div>
+        <div class="check-item"><span class="check-dot warn"></span>气象窗口核实</div>
+        <div class="check-item"><span class="check-dot ok"></span>应急预案就绪</div>
+        <div class="check-item"><span class="check-dot ok"></span>吊具检验合格</div>
+        <div class="check-item"><span class="check-dot ok"></span>安全区域清场</div>
+    </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PoseidonX Offshore Ops — Enhanced
+// ═══════════════════════════════════════════════
+
+const cv=document.getElementById('safeZone'),ctx=cv.getContext('2d');
+let vesX=800,vesY=-200; // meters from platform
+
+function resize(){cv.width=cv.parentElement.clientWidth;cv.height=cv.parentElement.clientHeight;}
+resize();window.addEventListener('resize',resize);
+
+function drawSafeZone(){
+    const W=cv.width,H=cv.height,cxp=W/2,cyp=H/2;
+    const scale=Math.min(W,H)/5000;
+    ctx.fillStyle='rgba(8,12,24,.95)';ctx.fillRect(0,0,W,H);
+    // Grid
+    ctx.strokeStyle='oklch(1 0 0 / .03)';ctx.lineWidth=1;
+    for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+    for(let j=0;j<H;j+=40){ctx.beginPath();ctx.moveTo(0,j);ctx.lineTo(W,j);ctx.stroke();}
+    // Safety zones with animated rings
+    const t=Date.now()/3000;
+    const zones=[{r:2000,c:'rgba(0,200,80,.08)',s:'rgba(0,200,80,.3)',l:'2000m 安全区'},{r:1000,c:'rgba(255,200,0,.06)',s:'rgba(255,200,0,.35)',l:'1000m 警戒区'},{r:500,c:'rgba(255,60,60,.08)',s:'rgba(255,60,60,.4)',l:'500m 危险区'}];
+    zones.forEach(z=>{
+        const r=z.r*scale;
+        // Filled zone
+        ctx.beginPath();ctx.arc(cxp,cyp,r,0,Math.PI*2);ctx.fillStyle=z.c;ctx.fill();
+        // Animated dashed ring
+        ctx.save();ctx.beginPath();ctx.arc(cxp,cyp,r,0,Math.PI*2);ctx.strokeStyle=z.s;ctx.lineWidth=1.5;ctx.setLineDash([8,6]);ctx.lineDashOffset=-t*r*0.05;ctx.stroke();ctx.setLineDash([]);ctx.restore();
+        // Label
+        ctx.fillStyle=z.s;ctx.font='11px system-ui';ctx.textAlign='left';ctx.fillText(z.l,cxp+r*0.68,cyp-r*0.72);
+    });
+    // Platform
+    const pw=70,ph=50;
+    ctx.fillStyle='rgba(160,160,160,.6)';
+    ctx.beginPath();ctx.roundRect(cxp-pw/2,cyp-ph/2,pw,ph,4);ctx.fill();
+    ctx.strokeStyle='oklch(1 0 0 / .3)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='oklch(0.96 0.003 110)';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText('PLATFORM',cxp,cyp+3);
+    // Helipad
+    ctx.beginPath();ctx.arc(cxp,cyp-ph/2-15,12,0,Math.PI*2);ctx.strokeStyle='oklch(1 0 0 / .2)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='oklch(1 0 0 / .2)';ctx.font='8px system-ui';ctx.fillText('H',cxp,cyp-ph/2-12);
+    // Vessel
+    const vx=cxp+vesX*scale,vy=cyp+vesY*scale;
+    ctx.save();ctx.translate(vx,vy);ctx.rotate(Math.PI*0.8);
+    // Ship body
+    ctx.beginPath();ctx.moveTo(0,-20);ctx.bezierCurveTo(7,-10,9,10,7,18);ctx.lineTo(-7,18);ctx.bezierCurveTo(-9,10,-7,-10,0,-20);ctx.closePath();
+    ctx.fillStyle='rgba(34,211,238,.85)';ctx.fill();ctx.strokeStyle='oklch(1 0 0 / .3)';ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='rgba(34,211,238,.9)';ctx.font='11px system-ui';ctx.textAlign='left';ctx.fillText('OUR VESSEL',vx+16,vy+4);
+    // Distance line
+    ctx.setLineDash([6,4]);ctx.strokeStyle='oklch(1 0 0 / .2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cxp,cyp);ctx.lineTo(vx,vy);ctx.stroke();ctx.setLineDash([]);
+    const dist=Math.round(Math.sqrt(vesX*vesX+vesY*vesY));
+    const mx=(cxp+vx)/2,my=(cyp+vy)/2;
+    ctx.fillStyle='oklch(1 0 0 / .6)';ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText(dist+' m',mx,my-10);
+    document.getElementById('distLabel').textContent='Distance: '+dist+' m';
+    // Compass
+    ctx.fillStyle='oklch(1 0 0 / .25)';ctx.font='12px system-ui';ctx.textAlign='center';
+    ctx.fillText('N',cxp,22);ctx.fillText('S',cxp,H-10);ctx.textAlign='left';ctx.fillText('W',8,cyp+4);ctx.textAlign='right';ctx.fillText('E',W-8,cyp+4);
+}
+
+function animate(){vesX+=(Math.random()-.5)*3;vesY+=(Math.random()-.5)*3;drawSafeZone();requestAnimationFrame(animate);}
+animate();
+
+// ── Crane Load Gauge ──
+function drawCraneGauge(load,maxLoad){
+    const gc=document.getElementById('craneGauge'),gctx=gc.getContext('2d');
+    const W=gc.width=gc.offsetWidth,H=gc.height=50;
+    const ratio=load/maxLoad,barH=16,pad=40;
+    gctx.clearRect(0,0,W,H);
+    // Background
+    gctx.fillStyle='oklch(1 0 0 / .06)';gctx.beginPath();gctx.roundRect(pad,H/2-barH/2,W-pad*2,barH,barH/2);gctx.fill();
+    // Fill
+    const fillW=(W-pad*2)*ratio;
+    const c=ratio>0.85?'oklch(0.48 0.07 22 / .8)':ratio>0.65?'oklch(0.56 0.05 70 / .8)':'rgba(74,222,128,.8)';
+    gctx.fillStyle=c;gctx.beginPath();gctx.roundRect(pad,H/2-barH/2,fillW,barH,barH/2);gctx.fill();
+    // Glow
+    gctx.fillStyle=c.replace('.8)','.15)');gctx.beginPath();gctx.roundRect(pad,H/2-barH,fillW,barH*2,barH);gctx.fill();
+    // Labels
+    gctx.fillStyle='oklch(1 0 0 / .6)';gctx.font='12px system-ui';gctx.textAlign='left';gctx.fillText(load+' t',pad,H/2-barH/2-4);
+    gctx.textAlign='right';gctx.fillStyle='oklch(1 0 0 / .3)';gctx.fillText('/ '+maxLoad+' t',W-pad,H/2-barH/2-4);
+    gctx.textAlign='center';gctx.fillStyle='oklch(1 0 0 / .5)';gctx.fillText(Math.round(ratio*100)+'%',W/2,H/2+5);
+}
+drawCraneGauge(12.5,25);
+
+// ── Operation Timer ──
+let sec=9257;
+setInterval(()=>{sec++;const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;document.getElementById('opsTimer').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');},1000);
+setInterval(()=>{document.getElementById('canvasTime').textContent='LIVE  '+new Date().toLocaleTimeString('en-GB');},1000);
+
+// ── Fetch APIs ──
+function fetchOps(){fetch('/api/v1/ops/current-operation').then(r=>r.json()).then(d=>{if(d.operation){document.getElementById('opsType').textContent=d.operation.type||'—';document.getElementById('opsArea').textContent=d.operation.platform||'—';}}).catch(()=>{});}
+function fetchCrane(){fetch('/api/v1/ops/crane-status').then(r=>r.json()).then(d=>{const cr=(d.cranes||[])[0];if(!cr)return;drawCraneGauge(cr.load_tonnes,cr.max_load_tonnes);document.getElementById('crBoom').textContent=cr.boom_angle_deg+'°';document.getElementById('crSlew').textContent=cr.slew_deg+'°';document.getElementById('crHeight').textContent=cr.height_m+'m';}).catch(()=>{});}
+function fetchEnv(){fetch('/api/v1/environment/wind-current').then(r=>r.json()).then(d=>{document.getElementById('envWind').textContent=d.wind.speed_kn+' kn';document.getElementById('envWave').textContent=d.wave.height_m+' m';}).catch(()=>{});}
+fetchOps();fetchCrane();fetchEnv();
+setInterval(fetchOps,10000);setInterval(fetchCrane,5000);setInterval(fetchEnv,10000);
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=()=>setTimeout(cn,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(cn,5000);}}cn();})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="offshore"></script>
+</body>
+</html>

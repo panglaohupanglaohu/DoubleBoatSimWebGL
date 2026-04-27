@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Demo A · Pentagram 信息建筑</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   Pentagram / Michael Bierut — 信息建筑派
+   哲学：字体即语言，网格即思想
+   色彩：极度克制 — 黑白 + 1 accent（#E8503A 海事红）
+   排版：Helvetica Neue 主导，数学化网格，60%+ 留白
+   ═══════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --ink: #1a1a1a;
+  --paper: #fafafa;
+  --mid: #888;
+  --light: #d4d4d4;
+  --accent: #E8503A;       /* 海事红 — 唯一品牌色 */
+  --accent-bg: rgba(232,80,58,0.06);
+  --grid-unit: 8px;
+  --col: 120px;
+  --gutter: 24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* ── Swiss Grid Container ── */
+.frame {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+/* ── Masthead ── */
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 40px 0 32px;
+  border-bottom: 2px solid var(--ink);
+}
+.masthead .wordmark {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.masthead .wordmark .accent { color: var(--accent); }
+.masthead nav {
+  display: flex; gap: 32px;
+  font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--mid);
+}
+.masthead nav a { color: inherit; text-decoration: none; }
+.masthead nav a:hover { color: var(--ink); }
+
+/* ── Hero Block ── */
+.hero {
+  padding: 80px 0 64px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: end;
+}
+.hero-title {
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+}
+.hero-title .red { color: var(--accent); }
+.hero-sub {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mid);
+  line-height: 1.7;
+  max-width: 440px;
+}
+.hero-sub strong { color: var(--ink); font-weight: 600; }
+.hero-rule { border: none; border-top: 1px solid var(--light); margin: 0; }
+
+/* ── KPI Strip — 7 columns, tabular ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--light);
+}
+.kpi-cell {
+  padding: 24px 16px;
+  border-right: 1px solid var(--light);
+}
+.kpi-cell:last-child { border-right: none; }
+.kpi-label {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 8px;
+}
+.kpi-value {
+  font-size: 36px; font-weight: 800;
+  font-feature-settings: 'tnum';
+  line-height: 1;
+}
+.kpi-value .unit { font-size: 14px; font-weight: 400; color: var(--mid); margin-left: 2px; }
+.kpi-delta {
+  font-size: 11px; font-weight: 500; margin-top: 4px;
+}
+.kpi-delta.good { color: #2a9d4e; }
+.kpi-delta.warn { color: var(--accent); }
+
+/* ── 3D Viewport Placeholder ── */
+.viewport-wrap {
+  margin: 48px 0;
+  position: relative;
+  aspect-ratio: 16/7;
+  background: var(--ink);
+  overflow: hidden;
+}
+.viewport-wrap .grid-bg {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.viewport-label {
+  position: absolute; top: 24px; left: 24px;
+  font-size: 10px; font-weight: 600; letter-spacing: 3px;
+  text-transform: uppercase; color: rgba(255,255,255,0.5);
+}
+.viewport-label .live-dot {
+  display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent);
+  margin-right: 8px; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+.viewport-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.25);
+  font-size: 13px; letter-spacing: 4px; text-transform: uppercase;
+}
+.viewport-center .big { font-size: 120px; font-weight: 900; line-height: 1; letter-spacing: -4px; color: rgba(255,255,255,0.08); }
+.viewport-readout {
+  position: absolute; bottom: 24px; right: 24px;
+  color: rgba(255,255,255,0.6); font-size: 10px;
+  font-feature-settings: 'tnum'; text-align: right; line-height: 2;
+  letter-spacing: 1px;
+}
+
+/* ── Two-Column Content ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  padding: 48px 0;
+  border-top: 1px solid var(--light);
+}
+.section-head {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--light);
+}
+
+/* ── Device Table ── */
+.dev-table { width: 100%; border-collapse: collapse; }
+.dev-table th {
+  font-size: 9px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid);
+  text-align: left; padding: 8px 12px;
+  border-bottom: 2px solid var(--ink);
+}
+.dev-table td {
+  padding: 10px 12px;
+  font-size: 13px; font-feature-settings: 'tnum';
+  border-bottom: 1px solid var(--light);
+}
+.dev-table tr:hover { background: var(--accent-bg); }
+.dev-table .id-col { font-weight: 700; letter-spacing: 0.5px; }
+.dev-table .val-col { font-weight: 700; color: var(--ink); }
+.status-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 6px;
+}
+.status-dot.ok { background: #2a9d4e; }
+.status-dot.warn { background: #d4a017; }
+.status-dot.crit { background: var(--accent); }
+
+/* ── Anomaly Index ── */
+.anomaly-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.anomaly-card {
+  padding: 20px;
+  border: 1px solid var(--light);
+  transition: border-color 0.15s;
+  cursor: pointer;
+}
+.anomaly-card:hover { border-color: var(--ink); }
+.anomaly-card .sev {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.anomaly-card .sev.critical { color: var(--accent); }
+.anomaly-card .sev.high { color: #d4a017; }
+.anomaly-card .sev.medium { color: var(--mid); }
+.anomaly-card .desc {
+  font-size: 13px; line-height: 1.6; color: var(--ink);
+}
+.anomaly-card .meta {
+  font-size: 10px; color: var(--mid); margin-top: 8px;
+  font-feature-settings: 'tnum';
+}
+
+/* ── PUE Chart Area ── */
+.chart-block {
+  padding: 48px 0;
+  border-top: 1px solid var(--light);
+}
+.chart-frame {
+  width: 100%;
+  height: 220px;
+  border: 1px solid var(--light);
+  position: relative;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 43px,
+    var(--light) 43px,
+    var(--light) 44px
+  );
+}
+.chart-frame .placeholder-line {
+  position: absolute;
+  bottom: 40%;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+.chart-frame .baseline {
+  position: absolute;
+  bottom: 36%;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--light);
+  border-top: 1px dashed var(--mid);
+}
+.chart-label-left {
+  position: absolute; left: -60px; top: 50%;
+  transform: rotate(-90deg);
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--mid);
+}
+.chart-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 16px;
+}
+.chart-header h3 {
+  font-size: 14px; font-weight: 700; letter-spacing: 1px;
+}
+.chart-header .legend {
+  display: flex; gap: 20px; font-size: 10px; color: var(--mid); letter-spacing: 1px;
+}
+.legend-dot { display: inline-block; width: 10px; height: 2px; margin-right: 6px; vertical-align: middle; }
+
+/* ── AI Insight Block ── */
+.insight-block {
+  padding: 48px 0;
+  border-top: 1px solid var(--light);
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+}
+.insight-label {
+  font-size: 48px; font-weight: 900; line-height: 1;
+  letter-spacing: -1px; color: var(--light);
+}
+.insight-label .num { display: block; font-size: 120px; letter-spacing: -4px; color: var(--ink); }
+.insight-content {
+  font-size: 14px; line-height: 1.8; color: var(--ink);
+}
+.insight-content .tag {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.rec-list {
+  list-style: none; padding: 0; margin-top: 20px;
+}
+.rec-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--light);
+  font-size: 13px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+}
+.rec-list .n {
+  font-size: 10px; font-weight: 800;
+  color: var(--accent);
+  padding-top: 1px;
+}
+
+/* ── Energy Flow Diagram ── */
+.flow-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--light);
+}
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40px 0;
+}
+.flow-node {
+  width: 140px;
+  padding: 20px 16px;
+  border: 2px solid var(--ink);
+  text-align: center;
+  position: relative;
+}
+.flow-node .fn-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.flow-node .fn-val {
+  font-size: 28px; font-weight: 800;
+  font-feature-settings: 'tnum';
+  margin-top: 8px;
+}
+.flow-node .fn-unit { font-size: 11px; color: var(--mid); }
+.flow-arrow {
+  flex: 1; height: 2px;
+  background: var(--ink);
+  position: relative;
+  margin: 0 -1px;
+}
+.flow-arrow::after {
+  content: '→';
+  position: absolute;
+  right: -2px; top: -9px;
+  font-size: 16px;
+}
+
+/* ── Ratchet Loop (First Principle) ── */
+.ratchet-section {
+  padding: 48px 0;
+  border-top: 1px solid var(--light);
+}
+.ratchet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-top: 24px;
+}
+.ratchet-step {
+  padding: 24px 20px;
+  border: 1px solid var(--light);
+  position: relative;
+}
+.ratchet-step.active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.ratchet-step .step-num {
+  font-size: 48px; font-weight: 900;
+  color: var(--light);
+  line-height: 1;
+}
+.ratchet-step.active .step-num { color: var(--accent); }
+.ratchet-step h4 {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-top: 12px;
+}
+.ratchet-step p {
+  font-size: 12px; color: var(--mid);
+  margin-top: 8px; line-height: 1.6;
+}
+
+/* ── Footer ── */
+.foot {
+  padding: 40px 0;
+  border-top: 2px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.foot .sig { color: var(--ink); font-weight: 700; }
+
+/* ── Keyboard Help (compact) ── */
+.key-help {
+  position: fixed;
+  bottom: 24px; left: 24px;
+  font-size: 9px; letter-spacing: 1.5px;
+  color: var(--mid); text-transform: uppercase;
+}
+.key-help kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--light);
+  font-family: inherit;
+  font-size: 9px;
+  margin: 0 2px;
+}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <!-- ── Masthead ── -->
+  <header class="masthead">
+    <div class="wordmark">Poseidon<span class="accent">X</span> · Data Center Digital Twin</div>
+    <nav>
+      <a href="#">Overview</a>
+      <a href="#">Devices</a>
+      <a href="#">Anomalies</a>
+      <a href="#">Energy</a>
+      <a href="#">AI Insight</a>
+    </nav>
+  </header>
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div>
+      <h1 class="hero-title">
+        Physical<br/>↔ Digital<br/><span class="red">1:1</span> Twin
+      </h1>
+    </div>
+    <div>
+      <p class="hero-sub">
+        <strong>xFirst Principle Energy Datacenter</strong> — 物理世界的每一台机柜、每一条母线、每一个传感器，在数字侧拥有精确的几何映射与实时状态同步。通过 Musk 五步法持续优化能效，目标 PUE ≤ 1.20。
+      </p>
+    </div>
+  </section>
+  <hr class="hero-rule"/>
+
+  <!-- ── KPI Strip ── -->
+  <section class="kpi-row">
+    <div class="kpi-cell">
+      <div class="kpi-label">PUE</div>
+      <div class="kpi-value">1.18</div>
+      <div class="kpi-delta good">↓ 0.03</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">IT Load</div>
+      <div class="kpi-value">847<span class="unit">kW</span></div>
+      <div class="kpi-delta good">↓ 2.1%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Cooling</div>
+      <div class="kpi-value">142<span class="unit">kW</span></div>
+      <div class="kpi-delta good">↓ 5.8%</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Temp</div>
+      <div class="kpi-value">24.3<span class="unit">°C</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Humidity</div>
+      <div class="kpi-value">48<span class="unit">%</span></div>
+      <div class="kpi-delta">—</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Devices</div>
+      <div class="kpi-value">64</div>
+      <div class="kpi-delta">8×8 Rack</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Anomalies</div>
+      <div class="kpi-value" style="color:var(--accent)">3</div>
+      <div class="kpi-delta warn">1 Critical</div>
+    </div>
+  </section>
+
+  <!-- ── 3D Viewport ── -->
+  <div class="viewport-wrap">
+    <div class="grid-bg"></div>
+    <div class="viewport-label"><span class="live-dot"></span>THREE.JS · LIVE SYNC · 8×8 RACK MATRIX</div>
+    <div class="viewport-center">
+      <div class="big">3D</div>
+      Three.js Digital Twin Viewport
+    </div>
+    <div class="viewport-readout">
+      ROOM 80×50×12 UNITS<br/>
+      8 ROWS × 8 COLS<br/>
+      GPU HEAT FIELD · IDW<br/>
+      PDU WIRING · BUSWAY<br/>
+      COLD/HOT AISLE FLOW
+    </div>
+  </div>
+
+  <!-- ── Devices + Anomalies ── -->
+  <div class="two-col">
+    <div>
+      <div class="section-head">Device Matrix · 64 Racks</div>
+      <table class="dev-table">
+        <thead>
+          <tr><th>ID</th><th>Type</th><th>Power</th><th>Temp</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="id-col">R1-01</td><td>GPU Server</td><td class="val-col">18.2 kW</td><td>67.3 °C</td><td><span class="status-dot crit"></span>Hot</td></tr>
+          <tr><td class="id-col">R1-02</td><td>GPU Server</td><td class="val-col">16.8 kW</td><td>52.1 °C</td><td><span class="status-dot ok"></span>OK</td></tr>
+          <tr><td class="id-col">R2-01</td><td>Storage</td><td class="val-col">4.5 kW</td><td>38.7 °C</td><td><span class="status-dot ok"></span>OK</td></tr>
+          <tr><td class="id-col">R2-02</td><td>Network</td><td class="val-col">2.1 kW</td><td>34.2 °C</td><td><span class="status-dot ok"></span>OK</td></tr>
+          <tr><td class="id-col">R3-01</td><td>GPU Server</td><td class="val-col">17.4 kW</td><td>58.9 °C</td><td><span class="status-dot warn"></span>Warm</td></tr>
+          <tr><td class="id-col">R3-02</td><td>CPU Server</td><td class="val-col">8.6 kW</td><td>45.0 °C</td><td><span class="status-dot ok"></span>OK</td></tr>
+          <tr><td class="id-col">R4-01</td><td>GPU Server</td><td class="val-col">19.1 kW</td><td>71.2 °C</td><td><span class="status-dot crit"></span>Hot</td></tr>
+          <tr><td class="id-col">R4-02</td><td>UPS</td><td class="val-col">1.2 kW</td><td>29.8 °C</td><td><span class="status-dot ok"></span>OK</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="section-head">Anomaly Index</div>
+      <div class="anomaly-grid">
+        <div class="anomaly-card">
+          <div class="sev critical">CRITICAL</div>
+          <div class="desc">R4-01 温度超限 71.2°C — 冷通道回风受阻，建议立即检查 CRAH-04 风机</div>
+          <div class="meta">12:04:32 · z-score 3.8</div>
+        </div>
+        <div class="anomaly-card">
+          <div class="sev high">HIGH</div>
+          <div class="desc">R1-01 功耗持续高位 18.2kW — GPU 利用率 98%，建议迁移负载</div>
+          <div class="meta">12:01:15 · z-score 2.9</div>
+        </div>
+        <div class="anomaly-card">
+          <div class="sev medium">MEDIUM</div>
+          <div class="desc">PDU-B2 相位不平衡 — L1/L2 差异 8.3A，建议重新分配回路</div>
+          <div class="meta">11:58:40 · z-score 2.1</div>
+        </div>
+        <div class="anomaly-card">
+          <div class="sev medium">LOW</div>
+          <div class="desc">湿度传感器 H-12 漂移 — 读数偏低 3%，建议校准</div>
+          <div class="meta">11:45:00 · z-score 1.4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PUE Trend ── -->
+  <section class="chart-block">
+    <div class="chart-header">
+      <h3>PUE Trend · 24h History + Forecast</h3>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:var(--ink)"></span>Actual</span>
+        <span><span class="legend-dot" style="background:var(--accent)"></span>Forecast</span>
+        <span><span class="legend-dot" style="background:var(--light);border-top:1px dashed var(--mid)"></span>Target 1.20</span>
+      </div>
+    </div>
+    <div class="chart-frame">
+      <div class="baseline"></div>
+      <div class="placeholder-line"></div>
+    </div>
+  </section>
+
+  <!-- ── AI Insight ── -->
+  <section class="insight-block">
+    <div>
+      <div class="insight-label"><span class="num">AI</span>Insight</div>
+    </div>
+    <div class="insight-content">
+      <div class="tag">Energy Optimization</div>
+      <p>
+        当前机房 PUE 为 1.18，处于优秀水平。主要能耗集中在 Row 1 和 Row 4 的 GPU 集群，冷通道热岛效应显著。建议：(1) 将 R4-01 负载迁移至低温区 R6；(2) 调高 CRAH-04 风速至 85%；(3) 启用液冷辅助回路。预计可将 PUE 降至 1.15，年节省约 ¥48 万电费。
+      </p>
+      <ul class="rec-list">
+        <li><span class="n">01</span> 迁移 R4-01 GPU 负载至 R6-03（预计降温 12°C）</li>
+        <li><span class="n">02</span> CRAH-04 风速 65% → 85%（消除热岛）</li>
+        <li><span class="n">03</span> 启用液冷辅助回路（PUE ↓ 0.03）</li>
+        <li><span class="n">04</span> PDU-B2 回路负载再平衡（降低谐波损耗 2.1%）</li>
+        <li><span class="n">05</span> 夜间低负载时段关闭 UPS-02 旁路（省电 1.8kW）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── Energy Flow ── -->
+  <section class="flow-section">
+    <div class="section-head">Energy Flow · Sankey</div>
+    <div class="flow-diagram">
+      <div class="flow-node">
+        <div class="fn-label">Grid Input</div>
+        <div class="fn-val">998</div>
+        <div class="fn-unit">kW</div>
+      </div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node">
+        <div class="fn-label">UPS</div>
+        <div class="fn-val">982</div>
+        <div class="fn-unit">kW (η 98.4%)</div>
+      </div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node">
+        <div class="fn-label">PDU</div>
+        <div class="fn-val">968</div>
+        <div class="fn-unit">kW</div>
+      </div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node" style="border-color:var(--accent)">
+        <div class="fn-label">IT Load</div>
+        <div class="fn-val" style="color:var(--accent)">847</div>
+        <div class="fn-unit">kW</div>
+      </div>
+      <div class="flow-arrow"></div>
+      <div class="flow-node">
+        <div class="fn-label">Cooling</div>
+        <div class="fn-val">142</div>
+        <div class="fn-unit">kW</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Ratchet Loop ── -->
+  <section class="ratchet-section">
+    <div class="section-head">Musk 五步法 · xFirst Principle Ratchet</div>
+    <div class="ratchet-grid">
+      <div class="ratchet-step active">
+        <div class="step-num">01</div>
+        <h4>Question</h4>
+        <p>质疑需求 — 真的需要这个制冷量吗？</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="step-num">02</div>
+        <h4>Delete</h4>
+        <p>删除冗余 — 去掉不必要的冷却回路</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="step-num">03</div>
+        <h4>Simplify</h4>
+        <p>简化系统 — 合并电力分配路径</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="step-num">04</div>
+        <h4>Accelerate</h4>
+        <p>加速迭代 — AI 预测 + 自动调节</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="foot">
+    <span class="sig">PoseidonX</span>
+    <span>Datacenter Digital Twin · Pentagram 信息建筑</span>
+    <span>Design Demo A</span>
+  </footer>
+
+</div>
+
+<div class="key-help">
+  <kbd>H</kbd> Help · <kbd>S</kbd> Sensor · <kbd>F</kbd> Flow · <kbd>T</kbd> Twin
+</div>
+
+</body>
+</html>

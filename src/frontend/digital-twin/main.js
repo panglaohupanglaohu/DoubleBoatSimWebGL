@@ -109,6 +109,40 @@ export function init() {
     state.controls.target.set(0, 0, 0);
     state.controls.minDistance = 10;
     state.controls.maxDistance = 120;
+
+    // ── 监控摄像头预设（worldmonitor-map.html 通过 ?cam=top|bow|stern 嵌入）──
+    const camParam = new URLSearchParams(window.location.search).get('cam');
+    if (camParam && ['top', 'bow', 'stern'].includes(camParam)) {
+        state.cctvPreset = camParam;
+        // 关闭旋转/平移，仅保留鼠标滚轮缩放（用户要求）
+        state.controls.enableRotate = false;
+        state.controls.enablePan = false;
+        state.controls.enableZoom = true;
+        state.controls.minDistance = 5;
+        state.controls.maxDistance = 400;
+        // canvas 仍要响应滚轮事件
+        try { state.renderer.domElement.style.pointerEvents = 'auto'; } catch (e) {}
+        if (camParam === 'top') {
+            state.camera.position.set(0, 180, 1);
+            state.camera.fov = 60;
+        } else {
+            state.camera.fov = 50;
+        }
+        state.camera.updateProjectionMatrix();
+        console.log(`[CCTV] preset=${camParam} 已激活（鼠标滚轮可缩放）`);
+        // 鼠标滚轮缩放（调整 FOV，35° ~ 95°）
+        state.cctvZoom = 1.0;
+        state.renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const baseFov = camParam === 'top' ? 60 : 50;
+            state.cctvZoom = Math.max(0.4, Math.min(2.0, state.cctvZoom + (e.deltaY > 0 ? 0.05 : -0.05)));
+            state.camera.fov = baseFov * state.cctvZoom;
+            state.camera.updateProjectionMatrix();
+        }, { passive: false });
+        // 强制 resize，避免 canvas 尺寸残留
+        setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch(e) {} }, 50);
+        setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch(e) {} }, 500);
+    }
     
     // 设置灯光
     setupLights();
@@ -122,6 +156,9 @@ export function init() {
     // 创建 AR-CAS 场景元素 (货船 + 冰山)
     createCargoShip();
     createIcebergs();
+    
+    // 创建 wabi-sabi 风格 HUD (货船轨道遥测)
+    createCargoOrbitHUD();
     
     // 测深仪声纳可视化
     createDepthSounder();
@@ -734,19 +771,19 @@ function createFallbackBoat() {
     state.boatMesh = new THREE.Group();
     
     const hullMat = new THREE.MeshPhysicalMaterial({
-        color: 0x1a4a8a, roughness: 0.35, metalness: 0.15, clearcoat: 0.3,
+        color: 0x2d2a26, roughness: 0.45, metalness: 0.10, clearcoat: 0.15,
     });
     const deckMat = new THREE.MeshPhysicalMaterial({
-        color: 0x556677, roughness: 0.6, metalness: 0.05,
+        color: 0x8a8378, roughness: 0.7, metalness: 0.03,
     });
     const superMat = new THREE.MeshPhysicalMaterial({
-        color: 0xeef2f5, roughness: 0.4, metalness: 0.1,
+        color: 0xe8e3db, roughness: 0.5, metalness: 0.05,
     });
     const glassMat = new THREE.MeshPhysicalMaterial({
-        color: 0x88ccff, roughness: 0.05, metalness: 0.3,
-        transmission: 0.6, thickness: 0.2, transparent: true, opacity: 0.7,
+        color: 0x8a9b8a, roughness: 0.08, metalness: 0.2,
+        transmission: 0.5, thickness: 0.2, transparent: true, opacity: 0.65,
     });
-    const redMat = new THREE.MeshPhongMaterial({ color: 0xcc2222 });
+    const redMat = new THREE.MeshPhongMaterial({ color: 0x8f4a3a });
     
     // === 左右浮筒 (流线型截面 — 用拉伸曲面) ===
     function createPontoon(side) {
@@ -1276,29 +1313,29 @@ function createCargoShip() {
 
     // ========== 材质定义 ==========
     const hullMat = new THREE.MeshPhongMaterial({
-        color: 0x1a1a2e, shininess: 60, specular: 0x222222
+        color: 0x2d2a26, shininess: 40, specular: 0x1a1a1a
     });
     const hullBottomMat = new THREE.MeshPhongMaterial({
-        color: 0x8b1a1a, shininess: 30  // 防污漆红色
+        color: 0x6b3a2a, shininess: 20  // 防污漆 — 侘寂朱色
     });
     const deckMat = new THREE.MeshPhongMaterial({
-        color: 0x4a4a4a, shininess: 20
+        color: 0x8a8378, shininess: 15
     });
     const superMat = new THREE.MeshPhongMaterial({
-        color: 0xf0f0f0, shininess: 50
+        color: 0xe8e3db, shininess: 35
     });
     const windowMat = new THREE.MeshPhongMaterial({
-        color: 0x1a3a5c, shininess: 120, specular: 0x4488aa,
-        emissive: 0x0a1520, emissiveIntensity: 0.3
+        color: 0x5a6b5a, shininess: 80, specular: 0x3a5a3a,
+        emissive: 0x0a150a, emissiveIntensity: 0.2
     });
     const funnelMat = new THREE.MeshPhongMaterial({
-        color: 0x2c2c2c, shininess: 40
+        color: 0x3a3632, shininess: 30
     });
     const funnelBandMat = new THREE.MeshPhongMaterial({
-        color: 0xcc2200, shininess: 30
+        color: 0x8f4a3a, shininess: 20
     });
     const railMat = new THREE.MeshPhongMaterial({
-        color: 0x888888, shininess: 60
+        color: 0xbfb9b0, shininess: 40
     });
 
     // ========== 1. 船体 (约 300TEU 集装箱船, length≈70, beam≈12) ==========
@@ -3778,6 +3815,160 @@ function handleWindowMessage(event) {
     }
 }
 
+// ==================== Wabi-Sabi 风格 HUD (货船轨道遥测) ====================
+
+function createCargoOrbitHUD() {
+    // 创建 HUD 容器 — 侘寂风格: 粗粝质感、不对称、留白、自然色
+    const container = document.createElement('div');
+    container.id = 'cargo-orbit-hud';
+    container.innerHTML = `
+      <div class="wabisabi-hud">
+        <div class="hud-title">⛵ 貨船軌道 · 侘寂</div>
+        <div class="hud-body">
+          <div class="hud-row">
+            <span class="hud-label">方位角</span>
+            <span class="hud-value" id="orbit-angle">0.0°</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">距本船</span>
+            <span class="hud-value" id="orbit-distance">80.0 m</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">航向</span>
+            <span class="hud-value" id="orbit-heading">090°</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">緯度</span>
+            <span class="hud-value" id="orbit-lat">--</span>
+          </div>
+          <div class="hud-row">
+            <span class="hud-label">經度</span>
+            <span class="hud-value" id="orbit-lon">--</span>
+          </div>
+        </div>
+        <div class="hud-footer">— 不完全の美 —</div>
+      </div>
+    `;
+    document.body.appendChild(container);
+
+    // 注入 wabi-sabi 样式
+    const style = document.createElement('style');
+    style.textContent = `
+      #cargo-orbit-hud {
+        position: fixed;
+        right: 24px;
+        bottom: 80px;
+        z-index: 1000;
+        font-family: 'Noto Serif SC', 'Georgia', 'Times New Roman', serif;
+        user-select: none;
+        pointer-events: none;
+        opacity: 0;
+        animation: wabisabiFadeIn 2.5s ease-out 1.5s forwards;
+      }
+      @keyframes wabisabiFadeIn {
+        to { opacity: 1; }
+      }
+      .wabisabi-hud {
+        background: rgba(18, 22, 18, 0.72);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(140, 130, 110, 0.35);
+        border-radius: 2px;
+        padding: 18px 22px 14px;
+        min-width: 180px;
+        box-shadow:
+          0 0 0 1px rgba(100, 90, 70, 0.12) inset,
+          4px 6px 18px rgba(0, 0, 0, 0.5);
+        /* 不对称偏移 — 侘寂的「不完全」 */
+        transform: rotate(-0.6deg) translateY(2px);
+      }
+      .hud-title {
+        font-size: 13px;
+        letter-spacing: 3px;
+        color: #b8aa8a;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(140, 130, 110, 0.25);
+        padding-bottom: 8px;
+        margin-bottom: 10px;
+        font-weight: 400;
+      }
+      .hud-body {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .hud-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+      }
+      .hud-label {
+        font-size: 11px;
+        color: #8a8a7a;
+        letter-spacing: 1px;
+        font-weight: 300;
+      }
+      .hud-value {
+        font-size: 15px;
+        color: #d4cfc0;
+        font-weight: 400;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.5px;
+        text-shadow: 0 0 6px rgba(180, 170, 140, 0.15);
+      }
+      .hud-footer {
+        font-size: 10px;
+        color: #6a6a5a;
+        text-align: right;
+        margin-top: 10px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(140, 130, 110, 0.15);
+        letter-spacing: 2px;
+        font-style: italic;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // 缓存 DOM 引用
+    state._hudAngle = document.getElementById('orbit-angle');
+    state._hudDistance = document.getElementById('orbit-distance');
+    state._hudHeading = document.getElementById('orbit-heading');
+    state._hudLat = document.getElementById('orbit-lat');
+    state._hudLon = document.getElementById('orbit-lon');
+}
+
+function updateCargoOrbitHUD() {
+    if (!state.cargoShip || !state._hudAngle) return;
+
+    // 从 cargo ship 位置计算角度和距离
+    const cx = state.cargoShip.position.x;
+    const cz = state.cargoShip.position.z;
+
+    // 距原点 (双体船) 的距离
+    const distance = Math.sqrt(cx * cx + cz * cz);
+
+    // 当前角度 (度) — 从正北顺时针
+    let angleDeg = Math.atan2(cx, cz) * (180 / Math.PI);
+    if (angleDeg < 0) angleDeg += 360;
+
+    // 航向 (切线方向 = 径向 + 90°)
+    let headingDeg = (angleDeg + 90) % 360;
+
+    // 更新 HUD
+    state._hudAngle.textContent = angleDeg.toFixed(1) + '°';
+    state._hudDistance.textContent = distance.toFixed(1) + ' m';
+    state._hudHeading.textContent = headingDeg.toFixed(0).padStart(3, '0') + '°';
+
+    // 模拟地理坐标 (与后端 cargo_orbit_telemetry 一致)
+    const originLat = 31.2304;
+    const originLon = 121.4737;
+    const sceneToDeg = 0.0001;
+    const lat = originLat + cz * sceneToDeg;
+    const lon = originLon + cx * sceneToDeg;
+    state._hudLat.textContent = lat.toFixed(4) + '°N';
+    state._hudLon.textContent = lon.toFixed(4) + '°E';
+}
+
 // ==================== 动画循环 ====================
 
 function animate() {
@@ -3785,7 +3976,43 @@ function animate() {
     
     state.controls.update();
     const now = performance.now() * 0.001;
-    
+
+    // ── CCTV 预设相机：锁定为顶视/船头/船尾 跟随双体船 ──
+    if (state.cctvPreset && state.boatMesh) {
+        const b = state.boatMesh;
+        const heading = b.rotation.y || 0;
+        const sin = Math.sin(heading), cos = Math.cos(heading);
+        const cargo = state.cargoShip;
+
+        if (state.cctvPreset === 'top') {
+            // 全局俯视：高空看双体船 + 货船轨道；轻微跟随双体船位置
+            state.camera.position.set(b.position.x, 180, b.position.z + 1);
+            state.camera.up.set(0, 0, -1);
+            state.camera.lookAt(b.position.x, 0, b.position.z);
+        } else if (state.cctvPreset === 'bow' && cargo) {
+            // 前置摄像头：起点位于双体船船头，终点落在货船上
+            const bowOff = -10;  // 本地 -Z 是船首方向
+            const bx = b.position.x + bowOff * sin;
+            const bz = b.position.z + bowOff * cos;
+            state.camera.position.set(bx, b.position.y + 5.5, bz);
+            state.camera.up.set(0, 1, 0);
+            state.camera.lookAt(cargo.position.x, cargo.position.y + 3, cargo.position.z);
+        } else if (state.cctvPreset === 'stern' && cargo) {
+            // 后置摄像头：起点位于双体船船尾，终点落在货船上
+            const sternOff = 10;
+            const sx = b.position.x + sternOff * sin;
+            const sz = b.position.z + sternOff * cos;
+            state.camera.position.set(sx, b.position.y + 5.5, sz);
+            state.camera.up.set(0, 1, 0);
+            state.camera.lookAt(cargo.position.x, cargo.position.y + 3, cargo.position.z);
+        } else if (state.cctvPreset === 'bow' || state.cctvPreset === 'stern') {
+            // 货船尚未加载时，给一个临时朝向
+            const dir = state.cctvPreset === 'bow' ? -1 : 1;
+            state.camera.position.set(b.position.x, b.position.y + 5.5, b.position.z + dir * 10);
+            state.camera.lookAt(b.position.x, b.position.y + 3, b.position.z + dir * 80);
+        }
+    }
+
     // 更新水面 + 天空时间
     if (state.waterMesh) {
         state.waterMesh.material.uniforms.time.value = now;
@@ -3894,22 +4121,27 @@ function animate() {
         state._seaFloor.material.uniforms.time.value = now;
     }
     
-    // AR-CAS: 货船运动 (大型船, 慢速接近, 最小安全距离守卫)
+    // AR-CAS: 货船运动 — 以双体船(原点)为圆心做圆周运动 (速度别太快)
     if (state.cargoShip) {
-        const t = now;
-        const ownPos = state.boatMesh ? state.boatMesh.position : new THREE.Vector3();
-        const dx = state.cargoShip.position.x - ownPos.x;
-        const dz = state.cargoShip.position.z - ownPos.z;
-        const dist = Math.sqrt(dx * dx + dz * dz);
-        // 安全距离: 货船半长(35) + WPC半长(8) + 缓冲(7) ≈ 50 units (~115m)
-        if (dist > 50) {
-            state.cargoShip.position.x += Math.sin(t * 0.1) * 0.002 - 0.005;
-            state.cargoShip.position.z += Math.cos(t * 0.08) * 0.002 + 0.003;
-        }
+        // 使用帧计数器: 每帧递增，角速度 0.005 rad/帧 ≈ 0.3°/s @60fps
+        if (state._cargoOrbitAngle === undefined) state._cargoOrbitAngle = 0;
+        state._cargoOrbitAngle += 0.005;
+        const orbitAngle = state._cargoOrbitAngle;
+        // 圆周运动参数
+        const orbitRadius = 80;          // 轨道半径 (units)
+        // 计算圆周位置: 以原点(双体船位置)为圆心
+        state.cargoShip.position.x = Math.cos(orbitAngle) * orbitRadius;
+        state.cargoShip.position.z = Math.sin(orbitAngle) * orbitRadius;
+        // 船头指向运动方向 (圆周切线方向)
+        const headingAngle = orbitAngle + Math.PI / 2; // 切线方向 = 径向 + 90°
+        state.cargoShip.rotation.y = headingAngle;
         // 大型船波浪影响 — 摇摆幅度小、周期长
-        state.cargoShip.rotation.z = Math.sin(t * 0.4) * 0.008;
-        state.cargoShip.rotation.x = Math.cos(t * 0.3) * 0.006;
-        state.cargoShip.position.y = Math.sin(t * 0.5) * 0.5;
+        state.cargoShip.rotation.z = Math.sin(now * 0.4) * 0.008;
+        state.cargoShip.rotation.x = Math.cos(now * 0.3) * 0.006;
+        state.cargoShip.position.y = Math.sin(now * 0.5) * 0.5;
+
+        // 更新 wabi-sabi HUD
+        updateCargoOrbitHUD();
     }
     
     // AR-CAS: 冰山漂浮 (大型冰山, 缓慢漂移)

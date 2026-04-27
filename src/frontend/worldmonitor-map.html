@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WorldMonitor - 全球船舶监控平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
@@ -14,12 +15,27 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0a0e1a;
-            color: #ffffff;
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: oklch(0.96 0.003 110);
+            color: oklch(0.18 0.008 110);
             overflow: hidden;
             height: 100vh;
+            position: relative;
         }
+        /* Wabi-Sabi Rubber tokens */
+        :root{--shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.005 110);--sumi:oklch(0.18 0.008 110);--sumi-3:oklch(0.55 0.005 110);--koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);--groove:oklch(0.82 0.004 110);--font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace}
+        body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(oklch(0 0 0/.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/.008) 1px,transparent 1px);background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+        .seal{display:inline-block;font-size:10px;font-weight:900;color:var(--shironeri);background:var(--sumi);padding:1px 5px;line-height:1.3;font-family:var(--font-serif);vertical-align:middle;margin-right:4px}.seal-koke{background:var(--koke)}.seal-shu{background:var(--shu)}.seal-kitsune{background:var(--kitsune)}
+        .header{background:var(--ishi) !important;border-bottom:1px solid var(--groove) !important}
+        .header h1{background:none !important;-webkit-text-fill-color:var(--koke) !important;color:var(--koke) !important;font-family:var(--font-serif)}
+        .sidebar,.right-panel{background:var(--ishi) !important;border-color:var(--groove) !important}
+        .panel{background:var(--shironeri) !important;border-color:var(--groove) !important}
+        .ais-target,.weather-item,.route-info,.port-item,.camera-feed{background:var(--shironeri) !important}
+        .chat-agent-select,.chat-input-row input{background:var(--shironeri) !important;color:var(--sumi) !important;border-color:var(--groove) !important}
+        .chat-msg{background:oklch(0.52 0.04 160 / 0.04) !important}
+        .chat-msg.user{background:oklch(0.56 0.05 70 / 0.06) !important}
+        .chat-input-row button{background:oklch(0.52 0.04 160 / 0.08) !important;border-color:oklch(0.52 0.04 160 / 0.18) !important}
+        .header-actions a{background:oklch(0.52 0.04 160 / 0.06) !important;border-color:oklch(0.52 0.04 160 / 0.15) !important}
 
         /* 顶部状态栏 */
         .header {
@@ -28,8 +44,8 @@
             left: 0;
             right: 0;
             height: 60px;
-            background: linear-gradient(180deg, rgba(10,14,26,0.95) 0%, rgba(10,14,26,0.8) 100%);
-            border-bottom: 1px solid rgba(79,195,247,0.3);
+            background: oklch(0.91 0.004 110);
+            border-bottom: 1px solid oklch(0.82 0.004 110);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -40,7 +56,7 @@
         .header h1 {
             font-size: 20px;
             font-weight: 700;
-            background: linear-gradient(90deg, #4fc3f7 0%, #29b6f6 100%);
+            background: linear-gradient(90deg, oklch(0.52 0.04 160) 0%, oklch(0.52 0.04 160) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -58,10 +74,10 @@
         }
 
         .header-actions a {
-            color: #d9f6ff;
+            color: oklch(0.25 0.006 110);
             text-decoration: none;
             padding: 8px 12px;
-            border-radius: 999px;
+            border-radius:0;
             background: rgba(79,195,247,0.12);
             border: 1px solid rgba(79,195,247,0.24);
             font-size: 12px;
@@ -76,14 +92,14 @@
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            color: #a0aec0;
+            color: oklch(0.55 0.005 110);
         }
 
         .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #48bb78;
+            background: oklch(0.52 0.04 160);
             animation: pulse 2s infinite;
         }
 
@@ -117,7 +133,7 @@
         .panel {
             background: rgba(16,24,48,0.8);
             border: 1px solid rgba(79,195,247,0.2);
-            border-radius: 12px;
+            border-radius:0;
             padding: 16px;
             margin-bottom: 16px;
         }
@@ -125,7 +141,7 @@
         .panel h3 {
             font-size: 14px;
             font-weight: 600;
-            color: #4fc3f7;
+            color: oklch(0.52 0.04 160);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -134,11 +150,11 @@
 
         /* AIS 目标列表 */
         .ais-target {
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
+            background: oklch(0 0 0 / 0.3);
+            border-radius:0;
             padding: 12px;
             margin-bottom: 8px;
-            border-left: 3px solid #48bb78;
+            border-left: 3px solid oklch(0.52 0.04 160);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -149,7 +165,7 @@
         }
 
         .ais-target.high-risk {
-            border-left-color: #f56565;
+            border-left-color: oklch(0.48 0.07 22);
         }
 
         .ais-target-header {
@@ -161,12 +177,12 @@
 
         .ais-target-type {
             font-weight: 600;
-            color: #4fc3f7;
+            color: oklch(0.52 0.04 160);
             font-size: 13px;
         }
 
         .ais-target-mmsi {
-            color: #718096;
+            color: oklch(0.55 0.005 110);
             font-size: 11px;
         }
 
@@ -175,7 +191,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 6px;
             font-size: 11px;
-            color: #a0aec0;
+            color: oklch(0.55 0.005 110);
         }
 
         /* 气象面板 */
@@ -186,22 +202,22 @@
         }
 
         .weather-item {
-            background: rgba(0,0,0,0.3);
+            background: oklch(0 0 0 / 0.3);
             padding: 12px;
-            border-radius: 8px;
+            border-radius:0;
             text-align: center;
         }
 
         .weather-label {
             font-size: 11px;
-            color: #718096;
+            color: oklch(0.55 0.005 110);
             margin-bottom: 4px;
         }
 
         .weather-value {
             font-size: 16px;
             font-weight: 600;
-            color: #48bb78;
+            color: oklch(0.52 0.04 160);
         }
 
         /* 港口列表 */
@@ -210,19 +226,19 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px;
-            background: rgba(0,0,0,0.3);
+            background: oklch(0 0 0 / 0.3);
             border-radius: 6px;
             margin-bottom: 6px;
         }
 
         .port-name {
             font-weight: 600;
-            color: #f6ad55;
+            color: oklch(0.56 0.05 70);
         }
 
         .port-distance {
             font-size: 11px;
-            color: #718096;
+            color: oklch(0.55 0.005 110);
         }
 
         /* 右侧面板 */
@@ -234,39 +250,78 @@
             padding: 20px;
         }
 
-        /* 监控图像 */
+        /* 监控图像 (wabi-sabi · 数字孪生实时画面) */
         .camera-feed {
-            background: rgba(0,0,0,0.5);
-            border-radius: 8px;
+            background: var(--shironeri);
+            border: 1px solid var(--kabe);
+            box-shadow: 0 1px 0 var(--kabe), inset 0 0 0 1px rgba(255,255,255,0.4);
             overflow: hidden;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
-
-        .camera-feed img {
+        .camera-feed.active {
+            border-color: var(--shu);
+            box-shadow: 0 0 0 2px var(--shu), 0 1px 6px rgba(0,0,0,0.18);
+        }
+        .camera-feed:not(.active) iframe {
+            pointer-events: none;
+        }
+        .camera-feed iframe {
             width: 100%;
-            height: 180px;
-            object-fit: cover;
+            height: 200px;
+            display: block;
+            border: 0;
+            background: oklch(0.91 0.004 110);
         }
+        .camera-feed .corner-stamp {
+            position: absolute; top: 8px; right: 8px;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 11px; letter-spacing: 2px;
+            color: var(--shironeri);
+            background: var(--shu);
+            padding: 2px 8px;
+            writing-mode: vertical-rl;
+            opacity: 0.85;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .camera-feed.top .corner-stamp     { background: var(--sumi);  }
+        .camera-feed.bow .corner-stamp     { background: var(--koke);  }
+        .camera-feed.stern .corner-stamp   { background: var(--kitsune); }
 
         .camera-info {
-            padding: 12px;
+            padding: 10px 12px;
+            border-top: 1px solid var(--kabe);
+            display: flex; justify-content: space-between; align-items: baseline;
         }
-
         .camera-name {
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 500;
+            color: var(--sumi);
+            font-size: 13px;
+            letter-spacing: 1px;
         }
-
         .camera-status {
-            font-size: 11px;
-            color: #48bb78;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--koke);
+            letter-spacing: 0.5px;
         }
+        .camera-status::before {
+            content: ''; display: inline-block;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--koke);
+            margin-right: 6px;
+            animation: cctvPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes cctvPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
         /* 航线信息 */
         .route-info {
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
+            background: oklch(0 0 0 / 0.3);
+            border-radius:0;
             padding: 16px;
         }
 
@@ -286,21 +341,21 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #4fc3f7;
+            background: oklch(0.52 0.04 160);
         }
 
         .route-dot.waypoint {
-            background: #f6ad55;
+            background: oklch(0.56 0.05 70);
         }
 
         .route-label {
             font-size: 12px;
-            color: #a0aec0;
+            color: oklch(0.55 0.005 110);
         }
 
         /* MapLibre 自定义样式 */
         .maplibregl-map {
-            background: #0a0e1a;
+            background: oklch(0.96 0.003 110);
         }
 
         .maplibregl-ctrl-bottom-left,
@@ -311,40 +366,40 @@
         /* ═══ Chat Panel ═══ */
         .chat-panel { display: flex; flex-direction: column; min-height: 200px; }
         .chat-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .chat-model-tag { font-size: 10px; color: #4fc3f7; background: rgba(79,195,247,.08); border: 1px solid rgba(79,195,247,.25); border-radius: 4px; padding: 2px 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-family: monospace; }
-        .chat-model-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #4a5568; transition: background .3s, box-shadow .3s; }
-        .chat-model-dot.active { background: #48bb78; box-shadow: 0 0 8px rgba(72,187,120,.6); }
-        .chat-model-dot.inactive { background: #4a5568; }
+        .chat-model-tag { font-size: 10px; color: oklch(0.52 0.04 160); background: rgba(79,195,247,.08); border: 1px solid rgba(79,195,247,.25); border-radius: 4px; padding: 2px 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-family: monospace; }
+        .chat-model-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: oklch(0.55 0.005 110); transition: background .3s, box-shadow .3s; }
+        .chat-model-dot.active { background: oklch(0.52 0.04 160); box-shadow: 0 0 8px rgba(72,187,120,.6); }
+        .chat-model-dot.inactive { background: oklch(0.55 0.005 110); }
         .chat-agent-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
         .chat-agent-select {
             flex: 1; font-size: 11px; font-family: monospace; padding: 4px 6px;
-            background: rgba(0,0,0,.3); color: #a0aec0; border: 1px solid rgba(79,195,247,.2);
+            background: rgba(0,0,0,.3); color: oklch(0.55 0.005 110); border: 1px solid rgba(79,195,247,.2);
             border-radius: 4px; outline: none; cursor: pointer;
         }
-        .chat-agent-select:focus { border-color: #4fc3f7; }
-        .chat-agent-select option.model-active { color: #48bb78; font-weight: 600; }
-        .chat-agent-select option.model-inactive { color: #718096; }
+        .chat-agent-select:focus { border-color: oklch(0.52 0.04 160); }
+        .chat-agent-select option.model-active { color: oklch(0.52 0.04 160); font-weight: 600; }
+        .chat-agent-select option.model-inactive { color: oklch(0.55 0.005 110); }
         .chat-messages { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; flex: 1; padding-right: 2px; margin-bottom: 8px; }
         .chat-messages::-webkit-scrollbar { width: 3px; }
         .chat-messages::-webkit-scrollbar-thumb { background: rgba(79,195,247,.3); border-radius: 2px; }
-        .chat-msg { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; border-left: 3px solid #4fc3f7; background: rgba(79,195,247,.05); word-break: break-word; }
-        .chat-msg.user { border-left-color: #f6ad55; background: rgba(246,173,85,.06); }
-        .chat-msg.danger { border-left-color: #f56565; background: rgba(245,101,101,.06); }
-        .chat-msg .chat-time { font-size: 9px; color: #4a5568; margin-top: 4px; text-align: right; }
+        .chat-msg { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; border-left: 3px solid oklch(0.52 0.04 160); background: rgba(79,195,247,.05); word-break: break-word; }
+        .chat-msg.user { border-left-color: oklch(0.56 0.05 70); background: rgba(246,173,85,.06); }
+        .chat-msg.danger { border-left-color: oklch(0.48 0.07 22); background: rgba(245,101,101,.06); }
+        .chat-msg .chat-time { font-size: 9px; color: oklch(0.55 0.005 110); margin-top: 4px; text-align: right; }
         .chat-input-row { display: flex; gap: 6px; }
-        .chat-input-row input { flex: 1; background: rgba(0,0,0,.3); border: 1px solid rgba(79,195,247,.2); border-radius: 4px; padding: 6px 10px; color: #fff; font-size: 12px; outline: none; }
-        .chat-input-row input:focus { border-color: #4fc3f7; }
-        .chat-input-row button { background: rgba(79,195,247,.15); border: 1px solid rgba(79,195,247,.3); border-radius: 4px; color: #4fc3f7; padding: 6px 14px; cursor: pointer; font-size: 14px; font-weight: 700; }
+        .chat-input-row input { flex: 1; background: rgba(0,0,0,.3); border: 1px solid rgba(79,195,247,.2); border-radius: 4px; padding: 6px 10px; color: oklch(0.18 0.008 110); font-size: 12px; outline: none; }
+        .chat-input-row input:focus { border-color: oklch(0.52 0.04 160); }
+        .chat-input-row button { background: rgba(79,195,247,.15); border: 1px solid rgba(79,195,247,.3); border-radius: 4px; color: oklch(0.52 0.04 160); padding: 6px 14px; cursor: pointer; font-size: 14px; font-weight: 700; }
         .chat-input-row button:hover { background: rgba(79,195,247,.25); }
     </style>
-<meta name="ob-title" content="全船监控">
-<meta name="ob-subtitle" content="WorldMonitor — 全船态势感知">
+
 <link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
     <!-- 顶部状态栏 -->
     <div class="header">
-        <h1>🌍 WorldMonitor - 全球船舶监控平台</h1>
+        <h1><span class="seal">球</span> WorldMonitor - 全球船舶监控平台</h1>
         <div class="header-status">
             <div class="status-item">
                 <span class="status-dot"></span>
@@ -352,11 +407,11 @@
             </div>
             <div class="status-item">
                 <span>本船位置：</span>
-                <span style="color: #4fc3f7;" id="own-ship-position">三亚附近</span>
+                <span style="color: oklch(0.52 0.04 160);" id="own-ship-position">三亚附近</span>
             </div>
             <div class="status-item">
                 <span>AIS 目标：</span>
-                <span style="color: #48bb78;" id="ais-count">0</span>
+                <span style="color: oklch(0.52 0.04 160);" id="ais-count">0</span>
             </div>
         </div>
         <div class="header-actions">
@@ -371,15 +426,15 @@
         <div class="sidebar">
             <!-- AIS 目标列表 -->
             <div class="panel">
-                <h3>🚢 AIS 目标列表</h3>
+                <h3><span class="seal">舶</span> AIS 目标列表</h3>
                 <div id="ais-targets-list">
-                    <div style="color: #718096; text-align: center; padding: 20px;">加载中...</div>
+                    <div style="color: oklch(0.55 0.005 110); text-align: center; padding: 20px;">加载中...</div>
                 </div>
             </div>
 
             <!-- 气象详情 -->
             <div class="panel">
-                <h3>🌤️ 气象详情</h3>
+                <h3><span class="seal seal-kitsune">气</span> 气象详情</h3>
                 <div class="weather-grid" id="weather-grid">
                     <div class="weather-item">
                         <div class="weather-label">风速</div>
@@ -410,7 +465,7 @@
 
             <!-- 附近港口 -->
             <div class="panel">
-                <h3>⚓ 附近港口</h3>
+                <h3><span class="seal seal-kitsune">港</span> 附近港口</h3>
                 <div id="ports-list">
                     <div class="port-item">
                         <span class="port-name">三亚港</span>
@@ -435,7 +490,7 @@
         <div class="right-panel">
             <!-- 本船信息 -->
             <div class="panel">
-                <h3>🚢 本船信息</h3>
+                <h3><span class="seal">舶</span> 本船信息</h3>
                 <div class="route-info">
                     <div class="route-point">
                         <div class="route-dot"></div>
@@ -452,28 +507,41 @@
                 </div>
             </div>
 
-            <!-- 监控摄像头 -->
+            <!-- 监控摄像头 (实时取自数字孪生 · wabi-sabi) -->
             <div class="panel">
                 <h3>📹 监控摄像头</h3>
-                <div class="camera-feed">
-                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=200&fit=crop" alt="前视摄像头" />
+                <div class="camera-feed top">
+                    <span class="corner-stamp">頂視</span>
+                    <iframe src="/digital-twin.html?embed=1&cam=top"
+                            loading="lazy" title="顶视摄像头" allow="autoplay"></iframe>
                     <div class="camera-info">
-                        <div class="camera-name">前视摄像头</div>
-                        <div class="camera-status">🟢 实时直播</div>
+                        <div class="camera-name">顶视摄像头 · 双体船俯视</div>
+                        <div class="camera-status">实时直播</div>
                     </div>
                 </div>
-                <div class="camera-feed">
-                    <img src="https://images.unsplash.com/photo-1544644171-1c107c7c29e4?w=400&h=200&fit=crop" alt="后视摄像头" />
+                <div class="camera-feed bow">
+                    <span class="corner-stamp">船首</span>
+                    <iframe src="/digital-twin.html?embed=1&cam=bow"
+                            loading="lazy" title="船头前视" allow="autoplay"></iframe>
                     <div class="camera-info">
-                        <div class="camera-name">后视摄像头</div>
-                        <div class="camera-status">🟢 实时直播</div>
+                        <div class="camera-name">前置摄像头 · 船头视角</div>
+                        <div class="camera-status">实时直播</div>
+                    </div>
+                </div>
+                <div class="camera-feed stern">
+                    <span class="corner-stamp">船尾</span>
+                    <iframe src="/digital-twin.html?embed=1&cam=stern"
+                            loading="lazy" title="船尾回视" allow="autoplay"></iframe>
+                    <div class="camera-info">
+                        <div class="camera-name">后视摄像头 · 船尾视角</div>
+                        <div class="camera-status">实时直播</div>
                     </div>
                 </div>
             </div>
 
             <!-- 航线规划 -->
             <div class="panel">
-                <h3>🗺️ 航线规划</h3>
+                <h3><span class="seal seal-koke">航</span> 航线规划</h3>
                 <div class="route-info">
                     <div class="route-point">
                         <div class="route-dot"></div>
@@ -488,7 +556,7 @@
                         <div class="route-label">航点 2：19.00°N, 110.50°E</div>
                     </div>
                     <div class="route-point">
-                        <div class="route-dot" style="background: #48bb78;"></div>
+                        <div class="route-dot" style="background: oklch(0.52 0.04 160);"></div>
                         <div class="route-label">终点：深圳港</div>
                     </div>
                 </div>
@@ -497,7 +565,7 @@
             <!-- AI Chat 智能助手 -->
             <div class="panel chat-panel">
                 <div class="chat-title-row">
-                    <h3 style="margin:0;">💬 AI ASSISTANT</h3>
+                    <h3 style="margin:0;"><span class="seal">话</span> AI ASSISTANT</h3>
                     <span class="chat-model-tag">
                         <span class="chat-model-dot" id="chatModelDot"></span>
                         <span id="chatModelName">—</span>
@@ -590,8 +658,8 @@
                             el.style.cssText = `
                                 width: 16px;
                                 height: 16px;
-                                background: ${target.risk_level === 'high' ? '#f56565' : '#48bb78'};
-                                border: 2px solid #fff;
+                                background: ${target.risk_level === 'high' ? 'oklch(0.48 0.07 22)' : 'oklch(0.52 0.04 160)'};
+                                border: 2px solid oklch(0.96 0.003 110);
                                 border-radius: 50%;
                                 cursor: pointer;
                             `;
@@ -602,10 +670,10 @@
                                 .setLngLat([target.longitude, target.latitude])
                                 .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
                                     <div style="padding: 8px;">
-                                        <div style="font-weight: 600; color: #4fc3f7;">${target.vessel_type || 'Unknown'}</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">MMSI: ${target.mmsi}</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">航速：${target.speed?.toFixed(1) || '--'} kn</div>
-                                        <div style="font-size: 11px; color: #a0aec0;">航向：${target.course?.toFixed(0) || '--'}°</div>
+                                        <div style="font-weight: 600; color: oklch(0.52 0.04 160);">${target.vessel_type || 'Unknown'}</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">MMSI: ${target.mmsi}</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">航速：${target.speed?.toFixed(1) || '--'} kn</div>
+                                        <div style="font-size: 11px; color: oklch(0.55 0.005 110);">航向：${target.course?.toFixed(0) || '--'}°</div>
                                     </div>
                                 `))
                                 .addTo(map);
@@ -617,8 +685,8 @@
                     ownShipEl.style.cssText = `
                         width: 20px;
                         height: 20px;
-                        background: #4fc3f7;
-                        border: 3px solid #fff;
+                        background: oklch(0.52 0.04 160);
+                        border: 3px solid oklch(0.96 0.003 110);
                         border-radius: 50%;
                         box-shadow: 0 0 20px rgba(79,195,247,0.8);
                     `;
@@ -627,10 +695,10 @@
                         .setLngLat([109.50, 18.25])
                         .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`
                             <div style="padding: 8px;">
-                                <div style="font-weight: 600; color: #4fc3f7;">🚢 本船</div>
-                                <div style="font-size: 11px; color: #a0aec0;">位置：18.25°N, 109.50°E</div>
-                                <div style="font-size: 11px; color: #a0aec0;">航向：045°</div>
-                                <div style="font-size: 11px; color: #a0aec0;">航速：12.5 kn</div>
+                                <div style="font-weight: 600; color: oklch(0.52 0.04 160);"><span class="seal">舶</span> 本船</div>
+                                <div style="font-size: 11px; color: oklch(0.55 0.005 110);">位置：18.25°N, 109.50°E</div>
+                                <div style="font-size: 11px; color: oklch(0.55 0.005 110);">航向：045°</div>
+                                <div style="font-size: 11px; color: oklch(0.55 0.005 110);">航速：12.5 kn</div>
                             </div>
                         `))
                         .addTo(map);
@@ -790,6 +858,20 @@
             return d.innerHTML;
         }
     </script>
+    <script>
+        // 摄像头点击高亮 (wabi-sabi 朱印边框)
+        document.addEventListener('DOMContentLoaded', function() {
+            var feeds = document.querySelectorAll('.camera-feed');
+            feeds.forEach(function(f) {
+                f.addEventListener('click', function() {
+                    feeds.forEach(function(x) { x.classList.remove('active'); });
+                    f.classList.add('active');
+                });
+            });
+            if (feeds.length > 0) feeds[0].classList.add('active');
+        });
+    </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="monitor"></script>
 </body>
 </html>

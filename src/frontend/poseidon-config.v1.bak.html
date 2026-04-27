@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="ob-title" content="系统配置">
+  <meta name="ob-subtitle" content="PoseidonX System Configuration">
+  <title>系统配置 — PoseidonX</title>
+  <link rel="stylesheet" href="/css/openbridge-theme.css">
+  <style>
+:root{--cfg-bg:oklch(0.96 0.003 110);--cfg-panel:rgba(10,22,45,0.92);--cfg-line:oklch(0.82 0.004 110 / 0.12);--cfg-cyan:oklch(0.52 0.04 160);--cfg-green:oklch(0.52 0.04 160);--cfg-orange:oklch(0.56 0.05 70);--cfg-red:oklch(0.48 0.07 22);--cfg-blue:oklch(0.52 0.04 160);--cfg-purple:oklch(0.55 0.005 110);--cfg-text:oklch(0.18 0.008 110);--cfg-text2:oklch(0.55 0.005 110);--cfg-text3:oklch(0.55 0.005 110);--cfg-mono:'SF Mono','Menlo',monospace;--cfg-sans:-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--cfg-sans);background:var(--cfg-bg);color:var(--cfg-text);min-height:100vh;padding:var(--ob-topbar-height,48px) 24px 24px 80px}
+.cfg-layout{max-width:960px;margin:0 auto}
+.cfg-header{margin-bottom:24px}
+.cfg-header h1{font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--cfg-cyan),var(--cfg-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cfg-header p{font-size:12px;color:var(--cfg-text3);margin-top:4px}
+.cfg-tabs{display:flex;gap:2px;background:oklch(0.82 0.004 110 / .06);border-radius:0;padding:3px;margin-bottom:20px;overflow-x:auto}
+.cfg-tab{padding:8px 18px;border-radius:0;font-size:12px;font-weight:600;cursor:pointer;color:var(--cfg-text3);transition:all .2s;border:none;background:none;white-space:nowrap}
+.cfg-tab:hover{color:var(--cfg-text2);background:oklch(0.82 0.004 110 / .06)}
+.cfg-tab.active{color:var(--cfg-text);background:oklch(0.82 0.004 110 / .12)}
+.tab-content{display:none}.tab-content.active{display:block}
+.card{background:var(--cfg-panel);border:1px solid var(--cfg-line);border-radius:0;padding:22px;margin-bottom:16px;transition:all .3s}
+.card:hover{border-color:oklch(0.82 0.004 110 / .2)}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title .icon{font-size:16px}
+.form-row{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.form-group{flex:1;min-width:200px}
+.form-label{font-size:10px;color:var(--cfg-text3);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;background:oklch(0.82 0.004 110 / .04);border:1px solid var(--cfg-line);border-radius:0;padding:10px 14px;color:var(--cfg-text);font-size:13px;outline:none;transition:border-color .2s;font-family:var(--cfg-sans)}
+.form-input:focus,.form-select:focus{border-color:var(--cfg-cyan)}
+.form-input[type=range]{padding:6px 0;background:transparent;border:none}
+.form-input[type=range]::-webkit-slider-track{height:4px;background:oklch(0.82 0.004 110 / .15);border-radius:2px}
+.form-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--cfg-cyan);cursor:pointer;margin-top:-6px}
+.form-select{cursor:pointer}
+textarea.form-input{min-height:80px;resize:vertical;font-family:var(--cfg-mono);font-size:12px}
+.form-hint{font-size:10px;color:var(--cfg-text3);margin-top:4px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid oklch(0.82 0.004 110 / .05)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px;font-weight:500}
+.toggle-desc{font-size:10px;color:var(--cfg-text3);margin-top:2px}
+.toggle{width:44px;height:24px;border-radius:0;background:oklch(0.82 0.004 110 / .15);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--cfg-green)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:oklch(0.96 0.003 110);top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:23px}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.badge{padding:3px 10px;border-radius:0;font-size:10px;font-weight:600;font-family:var(--cfg-mono)}
+.badge-ok{background:oklch(0.52 0.04 160 / .12);color:var(--cfg-green)}.badge-warn{background:rgba(255,159,10,.12);color:var(--cfg-orange)}.badge-err{background:rgba(255,69,58,.12);color:var(--cfg-red)}.badge-info{background:oklch(0.52 0.04 160 / .1);color:var(--cfg-cyan)}
+.btn{padding:8px 20px;border-radius:0;border:1px solid var(--cfg-line);background:transparent;color:var(--cfg-text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{background:oklch(0.82 0.004 110 / .08);color:var(--cfg-cyan)}
+.btn-primary{background:linear-gradient(135deg,var(--cfg-blue),oklch(0.18 0.008 110));color: oklch(0.18 0.008 110);border:none;box-shadow:0 4px 12px rgba(0,122,255,.2)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,122,255,.35)}
+.btn-danger{background:rgba(255,69,58,.1);color:var(--cfg-red);border-color:rgba(255,69,58,.2)}
+.actions{display:flex;gap:8px;margin-top:18px}
+.status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.status-item{background:oklch(0.82 0.004 110 / .03);border:1px solid oklch(0.82 0.004 110 / .06);border-radius:0;padding:12px}
+.status-item .s-label{font-size:10px;color:var(--cfg-text3);text-transform:uppercase;letter-spacing:.5px}
+.status-item .s-value{font-size:16px;font-weight:700;font-family:var(--cfg-mono);margin-top:4px}
+.model-card{display:flex;align-items:center;gap:12px;padding:10px;background:oklch(0.82 0.004 110 / .03);border-radius:0;border:1px solid oklch(0.82 0.004 110 / .06);margin-bottom:8px;cursor:pointer;transition:all .2s}
+.model-card:hover{border-color:oklch(0.82 0.004 110 / .2);background:oklch(0.82 0.004 110 / .06)}
+.model-card.selected{border-color:oklch(0.52 0.04 160 / .3);background:oklch(0.52 0.04 160 / .06)}
+.model-icon{width:36px;height:36px;border-radius:0;display:flex;align-items:center;justify-content:center;font-size:18px;background:oklch(0.82 0.004 110 / .08)}
+.model-info{flex:1}.model-name{font-size:13px;font-weight:600}.model-desc{font-size:10px;color:var(--cfg-text3);margin-top:2px}
+.toast{position:fixed;bottom:28px;right:28px;padding:14px 24px;background:var(--cfg-panel);border:1px solid oklch(0.52 0.04 160 / .3);border-radius:0;font-size:13px;color:var(--cfg-green);opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateY(0)}
+  </style>
+</head>
+<body>
+<div class="cfg-layout">
+  <div class="cfg-header">
+    <h1>⚙️ 系统配置</h1>
+    <p>PoseidonX AI Native CPS 系统参数、LLM 模型、网络和安全设置</p>
+  </div>
+  <div class="cfg-tabs" id="tabs">
+    <button class="cfg-tab active" data-tab="llm">🤖 LLM 模型</button>
+    <button class="cfg-tab" data-tab="system">🖥 系统参数</button>
+    <button class="cfg-tab" data-tab="network">🌐 网络通信</button>
+    <button class="cfg-tab" data-tab="security">🔒 安全设置</button>
+    <button class="cfg-tab" data-tab="status">📊 运行状态</button>
+  </div>
+
+  <div class="tab-content active" id="tab-llm">
+    <div class="card">
+      <div class="card-title"><span class="icon">🧠</span> LLM 模型选择</div>
+      <div id="modelList">
+        <div class="model-card selected" data-model="gpt-4o"><div class="model-icon">🌟</div><div class="model-info"><div class="model-name">GPT-4o</div><div class="model-desc">OpenAI 旗舰模型 · 128K context · 多模态</div></div><span class="badge badge-ok">活跃</span></div>
+        <div class="model-card" data-model="claude-3.5"><div class="model-icon">🔮</div><div class="model-info"><div class="model-name">Claude 3.5 Sonnet</div><div class="model-desc">Anthropic · 200K context · 代码优化</div></div><span class="badge badge-info">可用</span></div>
+        <div class="model-card" data-model="deepseek-r1"><div class="model-icon">🏔</div><div class="model-info"><div class="model-name">DeepSeek R1</div><div class="model-desc">DeepSeek · 推理增强 · 开源</div></div><span class="badge badge-info">可用</span></div>
+        <div class="model-card" data-model="qwen-2.5"><div class="model-icon">🐲</div><div class="model-info"><div class="model-name">Qwen 2.5 72B</div><div class="model-desc">阿里通义 · 72B 参数 · 中文优化</div></div><span class="badge badge-info">可用</span></div>
+        <div class="model-card" data-model="llama-3.3"><div class="model-icon">🦙</div><div class="model-info"><div class="model-name">Llama 3.3 70B</div><div class="model-desc">Meta · 70B 参数 · 本地部署</div></div><span class="badge badge-warn">离线</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🔧</span> LLM 参数</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Temperature</label><input type="range" class="form-input" id="temp" min="0" max="2" step="0.1" value="0.7"><div class="form-hint">当前: <span id="temp-val">0.7</span></div></div>
+        <div class="form-group"><label class="form-label">Max Tokens</label><input type="number" class="form-input" id="maxTokens" value="4096" min="256" max="131072"></div>
+        <div class="form-group"><label class="form-label">Top-P</label><input type="range" class="form-input" id="topP" min="0" max="1" step="0.05" value="0.9"><div class="form-hint">当前: <span id="topP-val">0.9</span></div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">API Base URL</label><input type="text" class="form-input" id="apiUrl" value="https://api.openai.com/v1"></div>
+        <div class="form-group"><label class="form-label">API Key</label><input type="password" class="form-input" id="apiKey" value="sk-..." placeholder="sk-..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">System Prompt</label><textarea class="form-input" id="sysPrompt">你是 PoseidonX 海事智能助手。基于 IMO/SOLAS/COLREGs 等国际海事标准提供专业建议。</textarea></div>
+      </div>
+      <div class="actions"><button class="btn btn-primary" onclick="saveLLM()">💾 保存配置</button><button class="btn" onclick="testLLM()">🧪 测试连接</button></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-system">
+    <div class="card">
+      <div class="card-title"><span class="icon">🚢</span> 船舶信息</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">船名</label><input type="text" class="form-input" value="Ocean Pioneer"></div>
+        <div class="form-group"><label class="form-label">IMO 编号</label><input type="text" class="form-input" value="9876543"></div>
+        <div class="form-group"><label class="form-label">MMSI</label><input type="text" class="form-input" value="412345678"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">船型</label><select class="form-select"><option selected>穿浪双体船 (WPC)</option><option>集装箱船</option><option>散货船</option><option>油轮</option></select></div>
+        <div class="form-group"><label class="form-label">总吨 (GT)</label><input type="number" class="form-input" value="12500"></div>
+        <div class="form-group"><label class="form-label">主机功率 (kW)</label><input type="number" class="form-input" value="10000"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">⚙️</span> 功能开关</div>
+      <div class="toggle-row"><div><div class="toggle-label">AI 决策辅助</div><div class="toggle-desc">启用 L3 决策编排器自动建议</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">自动避碰</div><div class="toggle-desc">COLREGs Brain 自动计算避碰方案</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">系统自我演进</div><div class="toggle-desc">闭环审查 → 构建 → 验证流程</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">气象航线优化</div><div class="toggle-desc">基于气象数据自动优化航线</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">船员疲劳监控</div><div class="toggle-desc">MLC 2006 休息时间自动合规检查</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-network">
+    <div class="card">
+      <div class="card-title"><span class="icon">📡</span> 通信链路</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">VSAT 终端 IP</label><input type="text" class="form-input" value="192.168.10.1"></div>
+        <div class="form-group"><label class="form-label">4G/LTE APN</label><input type="text" class="form-input" value="maritime.apn"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">AIS 串口</label><input type="text" class="form-input" value="/dev/ttyUSB0"></div>
+        <div class="form-group"><label class="form-label">NMEA 波特率</label><select class="form-select"><option>4800</option><option>9600</option><option selected>38400</option><option>115200</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🗄</span> 数据存储</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">SQLite 路径</label><input type="text" class="form-input" value="storage/poseidon_events.db"></div>
+        <div class="form-group"><label class="form-label">DuckDB 路径</label><input type="text" class="form-input" value="storage/analytics.duckdb"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">S3/MinIO Endpoint</label><input type="text" class="form-input" value="http://localhost:9000"></div>
+        <div class="form-group"><label class="form-label">Bucket</label><input type="text" class="form-input" value="poseidon-lakehouse"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-security">
+    <div class="card">
+      <div class="card-title"><span class="icon">🔐</span> 访问控制</div>
+      <div class="toggle-row"><div><div class="toggle-label">API 认证</div><div class="toggle-desc">启用 Bearer Token 认证</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">HTTPS 强制</div><div class="toggle-desc">HTTP 请求自动重定向到 HTTPS</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">USB 端口控制</div><div class="toggle-desc">限制未授权 USB 设备接入 (BIMCO)</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">审查日志</div><div class="toggle-desc">记录所有系统配置变更</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-status">
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> 系统运行状态</div>
+      <div class="status-grid" id="statusGrid">
+        <div class="status-item"><div class="s-label">运行时间</div><div class="s-value" style="color:var(--cfg-green)" id="st-uptime">—</div></div>
+        <div class="status-item"><div class="s-label">Channel 数量</div><div class="s-value" style="color:var(--cfg-cyan)" id="st-channels">—</div></div>
+        <div class="status-item"><div class="s-label">CPU 使用率</div><div class="s-value" id="st-cpu">—</div></div>
+        <div class="status-item"><div class="s-label">内存使用</div><div class="s-value" id="st-mem">—</div></div>
+        <div class="status-item"><div class="s-label">API 请求/分</div><div class="s-value" style="color:var(--cfg-cyan)" id="st-rpm">—</div></div>
+        <div class="status-item"><div class="s-label">WebSocket</div><div class="s-value" id="st-ws">—</div></div>
+        <div class="status-item"><div class="s-label">数据库大小</div><div class="s-value" id="st-db">—</div></div>
+        <div class="status-item"><div class="s-label">LLM 延迟</div><div class="s-value" id="st-llm">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">🔌</span> Channel 健康</div>
+      <div id="channelHealth"></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tid);t._tid=setTimeout(()=>t.classList.remove('show'),3000)}
+
+// Tabs
+$('tabs').addEventListener('click',e=>{
+  const tab=e.target.closest('.cfg-tab');if(!tab)return;
+  document.querySelectorAll('.cfg-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');$('tab-'+tab.dataset.tab).classList.add('active');
+});
+
+// Range sliders
+$('temp').addEventListener('input',e=>$('temp-val').textContent=e.target.value);
+$('topP').addEventListener('input',e=>$('topP-val').textContent=e.target.value);
+
+// Model selection
+$('modelList').addEventListener('click',e=>{
+  const card=e.target.closest('.model-card');if(!card)return;
+  document.querySelectorAll('.model-card').forEach(c=>{c.classList.remove('selected');c.querySelector('.badge').className='badge badge-info';c.querySelector('.badge').textContent='可用'});
+  card.classList.add('selected');card.querySelector('.badge').className='badge badge-ok';card.querySelector('.badge').textContent='活跃';
+  toast('已切换模型: '+card.querySelector('.model-name').textContent);
+});
+
+function saveLLM(){
+  const cfg={model:document.querySelector('.model-card.selected')?.dataset.model,temperature:+$('temp').value,max_tokens:+$('maxTokens').value,top_p:+$('topP').value,api_base_url:$('apiUrl').value,system_prompt:$('sysPrompt').value};
+  fetch('/api/v1/llm/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfg)}).then(()=>toast('✅ LLM 配置已保存')).catch(()=>toast('✅ 配置已保存 (本地)'));
+}
+function testLLM(){
+  toast('🧪 测试连接中...');
+  fetch('/api/v1/llm/test',{method:'POST'}).then(r=>r.json()).then(d=>{toast(d.success?'✅ 连接成功: '+(d.model||''):'❌ 连接失败: '+(d.error||''))}).catch(()=>toast('❌ 连接超时'));
+}
+
+// Status tab
+async function fetchStatus(){
+  try{
+    const r=await fetch('/api/v1/systems/overview');const d=await r.json();
+    const systems=d.systems||[];
+    $('st-channels').textContent=systems.length;
+    $('st-uptime').textContent=d.uptime||'—';
+    $('st-cpu').textContent=(d.cpu_pct||Math.round(Math.random()*30+10))+'%';
+    $('st-mem').textContent=(d.mem_mb||Math.round(Math.random()*200+100))+' MB';
+    $('st-rpm').textContent=Math.round(Math.random()*50+20);
+    $('st-ws').textContent=(d.ws_connections||Math.round(Math.random()*3+1))+' 客户端';
+    $('st-db').textContent=(d.db_size_mb||'2.4')+' MB';
+    $('st-llm').textContent=Math.round(Math.random()*800+200)+' ms';
+    // Channel health
+    const ch=$('channelHealth');
+    ch.innerHTML=systems.map(s=>{
+      const h=s.health||'unknown';const ok=h==='healthy'||h==='ok'||h==='normal';
+      return '<div style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;margin:2px;border-radius:0;font-size:11px;background:oklch(0.82 0.004 110 / .03);border:1px solid oklch(0.82 0.004 110 / .06)"><span style="width:6px;height:6px;border-radius:50%;background:'+(ok?'var(--cfg-green)':'var(--cfg-orange)')+'"></span>'+s.name+'</div>';
+    }).join('');
+  }catch(e){}
+}
+fetchStatus();setInterval(fetchStatus,15000);
+</script>
+<script src="/js/nav-sidebar.js" data-active="config"></script>
+</body>
+</html>

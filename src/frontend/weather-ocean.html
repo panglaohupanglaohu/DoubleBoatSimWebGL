@@ -1,77 +1,81 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-obc-theme="dusk">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="ob-title" content="气象海洋">
-<meta name="ob-subtitle" content="Weather & Ocean Intelligence">
 <title>气象海洋 — PoseidonX</title>
-<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--wo-glass:rgba(24,28,36,.72);--wo-border:rgba(255,255,255,.08);--wo-sky:#38bdf8;--wo-wave:#06b6d4;--wo-wind:#a78bfa;--wo-warm:#f97316;--wo-ok:#4ade80;--wo-warn:#fbbf24;--wo-alarm:#f87171;}
+:root{
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.006 110);
+  --hai:oklch(0.78 0.006 110);--nezumi:oklch(0.68 0.005 110);--sumi:oklch(0.18 0.008 110);
+  --koke:oklch(0.42 0.05 160);--shu:oklch(0.48 0.12 28);--kitsune:oklch(0.56 0.08 65);
+  --washi-dot:oklch(0.88 0.004 110);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow:hidden}
-.wo-grid{display:grid;grid-template-columns:1fr 1fr 320px;grid-template-rows:1fr 1fr;gap:14px;height:calc(100vh - 80px)}
-.glass{background:var(--wo-glass);backdrop-filter:blur(18px);border:1px solid var(--wo-border);border-radius:16px;padding:16px;overflow:hidden}
-.glass h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
-.glass h5 .dot{width:3px;height:12px;border-radius:2px}
-/* Wind Rose Panel */
+body{font-family:var(--font-sans);background:var(--shironeri);color:var(--sumi);min-height:100vh;padding:48px 16px 16px 80px;overflow:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(circle at 20% 30%,var(--washi-dot) 0.5px,transparent 0.5px),
+  radial-gradient(circle at 60% 70%,var(--washi-dot) 0.3px,transparent 0.3px),
+  radial-gradient(circle at 80% 20%,var(--washi-dot) 0.4px,transparent 0.4px);
+  background-size:60px 60px,45px 45px,55px 55px;opacity:.4}
+.wo-grid{display:grid;grid-template-columns:1fr 1fr 320px;grid-template-rows:1fr 1fr;gap:14px;height:calc(100vh - 80px);position:relative;z-index:1}
+.glass{background:var(--shironeri);border:1px solid var(--kabe);padding:16px;overflow:hidden;box-shadow:2px 2px 0 var(--ishi)}
+.glass h5{margin:0 0 12px;font-family:var(--font-serif);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.seal{font-family:var(--font-serif);font-size:13px;color:var(--shu);border:1.5px solid var(--shu);width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;transform:rotate(-2deg);flex-shrink:0}
+/* Wind Rose */
 .wind-panel{grid-row:1/2}
-.wind-panel h5 .dot{background:var(--wo-wind)}
 .wind-canvas-wrap{position:relative;height:calc(100% - 36px)}
 .wind-canvas-wrap canvas{width:100%;height:100%}
 .wind-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
-.wind-center .spd{font-size:32px;font-weight:800;color:var(--wo-wind);font-variant-numeric:tabular-nums}
-.wind-center .unit{font-size:11px;color:var(--ob-text-tertiary)}
-/* Wave Spectrum */
+.wind-center .spd{font-size:32px;font-weight:800;font-family:var(--font-mono);color:var(--sumi)}
+.wind-center .unit{font-family:var(--font-mono);font-size:11px;color:var(--nezumi)}
+/* Wave */
 .wave-panel{grid-row:1/2}
-.wave-panel h5 .dot{background:var(--wo-wave)}
 .wave-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.wave-stat{text-align:center;padding:10px;background:rgba(0,0,0,.15);border-radius:10px;border:1px solid var(--wo-border)}
-.wave-stat .v{font-size:20px;font-weight:700}
-.wave-stat .l{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
+.wave-stat{text-align:center;padding:10px;background:var(--ishi);border:1px solid var(--kabe)}
+.wave-stat .v{font-size:20px;font-weight:700;font-family:var(--font-mono)}
+.wave-stat .l{font-family:var(--font-mono);font-size:10px;color:var(--nezumi);margin-top:2px}
 .wave-chart{height:calc(100% - 110px);position:relative}
 .wave-chart canvas{width:100%;height:100%}
 /* Right sidebar */
 .right-stack{grid-row:1/3;display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-right:4px}
-/* Forecast Timeline */
+/* Forecast */
 .forecast-panel{grid-column:1/3;grid-row:2/3}
-.forecast-panel h5 .dot{background:var(--wo-sky)}
 .fc-timeline{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;height:calc(100% - 36px)}
-.fc-hour{flex:0 0 90px;background:rgba(0,0,0,.15);border:1px solid var(--wo-border);border-radius:12px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .2s}
-.fc-hour:hover{border-color:var(--wo-sky)}
-.fc-hour .time{font-size:11px;font-weight:600;color:var(--wo-sky)}
-.fc-hour .icon{font-size:22px}
-.fc-hour .temp{font-size:16px;font-weight:700}
-.fc-hour .detail{font-size:10px;color:var(--ob-text-tertiary)}
+.fc-hour{flex:0 0 90px;background:var(--ishi);border:1px solid var(--kabe);padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .2s}
+.fc-hour:hover{border-color:var(--hai)}
+.fc-hour .time{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--sumi)}
+.fc-hour .icon{font-family:var(--font-serif);font-size:18px;font-weight:900;color:var(--shu)}
+.fc-hour .temp{font-family:var(--font-mono);font-size:16px;font-weight:700}
+.fc-hour .detail{font-family:var(--font-mono);font-size:10px;color:var(--nezumi)}
 /* Small cards */
 .sm-card{padding:14px}
-.sm-card h5 .dot{background:var(--wo-warm)}
-.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--ishi);font-size:12px}
 .row:last-child{border-bottom:none}
-.row .lbl{color:var(--ob-text-tertiary)}
-.row .val{font-weight:600}
-.badge{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600}
-.badge-ok{background:rgba(74,222,128,.12);color:var(--wo-ok);border:1px solid rgba(74,222,128,.2)}
-.badge-warn{background:rgba(251,191,36,.12);color:var(--wo-warn);border:1px solid rgba(251,191,36,.2)}
-.badge-alarm{background:rgba(248,113,113,.12);color:var(--wo-alarm);border:1px solid rgba(248,113,113,.2)}
-/* Beaufort */
-.bf-bar{height:14px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.05);margin:8px 0}
-.bf-fill{height:100%;border-radius:7px;transition:width .5s}
-/* Swell direction indicator */
+.row .lbl{color:var(--nezumi)}
+.row .val{font-family:var(--font-mono);font-weight:600}
+.badge{display:inline-flex;padding:3px 10px;font-family:var(--font-mono);font-size:10px;font-weight:600}
+.badge-ok{background:oklch(0.42 0.05 160 / .1);color:var(--koke);border:1px solid oklch(0.42 0.05 160 / .2)}
+.badge-warn{background:oklch(0.56 0.08 65 / .1);color:var(--kitsune);border:1px solid oklch(0.56 0.08 65 / .2)}
+.badge-alarm{background:oklch(0.48 0.12 28 / .1);color:var(--shu);border:1px solid oklch(0.48 0.12 28 / .2)}
+.bf-bar{height:14px;overflow:hidden;background:var(--ishi);margin:8px 0}
+.bf-fill{height:100%;transition:width .5s}
 .swell-ind{display:flex;align-items:center;gap:12px;padding:10px 0}
-.swell-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--wo-wave);display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .5s}
-/* Tide */
+.swell-arrow{width:40px;height:40px;border:1px solid var(--kabe);display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .5s;color:var(--sumi)}
 .tide-canvas{width:100%;height:80px}
-.warning-bar{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.15);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;align-items:center;gap:8px}
-.warning-bar .icon{font-size:16px}
+.warning-bar{background:oklch(0.48 0.12 28 / .06);border:1px solid oklch(0.48 0.12 28 / .12);padding:10px 14px;font-size:12px;display:flex;align-items:center;gap:8px}
+.warning-bar .w-seal{font-family:var(--font-serif);font-size:14px;color:var(--shu);font-weight:900}
 </style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 <div class="wo-grid">
-<!-- ═══ Wind Rose ═══ -->
 <div class="glass wind-panel">
-    <h5><span class="dot"></span>风场 Wind Rose</h5>
+    <h5><span class="seal">風</span> 風场 Wind Rose</h5>
     <div class="wind-canvas-wrap">
         <canvas id="windRose"></canvas>
         <div class="wind-center">
@@ -80,66 +84,57 @@ body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var
         </div>
     </div>
 </div>
-<!-- ═══ Wave Spectrum ═══ -->
 <div class="glass wave-panel">
-    <h5><span class="dot"></span>海浪谱 Wave Spectrum</h5>
+    <h5><span class="seal">浪</span> 海浪譜 Wave Spectrum</h5>
     <div class="wave-stats">
-        <div class="wave-stat"><div class="v" id="wvHs" style="color:var(--wo-wave)">1.8</div><div class="l">Hs (m)</div></div>
-        <div class="wave-stat"><div class="v" id="wvTp" style="color:var(--wo-sky)">7.2</div><div class="l">Tp (s)</div></div>
-        <div class="wave-stat"><div class="v" id="wvDir" style="color:var(--wo-wind)">225°</div><div class="l">方向 SW</div></div>
+        <div class="wave-stat"><div class="v" id="wvHs" style="color:var(--sumi)">1.8</div><div class="l">Hs (m)</div></div>
+        <div class="wave-stat"><div class="v" id="wvTp" style="color:var(--sumi)">7.2</div><div class="l">Tp (s)</div></div>
+        <div class="wave-stat"><div class="v" id="wvDir" style="color:var(--sumi)">225°</div><div class="l">方向 SW</div></div>
     </div>
     <div class="wave-chart"><canvas id="waveChart"></canvas></div>
 </div>
-<!-- ═══ Right Sidebar ═══ -->
 <div class="right-stack">
-    <!-- Sea Condition Summary -->
     <div class="glass sm-card">
-        <h5><span class="dot"></span>海况综合</h5>
+        <h5><span class="seal">況</span> 海況綜合</h5>
         <div class="row"><span class="lbl">道格拉斯海况</span><span class="val" id="seaState">4 级 — 中浪</span></div>
         <div class="row"><span class="lbl">蒲福风级</span><span class="val" id="bfScale">BF 5</span></div>
-        <div class="bf-bar"><div class="bf-fill" id="bfBar" style="width:42%;background:linear-gradient(90deg,var(--wo-ok),var(--wo-warn))"></div></div>
+        <div class="bf-bar"><div class="bf-fill" id="bfBar" style="width:42%;background:linear-gradient(90deg,var(--koke),var(--kitsune))"></div></div>
         <div class="row"><span class="lbl">能见度</span><span class="val" id="vis">8.5 nm</span></div>
         <div class="row"><span class="lbl">气温 / 水温</span><span class="val" id="temps">22°C / 19°C</span></div>
         <div class="row"><span class="lbl">气压</span><span class="val" id="pressure">1013 hPa ↓</span></div>
         <div class="row"><span class="lbl">湿度</span><span class="val" id="humidity">78%</span></div>
     </div>
-    <!-- Current -->
     <div class="glass sm-card">
-        <h5><span class="dot" style="background:var(--wo-wave)"></span>洋流 & 涌浪</h5>
+        <h5><span class="seal">流</span> 洋流 & 涌浪</h5>
         <div class="row"><span class="lbl">表面流速</span><span class="val" id="curSpd">0.8 kn</span></div>
         <div class="row"><span class="lbl">流向</span><span class="val" id="curDir">045° NE</span></div>
         <div class="swell-ind">
             <div class="swell-arrow" id="swellArr" style="transform:rotate(225deg)">↑</div>
-            <div><div style="font-weight:600" id="swellH">1.2 m / 12s</div><div style="font-size:10px;color:var(--ob-text-tertiary)">SW 涌浪</div></div>
+            <div><div style="font-weight:600;font-family:var(--font-mono)" id="swellH">1.2 m / 12s</div><div style="font-size:10px;color:var(--nezumi)">SW 涌浪</div></div>
         </div>
         <div class="row"><span class="lbl">涌浪评估</span><span class="val"><span class="badge badge-ok" id="swellBadge">适航</span></span></div>
     </div>
-    <!-- Tide -->
     <div class="glass sm-card">
-        <h5><span class="dot" style="background:var(--wo-sky)"></span>潮汐 Tide</h5>
+        <h5><span class="seal">潮</span> 潮汐 Tide</h5>
         <canvas id="tideCurve" class="tide-canvas"></canvas>
         <div class="row"><span class="lbl">当前潮高</span><span class="val" id="tideH">2.4 m</span></div>
         <div class="row"><span class="lbl">下次高/低潮</span><span class="val" id="tideNext">高潮 14:32</span></div>
     </div>
-    <!-- Weather Alerts -->
     <div class="glass sm-card">
-        <h5><span class="dot" style="background:var(--wo-alarm)"></span>气象预警</h5>
-        <div class="warning-bar" id="wxAlert"><span class="icon">⚠️</span><span>大风蓝色预警 — NW 25kn 阵风预计 18:00</span></div>
+        <h5><span class="seal">警</span> 气象预警</h5>
+        <div class="warning-bar" id="wxAlert"><span class="w-seal">警</span><span>大风蓝色预警 — NW 25kn 阵风预计 18:00</span></div>
         <div class="row" style="margin-top:8px"><span class="lbl">天气窗口</span><span class="val"><span class="badge badge-ok" id="wxWindow">可作业 48h</span></span></div>
         <div class="row"><span class="lbl">航线天气评估</span><span class="val"><span class="badge badge-ok" id="routeWx">良好</span></span></div>
     </div>
 </div>
-<!-- ═══ Forecast Timeline ═══ -->
 <div class="glass forecast-panel">
-    <h5><span class="dot"></span>48h 预报 Forecast</h5>
+    <h5><span class="seal">预</span> 48h 预报 Forecast</h5>
     <div class="fc-timeline" id="fcTimeline"></div>
 </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  PoseidonX Weather & Ocean Intelligence
-// ═══════════════════════════════════════════════════
+const WS={shironeri:'oklch(0.96 0.003 110)',ishi:'oklch(0.91 0.004 110)',kabe:'oklch(0.85 0.006 110)',hai:'oklch(0.78 0.006 110)',nezumi:'oklch(0.68 0.005 110)',sumi:'oklch(0.18 0.008 110)',koke:'oklch(0.42 0.05 160)',shu:'oklch(0.48 0.12 28)',kitsune:'oklch(0.56 0.08 65)'};
 
 // ── Wind Rose ──
 (function(){
@@ -147,49 +142,34 @@ const cv=document.getElementById('windRose'),ctx=cv.getContext('2d');
 const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 let windData=dirs.map(()=>3+Math.random()*12);
 let mainDir=315, mainSpd=14.2;
-
 function resize(){cv.width=cv.parentElement.clientWidth;cv.height=cv.parentElement.clientHeight;}
 resize();window.addEventListener('resize',resize);
-
 function draw(){
     const W=cv.width,H=cv.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-40;
     ctx.clearRect(0,0,W,H);
-    // Concentric rings
-    for(let i=1;i<=4;i++){
-        const r=R*i/4;
-        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
-        ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;ctx.stroke();
-    }
-    // Direction labels
-    ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
-    dirs.forEach((d,i)=>{
-        const a=(i*22.5-90)*Math.PI/180;
-        ctx.fillText(d,cx+Math.cos(a)*(R+22),cy+Math.sin(a)*(R+22));
-    });
-    // Wind petals
+    for(let i=1;i<=4;i++){const r=R*i/4;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=WS.kabe;ctx.lineWidth=1;ctx.stroke();}
+    ctx.fillStyle=WS.hai;ctx.font='11px "Noto Sans SC",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    dirs.forEach((d,i)=>{const a=(i*22.5-90)*Math.PI/180;ctx.fillText(d,cx+Math.cos(a)*(R+22),cy+Math.sin(a)*(R+22));});
     const n=dirs.length,step=Math.PI*2/n;
     windData.forEach((v,i)=>{
         const a1=i*step-Math.PI/2-step/2, a2=a1+step;
         const r=R*(v/20);
         ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a1,a2);ctx.closePath();
-        const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-        g.addColorStop(0,'rgba(167,139,250,.02)');g.addColorStop(1,'rgba(167,139,250,.35)');
-        ctx.fillStyle=g;ctx.fill();
-        ctx.strokeStyle='rgba(167,139,250,.5)';ctx.lineWidth=1;ctx.stroke();
+        ctx.fillStyle='oklch(0.68 0.005 110 / .25)';ctx.fill();
+        ctx.strokeStyle='oklch(0.68 0.005 110 / .4)';ctx.lineWidth=1;ctx.stroke();
     });
-    // Main direction arrow
     const ma=(mainDir-90)*Math.PI/180, al=R*0.7;
     ctx.save();ctx.translate(cx,cy);ctx.rotate(ma);
     ctx.beginPath();ctx.moveTo(al,0);ctx.lineTo(al-14,-6);ctx.lineTo(al-14,6);ctx.closePath();
-    ctx.fillStyle='rgba(167,139,250,.9)';ctx.fill();
-    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(al-14,0);ctx.strokeStyle='rgba(167,139,250,.6)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=WS.sumi;ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(al-14,0);ctx.strokeStyle=WS.nezumi;ctx.lineWidth=2;ctx.stroke();
     ctx.restore();
 }
 draw();
 setInterval(()=>{windData=windData.map(v=>Math.max(1,v+(Math.random()-.5)*1.5));mainSpd=Math.max(5,mainSpd+(Math.random()-.5)*.4);document.getElementById('windSpd').textContent=mainSpd.toFixed(1);draw();},2000);
 })();
 
-// ── Wave Spectrum Chart ──
+// ── Wave Spectrum ──
 (function(){
 const cv=document.getElementById('waveChart'),ctx=cv.getContext('2d');
 let freqs=[];for(let f=0.03;f<0.5;f+=0.01)freqs.push(f);
@@ -197,30 +177,25 @@ function jonswap(f,fp,hs){const g=fp<f?0.07:0.09;const s=0.0081*9.81**2/((2*Math
 function resize(){cv.width=cv.parentElement.clientWidth;cv.height=cv.parentElement.clientHeight;}
 resize();window.addEventListener('resize',resize);
 let hs=1.8,tp=7.2;
-
 function draw(){
     const W=cv.width,H=cv.height;const fp=1/tp;
     ctx.clearRect(0,0,W,H);
     const vals=freqs.map(f=>jonswap(f,fp,hs));const maxV=Math.max(...vals);
-    // Grid lines
-    ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+    ctx.strokeStyle=WS.ishi;ctx.lineWidth=1;
     for(let i=0;i<5;i++){const y=H*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-    // Spectrum fill
     ctx.beginPath();ctx.moveTo(0,H);
-    vals.forEach((v,i)=>{const x=W*i/(vals.length-1),y=H-H*(v/maxV)*0.85;if(i===0)ctx.lineTo(x,y);else ctx.lineTo(x,y);});
+    vals.forEach((v,i)=>{const x=W*i/(vals.length-1),y=H-H*(v/maxV)*0.85;ctx.lineTo(x,y);});
     ctx.lineTo(W,H);ctx.closePath();
-    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(6,182,212,.4)');g.addColorStop(1,'rgba(6,182,212,.02)');
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'oklch(0.42 0.05 160 / .2)');g.addColorStop(1,'oklch(0.42 0.05 160 / .01)');
     ctx.fillStyle=g;ctx.fill();
-    // Spectrum line
     ctx.beginPath();
     vals.forEach((v,i)=>{const x=W*i/(vals.length-1),y=H-H*(v/maxV)*0.85;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-    ctx.strokeStyle='rgba(6,182,212,.8)';ctx.lineWidth=2;ctx.stroke();
-    // Peak marker
+    ctx.strokeStyle=WS.koke;ctx.lineWidth=2;ctx.stroke();
     const pi=vals.indexOf(maxV);const px=W*pi/(vals.length-1),py=H-H*0.85;
-    ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle='var(--wo-wave)';ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText('fp='+freqs[pi].toFixed(2)+' Hz',px,py-10);
-    // Axis labels
-    ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px system-ui';ctx.textAlign='left';ctx.fillText('f (Hz)',W-40,H-4);ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('S(f) m²/Hz',0,0);ctx.restore();
+    ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle=WS.koke;ctx.fill();
+    ctx.fillStyle=WS.nezumi;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillText('fp='+freqs[pi].toFixed(2)+' Hz',px,py-10);
+    ctx.fillStyle=WS.hai;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='left';ctx.fillText('f (Hz)',W-40,H-4);
+    ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('S(f) m²/Hz',0,0);ctx.restore();
 }
 draw();
 setInterval(()=>{hs=Math.max(0.5,hs+(Math.random()-.5)*0.15);tp=Math.max(4,tp+(Math.random()-.5)*0.3);document.getElementById('wvHs').textContent=hs.toFixed(1);document.getElementById('wvTp').textContent=tp.toFixed(1);draw();},3000);
@@ -231,11 +206,9 @@ setInterval(()=>{hs=Math.max(0.5,hs+(Math.random()-.5)*0.15);tp=Math.max(4,tp+(M
 const cv=document.getElementById('tideCurve'),ctx=cv.getContext('2d');
 function resize(){cv.width=cv.parentElement.clientWidth;cv.height=80;}
 resize();window.addEventListener('resize',resize);
-
 function draw(){
     const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
     const now=new Date(),hr=now.getHours()+now.getMinutes()/60;
-    // Draw 24h tide curve (simplified harmonic)
     ctx.beginPath();
     for(let x=0;x<W;x++){
         const t=(x/W)*24;
@@ -243,17 +216,14 @@ function draw(){
         const y=H-H*(h/5);
         x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     }
-    ctx.strokeStyle='rgba(56,189,248,.6)';ctx.lineWidth=2;ctx.stroke();
-    // Fill below
+    ctx.strokeStyle=WS.koke;ctx.lineWidth=2;ctx.stroke();
     ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
-    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(56,189,248,.15)');g.addColorStop(1,'rgba(56,189,248,.02)');
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'oklch(0.42 0.05 160 / .1)');g.addColorStop(1,'oklch(0.42 0.05 160 / .01)');
     ctx.fillStyle=g;ctx.fill();
-    // Now marker
     const nx=W*(hr/24);
-    ctx.beginPath();ctx.moveTo(nx,0);ctx.lineTo(nx,H);ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText('NOW',nx,10);
-    // Time labels
-    ctx.fillStyle='rgba(255,255,255,.2)';ctx.textAlign='center';
+    ctx.beginPath();ctx.moveTo(nx,0);ctx.lineTo(nx,H);ctx.strokeStyle=WS.hai;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=WS.nezumi;ctx.font='10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.fillText('NOW',nx,10);
+    ctx.fillStyle=WS.hai;ctx.textAlign='center';
     [0,6,12,18,24].forEach(h=>{ctx.fillText(String(h).padStart(2,'0')+':00',W*(h/24),H-2);});
 }
 draw();setInterval(draw,60000);
@@ -262,7 +232,7 @@ draw();setInterval(draw,60000);
 // ── Forecast Timeline ──
 (function(){
 const el=document.getElementById('fcTimeline');
-const icons=['☀️','⛅','🌤️','☁️','🌧️','⛈️','🌫️','❄️'];
+const seals=['晴','云','霧','陰','雨','雷','霧','雪'];
 const conditions=['晴朗','多云','少云','阴天','小雨','雷暴','雾','雪'];
 let html='';
 const now=new Date();
@@ -273,12 +243,11 @@ for(let i=0;i<24;i++){
     const t=Math.round(20+3*Math.sin(i/6)+Math.random()*2);
     const w=Math.round(10+8*Math.sin(i/8)+Math.random()*3);
     const hs=(1.2+0.8*Math.sin(i/5)+Math.random()*0.3).toFixed(1);
-    html+=`<div class="fc-hour"><div class="time">${String(hr).padStart(2,'0')}:00</div><div class="icon">${icons[ci]}</div><div class="temp">${t}°C</div><div class="detail">💨 ${w}kn</div><div class="detail">🌊 ${hs}m</div></div>`;
+    html+=`<div class="fc-hour"><div class="time">${String(hr).padStart(2,'0')}:00</div><div class="icon">${seals[ci]}</div><div class="temp">${t}°C</div><div class="detail">${w}kn</div><div class="detail">${hs}m</div></div>`;
 }
 el.innerHTML=html;
 })();
 
-// ── API Fetch ──
 function fetchWeather(){
     fetch('/api/v1/environment/wind-current').then(r=>r.json()).then(d=>{
         if(d.wind){document.getElementById('windSpd').textContent=(d.wind.speed_kn||14.2).toFixed(1);}
@@ -288,9 +257,9 @@ function fetchWeather(){
 }
 fetchWeather();setInterval(fetchWeather,15000);
 
-// ── WebSocket ──
 (function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=()=>setTimeout(cn,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(cn,5000);}}cn();})();
 </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="weather"></script>
 </body>
 </html>

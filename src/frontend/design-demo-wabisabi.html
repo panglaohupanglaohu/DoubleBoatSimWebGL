@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Demo F · 侘寂橡膠 · Wabi-Sabi Rubber</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   侘寂橡膠 · Wabi-Sabi Rubber
+   ─────────────────────────────────────────────────────────────
+   融合三条线索：
+   ● 硫化橡胶拟态 (Softimage|XSI) — 4层box-shadow按钮系统
+     按下反转=凸变凹、微粒纹理、0.08s弹回
+     在浅色石面上呈现 — 像混凝土台面上的工业垫圈
+   ● 东方极简 (Kenya Hara) — 80%+留白、内容削减到无法再削
+     白不是空洞，是容器；空间不是浪费，是呼吸
+   ● 侘寂 (千利休) — 枯淡之美、不完美的完美
+     利休鼠色阶、无金属光泽、墨+苔+朱泥三色自然材质
+   ─────────────────────────────────────────────────────────────
+   七则侘寂：
+   不均斉 (fukinsei) — 不对称
+   簡素 (kanso) — 简朴
+   枯高 (koko) — 枯淡
+   自然 (shizen) — 自然
+   幽玄 (yugen) — 幽深
+   脱俗 (datsuzoku) — 脱俗
+   静寂 (seijaku) — 静寂
+   ─────────────────────────────────────────────────────────────
+   反 AI slop 核查：
+   ✅ 无紫渐变 · ✅ 无 emoji · ✅ 无圆角+左border accent
+   ✅ oklch() 色彩 · ✅「」引号 · ✅ text-wrap: pretty
+   ✅ 无玻璃模糊 · ✅ 无霓虹 · ✅ 无 #0D1117 · ✅ 无金属色
+   ✅ 签名120%：浅底橡胶按钮系统（工业垫圈触感）
+   ═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root {
+  /* ── 石灰色阶 · 侘寂五白 ── */
+  --shironeri: oklch(0.96 0.003 110);  /* 白練 — 生絹の白 */
+  --ishi:      oklch(0.91 0.004 110);  /* 石 — 石灰岩 */
+  --kabe:      oklch(0.85 0.005 110);  /* 壁 — 漆喰壁 */
+  --hai:       oklch(0.78 0.005 110);  /* 灰 — 利休鼠の中間 */
+  --nezumi:    oklch(0.68 0.006 110);  /* 鼠 — 利休鼠 */
+
+  /* ── 橡膠材質 ── */
+  --rubber:       oklch(0.72 0.006 110);
+  --rubber-hover: oklch(0.68 0.007 110);
+  --rubber-press: oklch(0.64 0.007 110);
+
+  /* ── 墨（唯一的强色 — 充当过去金色的角色） ── */
+  --sumi:     oklch(0.18 0.008 110);  /* 墨 */
+  --sumi-2:   oklch(0.38 0.006 110);  /* 淡墨 */
+  --sumi-3:   oklch(0.55 0.005 110);  /* 薄墨 */
+
+  /* ── 状态色 · 自然材质（极低饱和） ── */
+  --koke:     oklch(0.52 0.04 160);   /* 苔色 — OK/正常 */
+  --shu:      oklch(0.48 0.07 22);    /* 朱泥 — 危险（退色的朱砂） */
+  --kitsune:  oklch(0.56 0.05 70);    /* 狐色 — 警告 */
+
+  /* ── 文字 ── */
+  --text:     oklch(0.18 0.008 110);  /* 墨色文字 */
+  --text-2:   oklch(0.42 0.006 110);
+  --text-3:   oklch(0.60 0.005 110);
+
+  /* ── 凹凸线 ── */
+  --groove:   oklch(0.82 0.004 110);
+  --ridge:    oklch(1.00 0 0 / 0.6);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--shironeri);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════════════════
+   和紙質感 — 微粒紋理模擬紙張纖維
+   不是噪波，是真的纖維散布
+   ════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(oklch(0 0 0 / 0.012) 1px, transparent 1px),
+    radial-gradient(oklch(0 0 0 / 0.008) 1px, transparent 1px);
+  background-size: 5px 5px, 7px 7px;
+  background-position: 0 0, 3px 3px;
+}
+
+.frame {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 56px;
+  position: relative; z-index: 1;
+}
+
+/* ════════════════════════════════════════════
+   签名系统 · 橡膠按鈕 (浅底版)
+   ─────────────────────────────────────────
+   同样4层shadow，但在浅色石面上：
+   - 外阴影向下（自然光从上方来）
+   - 内顶高光（白 — 像橡胶表面的反光）
+   - 内底暗（按钮底部的切线阴影）
+   - 微粒纹理保留（橡胶表面颗粒）
+   按下：全部反转 = 凸变凹
+   ════════════════════════════════════════════ */
+.rubber-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 7px 16px;
+  background: var(--rubber);
+  color: var(--sumi);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  border: none; cursor: pointer;
+  position: relative;
+  box-shadow:
+    0 2px 5px oklch(0 0 0 / 0.12),
+    0 1px 2px oklch(0 0 0 / 0.08),
+    inset 0 1px 0 oklch(1 0 0 / 0.35),
+    inset 0 -1px 0 oklch(0 0 0 / 0.08);
+  background-image:
+    radial-gradient(oklch(0 0 0 / 0.02) 1px, transparent 1px);
+  background-size: 3px 3px;
+  transition: all 0.08s ease-out;
+  user-select: none;
+}
+.rubber-btn:hover {
+  background-color: var(--rubber-hover);
+}
+.rubber-btn:active {
+  box-shadow:
+    inset 0 2px 5px oklch(0 0 0 / 0.15),
+    inset 0 1px 2px oklch(0 0 0 / 0.10),
+    0 0 0 oklch(0 0 0 / 0),
+    inset 0 -1px 0 oklch(1 0 0 / 0.15);
+  transform: translateY(1px);
+  background-color: var(--rubber-press);
+}
+.rubber-btn.active {
+  background-color: var(--sumi);
+  color: var(--shironeri);
+  box-shadow:
+    0 2px 5px oklch(0 0 0 / 0.15),
+    0 1px 2px oklch(0 0 0 / 0.10),
+    inset 0 1px 0 oklch(1 0 0 / 0.08),
+    inset 0 -1px 0 oklch(0 0 0 / 0.3);
+}
+.rubber-btn.active:active {
+  box-shadow:
+    inset 0 2px 5px oklch(0 0 0 / 0.4),
+    inset 0 1px 2px oklch(0 0 0 / 0.2);
+  transform: translateY(1px);
+}
+
+/* ════════════════════════════════════════════
+   嵌凹面板 — 像石面上的凹槽
+   ════════════════════════════════════════════ */
+.inset {
+  background: oklch(0.93 0.003 110);
+  box-shadow:
+    inset 0 1px 4px oklch(0 0 0 / 0.06),
+    inset 0 0 1px oklch(0 0 0 / 0.04),
+    0 1px 0 var(--ridge);
+}
+
+/* ════════════════════════════════════════════
+   頂欄 — 極簡橫線
+   ════════════════════════════════════════════ */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 32px 0 28px;
+  border-bottom: 1px solid var(--groove);
+}
+.brand {
+  display: flex; align-items: center; gap: 14px;
+}
+/* 方印 — 墨色、不是金色 */
+.sigil {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 18px; font-weight: 900;
+  color: var(--shironeri);
+  background: var(--sumi);
+  position: relative;
+}
+.wordmark {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; font-weight: 300;
+  letter-spacing: 3px; color: var(--text-3);
+}
+.wordmark strong { color: var(--text); font-weight: 600; }
+.status-line {
+  display: flex; align-items: center; gap: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-3); letter-spacing: 1px;
+}
+.live-mark {
+  width: 5px; height: 5px;
+  background: var(--koke);
+  display: inline-block; vertical-align: middle; margin-right: 5px;
+  animation: breath 3s ease-in-out infinite;
+}
+@keyframes breath {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ════════════════════════════════════════════
+   英雄区 — 枯淡
+   80%+ 留白。文字是墨迹，不是信息。
+   ════════════════════════════════════════════ */
+.hero {
+  padding: 100px 0 80px;
+  max-width: 800px;
+}
+.hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 200;
+  line-height: 1.25;
+}
+.hero-title .zh {
+  font-size: 44px;
+  letter-spacing: 10px;
+  color: var(--text);
+  display: block;
+}
+.hero-title .en {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 400;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--text-3);
+  margin-top: 24px;
+}
+.hero-sub {
+  margin-top: 40px;
+  max-width: 520px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px; font-weight: 300;
+  line-height: 2.2; color: var(--text-2);
+  text-wrap: pretty;
+}
+.divider {
+  height: 1px; border: none;
+  background: var(--groove);
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════
+   按钮演示行 — 让用户亲手感受
+   ════════════════════════════════════════════ */
+.btn-demo {
+  padding: 32px 0;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center;
+}
+.btn-demo-label {
+  width: 100%;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px; letter-spacing: 3px;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+
+/* ════════════════════════════════════════════
+   KPI — 凹嵌仪表窗
+   留白围绕，不挤满
+   ════════════════════════════════════════════ */
+.gauge-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  padding: 36px 0;
+}
+.gauge {
+  padding: 18px 12px;
+  text-align: center;
+  background: oklch(0.93 0.003 110);
+  box-shadow:
+    inset 0 1px 5px oklch(0 0 0 / 0.06),
+    inset 0 0 1px oklch(0 0 0 / 0.03),
+    0 1px 0 oklch(1 0 0 / 0.5);
+}
+.gauge-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.gauge-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px; font-weight: 600;
+  color: var(--sumi);
+  font-feature-settings: 'tnum';
+  line-height: 1;
+}
+.gauge-val .u {
+  font-size: 10px; font-weight: 400; color: var(--text-3); margin-left: 2px;
+}
+.gauge-delta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; margin-top: 8px;
+}
+.gauge-delta.ok { color: var(--koke); }
+.gauge-delta.bad { color: var(--shu); }
+.gauge-delta.nil { color: var(--text-3); }
+
+/* ════════════════════════════════════════════
+   3D 視口 — 石壁上的觀察窗
+   凹陷的混凝土色域，非黑洞
+   ════════════════════════════════════════════ */
+.viewport-wrap {
+  margin: 36px -56px;
+  padding: 8px;
+  background: var(--kabe);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.3),
+    0 1px 0 oklch(0 0 0 / 0.04);
+}
+.viewport {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  background: oklch(0.90 0.003 110);
+  box-shadow:
+    inset 0 2px 10px oklch(0 0 0 / 0.08),
+    inset 0 0 2px oklch(0 0 0 / 0.04);
+  position: relative; overflow: hidden;
+}
+/* 墨迹暈染 — 用极淡的径向渐变模拟墨在水中扩散 */
+.viewport .ink-bloom {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 30% 40% at 35% 45%, oklch(0.60 0.005 110 / 0.04), transparent),
+    radial-gradient(ellipse 25% 35% at 65% 55%, oklch(0.55 0.005 110 / 0.03), transparent);
+}
+/* 角标 — 薄墨 */
+.viewport .mark {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px;
+  color: var(--text-3);
+  opacity: 0.5;
+}
+.viewport .mark.tl { top: 16px; left: 20px; }
+.viewport .mark.tr { top: 16px; right: 20px; text-align: right; }
+.viewport .mark.bl { bottom: 16px; left: 20px; }
+.viewport .mark.br { bottom: 16px; right: 20px; text-align: right; line-height: 1.8; }
+/* 中心大字 — 極淡墨迹 */
+.viewport .center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.viewport .center .kanji {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 120px; font-weight: 900;
+  color: oklch(0.84 0.004 110);
+  line-height: 1;
+  user-select: none;
+}
+.viewport .center .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
+  color: var(--text-3); margin-top: 12px; opacity: 0.5;
+}
+/* 十字 — 細線 */
+.viewport .cross {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px; height: 60px;
+  pointer-events: none;
+}
+.viewport .cross::before, .viewport .cross::after {
+  content: '';
+  position: absolute;
+  background: oklch(0 0 0 / 0.06);
+}
+.viewport .cross::before {
+  top: 0; left: 50%; width: 1px; height: 100%;
+}
+.viewport .cross::after {
+  top: 50%; left: 0; width: 100%; height: 1px;
+}
+/* 图层按钮 */
+.layer-col {
+  position: absolute; left: 16px; top: 48px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.layer-col .rubber-btn {
+  padding: 4px 10px;
+  font-size: 9px;
+  min-width: 160px;
+  justify-content: space-between;
+  background: oklch(0.88 0.004 110);
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 0.08),
+    inset 0 1px 0 oklch(1 0 0 / 0.4),
+    inset 0 -1px 0 oklch(0 0 0 / 0.05);
+}
+.layer-col .rubber-btn.active {
+  background: var(--sumi);
+  color: var(--shironeri);
+}
+.layer-col .rubber-btn .pip {
+  display: inline-block; width: 5px; height: 5px;
+}
+
+/* ════════════════════════════════════════════
+   双栏 — 設備 + 異常
+   ════════════════════════════════════════════ */
+.twin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 36px 0;
+}
+.pane {
+  padding: 28px;
+  background: oklch(0.93 0.003 110);
+  box-shadow:
+    inset 0 1px 5px oklch(0 0 0 / 0.05),
+    0 1px 0 oklch(1 0 0 / 0.5);
+}
+.pane-head {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; font-weight: 400;
+  letter-spacing: 3px;
+  color: var(--sumi);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--groove);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.pane-head .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--text-3); letter-spacing: 1.5px;
+}
+
+/* 设备表 */
+.dt { width: 100%; border-collapse: collapse; }
+.dt th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-3);
+  text-align: left; padding: 5px 6px;
+  border-bottom: 1px solid var(--groove);
+}
+.dt td {
+  padding: 9px 6px;
+  font-size: 12px; color: var(--text);
+  border-bottom: 1px solid oklch(0.90 0.003 110);
+  font-feature-settings: 'tnum';
+}
+.dt tr { cursor: pointer; transition: background 0.1s; }
+.dt tr:hover td { background: oklch(0.96 0.003 110); }
+.dt .id {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600; color: var(--sumi); letter-spacing: 0.5px;
+}
+.dt .v {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+/* LED — 没有发光、没有box-shadow。侘寂的指示灯是安静的 */
+.led {
+  display: inline-block; width: 6px; height: 6px;
+}
+.led.ok { background: var(--koke); }
+.led.warn { background: var(--kitsune); }
+.led.crit { background: var(--shu); animation: crit-dim 2s ease-in-out infinite; }
+@keyframes crit-dim {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* 异常流 */
+.anom-list { display: flex; flex-direction: column; gap: 10px; }
+.anom {
+  padding: 14px 16px;
+  background: var(--shironeri);
+  cursor: pointer;
+  transition: background 0.12s;
+  position: relative;
+  /* 无 border-left accent — 用底部色带代替 */
+}
+.anom:hover { background: oklch(0.97 0.003 110); }
+/* 底部细线色带 — 侘寂的点到为止 */
+.anom::after {
+  content: '';
+  position: absolute; bottom: 0; left: 16px; right: 16px;
+  height: 1px;
+}
+.anom.critical::after { background: var(--shu); }
+.anom.high::after { background: var(--kitsune); }
+.anom.medium::after { background: var(--koke); }
+.anom-sev {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.anom.critical .anom-sev { color: var(--shu); }
+.anom.high .anom-sev { color: var(--kitsune); }
+.anom.medium .anom-sev { color: var(--koke); }
+.anom-desc { font-size: 12px; line-height: 1.7; color: var(--text); }
+.anom-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); margin-top: 4px;
+}
+
+/* ════════════════════════════════════════════
+   PUE 趨勢 — 枯山水式圖表
+   砂紋般的極淡波形
+   ════════════════════════════════════════════ */
+.chart-sec {
+  padding: 48px 0;
+}
+.chart-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 20px;
+}
+.chart-head h3 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; font-weight: 400; letter-spacing: 3px;
+}
+.chart-legend {
+  display: flex; gap: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); letter-spacing: 1px;
+}
+.leg-bar { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 4px; }
+.chart-well {
+  padding: 6px;
+  background: var(--kabe);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.3),
+    0 1px 0 oklch(0 0 0 / 0.03);
+}
+.chart-screen {
+  width: 100%; height: 180px;
+  background: oklch(0.93 0.003 110);
+  box-shadow: inset 0 1px 6px oklch(0 0 0 / 0.05);
+  position: relative; overflow: hidden;
+}
+/* 栅格 — 枯山水砂紋 */
+.chart-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(oklch(0 0 0 / 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0 0 0 / 0.02) 1px, transparent 1px);
+  background-size: 40px 36px;
+}
+/* 波形 — 苔色 */
+.chart-screen .wave {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 70%;
+  background: linear-gradient(0deg,
+    oklch(0.52 0.04 160 / 0.08) 0%,
+    oklch(0.52 0.04 160 / 0.02) 50%,
+    transparent 100%);
+  clip-path: polygon(
+    0% 78%, 4% 62%, 8% 68%, 12% 54%, 16% 58%,
+    20% 44%, 24% 48%, 28% 38%, 32% 42%, 36% 32%,
+    40% 38%, 44% 28%, 48% 34%, 52% 26%, 56% 30%,
+    60% 22%, 64% 28%, 68% 20%, 72% 26%, 76% 18%,
+    80% 24%, 84% 30%, 88% 26%, 92% 34%, 96% 28%, 100% 36%,
+    100% 100%, 0% 100%
+  );
+}
+/* 目标线 */
+.chart-screen .target-line {
+  position: absolute; top: 28%; left: 0; right: 0;
+  border-top: 1px dashed oklch(0 0 0 / 0.1);
+}
+.chart-screen .target-text {
+  position: absolute; top: 25.5%; right: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); opacity: 0.6; letter-spacing: 1px;
+}
+/* 预测区 */
+.chart-screen .forecast {
+  position: absolute; top: 0; bottom: 0; right: 0; width: 33%;
+  background: repeating-linear-gradient(
+    90deg,
+    oklch(0 0 0 / 0.015),
+    oklch(0 0 0 / 0.015) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+}
+
+/* ════════════════════════════════════════════
+   AI 洞察 — 墨跡書簡
+   ════════════════════════════════════════════ */
+.insight-sec {
+  padding: 48px 0;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.insight-stamp {
+  display: flex; flex-direction: column;
+  align-items: center; padding-top: 12px;
+}
+/* 方印 — 纯墨、无金 */
+.stamp {
+  width: 80px; height: 80px;
+  background: var(--sumi);
+  display: flex; align-items: center; justify-content: center;
+}
+.stamp .ch {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 40px; font-weight: 900;
+  color: var(--shironeri);
+}
+.stamp-label {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 10px; font-weight: 300;
+  letter-spacing: 4px; color: var(--text-3);
+  margin-top: 16px;
+}
+
+.insight-body { padding-top: 4px; }
+.insight-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--sumi);
+  background: oklch(0.93 0.003 110);
+  box-shadow:
+    inset 0 1px 3px oklch(0 0 0 / 0.05),
+    0 1px 0 oklch(1 0 0 / 0.4);
+  margin-bottom: 18px;
+}
+.insight-body p {
+  font-size: 14px; line-height: 2.2;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.insight-body p strong { color: var(--text); font-weight: 500; }
+.rec-list {
+  list-style: none; margin-top: 28px;
+}
+.rec-list li {
+  padding: 10px 0;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-2);
+  line-height: 1.7;
+  border-bottom: 1px solid oklch(0.90 0.003 110);
+  transition: color 0.1s;
+}
+.rec-list li:hover { color: var(--text); }
+.rec-list .rn {
+  font-family: 'Noto Serif SC', serif;
+  color: var(--sumi); font-weight: 600; margin-right: 10px;
+  font-size: 11px;
+}
+
+/* ════════════════════════════════════════════
+   能量流 — 石板上的管路
+   ════════════════════════════════════════════ */
+.flow-sec { padding: 36px 0; }
+.flow-row {
+  display: flex; align-items: center; gap: 0;
+  margin-top: 24px;
+}
+.flow-cell {
+  flex: 1;
+  padding: 6px;
+  background: var(--kabe);
+}
+.flow-cell-inner {
+  padding: 18px 10px;
+  background: oklch(0.93 0.003 110);
+  box-shadow: inset 0 1px 4px oklch(0 0 0 / 0.04);
+  text-align: center;
+}
+.flow-cell .fn { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-3); }
+.flow-cell .fv { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 600; color: var(--sumi); margin-top: 6px; font-feature-settings: 'tnum'; }
+.flow-cell .fu { font-size: 9px; color: var(--text-3); }
+.flow-cell.primary .fv { font-weight: 700; }
+.flow-pipe {
+  width: 16px; height: 1px;
+  background: var(--nezumi);
+  flex-shrink: 0;
+  position: relative;
+}
+.flow-pipe::after {
+  content: '';
+  position: absolute; right: -2px; top: -2px;
+  width: 5px; height: 5px;
+  border-right: 1px solid var(--nezumi);
+  border-top: 1px solid var(--nezumi);
+  transform: rotate(45deg);
+}
+
+/* ════════════════════════════════════════════
+   棘轮 — 四步
+   ════════════════════════════════════════════ */
+.ratchet-sec { padding: 36px 0; }
+.ratchet-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-top: 24px;
+}
+.ratchet-step {
+  padding: 24px 18px;
+  background: oklch(0.93 0.003 110);
+  box-shadow:
+    inset 0 1px 5px oklch(0 0 0 / 0.05),
+    0 1px 0 oklch(1 0 0 / 0.5);
+}
+.ratchet-step.active {
+  background: var(--sumi);
+  color: var(--shironeri);
+  box-shadow:
+    0 2px 8px oklch(0 0 0 / 0.12),
+    inset 0 1px 0 oklch(1 0 0 / 0.06);
+}
+.ratchet-step .sn {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 32px; font-weight: 200;
+  color: var(--text-3); line-height: 1;
+}
+.ratchet-step.active .sn { color: oklch(0.70 0.004 110); }
+.ratchet-step h4 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; font-weight: 500; letter-spacing: 2px;
+  margin-top: 10px;
+}
+.ratchet-step p {
+  font-size: 11px; margin-top: 4px; line-height: 1.7;
+  opacity: 0.6;
+}
+.ratchet-step.active h4 { color: var(--shironeri); }
+.ratchet-step.active p { color: oklch(0.70 0.004 110); opacity: 1; }
+
+/* ════════════════════════════════════════════
+   底欄
+   ════════════════════════════════════════════ */
+.foot {
+  padding: 48px 0 40px;
+  border-top: 1px solid var(--groove);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-3);
+}
+.foot .sig {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px; color: var(--sumi); letter-spacing: 3px;
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- ── 顶栏 ── -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="sigil">海</div>
+      <div class="wordmark"><strong>PoseidonX</strong> · 数据中心</div>
+    </div>
+    <div class="status-line">
+      <span><span class="live-mark"></span>LIVE</span>
+      <span>12:04:32</span>
+      <span>8×8</span>
+    </div>
+  </header>
+
+  <!-- ── 英雄区 · 80%留白 ── -->
+  <section class="hero">
+    <h1 class="hero-title">
+      <span class="zh">物理 ↔ 数字</span>
+      <span class="en">Wabi-Sabi Instruments · Tactile Digital Twin</span>
+    </h1>
+    <p class="hero-sub">
+      不完美之中的完美。六十四台机柜不是数据的容器，是呼吸的有机体。橡胶的触感让数字有了温度，石面的沉默让噪音有了秩序。
+    </p>
+  </section>
+  <hr class="divider"/>
+
+  <!-- ── 按钮触感演示 ── -->
+  <div class="btn-demo">
+    <div class="btn-demo-label">触觉 · 按下感受回弹</div>
+    <button class="rubber-btn active">机房总览</button>
+    <button class="rubber-btn">温度场</button>
+    <button class="rubber-btn">功耗分析</button>
+    <button class="rubber-btn">气流仿真</button>
+    <button class="rubber-btn">异常告警</button>
+    <button class="rubber-btn">AI 洞察</button>
+    <button class="rubber-btn">PUE 追踪</button>
+  </div>
+  <hr class="divider"/>
+
+  <!-- ── KPI ── -->
+  <section class="gauge-row">
+    <div class="gauge">
+      <div class="gauge-label">PUE</div>
+      <div class="gauge-val">1.18</div>
+      <div class="gauge-delta ok">↓ 0.03</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">IT Load</div>
+      <div class="gauge-val">847<span class="u">kW</span></div>
+      <div class="gauge-delta ok">↓ 2.1%</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Cooling</div>
+      <div class="gauge-val">142<span class="u">kW</span></div>
+      <div class="gauge-delta ok">↓ 5.8%</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Temp</div>
+      <div class="gauge-val">24.3<span class="u">°C</span></div>
+      <div class="gauge-delta nil">—</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Humidity</div>
+      <div class="gauge-val">48<span class="u">%</span></div>
+      <div class="gauge-delta nil">—</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Devices</div>
+      <div class="gauge-val">64</div>
+      <div class="gauge-delta nil">8×8</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Anomaly</div>
+      <div class="gauge-val" style="color:var(--shu)">3</div>
+      <div class="gauge-delta bad">1 严重</div>
+    </div>
+  </section>
+
+  <!-- ── 3D 視口 ── -->
+  <section class="viewport-wrap">
+    <div class="viewport">
+      <div class="ink-bloom"></div>
+      <div class="cross"></div>
+      <div class="center">
+        <div class="kanji">孪</div>
+        <div class="sub">Three.js · WebGL · Real-Time</div>
+      </div>
+      <div class="mark tl">数字孪生 · 自由轨道</div>
+      <div class="mark tr">THREE.JS v0.158</div>
+      <div class="mark bl">LIVE · 8s</div>
+      <div class="mark br">ROOM 80×50×12<br/>COLD / HOT AISLE</div>
+      <div class="layer-col">
+        <button class="rubber-btn active"><span><span class="pip" style="background:var(--sumi)"></span> 机柜 64</span><span>R</span></button>
+        <button class="rubber-btn"><span><span class="pip" style="background:var(--nezumi)"></span> 高架地板</span><span>F</span></button>
+        <button class="rubber-btn"><span><span class="pip" style="background:var(--koke)"></span> 液冷管路</span><span>P</span></button>
+        <button class="rubber-btn"><span><span class="pip" style="background:var(--nezumi)"></span> 母线槽</span><span>B</span></button>
+        <button class="rubber-btn"><span><span class="pip" style="background:var(--hai)"></span> 机房外壳</span><span>S</span></button>
+        <button class="rubber-btn"><span><span class="pip" style="background:var(--nezumi)"></span> 气流矢量</span><span>W</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 设备 + 异常 ── -->
+  <div class="twin">
+    <div class="pane">
+      <div class="pane-head">
+        <span>设备矩阵</span>
+        <span class="tag">64 RACK</span>
+      </div>
+      <table class="dt">
+        <thead><tr><th>编号</th><th>类型</th><th>功耗</th><th>温度</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="id">R1-01</td><td>GPU Server</td><td class="v">18.2 kW</td><td>67.3°C</td><td><span class="led crit"></span></td></tr>
+          <tr><td class="id">R1-02</td><td>GPU Server</td><td class="v">16.8 kW</td><td>52.1°C</td><td><span class="led ok"></span></td></tr>
+          <tr><td class="id">R2-01</td><td>Storage</td><td class="v">4.5 kW</td><td>38.7°C</td><td><span class="led ok"></span></td></tr>
+          <tr><td class="id">R2-02</td><td>Network</td><td class="v">2.1 kW</td><td>34.2°C</td><td><span class="led ok"></span></td></tr>
+          <tr><td class="id">R3-01</td><td>GPU Server</td><td class="v">17.4 kW</td><td>58.9°C</td><td><span class="led warn"></span></td></tr>
+          <tr><td class="id">R3-02</td><td>CPU Server</td><td class="v">8.6 kW</td><td>45.0°C</td><td><span class="led ok"></span></td></tr>
+          <tr><td class="id">R4-01</td><td>GPU Server</td><td class="v">19.1 kW</td><td>71.2°C</td><td><span class="led crit"></span></td></tr>
+          <tr><td class="id">R4-02</td><td>UPS</td><td class="v">1.2 kW</td><td>29.8°C</td><td><span class="led ok"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pane">
+      <div class="pane-head">
+        <span>异常指挥</span>
+        <span class="tag">ANOMALY</span>
+      </div>
+      <div class="anom-list">
+        <div class="anom critical">
+          <div class="anom-sev">严重 · CRITICAL</div>
+          <div class="anom-desc">R4-01 温度超限 71.2°C — 冷通道回风受阻，建议立即检查 CRAH-04 风机</div>
+          <div class="anom-meta">12:04:32 · z-score 3.8 · Row4</div>
+        </div>
+        <div class="anom high">
+          <div class="anom-sev">警告 · HIGH</div>
+          <div class="anom-desc">R1-01 功耗持续高位 18.2kW — GPU 利用率 98%，建议迁移部分负载</div>
+          <div class="anom-meta">12:01:15 · z-score 2.9</div>
+        </div>
+        <div class="anom medium">
+          <div class="anom-sev">提示 · MEDIUM</div>
+          <div class="anom-desc">PDU-B2 相位不平衡 — L1/L2 差异 8.3A，建议重新分配回路负载</div>
+          <div class="anom-meta">11:58:40 · z-score 2.1</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PUE 趋势 ── -->
+  <section class="chart-sec">
+    <div class="chart-head">
+      <h3>能效趋势 · 二十四小时</h3>
+      <div class="chart-legend">
+        <span><span class="leg-bar" style="background:var(--koke)"></span>实际</span>
+        <span><span class="leg-bar" style="background:var(--text-3)"></span>预测</span>
+        <span><span class="leg-bar" style="border-top:1px dashed var(--text-3);height:0"></span>目标</span>
+      </div>
+    </div>
+    <div class="chart-well">
+      <div class="chart-screen">
+        <div class="wave"></div>
+        <div class="forecast"></div>
+        <div class="target-line"></div>
+        <div class="target-text">PUE 1.20</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AI 洞察 ── -->
+  <section class="insight-sec">
+    <div class="insight-stamp">
+      <div class="stamp">
+        <div class="ch">智</div>
+      </div>
+      <div class="stamp-label">洞察</div>
+    </div>
+    <div class="insight-body">
+      <div class="insight-tag">Energy Optimization</div>
+      <p>
+        <strong>当前 PUE 为 1.18，处于优秀水平</strong>。主要能耗集中在第一排与第四排 GPU 集群，冷通道存在热岛效应。建议将 R4-01 负载迁移至低温区 R6，调高 CRAH-04 风速至 85%，启用液冷辅助回路。预计可将 PUE 降至 1.15，年节省约四十八万元。
+      </p>
+      <ul class="rec-list">
+        <li><span class="rn">壹</span>迁移 R4-01 至 R6-03（降温 12°C）</li>
+        <li><span class="rn">贰</span>CRAH-04 风速 65% → 85%</li>
+        <li><span class="rn">叁</span>启用液冷辅助回路（PUE ↓ 0.03）</li>
+        <li><span class="rn">肆</span>PDU-B2 回路再平衡（谐波 ↓ 2.1%）</li>
+        <li><span class="rn">伍</span>夜间关闭 UPS-02 旁路（↓ 1.8kW）</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ── 能量流 ── -->
+  <section class="flow-sec">
+    <div class="pane-head">
+      <span>能量流</span>
+      <span class="tag">GRID → IT → HEAT</span>
+    </div>
+    <div class="flow-row">
+      <div class="flow-cell"><div class="flow-cell-inner"><div class="fn">市电</div><div class="fv">998</div><div class="fu">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-cell"><div class="flow-cell-inner"><div class="fn">UPS</div><div class="fv">982</div><div class="fu">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-cell"><div class="flow-cell-inner"><div class="fn">PDU</div><div class="fv">968</div><div class="fu">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-cell primary"><div class="flow-cell-inner"><div class="fn">IT</div><div class="fv">847</div><div class="fu">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-cell"><div class="flow-cell-inner"><div class="fn">制冷</div><div class="fv">142</div><div class="fu">kW</div></div></div>
+    </div>
+  </section>
+
+  <hr class="divider"/>
+
+  <!-- ── 棘轮 ── -->
+  <section class="ratchet-sec">
+    <div class="pane-head">
+      <span>无限棘轮</span>
+      <span class="tag">RATCHET LOOP</span>
+    </div>
+    <div class="ratchet-grid">
+      <div class="ratchet-step active">
+        <div class="sn">壹</div>
+        <h4>感知</h4>
+        <p>IoT + 边缘 PLC 全维度遥测</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">贰</div>
+        <h4>解析</h4>
+        <p>四视角 AI 并行评估</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">叁</div>
+        <h4>执行</h4>
+        <p>边缘 Agent 调节阀门风机</p>
+      </div>
+      <div class="ratchet-step">
+        <div class="sn">肆</div>
+        <h4>锁定</h4>
+        <p>验证 → 锁定 → 永不回退</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 底栏 ── -->
+  <footer class="foot">
+    <span class="sig">PoseidonX</span>
+    <span>侘寂橡膠</span>
+    <span>DEMO F · WABI-SABI × SOFTIMAGE × KENYA HARA</span>
+  </footer>
+
+</div>
+
+<script>
+document.querySelectorAll('.btn-demo .rubber-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.btn-demo .rubber-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+document.querySelectorAll('.layer-col .rubber-btn').forEach(btn => {
+  btn.addEventListener('click', () => btn.classList.toggle('active'));
+});
+</script>
+
+</body>
+</html>

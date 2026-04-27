@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="ob-title" content="气象海洋">
+<meta name="ob-subtitle" content="Weather & Ocean Intelligence">
+<title>气象海洋 — PoseidonX</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+:root{--wo-glass:rgba(24,28,36,.72);--wo-border:oklch(1 0 0 / .08);--wo-sky:oklch(0.52 0.04 160);--wo-wave:oklch(0.52 0.04 160);--wo-wind:oklch(0.55 0.005 110);--wo-warm:oklch(0.56 0.05 70);--wo-ok:oklch(0.52 0.04 160);--wo-warn:oklch(0.56 0.05 70);--wo-alarm:oklch(0.48 0.07 22);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow:hidden}
+.wo-grid{display:grid;grid-template-columns:1fr 1fr 320px;grid-template-rows:1fr 1fr;gap:14px;height:calc(100vh - 80px)}
+.glass{background:var(--wo-glass);backdrop-filter:blur(18px);border:1px solid var(--wo-border);border-radius:0;padding:16px;overflow:hidden}
+.glass h5{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.glass h5 .dot{width:3px;height:12px;border-radius:2px}
+/* Wind Rose Panel */
+.wind-panel{grid-row:1/2}
+.wind-panel h5 .dot{background:var(--wo-wind)}
+.wind-canvas-wrap{position:relative;height:calc(100% - 36px)}
+.wind-canvas-wrap canvas{width:100%;height:100%}
+.wind-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.wind-center .spd{font-size:32px;font-weight:800;color:var(--wo-wind);font-variant-numeric:tabular-nums}
+.wind-center .unit{font-size:11px;color:var(--ob-text-tertiary)}
+/* Wave Spectrum */
+.wave-panel{grid-row:1/2}
+.wave-panel h5 .dot{background:var(--wo-wave)}
+.wave-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.wave-stat{text-align:center;padding:10px;background:rgba(0,0,0,.15);border-radius:0;border:1px solid var(--wo-border)}
+.wave-stat .v{font-size:20px;font-weight:700}
+.wave-stat .l{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
+.wave-chart{height:calc(100% - 110px);position:relative}
+.wave-chart canvas{width:100%;height:100%}
+/* Right sidebar */
+.right-stack{grid-row:1/3;display:flex;flex-direction:column;gap:12px;overflow-y:auto;padding-right:4px}
+/* Forecast Timeline */
+.forecast-panel{grid-column:1/3;grid-row:2/3}
+.forecast-panel h5 .dot{background:var(--wo-sky)}
+.fc-timeline{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;height:calc(100% - 36px)}
+.fc-hour{flex:0 0 90px;background:rgba(0,0,0,.15);border:1px solid var(--wo-border);border-radius:0;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .2s}
+.fc-hour:hover{border-color:var(--wo-sky)}
+.fc-hour .time{font-size:11px;font-weight:600;color:var(--wo-sky)}
+.fc-hour .icon{font-size:22px}
+.fc-hour .temp{font-size:16px;font-weight:700}
+.fc-hour .detail{font-size:10px;color:var(--ob-text-tertiary)}
+/* Small cards */
+.sm-card{padding:14px}
+.sm-card h5 .dot{background:var(--wo-warm)}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid oklch(1 0 0 / .04);font-size:12px}
+.row:last-child{border-bottom:none}
+.row .lbl{color:var(--ob-text-tertiary)}
+.row .val{font-weight:600}
+.badge{display:inline-flex;padding:3px 10px;border-radius:0;font-size:10px;font-weight:600}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--wo-ok);border:1px solid rgba(74,222,128,.2)}
+.badge-warn{background:oklch(0.56 0.05 70 / .12);color:var(--wo-warn);border:1px solid oklch(0.56 0.05 70 / .2)}
+.badge-alarm{background:oklch(0.48 0.07 22 / .12);color:var(--wo-alarm);border:1px solid oklch(0.48 0.07 22 / .2)}
+/* Beaufort */
+.bf-bar{height:14px;border-radius:7px;overflow:hidden;background:oklch(1 0 0 / .05);margin:8px 0}
+.bf-fill{height:100%;border-radius:7px;transition:width .5s}
+/* Swell direction indicator */
+.swell-ind{display:flex;align-items:center;gap:12px;padding:10px 0}
+.swell-arrow{width:40px;height:40px;border-radius:50%;border:1px solid var(--wo-wave);display:flex;align-items:center;justify-content:center;font-size:18px;transition:transform .5s}
+/* Tide */
+.tide-canvas{width:100%;height:80px}
+.warning-bar{background:oklch(0.48 0.07 22 / .08);border:1px solid oklch(0.48 0.07 22 / .15);border-radius:0;padding:10px 14px;font-size:12px;display:flex;align-items:center;gap:8px}
+.warning-bar .icon{font-size:16px}
+</style>
+</head>
+<body>
+<div class="wo-grid">
+<!-- ═══ Wind Rose ═══ -->
+<div class="glass wind-panel">
+    <h5><span class="dot"></span>风场 Wind Rose</h5>
+    <div class="wind-canvas-wrap">
+        <canvas id="windRose"></canvas>
+        <div class="wind-center">
+            <div class="spd" id="windSpd">14.2</div>
+            <div class="unit">kn / NW 315°</div>
+        </div>
+    </div>
+</div>
+<!-- ═══ Wave Spectrum ═══ -->
+<div class="glass wave-panel">
+    <h5><span class="dot"></span>海浪谱 Wave Spectrum</h5>
+    <div class="wave-stats">
+        <div class="wave-stat"><div class="v" id="wvHs" style="color:var(--wo-wave)">1.8</div><div class="l">Hs (m)</div></div>
+        <div class="wave-stat"><div class="v" id="wvTp" style="color:var(--wo-sky)">7.2</div><div class="l">Tp (s)</div></div>
+        <div class="wave-stat"><div class="v" id="wvDir" style="color:var(--wo-wind)">225°</div><div class="l">方向 SW</div></div>
+    </div>
+    <div class="wave-chart"><canvas id="waveChart"></canvas></div>
+</div>
+<!-- ═══ Right Sidebar ═══ -->
+<div class="right-stack">
+    <!-- Sea Condition Summary -->
+    <div class="glass sm-card">
+        <h5><span class="dot"></span>海况综合</h5>
+        <div class="row"><span class="lbl">道格拉斯海况</span><span class="val" id="seaState">4 级 — 中浪</span></div>
+        <div class="row"><span class="lbl">蒲福风级</span><span class="val" id="bfScale">BF 5</span></div>
+        <div class="bf-bar"><div class="bf-fill" id="bfBar" style="width:42%;background:linear-gradient(90deg,var(--wo-ok),var(--wo-warn))"></div></div>
+        <div class="row"><span class="lbl">能见度</span><span class="val" id="vis">8.5 nm</span></div>
+        <div class="row"><span class="lbl">气温 / 水温</span><span class="val" id="temps">22°C / 19°C</span></div>
+        <div class="row"><span class="lbl">气压</span><span class="val" id="pressure">1013 hPa ↓</span></div>
+        <div class="row"><span class="lbl">湿度</span><span class="val" id="humidity">78%</span></div>
+    </div>
+    <!-- Current -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--wo-wave)"></span>洋流 & 涌浪</h5>
+        <div class="row"><span class="lbl">表面流速</span><span class="val" id="curSpd">0.8 kn</span></div>
+        <div class="row"><span class="lbl">流向</span><span class="val" id="curDir">045° NE</span></div>
+        <div class="swell-ind">
+            <div class="swell-arrow" id="swellArr" style="transform:rotate(225deg)">↑</div>
+            <div><div style="font-weight:600" id="swellH">1.2 m / 12s</div><div style="font-size:10px;color:var(--ob-text-tertiary)">SW 涌浪</div></div>
+        </div>
+        <div class="row"><span class="lbl">涌浪评估</span><span class="val"><span class="badge badge-ok" id="swellBadge">适航</span></span></div>
+    </div>
+    <!-- Tide -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--wo-sky)"></span>潮汐 Tide</h5>
+        <canvas id="tideCurve" class="tide-canvas"></canvas>
+        <div class="row"><span class="lbl">当前潮高</span><span class="val" id="tideH">2.4 m</span></div>
+        <div class="row"><span class="lbl">下次高/低潮</span><span class="val" id="tideNext">高潮 14:32</span></div>
+    </div>
+    <!-- Weather Alerts -->
+    <div class="glass sm-card">
+        <h5><span class="dot" style="background:var(--wo-alarm)"></span>气象预警</h5>
+        <div class="warning-bar" id="wxAlert"><span class="icon">⚠️</span><span>大风蓝色预警 — NW 25kn 阵风预计 18:00</span></div>
+        <div class="row" style="margin-top:8px"><span class="lbl">天气窗口</span><span class="val"><span class="badge badge-ok" id="wxWindow">可作业 48h</span></span></div>
+        <div class="row"><span class="lbl">航线天气评估</span><span class="val"><span class="badge badge-ok" id="routeWx">良好</span></span></div>
+    </div>
+</div>
+<!-- ═══ Forecast Timeline ═══ -->
+<div class="glass forecast-panel">
+    <h5><span class="dot"></span>48h 预报 Forecast</h5>
+    <div class="fc-timeline" id="fcTimeline"></div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  PoseidonX Weather & Ocean Intelligence
+// ═══════════════════════════════════════════════════
+
+// ── Wind Rose ──
+(function(){
+const cv=document.getElementById('windRose'),ctx=cv.getContext('2d');
+const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+let windData=dirs.map(()=>3+Math.random()*12);
+let mainDir=315, mainSpd=14.2;
+
+function resize(){cv.width=cv.parentElement.clientWidth;cv.height=cv.parentElement.clientHeight;}
+resize();window.addEventListener('resize',resize);
+
+function draw(){
+    const W=cv.width,H=cv.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-40;
+    ctx.clearRect(0,0,W,H);
+    // Concentric rings
+    for(let i=1;i<=4;i++){
+        const r=R*i/4;
+        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.strokeStyle='oklch(1 0 0 / .06)';ctx.lineWidth=1;ctx.stroke();
+    }
+    // Direction labels
+    ctx.fillStyle='oklch(1 0 0 / .35)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    dirs.forEach((d,i)=>{
+        const a=(i*22.5-90)*Math.PI/180;
+        ctx.fillText(d,cx+Math.cos(a)*(R+22),cy+Math.sin(a)*(R+22));
+    });
+    // Wind petals
+    const n=dirs.length,step=Math.PI*2/n;
+    windData.forEach((v,i)=>{
+        const a1=i*step-Math.PI/2-step/2, a2=a1+step;
+        const r=R*(v/20);
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a1,a2);ctx.closePath();
+        const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+        g.addColorStop(0,'oklch(0.55 0.005 110 / .02)');g.addColorStop(1,'oklch(0.55 0.005 110 / .35)');
+        ctx.fillStyle=g;ctx.fill();
+        ctx.strokeStyle='oklch(0.55 0.005 110 / .5)';ctx.lineWidth=1;ctx.stroke();
+    });
+    // Main direction arrow
+    const ma=(mainDir-90)*Math.PI/180, al=R*0.7;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(ma);
+    ctx.beginPath();ctx.moveTo(al,0);ctx.lineTo(al-14,-6);ctx.lineTo(al-14,6);ctx.closePath();
+    ctx.fillStyle='oklch(0.55 0.005 110 / .9)';ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(al-14,0);ctx.strokeStyle='oklch(0.55 0.005 110 / .6)';ctx.lineWidth=2;ctx.stroke();
+    ctx.restore();
+}
+draw();
+setInterval(()=>{windData=windData.map(v=>Math.max(1,v+(Math.random()-.5)*1.5));mainSpd=Math.max(5,mainSpd+(Math.random()-.5)*.4);document.getElementById('windSpd').textContent=mainSpd.toFixed(1);draw();},2000);
+})();
+
+// ── Wave Spectrum Chart ──
+(function(){
+const cv=document.getElementById('waveChart'),ctx=cv.getContext('2d');
+let freqs=[];for(let f=0.03;f<0.5;f+=0.01)freqs.push(f);
+function jonswap(f,fp,hs){const g=fp<f?0.07:0.09;const s=0.0081*9.81**2/((2*Math.PI)**4*f**5)*Math.exp(-1.25*(fp/f)**4);const r=Math.exp(-((f-fp)**2)/(2*g**2*fp**2));return s*3.3**r*hs*4;}
+function resize(){cv.width=cv.parentElement.clientWidth;cv.height=cv.parentElement.clientHeight;}
+resize();window.addEventListener('resize',resize);
+let hs=1.8,tp=7.2;
+
+function draw(){
+    const W=cv.width,H=cv.height;const fp=1/tp;
+    ctx.clearRect(0,0,W,H);
+    const vals=freqs.map(f=>jonswap(f,fp,hs));const maxV=Math.max(...vals);
+    // Grid lines
+    ctx.strokeStyle='oklch(1 0 0 / .04)';ctx.lineWidth=1;
+    for(let i=0;i<5;i++){const y=H*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // Spectrum fill
+    ctx.beginPath();ctx.moveTo(0,H);
+    vals.forEach((v,i)=>{const x=W*i/(vals.length-1),y=H-H*(v/maxV)*0.85;if(i===0)ctx.lineTo(x,y);else ctx.lineTo(x,y);});
+    ctx.lineTo(W,H);ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(6,182,212,.4)');g.addColorStop(1,'rgba(6,182,212,.02)');
+    ctx.fillStyle=g;ctx.fill();
+    // Spectrum line
+    ctx.beginPath();
+    vals.forEach((v,i)=>{const x=W*i/(vals.length-1),y=H-H*(v/maxV)*0.85;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.strokeStyle='rgba(6,182,212,.8)';ctx.lineWidth=2;ctx.stroke();
+    // Peak marker
+    const pi=vals.indexOf(maxV);const px=W*pi/(vals.length-1),py=H-H*0.85;
+    ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle='var(--wo-wave)';ctx.fill();
+    ctx.fillStyle='oklch(1 0 0 / .5)';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText('fp='+freqs[pi].toFixed(2)+' Hz',px,py-10);
+    // Axis labels
+    ctx.fillStyle='oklch(1 0 0 / .3)';ctx.font='10px system-ui';ctx.textAlign='left';ctx.fillText('f (Hz)',W-40,H-4);ctx.save();ctx.translate(12,H/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('S(f) m²/Hz',0,0);ctx.restore();
+}
+draw();
+setInterval(()=>{hs=Math.max(0.5,hs+(Math.random()-.5)*0.15);tp=Math.max(4,tp+(Math.random()-.5)*0.3);document.getElementById('wvHs').textContent=hs.toFixed(1);document.getElementById('wvTp').textContent=tp.toFixed(1);draw();},3000);
+})();
+
+// ── Tide Curve ──
+(function(){
+const cv=document.getElementById('tideCurve'),ctx=cv.getContext('2d');
+function resize(){cv.width=cv.parentElement.clientWidth;cv.height=80;}
+resize();window.addEventListener('resize',resize);
+
+function draw(){
+    const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+    const now=new Date(),hr=now.getHours()+now.getMinutes()/60;
+    // Draw 24h tide curve (simplified harmonic)
+    ctx.beginPath();
+    for(let x=0;x<W;x++){
+        const t=(x/W)*24;
+        const h=2.0+1.5*Math.sin((t-2)*Math.PI/6.21)+0.3*Math.sin((t-1)*Math.PI/12.42);
+        const y=H-H*(h/5);
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle='oklch(0.52 0.04 160 / .6)';ctx.lineWidth=2;ctx.stroke();
+    // Fill below
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'oklch(0.52 0.04 160 / .15)');g.addColorStop(1,'oklch(0.52 0.04 160 / .02)');
+    ctx.fillStyle=g;ctx.fill();
+    // Now marker
+    const nx=W*(hr/24);
+    ctx.beginPath();ctx.moveTo(nx,0);ctx.lineTo(nx,H);ctx.strokeStyle='oklch(1 0 0 / .3)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='oklch(1 0 0 / .6)';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText('NOW',nx,10);
+    // Time labels
+    ctx.fillStyle='oklch(1 0 0 / .2)';ctx.textAlign='center';
+    [0,6,12,18,24].forEach(h=>{ctx.fillText(String(h).padStart(2,'0')+':00',W*(h/24),H-2);});
+}
+draw();setInterval(draw,60000);
+})();
+
+// ── Forecast Timeline ──
+(function(){
+const el=document.getElementById('fcTimeline');
+const icons=['☀️','⛅','🌤️','☁️','🌧️','⛈️','🌫️','❄️'];
+const conditions=['晴朗','多云','少云','阴天','小雨','雷暴','雾','雪'];
+let html='';
+const now=new Date();
+for(let i=0;i<24;i++){
+    const h=new Date(now.getTime()+i*3600000);
+    const hr=h.getHours();
+    const ci=i<6?0:i<10?1:i<14?2:i<18?3:i<20?1:0;
+    const t=Math.round(20+3*Math.sin(i/6)+Math.random()*2);
+    const w=Math.round(10+8*Math.sin(i/8)+Math.random()*3);
+    const hs=(1.2+0.8*Math.sin(i/5)+Math.random()*0.3).toFixed(1);
+    html+=`<div class="fc-hour"><div class="time">${String(hr).padStart(2,'0')}:00</div><div class="icon">${icons[ci]}</div><div class="temp">${t}°C</div><div class="detail">💨 ${w}kn</div><div class="detail">🌊 ${hs}m</div></div>`;
+}
+el.innerHTML=html;
+})();
+
+// ── API Fetch ──
+function fetchWeather(){
+    fetch('/api/v1/environment/wind-current').then(r=>r.json()).then(d=>{
+        if(d.wind){document.getElementById('windSpd').textContent=(d.wind.speed_kn||14.2).toFixed(1);}
+        if(d.current){document.getElementById('curSpd').textContent=(d.current.speed_kn||0.8)+' kn';document.getElementById('curDir').textContent=(d.current.direction_deg||45)+'° '+(d.current.direction_label||'NE');}
+        if(d.wave){document.getElementById('wvHs').textContent=(d.wave.height_m||1.8).toFixed(1);document.getElementById('wvDir').textContent=(d.wave.direction_deg||225)+'°';}
+    }).catch(()=>{});
+}
+fetchWeather();setInterval(fetchWeather,15000);
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws');ws.onclose=()=>setTimeout(cn,5000);ws.onerror=()=>ws.close();}catch(e){setTimeout(cn,5000);}}cn();})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="weather"></script>
+</body>
+</html>

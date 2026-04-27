@@ -781,6 +781,7 @@ def _sync_register_all_channels():
         register_deterministic_network,
         register_visual_presentation,
         register_marine_datacenter_energy,
+        register_aiot_mesh,
     )
     _registrars = [
         register_energy_efficiency_channel,
@@ -835,6 +836,7 @@ def _sync_register_all_channels():
         register_deterministic_network,
         register_visual_presentation,
         register_marine_datacenter_energy,
+        register_aiot_mesh,
     ]
     for reg_fn in _registrars:
         try:
@@ -1808,6 +1810,123 @@ async def dc_sensing_ratchet(payload: RatchetPayload):
     return _dc_channel().ratchet_lock_cooling(payload.note)
 
 
+# ───────── AIoT Mesh (BIOS + LoRA + MC-RFID + OOB 带外通信) ─────────
+
+def _mesh_channel():
+    from channels.marine_base import get_default_registry
+    ch = get_default_registry().get("aiot_mesh")
+    if not ch:
+        raise HTTPException(status_code=503, detail="aiot_mesh not registered")
+    return ch
+
+
+@app.get("/api/v1/aiot-mesh/status")
+async def mesh_status():
+    """AIoT Mesh 总状态 (计数 + 阈值)."""
+    return _mesh_channel().get_status()
+
+
+@app.get("/api/v1/aiot-mesh/overview")
+async def mesh_overview():
+    """Mesh 综合视图: 三大关联 + 节点/边图结构."""
+    return _mesh_channel().mesh_overview()
+
+
+@app.get("/api/v1/aiot-mesh/bios")
+async def mesh_bios():
+    ch = _mesh_channel()
+    return {"bios": [
+        {"device_id": b.device_id, "board_model": b.board_model,
+         "firmware_version": b.firmware_version, "post_ok": b.post_ok,
+         "boot_count": b.boot_count, "cpu_temp_c": b.cpu_temp_c,
+         "mem_ecc_errors": b.mem_ecc_errors, "watchdog_resets": b.watchdog_resets,
+         "asset_tag": b.asset_tag, "position": list(b.position)}
+        for b in ch.bios.values()
+    ]}
+
+
+@app.get("/api/v1/aiot-mesh/lora")
+async def mesh_lora():
+    ch = _mesh_channel()
+    return {"lora": [
+        {"sensor_id": s.sensor_id, "position": list(s.position),
+         "temperature_c": s.temperature_c, "humidity_pct": s.humidity_pct,
+         "gas_ppm": s.gas_ppm, "gas_species": s.gas_species, "zone": s.zone,
+         "rssi": s.rssi, "battery_pct": s.battery_pct}
+        for s in ch.lora.values()
+    ]}
+
+
+@app.get("/api/v1/aiot-mesh/rfid")
+async def mesh_rfid():
+    ch = _mesh_channel()
+    return {"rfid": [
+        {"tag_id": a.tag_id, "asset_id": a.asset_id, "asset_type": a.asset_type,
+         "model": a.model, "material": a.material, "service_years": a.service_years,
+         "zone": a.zone, "position": list(a.position),
+         "thresholds": {"temp": [a.temp_min_c, a.temp_max_c],
+                        "rh": [a.rh_min_pct, a.rh_max_pct],
+                        "gas_max_ppm": a.gas_max_ppm}}
+        for a in ch.rfid.values()
+    ]}
+
+
+@app.get("/api/v1/aiot-mesh/oob")
+async def mesh_oob():
+    ch = _mesh_channel()
+    return {"oob": [
+        {"cmd_id": c.cmd_id, "kind": c.kind, "priority": c.priority,
+         "payload": c.payload, "target_hint": c.target_hint,
+         "routed_channel": c.routed_channel, "ts": c.ts}
+        for c in ch.oob_queue
+    ]}
+
+
+@app.get("/api/v1/aiot-mesh/associations/rfid-lora")
+async def mesh_assoc_rfid_lora():
+    """关联 1: MC-RFID × LoRA — 资产-环境匹配 + 阈值判断 + 影响量化."""
+    return {"items": _mesh_channel().associate_rfid_lora()}
+
+
+@app.get("/api/v1/aiot-mesh/associations/rfid-oob")
+async def mesh_assoc_rfid_oob():
+    """关联 2: MC-RFID × 带外通信 — 指令锁定故障资产."""
+    return {"items": _mesh_channel().associate_rfid_oob()}
+
+
+@app.get("/api/v1/aiot-mesh/associations/lora-oob")
+async def mesh_assoc_lora_oob():
+    """关联 3: LoRA × 带外通信 — 异常检测→优先级调度→自动调控."""
+    return {"items": _mesh_channel().associate_lora_oob()}
+
+
+@app.get("/api/v1/aiot-mesh/rules")
+async def mesh_rules():
+    """Mesh 自学习的关联规则 (按置信度降序)."""
+    return {"rules": _mesh_channel().list_rules()}
+
+
+class MeshRuleReinforcePayload(BaseModel):
+    success: bool
+
+
+@app.post("/api/v1/aiot-mesh/rules/{rule_id}/reinforce")
+async def mesh_rule_reinforce(rule_id: str, payload: MeshRuleReinforcePayload):
+    return _mesh_channel().reinforce_rule(rule_id, payload.success)
+
+
+class MeshIngestPayload(BaseModel):
+    type: str
+    data: Dict[str, Any]
+
+
+@app.post("/api/v1/aiot-mesh/ingest")
+async def mesh_ingest(payload: MeshIngestPayload):
+    """统一事件接入 (type=bios|lora|rfid|oob)."""
+    event = {"type": payload.type, **(payload.data or {})}
+    return _mesh_channel().process_event(event)
+
+
 @app.get("/api/v1/datacenter/skills")
 async def dc_skills():
     """运维技能库 (Lobster-style sediment)."""
@@ -1903,6 +2022,24 @@ async def dc_events(limit: int = 50):
 async def dc_pue_history(limit: int = 240):
     """PUE 时间序列 (用于趋势图)."""
     return {"history": _dc_channel().get_pue_history(limit)}
+
+
+@app.get("/api/v1/datacenter/pue-statistics")
+async def dc_pue_statistics():
+    """PUE 统计: min/max/avg/std + 趋势方向 + 改善幅度."""
+    return _dc_channel().pue_statistics()
+
+
+@app.get("/api/v1/datacenter/efficiency-score")
+async def dc_efficiency_score():
+    """综合效率评分 0-100 (PUE/策略/遗产/传感器/技能)."""
+    return _dc_channel().efficiency_score()
+
+
+@app.get("/api/v1/datacenter/dashboard")
+async def dc_dashboard():
+    """一站式仪表盘汇总."""
+    return _dc_channel().dashboard_summary()
 
 
 @app.get("/api/v1/datacenter/sankey")

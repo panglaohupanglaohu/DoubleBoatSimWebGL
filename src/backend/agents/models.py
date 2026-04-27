@@ -149,7 +149,7 @@ class ModelConfig:
     model_id: str = ""
     provider: str = "anthropic"
     name: str = "claude-sonnet-4-20250514"
-    max_tokens: int = 8192
+    max_tokens: int = 65536
     temperature: float = 0.7
     is_default: bool = False
     enabled: bool = True

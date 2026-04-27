@@ -4,40 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PX-TCS — PoseidonX Thruster Control System</title>
-<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
    PX-TCS Industrial Variables
    ═══════════════════════════════════════ */
 :root {
-  --kb-blue: #003399;
-  --kb-cyan: #00E5FF;
-  --kb-amber: #FFB100;
-  --kb-red: #FF2D2D;
-  --kb-green: #00E676;
-  --kb-bg: #0A0F1E;
-  --kb-panel: #111827;
-  --kb-card: #1A2035;
-  --kb-border: #1E293B;
-  --kb-border-hi: #2D3A52;
-  --kb-text: #E2E8F0;
-  --kb-dim: #64748B;
-  --kb-muted: #475569;
-  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', 'Fira Code', 'Consolas', monospace;
-  --font-sans: 'Inter', -apple-system, sans-serif;
-  --radius: 6px;
-  --glow-cyan: 0 0 12px rgba(0,229,255,.25);
-  --glow-red: 0 0 16px rgba(255,45,45,.4);
+  /* Wabi-Sabi Rubber tokens */
+  --shironeri:oklch(0.96 0.003 110);--ishi:oklch(0.91 0.004 110);--kabe:oklch(0.85 0.005 110);
+  --hai:oklch(0.78 0.005 110);--nezumi:oklch(0.68 0.006 110);--sumi:oklch(0.18 0.008 110);
+  --sumi-2:oklch(0.38 0.006 110);--sumi-3:oklch(0.55 0.005 110);
+  --koke:oklch(0.52 0.04 160);--shu:oklch(0.48 0.07 22);--kitsune:oklch(0.56 0.05 70);
+  --groove:oklch(0.82 0.004 110);--ridge:oklch(1.00 0 0 / 0.6);
+  --font-serif:'Noto Serif SC',serif;--font-sans:'Noto Sans SC',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  /* Legacy aliases */
+  --kb-blue: var(--koke); --kb-cyan: var(--koke); --kb-amber: var(--kitsune);
+  --kb-red: var(--shu); --kb-green: var(--koke);
+  --kb-bg: var(--shironeri); --kb-panel: var(--ishi); --kb-card: var(--ishi);
+  --kb-border: var(--groove); --kb-border-hi: var(--hai);
+  --kb-text: var(--sumi); --kb-dim: var(--sumi-3); --kb-muted: var(--sumi-3);
+  --radius: 0; --glow-cyan: none; --glow-red: none;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: var(--kb-bg);
   color: var(--kb-text);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
   line-height: 1.5;
   overflow-x: hidden;
+  position: relative;
 }
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(oklch(0 0 0/.012) 1px,transparent 1px),radial-gradient(oklch(0 0 0/.008) 1px,transparent 1px);background-size:5px 5px,7px 7px;background-position:0 0,3px 3px}
+.seal{display:inline-block;font-size:10px;font-weight:900;color:var(--shironeri);background:var(--sumi);padding:1px 5px;line-height:1.3;font-family:var(--font-serif);vertical-align:middle;margin-right:4px}
 .ob-content { padding: 0 !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; background: var(--kb-bg) !important; }
 .ob-topbar { display: none !important; }
 a { color: var(--kb-cyan); text-decoration: none; }
@@ -46,7 +45,7 @@ a { color: var(--kb-cyan); text-decoration: none; }
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 20px;
-  background: linear-gradient(180deg, #0D1424 0%, var(--kb-bg) 100%);
+  background: var(--kb-bg);
   border-bottom: 1px solid var(--kb-border);
   position: sticky; top: 0; z-index: 100;
 }
@@ -59,8 +58,8 @@ a { color: var(--kb-cyan); text-decoration: none; }
 .mode-badge.active { border-color: var(--kb-cyan); color: var(--kb-cyan); box-shadow: var(--glow-cyan); }
 .estop-btn {
   width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--kb-red);
-  background: radial-gradient(circle, #8B0000 0%, #3D0000 100%);
-  color: #FF6B6B; font-size: 10px; font-weight: 900; cursor: pointer;
+  background: radial-gradient(circle, oklch(0.48 0.07 22) 0%, oklch(0.48 0.07 22) 100%);
+  color: oklch(0.48 0.07 22); font-size: 10px; font-weight: 900; cursor: pointer;
   box-shadow: inset 0 2px 4px rgba(0,0,0,.5), 0 0 0 3px rgba(255,45,45,.15);
   transition: all .15s; font-family: var(--font-mono); letter-spacing: 1px;
   display: flex; align-items: center; justify-content: center;
@@ -99,7 +98,7 @@ a { color: var(--kb-cyan); text-decoration: none; }
 
 /* ═══ Stat Boxes ═══ */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.stat-box { background: rgba(15,23,42,.6); border: 1px solid var(--kb-border); border-radius: 4px; padding: 8px 10px; }
+.stat-box { background: var(--kb-card); border: 1px solid var(--kb-border); border-radius: 0; padding: 8px 10px; }
 .stat-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: var(--kb-dim); }
 .stat-value { font-size: 18px; font-weight: 700; color: var(--kb-text); line-height: 1.2; }
 .stat-unit { font-size: 9px; color: var(--kb-muted); margin-left: 2px; }
@@ -117,8 +116,8 @@ a { color: var(--kb-cyan); text-decoration: none; }
 .load-bar-fill { position: absolute; bottom: 0; left: 0; right: 0; transition: height .6s ease, background .3s; border-radius: 0 0 3px 3px; }
 .load-bar-label { font-size: 8px; color: var(--kb-dim); text-transform: uppercase; letter-spacing: 1px; }
 .load-bar-value { font-size: 14px; font-weight: 700; }
-.load-bar-fill.normal { background: linear-gradient(0deg, #006644 0%, var(--kb-green) 100%); }
-.load-bar-fill.warning { background: linear-gradient(0deg, #8B5E00 0%, var(--kb-amber) 100%); }
+.load-bar-fill.normal { background: var(--koke); }
+.load-bar-fill.warning { background: var(--kitsune); }
 .load-bar-fill.overload { background: var(--kb-red); animation: flash-bar .5s infinite; }
 @keyframes flash-bar { 50% { opacity: .4; } }
 
@@ -129,10 +128,10 @@ a { color: var(--kb-cyan); text-decoration: none; }
   border: 1px solid var(--kb-border); border-radius: 4px; cursor: pointer;
   background: var(--kb-panel); color: var(--kb-dim); font-size: 11px;
   font-family: var(--font-mono); transition: all .2s;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 1px 2px rgba(0,0,0,.3);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / .03), 0 1px 2px rgba(0,0,0,.3);
 }
 .mode-btn:hover { border-color: var(--kb-border-hi); color: var(--kb-text); }
-.mode-btn.active { border-color: var(--kb-cyan); color: var(--kb-cyan); background: rgba(0,229,255,.05); box-shadow: var(--glow-cyan), inset 0 1px 0 rgba(0,229,255,.1); }
+.mode-btn.active { border-color: var(--kb-cyan); color: var(--kb-cyan); background: oklch(0.52 0.04 160 / 0.08); }
 .mode-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--kb-muted); transition: all .3s; }
 .mode-btn.active .mode-dot { background: var(--kb-cyan); box-shadow: 0 0 8px var(--kb-cyan); }
 
@@ -158,8 +157,8 @@ a { color: var(--kb-cyan); text-decoration: none; }
 
 /* ═══ Power Split Bar ═══ */
 .split-bar { height: 20px; border-radius: 4px; display: flex; overflow: hidden; border: 1px solid var(--kb-border); }
-.split-fore { background: var(--kb-cyan); transition: width .6s; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #000; }
-.split-aft { background: var(--kb-blue); flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; }
+.split-fore { background: var(--kb-cyan); transition: width .6s; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: oklch(0.18 0.008 110); }
+.split-aft { background: var(--kb-blue); flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: oklch(0.18 0.008 110); }
 
 /* ═══ Center — Thruster SVG ═══ */
 .thruster-viz { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 380px; }
@@ -276,7 +275,7 @@ a { color: var(--kb-cyan); text-decoration: none; }
 .chat-title-row .card-title { margin: 0; }
 .chat-model-tag { font-size: 9px; color: var(--kb-cyan); background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.25); border-radius: 3px; padding: 2px 7px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); }
 .chat-model-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--kb-muted); transition: background .3s, box-shadow .3s; }
-.chat-model-dot.active { background: #F59E0B; box-shadow: 0 0 8px rgba(245,158,11,.6); }
+.chat-model-dot.active { background: oklch(0.56 0.05 70); box-shadow: 0 0 8px rgba(245,158,11,.6); }
 .chat-model-dot.inactive { background: var(--kb-muted); }
 .chat-agent-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .chat-agent-select {
@@ -289,13 +288,13 @@ a { color: var(--kb-cyan); text-decoration: none; }
 .chat-agent-select:focus { border-color: var(--kb-cyan); }
 .chat-model-tag { font-size: 8px; color: var(--kb-dim); background: var(--kb-panel); border: 1px solid var(--kb-border); border-radius: 3px; padding: 1px 5px; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
 .chat-model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--kb-muted); }
-.chat-model-dot.active { background: #F59E0B; box-shadow: 0 0 6px rgba(245,158,11,.5); }
+.chat-model-dot.active { background: oklch(0.56 0.05 70); box-shadow: 0 0 6px rgba(245,158,11,.5); }
 .chat-model-dot.inactive { background: var(--kb-muted); }
 .chat-messages { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; flex: 1; padding-right: 2px; }
 .chat-messages::-webkit-scrollbar { width: 2px; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--kb-border-hi); }
 .chat-msg { padding: 6px 10px; border-radius: 4px; font-size: 11px; line-height: 1.5; border-left: 3px solid var(--kb-cyan); background: rgba(0,229,255,.04); }
-.chat-msg.user { border-left-color: #818CF8; background: rgba(129,140,248,.06); }
+.chat-msg.user { border-left-color: oklch(0.55 0.005 110); background: rgba(129,140,248,.06); }
 .chat-msg.warn { border-left-color: var(--kb-amber); background: rgba(255,177,0,.06); }
 .chat-msg.danger { border-left-color: var(--kb-red); background: rgba(255,45,45,.06); }
 .chat-msg .chat-time { font-size: 8px; color: var(--kb-muted); margin-top: 2px; }
@@ -306,7 +305,7 @@ a { color: var(--kb-cyan); text-decoration: none; }
 }
 .chat-input-row input:focus { border-color: var(--kb-cyan); }
 .chat-input-row button {
-  padding: 6px 12px; background: var(--kb-cyan); color: #0A0F1E; border: none; border-radius: 4px;
+  padding: 6px 12px; background: var(--kb-cyan); color: oklch(0.18 0.008 110); border: none; border-radius: 4px;
   font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--font-mono);
 }
 .chat-input-row button:active { transform: scale(.95); }
@@ -325,6 +324,8 @@ a { color: var(--kb-cyan); text-decoration: none; }
 .eng-status-dot.standby { background: var(--kb-muted); }
 .eng-status-dot.emergency_stop { background: var(--kb-red); }
 </style>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 
@@ -553,7 +554,7 @@ a { color: var(--kb-cyan); text-decoration: none; }
           <input type="number" id="newEngineRpmMax" value="250" placeholder="RPM Max" style="width:60px;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none">
           <input type="number" id="newEnginePwrMax" value="10000" placeholder="kW Max" style="width:70px;background:var(--kb-panel);border:1px solid var(--kb-border);border-radius:4px;padding:4px 6px;color:var(--kb-text);font-size:10px;font-family:var(--font-mono);outline:none">
         </div>
-        <button id="addEngineBtn" style="width:100%;padding:5px;background:var(--kb-cyan);color:#0A0F1E;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px">+ ADD ENGINE</button>
+        <button id="addEngineBtn" style="width:100%;padding:5px;background:var(--kb-cyan);color: oklch(0.18 0.008 110);border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font-mono);letter-spacing:1px">+ ADD ENGINE</button>
       </div>
     </div>
 
@@ -640,14 +641,14 @@ function drawEffChart() {
   // Efficiency line
   if (effHistory.eff.length > 1) {
     const step = w / (MAX_HIST - 1);
-    effCtx.beginPath(); effCtx.strokeStyle = '#00E676'; effCtx.lineWidth = 1.5;
+    effCtx.beginPath(); effCtx.strokeStyle = 'oklch(0.52 0.04 160)'; effCtx.lineWidth = 1.5;
     effHistory.eff.forEach((v, i) => {
       const x = i * step, y = h - ((v - 70) / 30) * h;
       i === 0 ? effCtx.moveTo(x, y) : effCtx.lineTo(x, y);
     });
     effCtx.stroke();
     // RPM line (scaled)
-    effCtx.beginPath(); effCtx.strokeStyle = '#00E5FF'; effCtx.lineWidth = 1; effCtx.setLineDash([3, 2]);
+    effCtx.beginPath(); effCtx.strokeStyle = 'oklch(0.52 0.04 160)'; effCtx.lineWidth = 1; effCtx.setLineDash([3, 2]);
     effHistory.rpm.forEach((v, i) => {
       const x = i * step, y = h - (v / 300) * h;
       i === 0 ? effCtx.moveTo(x, y) : effCtx.lineTo(x, y);
@@ -655,9 +656,9 @@ function drawEffChart() {
     effCtx.stroke(); effCtx.setLineDash([]);
   }
   // Labels
-  effCtx.fillStyle = '#00E676'; effCtx.font = '9px JetBrains Mono, monospace';
+  effCtx.fillStyle = 'oklch(0.52 0.04 160)'; effCtx.font = '9px JetBrains Mono, monospace';
   effCtx.fillText('Eff %', 4, 12);
-  effCtx.fillStyle = '#00E5FF'; effCtx.fillText('RPM', 4, 24);
+  effCtx.fillStyle = 'oklch(0.52 0.04 160)'; effCtx.fillText('RPM', 4, 24);
 }
 
 // ── Log ──
@@ -1088,6 +1089,7 @@ function sendChat() {
 $('chatSend').addEventListener('click', sendChat);
 $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
 </script>
+<script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="thruster"></script>
 </body>
 </html>

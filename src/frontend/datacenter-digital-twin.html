@@ -6,198 +6,331 @@
 <title>Digital Twin · 物理↔数字一一映射 · xFirst Principle</title>
 <link rel="stylesheet" href="/css/openbridge-theme.css">
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
   :root {
-    --bg-0:#04070d; --bg-1:#0a1220; --bg-2:#111e34;
-    --grid:rgba(56,189,248,0.10); --line:rgba(125,211,252,0.20);
-    --accent:#38bdf8; --accent-2:#06ffa5; --accent-3:#a78bfa;
-    --warn:#fbbf24; --danger:#f87171;
-    --text:#e2f2ff; --muted:#6b8cae;
-    --rack:#22c4ff; --pdu:#fbbf24; --ats:#f87171; --busway:#a78bfa;
-    --cold:#06ffa5; --hot:#ff5b6f; --pipe:#38bdf8; --floor:#5b7bb5;
+    /* ── 侘寂橡胶 · Wabi-Sabi Rubber ── */
+    --bg-0:oklch(0.96 0.003 110); --bg-1:oklch(0.91 0.004 110); --bg-2:oklch(0.85 0.005 110);
+    --grid:oklch(0 0 0 / 0.03); --line:oklch(0.82 0.004 110);
+    --accent:oklch(0.18 0.008 110); --accent-2:oklch(0.52 0.04 160); --accent-3:oklch(0.55 0.005 110);
+    --warn:oklch(0.56 0.05 70); --danger:oklch(0.48 0.07 22);
+    --text:oklch(0.18 0.008 110); --muted:oklch(0.55 0.005 110);
+    --rack:oklch(0.18 0.008 110); --pdu:oklch(0.56 0.05 70); --ats:oklch(0.48 0.07 22); --busway:oklch(0.55 0.005 110);
+    --cold:oklch(0.52 0.04 160); --hot:oklch(0.48 0.07 22); --pipe:oklch(0.52 0.04 160); --floor:oklch(0.72 0.006 110);
+    /* rubber button system */
+    --rubber:oklch(0.72 0.006 110); --rubber-hover:oklch(0.68 0.007 110); --rubber-press:oklch(0.64 0.007 110);
+    --sumi:oklch(0.18 0.008 110); --koke:oklch(0.52 0.04 160); --shu:oklch(0.48 0.07 22);
+    --kitsune:oklch(0.56 0.05 70); --shironeri:oklch(0.96 0.003 110);
+    --groove:oklch(0.82 0.004 110); --ridge:oklch(1.00 0 0 / 0.6);
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;height:100%;font-family:'SF Mono','Roboto Mono','Menlo',monospace;color:var(--text)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{margin:0;padding:0;height:100%;font-family:'Noto Sans SC','JetBrains Mono',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
   body{
-    background:
-      radial-gradient(ellipse at 20% 10%,rgba(56,189,248,0.10),transparent 50%),
-      radial-gradient(ellipse at 80% 80%,rgba(6,255,165,0.08),transparent 50%),
-      linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 60%,var(--bg-2) 100%);
-    background-attachment:fixed; overflow-x:hidden;
+    background:var(--bg-0);
+    overflow-x:hidden;
   }
+  /* 和紙质感 — 微粒紋理 */
   body::before{
     content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     background-image:
-      linear-gradient(var(--grid) 1px,transparent 1px),
-      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-    background-size:40px 40px;
-    mask-image:radial-gradient(ellipse at 50% 50%,black 0%,transparent 90%);
+      radial-gradient(oklch(0 0 0 / 0.012) 1px, transparent 1px),
+      radial-gradient(oklch(0 0 0 / 0.008) 1px, transparent 1px);
+    background-size:5px 5px, 7px 7px;
+    background-position:0 0, 3px 3px;
   }
-  .container{position:relative;z-index:1;max-width:1760px;margin:0 auto;padding:18px 24px}
+  .container{position:relative;z-index:1;max-width:100%;margin:0 auto;padding:18px 24px}
 
   .hud{display:flex;align-items:center;justify-content:space-between;
-    padding:14px 22px;border:1px solid var(--line);border-radius:14px;
-    background:linear-gradient(135deg,rgba(15,32,55,0.7),rgba(8,18,34,0.7));
-    backdrop-filter:blur(10px);
-    box-shadow:0 0 30px rgba(56,189,248,0.10),inset 0 0 30px rgba(6,255,165,0.04)}
+    padding:14px 0;border-bottom:1px solid var(--groove)}
   .hud .brand{display:flex;align-items:center;gap:14px}
-  .hud .logo{width:44px;height:44px;border-radius:12px;
-    background:conic-gradient(from 0deg,var(--accent),var(--accent-2),var(--accent-3),var(--accent));
-    box-shadow:0 0 16px var(--accent);
+  .hud .logo{width:34px;height:34px;
+    background:var(--sumi);
     display:flex;align-items:center;justify-content:center;
-    font-size:22px;font-weight:700;color:#021018;
-    animation:spin 12s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .hud h1{margin:0;font-size:18px;letter-spacing:1px;font-weight:600}
-  .hud .sub{font-size:11px;color:var(--muted);letter-spacing:2px}
-  .hud .pills{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-  .pill{padding:6px 12px;border-radius:999px;font-size:11px;letter-spacing:1px;
-    border:1px solid var(--line);background:rgba(56,189,248,0.08);
-    color:var(--accent);cursor:pointer;user-select:none;text-decoration:none}
-  .pill:hover{background:rgba(56,189,248,0.16)}
-  .pill.live{background:rgba(6,255,165,0.10);color:var(--accent-2);border-color:rgba(6,255,165,0.4)}
-  .pill.live::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;
-    background:var(--accent-2);margin-right:6px;box-shadow:0 0 8px var(--accent-2);animation:blink 1.5s infinite}
-  .pill.ws{background:rgba(167,139,250,0.10);color:var(--accent-3);border-color:rgba(167,139,250,0.4)}
-  .pill.ws.off{background:rgba(248,113,113,0.10);color:var(--danger);border-color:rgba(248,113,113,0.4)}
+    font-family:'Noto Serif SC',serif;font-size:18px;font-weight:900;color:var(--shironeri)}
+  .hud h1{margin:0;font-family:'Noto Serif SC',serif;font-size:13px;letter-spacing:3px;font-weight:300;color:var(--muted)}
+  .hud h1 strong{color:var(--text);font-weight:600}
+  .hud .sub{font-size:10px;color:var(--muted);letter-spacing:2px;font-family:'JetBrains Mono',monospace}
+  .hud .pills{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  /* 橡胶按钮 pill */
+  .pill{padding:5px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;
+    border:none;cursor:pointer;user-select:none;text-decoration:none;text-transform:uppercase;
+    background:var(--rubber);color:var(--sumi);
+    box-shadow:0 2px 5px oklch(0 0 0/0.12),0 1px 2px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.35),inset 0 -1px 0 oklch(0 0 0/0.08);
+    background-image:radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px);background-size:3px 3px;
+    transition:all 0.08s ease-out}
+  .pill:hover{background-color:var(--rubber-hover)}
+  .pill:active{box-shadow:inset 0 2px 5px oklch(0 0 0/0.15),inset 0 1px 2px oklch(0 0 0/0.10);transform:translateY(1px);background-color:var(--rubber-press)}
+  .pill.live{background:var(--sumi);color:var(--shironeri);box-shadow:0 2px 5px oklch(0 0 0/0.15),inset 0 1px 0 oklch(1 0 0/0.08),inset 0 -1px 0 oklch(0 0 0/0.3)}
+  .pill.live::before{content:'';display:inline-block;width:5px;height:5px;
+    background:var(--koke);margin-right:6px;animation:blink 2.5s infinite}
+  .pill.ws{background:var(--sumi);color:var(--shironeri)}
+  .pill.ws.off{background:oklch(0.85 0.005 110);color:var(--shu)}
   @keyframes blink{50%{opacity:0.3}}
 
-  .fp-banner{margin-top:14px;padding:12px 18px;border-radius:12px;
-    background:linear-gradient(90deg,rgba(167,139,250,0.10),rgba(6,255,165,0.06),transparent);
-    border:1px dashed rgba(167,139,250,0.4);font-size:12px;color:var(--text);
+  .fp-banner{margin-top:14px;padding:12px 18px;
+    background:oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.05),0 1px 0 var(--ridge);
+    font-size:12px;color:var(--text);
     display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-  .fp-banner .formula{font-family:'Menlo';color:var(--accent-3);font-weight:700}
+  .fp-banner .formula{font-family:'JetBrains Mono',monospace;color:var(--sumi);font-weight:700}
 
-  .panel{padding:14px 16px;border-radius:12px;border:1px solid var(--line);
-    background:linear-gradient(135deg,rgba(15,32,55,0.45),rgba(10,22,42,0.45));
-    backdrop-filter:blur(6px)}
-  .panel h2{margin:0 0 10px;font-size:13px;letter-spacing:1.5px;color:var(--accent);
+  .panel{padding:14px 16px;
+    background:oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 5px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.5)}
+  .panel h2{margin:0 0 10px;font-family:'Noto Serif SC',serif;font-size:12px;letter-spacing:3px;color:var(--sumi);
     text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
-  .badge{font-size:9px;color:var(--muted);padding:2px 8px;border:1px solid var(--line);border-radius:8px;letter-spacing:1px}
-  .section-title{font-size:11px;color:var(--muted);letter-spacing:2px;margin:14px 0 6px;text-transform:uppercase}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--muted);padding:2px 8px;border:1px solid var(--groove);letter-spacing:1.5px}
+  .section-title{font-family:'Noto Serif SC',serif;font-size:11px;color:var(--muted);letter-spacing:3px;margin:14px 0 6px;text-transform:uppercase}
 
   .grid-21{display:grid;grid-template-columns:2fr 1fr;gap:14px}
   .grid-12{display:grid;grid-template-columns:1fr 2fr;gap:14px}
 
-  /* 3D twin viewport */
+  /* 3D twin viewport — 石壁观察窗 */
   .twin-viewport{position:relative;width:100%;height:680px;
-    border:1px solid var(--line);border-radius:12px;overflow:hidden;
-    background:radial-gradient(ellipse at 50% 30%,rgba(56,189,248,0.12),transparent 70%),
-      linear-gradient(180deg,#040912 0%,#0a1830 60%,#0e1f3a 100%)}
+    overflow:hidden;
+    padding:8px;background:oklch(0.85 0.005 110);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/0.3),0 1px 0 oklch(0 0 0/0.04)}
   .twin-viewport canvas{display:block}
-  .twin-overlay{position:absolute;top:0;left:0;right:0;padding:10px 14px;
+  .twin-overlay{position:absolute;top:8px;left:8px;right:8px;padding:10px 14px;
     display:flex;justify-content:space-between;pointer-events:none;font-size:11px}
-  .twin-overlay .tag{background:rgba(0,0,0,0.45);border:1px solid var(--line);
-    padding:4px 10px;border-radius:6px;color:var(--accent);letter-spacing:1px;pointer-events:auto}
-  .twin-overlay .tag.live{color:var(--accent-2);border-color:rgba(6,255,165,0.4)}
-  .twin-controls{position:absolute;left:10px;top:44px;
+  .twin-overlay .tag{background:oklch(0.93 0.003 110 / 0.85);
+    padding:4px 10px;color:var(--sumi);letter-spacing:1.5px;pointer-events:auto;
+    font-family:'JetBrains Mono',monospace;font-size:9px}
+  .twin-overlay .tag.live{color:var(--koke)}
+  .twin-controls{position:absolute;left:16px;top:52px;
     display:flex;flex-direction:column;gap:4px;font-size:10px;
-    max-height:calc(100% - 56px);overflow-y:auto;padding-bottom:10px}
+    max-height:calc(100% - 64px);overflow-y:auto;padding-bottom:10px}
+  /* 橡胶图层按钮 */
   .twin-controls .layer-btn{
-    padding:5px 10px;background:rgba(0,0,0,0.55);border:1px solid var(--line);
-    color:var(--text);border-radius:6px;cursor:pointer;letter-spacing:1px;text-align:left;min-width:160px;
+    padding:4px 10px;background:oklch(0.88 0.004 110);
+    border:none;color:var(--sumi);cursor:pointer;letter-spacing:1.5px;text-align:left;min-width:160px;
     display:flex;justify-content:space-between;align-items:center;gap:8px;
+    font-family:'JetBrains Mono',monospace;font-size:9px;
+    box-shadow:0 1px 3px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.4),inset 0 -1px 0 oklch(0 0 0/0.05);
+    background-image:radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px);background-size:3px 3px;
+    transition:all 0.08s ease-out;
   }
-  .twin-controls .layer-btn .swatch{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .twin-controls .layer-btn:active{box-shadow:inset 0 2px 4px oklch(0 0 0/0.12);transform:translateY(1px);background-color:oklch(0.82 0.004 110)}
+  .twin-controls .layer-btn .swatch{width:8px;height:8px;display:inline-block}
   .twin-controls .layer-btn.off{opacity:0.35;text-decoration:line-through}
-  .twin-legend{position:absolute;right:10px;bottom:10px;
-    background:rgba(0,0,0,0.55);border:1px solid var(--line);
-    padding:8px 12px;border-radius:6px;font-size:10px;line-height:1.7;color:var(--muted)}
+  .twin-legend{position:absolute;right:16px;bottom:16px;
+    background:oklch(0.93 0.003 110 / 0.9);
+    padding:8px 12px;font-size:10px;line-height:1.7;color:var(--muted);font-family:'JetBrains Mono',monospace}
   .twin-legend b{color:var(--text)}
-  .twin-readout{position:absolute;right:10px;top:60px;width:240px;
-    background:rgba(0,0,0,0.65);border:1px solid var(--accent);
-    padding:10px 12px;border-radius:8px;font-size:11px;color:var(--text);
-    box-shadow:0 0 20px rgba(56,189,248,0.4);display:none}
+  .twin-readout{position:absolute;right:16px;top:68px;width:240px;
+    background:oklch(0.93 0.003 110 / 0.95);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.06),0 2px 8px oklch(0 0 0/0.1);
+    padding:10px 12px;font-size:11px;color:var(--text);display:none}
   .twin-readout.show{display:block}
-  .twin-readout h4{margin:0 0 6px;color:var(--accent);font-size:12px;letter-spacing:1px}
-  .twin-readout .row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed var(--line)}
-  .twin-readout .row .v{color:var(--accent-2);font-weight:700}
+  .twin-readout h4{margin:0 0 6px;color:var(--sumi);font-family:'Noto Serif SC',serif;font-size:12px;letter-spacing:2px}
+  .twin-readout .row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid oklch(0.90 0.003 110)}
+  .twin-readout .row .v{color:var(--koke);font-weight:700;font-family:'JetBrains Mono',monospace}
 
-  /* mapping list (right side of twin) */
-  .map-list{display:flex;flex-direction:column;gap:8px}
-  .map-item{padding:10px 12px;border:1px solid var(--line);border-radius:8px;
-    background:rgba(15,32,55,0.45);font-size:11px;cursor:pointer;
-    display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center}
-  .map-item:hover{border-color:var(--accent)}
-  .map-item .dot{width:12px;height:12px;border-radius:3px}
-  .map-item .name{color:var(--text);font-weight:600;letter-spacing:0.5px}
-  .map-item .phys{font-size:10px;color:var(--muted);margin-top:2px}
-  .map-item .v{font-size:13px;color:var(--accent-2);font-weight:700;font-feature-settings:'tnum'}
+  /* mapping list */
+  .map-list{display:flex;flex-direction:column;gap:6px}
+  .map-item{padding:8px 10px;
+    background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04),0 1px 0 oklch(1 0 0/0.3);
+    font-size:11px;cursor:pointer;
+    display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;transition:background 0.15s}
+  .map-item:hover{background:oklch(0.90 0.003 110)}
+  .map-item .dot{width:8px;height:8px}
+  .map-item .name{color:var(--text);font-weight:500;letter-spacing:0.5px;font-size:10px}
+  .map-item .phys{font-size:9px;color:var(--muted);margin-top:1px}
+  .map-item .v{font-size:12px;color:var(--sumi);font-weight:600;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum'}
 
-  /* KPI strip identical to marine */
-  .kpi-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin:16px 0}
-  .kpi{padding:12px 16px;border-radius:12px;
-    border:1px solid var(--line);
-    background:linear-gradient(135deg,rgba(15,32,55,0.55),rgba(10,22,42,0.55));
+  /* KPI strip — 石硯嵌入卡 */
+  .kpi-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:14px 0}
+  .kpi{padding:12px 14px;
+    background:oklch(0.93 0.003 110);
+    box-shadow:inset 0 1px 4px oklch(0 0 0/0.05),0 1px 0 oklch(1 0 0/0.4);
     position:relative;overflow:hidden}
-  .kpi::after{content:'';position:absolute;bottom:0;left:0;height:2px;width:100%;
-    background:linear-gradient(90deg,transparent,var(--accent),transparent);
-    animation:scan 3s infinite}
-  @keyframes scan{0%,100%{opacity:0.2}50%{opacity:1}}
-  .kpi .label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-  .kpi .value{font-size:24px;font-weight:700;color:var(--accent);margin:4px 0 2px;font-feature-settings:'tnum'}
-  .kpi .unit{font-size:11px;color:var(--muted);margin-left:4px}
-  .kpi .delta{font-size:10px;color:var(--accent-2)}
+  .kpi::after{content:'';position:absolute;bottom:0;left:0;height:1px;width:100%;
+    background:var(--groove)}
+  .kpi .label{font-size:8px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+  .kpi .value{font-size:22px;font-weight:600;color:var(--sumi);margin:4px 0 2px;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum'}
+  .kpi .unit{font-size:10px;color:var(--muted);margin-left:2px}
+  .kpi .delta{font-size:10px;color:var(--koke)}
 
-  /* device row */
-  .dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;
-    max-height:260px;overflow-y:auto;padding-right:6px}
-  .dev-card{padding:8px 10px;border:1px solid var(--line);border-radius:8px;
-    background:rgba(15,32,55,0.5);font-size:11px;cursor:pointer;transition:all .15s}
-  .dev-card:hover{border-color:var(--accent);transform:translateY(-1px)}
-  .dev-card.hot{border-color:var(--warn);background:rgba(251,191,36,0.06)}
-  .dev-card.crit{border-color:var(--danger);background:rgba(248,113,113,0.06)}
-  .dev-card .id{color:var(--accent);font-weight:700;font-size:11px;letter-spacing:0.5px;display:flex;justify-content:space-between}
-  .dev-card .id .typ{color:var(--muted);font-size:9px;letter-spacing:1px}
-  .dev-card .pw{font-size:18px;color:var(--accent-2);font-weight:700;font-feature-settings:'tnum';margin:2px 0}
-  .dev-card .ln{font-size:10px;color:var(--muted)}
+  /* device cards — 石硯卡片 */
+  .dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;
+    max-height:260px;overflow-y:auto;padding-right:4px}
+  .dev-card{padding:8px 10px;
+    background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04),0 1px 0 oklch(1 0 0/0.3);
+    font-size:10px;cursor:pointer;transition:all .12s}
+  .dev-card:hover{background:oklch(0.90 0.003 110)}
+  .dev-card.hot{border-left:2px solid var(--kitsune)}
+  .dev-card.crit{border-left:2px solid var(--shu)}
+  .dev-card .id{color:var(--sumi);font-weight:600;font-size:10px;letter-spacing:0.5px;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace}
+  .dev-card .id .typ{color:var(--muted);font-size:8px;letter-spacing:1px}
+  .dev-card .pw{font-size:16px;color:var(--sumi);font-weight:600;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum';margin:2px 0}
+  .dev-card .ln{font-size:9px;color:var(--muted)}
 
   /* energy flow svg */
   svg.flow{width:100%;height:300px}
-  .flow .node{fill:rgba(56,189,248,0.10);stroke:var(--accent);stroke-width:1.2}
-  .flow .label{fill:var(--text);font-size:11px;font-family:'Menlo'}
-  .flow .sublabel{fill:var(--muted);font-size:9px;font-family:'Menlo'}
+  .flow .node{fill:oklch(0.93 0.003 110);stroke:var(--sumi);stroke-width:1}
+  .flow .label{fill:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace}
+  .flow .sublabel{fill:var(--muted);font-size:9px;font-family:'JetBrains Mono',monospace}
 
   /* ratchet steps */
   .ratchet-loop{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
-  .step{padding:10px 12px;border-radius:10px;border:1px solid var(--line);
-    background:rgba(15,32,55,0.4);font-size:11px;position:relative;transition:all 0.3s}
-  .step.active{border-color:var(--accent-2);background:rgba(6,255,165,0.10);
-    box-shadow:0 0 18px rgba(6,255,165,0.4)}
-  .step .step-n{position:absolute;top:-10px;left:10px;background:var(--bg-1);
-    color:var(--accent);padding:1px 8px;font-size:10px;letter-spacing:1px;border:1px solid var(--line);border-radius:4px}
-  .step.active .step-n{color:var(--accent-2);border-color:var(--accent-2)}
-  .step h4{margin:0 0 4px;color:var(--accent);letter-spacing:1px;font-size:12px}
-  .step.active h4{color:var(--accent-2)}
+  .step{padding:10px 12px;
+    background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04),0 1px 0 oklch(1 0 0/0.3);
+    font-size:11px;position:relative;transition:all 0.2s}
+  .step.active{background:oklch(0.90 0.004 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.06),0 0 0 1px var(--sumi)}
+  .step .step-n{position:absolute;top:-10px;left:10px;background:var(--bg-0);
+    color:var(--muted);padding:1px 8px;font-size:9px;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace}
+  .step.active .step-n{color:var(--sumi)}
+  .step h4{margin:0 0 4px;color:var(--sumi);letter-spacing:1.5px;font-size:11px;font-family:'Noto Serif SC',serif}
+  .step.active h4{color:var(--sumi);font-weight:700}
 
-  button{padding:6px 12px;font:inherit;font-size:11px;
-    background:rgba(56,189,248,0.10);color:var(--accent);
-    border:1px solid var(--line);border-radius:6px;
-    cursor:pointer;transition:all 0.15s;letter-spacing:0.5px}
-  button:hover{background:rgba(56,189,248,0.20);border-color:var(--accent)}
-  button.primary{background:rgba(6,255,165,0.10);color:var(--accent-2);border-color:rgba(6,255,165,0.3)}
+  /* 橡胶通用按钮 */
+  button{padding:5px 12px;font:inherit;font-size:10px;
+    background:var(--rubber);color:var(--sumi);
+    border:none;cursor:pointer;letter-spacing:1px;
+    font-family:'JetBrains Mono',monospace;
+    box-shadow:0 2px 5px oklch(0 0 0/0.10),0 1px 2px oklch(0 0 0/0.06),inset 0 1px 0 oklch(1 0 0/0.35),inset 0 -1px 0 oklch(0 0 0/0.06);
+    background-image:radial-gradient(oklch(0 0 0/0.02) 1px,transparent 1px);background-size:3px 3px;
+    transition:all 0.08s ease-out}
+  button:hover{background-color:var(--rubber-hover)}
+  button:active{box-shadow:inset 0 2px 5px oklch(0 0 0/0.12),inset 0 1px 2px oklch(0 0 0/0.08);transform:translateY(1px);background-color:var(--rubber-press)}
+  button.primary{background:var(--sumi);color:var(--shironeri);box-shadow:0 2px 5px oklch(0 0 0/0.15),inset 0 1px 0 oklch(1 0 0/0.08),inset 0 -1px 0 oklch(0 0 0/0.3)}
 
-  ::-webkit-scrollbar{width:6px;height:6px}
-  ::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.3);border-radius:3px}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:oklch(0.75 0.005 110);border-radius:0}
+  ::-webkit-scrollbar-track{background:oklch(0.93 0.003 110)}
 
-  .footer{text-align:center;color:var(--muted);padding:14px 0 6px;font-size:10px;letter-spacing:1px}
+  .footer{text-align:center;color:var(--muted);padding:14px 0 6px;font-size:9px;letter-spacing:2px;font-family:'JetBrains Mono',monospace}
 
   /* sensory mesh popup */
-  .mesh-popup{display:none;position:absolute;bottom:10px;left:10px;z-index:50;width:300px;padding:14px;
-    background:rgba(4,9,18,0.95);border:1px solid #22c4ff;border-radius:10px;color:var(--text);font-size:11px;
-    box-shadow:0 0 30px rgba(34,196,255,0.3)}
-  .mesh-popup h4{color:#22c4ff;font-size:13px;margin:0 0 8px}
-  .mesh-popup .mp-layer{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;margin-bottom:8px}
-  .mesh-popup .mp-analysis{color:var(--accent-2);line-height:1.6}
+  .mesh-popup{display:none;position:absolute;bottom:16px;left:16px;z-index:50;width:280px;padding:14px;
+    background:oklch(0.93 0.003 110 / 0.97);box-shadow:inset 0 1px 4px oklch(0 0 0/0.06),0 4px 16px oklch(0 0 0/0.12);
+    color:var(--text);font-size:11px}
+  .mesh-popup h4{color:var(--sumi);font-family:'Noto Serif SC',serif;font-size:12px;margin:0 0 8px;letter-spacing:2px}
+  .mesh-popup .mp-layer{display:inline-block;padding:2px 8px;font-size:9px;font-weight:600;margin-bottom:8px;background:var(--rubber);font-family:'JetBrains Mono',monospace}
+  .mesh-popup .mp-analysis{color:var(--text);line-height:1.6}
   .mesh-popup-close{position:absolute;top:6px;right:10px;cursor:pointer;color:var(--muted);font-size:16px}
   /* layer detail HUD */
-  .layer-hud{display:none;position:absolute;top:10px;right:10px;z-index:50;width:280px;padding:14px;
-    background:rgba(4,9,18,0.95);border:1px solid #22c4ff;border-radius:10px;color:var(--text);font-size:11px;
-    box-shadow:0 0 30px rgba(34,196,255,0.25)}
-  .layer-hud h4{font-size:14px;margin:0 0 6px;letter-spacing:1px}
+  .layer-hud{display:none;position:absolute;top:16px;right:16px;z-index:50;width:260px;padding:14px;
+    background:oklch(0.93 0.003 110 / 0.97);box-shadow:inset 0 1px 4px oklch(0 0 0/0.06),0 4px 16px oklch(0 0 0/0.12);
+    color:var(--text);font-size:11px}
+  .layer-hud h4{font-family:'Noto Serif SC',serif;font-size:13px;margin:0 0 6px;letter-spacing:2px}
   .layer-hud .lh-desc{color:var(--muted);margin-bottom:10px;line-height:1.5}
   .layer-hud .lh-tiers{display:flex;flex-direction:column;gap:6px}
   .layer-hud-close{position:absolute;top:6px;right:10px;cursor:pointer;color:var(--muted);font-size:16px}
+
+  /* ════ BUILD TEAM CHAT ════ */
+  .chat-fab{position:fixed;bottom:24px;right:24px;z-index:2000;width:48px;height:48px;
+    border:none;cursor:pointer;
+    background:var(--sumi);display:flex;align-items:center;justify-content:center;
+    font-size:20px;color:var(--shironeri);
+    box-shadow:0 2px 8px oklch(0 0 0/0.15);transition:all 0.15s}
+  .chat-fab:hover{background:oklch(0.25 0.008 110)}
+  .chat-fab.has-badge::after{content:'';position:absolute;top:2px;right:2px;width:8px;height:8px;
+    background:var(--shu)}
+  .chat-panel{position:fixed;bottom:80px;right:24px;z-index:2001;width:400px;height:500px;
+    display:none;flex-direction:column;
+    background:oklch(0.95 0.003 110);
+    box-shadow:0 4px 24px oklch(0 0 0/0.12),inset 0 1px 0 oklch(1 0 0/0.5);overflow:hidden}
+  .chat-panel.open{display:flex}
+  .chat-head{padding:12px 16px;background:oklch(0.91 0.004 110);
+    border-bottom:1px solid var(--groove);display:flex;align-items:center;justify-content:space-between;
+    cursor:move;user-select:none}
+  .chat-head h3{margin:0;font-family:'Noto Serif SC',serif;font-size:12px;letter-spacing:2px;color:var(--sumi)}
+  .chat-head .ch-sub{font-size:8px;color:var(--muted);letter-spacing:1.5px;font-family:'JetBrains Mono',monospace}
+  .chat-head .ch-close{cursor:pointer;color:var(--muted);font-size:16px;padding:0 4px}
+  .chat-head .ch-close:hover{color:var(--text)}
+  .chat-quick{display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--groove);flex-wrap:wrap}
+  .chat-quick button{padding:3px 8px;font-size:8px;letter-spacing:1px;
+    background:var(--rubber);border:none;color:var(--sumi);cursor:pointer;
+    font-family:'JetBrains Mono',monospace;
+    box-shadow:0 1px 3px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.3)}
+  .chat-quick button:active{box-shadow:inset 0 1px 3px oklch(0 0 0/0.1)}
+  .chat-quick button.task{background:var(--sumi);color:var(--shironeri)}
+  .chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .chat-msg{max-width:88%;padding:8px 12px;font-size:10px;line-height:1.6;
+    word-break:break-word;animation:chatIn 0.2s ease-out}
+  @keyframes chatIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .chat-msg.user{align-self:flex-end;background:oklch(0.88 0.004 110);color:var(--text);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04)}
+  .chat-msg.bot{align-self:flex-start;background:oklch(0.93 0.003 110);border-bottom:1px solid var(--groove);color:var(--text)}
+  .chat-msg.sys{align-self:center;background:oklch(0.91 0.004 110);
+    color:var(--muted);font-size:9px;text-align:center}
+  .chat-msg .task-tag{display:inline-block;padding:1px 6px;font-size:8px;font-weight:600;
+    background:var(--sumi);color:var(--shironeri);margin-top:4px;font-family:'JetBrains Mono',monospace}
+  .chat-input-row{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--groove);align-items:center}
+  .chat-input-row input{flex:1;padding:8px 12px;background:oklch(0.93 0.003 110);
+    border:1px solid var(--groove);
+    color:var(--text);font:inherit;font-size:10px;outline:none}
+  .chat-input-row input:focus{border-color:var(--sumi)}
+  .chat-input-row input::placeholder{color:var(--muted)}
+  .chat-input-row .send-btn{padding:8px 14px;font-size:10px;font-weight:600;
+    background:var(--sumi);border:none;color:var(--shironeri);cursor:pointer;letter-spacing:1px;
+    font-family:'JetBrains Mono',monospace;
+    box-shadow:0 2px 5px oklch(0 0 0/0.12)}
+  .chat-input-row .send-btn:hover{background:oklch(0.25 0.008 110)}
+  .chat-typing{display:none;padding:4px 12px;font-size:9px;color:var(--muted)}
+  .chat-typing.show{display:block}
+
+  /* ════ ANOMALY PANEL ════ */
+  .anom-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0}
+  .anom-kpi{padding:8px 10px;
+    background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04),0 1px 0 oklch(1 0 0/0.3);
+    font-size:11px;text-align:center}
+  .anom-kpi .av{font-size:18px;font-weight:600;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum';margin:2px 0}
+  .anom-kpi .al{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+  .anom-kpi.crit .av{color:var(--shu)}
+  .anom-kpi.high .av{color:var(--kitsune)}
+  .anom-kpi.med .av{color:var(--sumi)}
+  .anom-kpi.low .av{color:var(--muted)}
+  .anom-item{padding:8px 10px;margin:4px 0;
+    background:oklch(0.93 0.003 110);border-bottom:1px solid var(--groove);
+    font-size:10px;cursor:pointer;transition:all 0.12s;
+    display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+  .anom-item:hover{background:oklch(0.90 0.003 110)}
+  .anom-item .sev{width:6px;height:6px}
+  .anom-item .sev.critical{background:var(--shu)}
+  .anom-item .sev.high{background:var(--kitsune)}
+  .anom-item .sev.medium{background:var(--sumi)}
+  .anom-item .sev.low{background:var(--muted)}
+  .anom-item .ak{color:var(--sumi);font-weight:600;font-family:'JetBrains Mono',monospace}
+  .anom-item .act{color:var(--muted);font-size:9px;margin-top:2px}
+
+  /* ════ PUE TREND CHART ════ */
+  .pue-chart-wrap{position:relative;width:100%;height:200px;
+    background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 4px oklch(0 0 0/0.04);overflow:hidden}
+  .pue-chart-wrap canvas{width:100%!important;height:100%!important}
+  .pue-chart-legend{display:flex;gap:14px;padding:6px 0;font-size:9px;color:var(--muted);flex-wrap:wrap;font-family:'JetBrains Mono',monospace}
+  .pue-chart-legend span{display:flex;align-items:center;gap:4px}
+  .pue-chart-legend .dot{width:6px;height:6px;display:inline-block}
+
+  /* ════ AI INSIGHT PANEL ════ */
+  .insight-card{padding:10px 14px;
+    background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04),0 1px 0 oklch(1 0 0/0.3);
+    margin:6px 0;font-size:11px;line-height:1.6}
+  .insight-card .it{color:var(--sumi);font-weight:600;font-size:11px;margin-bottom:4px;font-family:'Noto Serif SC',serif}
+  .insight-card ul{margin:4px 0;padding-left:16px;color:var(--text)}
+  .insight-card li{margin:2px 0}
+  .rec-item{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+    padding:8px 10px;border-bottom:1px solid var(--groove);margin:4px 0;
+    background:oklch(0.93 0.003 110);font-size:10px;cursor:pointer;transition:all 0.12s}
+  .rec-item:hover{background:oklch(0.90 0.003 110)}
+  .rec-item .ri-score{font-size:14px;font-weight:600;color:var(--sumi);font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum'}
+  .rec-item .ri-title{color:var(--text);font-weight:500}
+  .rec-item .ri-save{font-size:9px;color:var(--muted)}
+
+  /* ════ KEYBOARD HELP ════ */
+  .kb-overlay{display:none;position:fixed;inset:0;z-index:3000;background:oklch(0.96 0.003 110 / 0.92);
+    align-items:center;justify-content:center}
+  .kb-overlay.show{display:flex}
+  .kb-box{background:oklch(0.93 0.003 110);
+    box-shadow:0 4px 24px oklch(0 0 0/0.12),inset 0 1px 4px oklch(0 0 0/0.04);
+    padding:24px 32px;max-width:440px;width:90%}
+  .kb-box h3{margin:0 0 14px;color:var(--sumi);font-family:'Noto Serif SC',serif;font-size:14px;letter-spacing:2px}
+  .kb-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--groove);font-size:10px}
+  .kb-row .k{display:inline-block;background:var(--rubber);
+    padding:2px 8px;font-family:'JetBrains Mono',monospace;color:var(--sumi);font-size:9px;min-width:24px;text-align:center;
+    box-shadow:0 1px 3px oklch(0 0 0/0.08),inset 0 1px 0 oklch(1 0 0/0.3)}
+  .kb-row .desc{color:var(--text)}
 </style>
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
 
@@ -205,9 +338,9 @@
 
   <div class="hud">
     <div class="brand">
-      <div class="logo">⛬</div>
+      <div class="logo">白</div>
       <div>
-        <h1>Digital Twin · 物理 ↔ 数字 一一映射</h1>
+        <h1><strong>Digital Twin</strong> · 物理 ↔ 数字 一一映射</h1>
         <div class="sub">ROOM · FLOOR · LIQUID-PIPE · ATS · SWITCHGEAR · BUSWAY · RACK · SERVER · COOLING-AISLE</div>
       </div>
     </div>
@@ -216,14 +349,14 @@
       <span class="pill live" id="pill-live">REAL-TIME TWIN</span>
       <span class="pill" id="pill-round">ROUND 0</span>
       <a href="/marine-datacenter.html" class="pill">← BACK · CONTROL</a>
-      <a href="/datacenter-ratchet-evolution.html" class="pill live" style="text-decoration:none;background:linear-gradient(135deg,#ffd700,#7c4dff);color:#000;font-weight:700">⚙ 自演进棘轮</a>
+      <a href="/datacenter-ratchet-evolution.html" class="pill live" style="text-decoration:none;font-weight:600">⚙ 自演进棘轮</a>
     </div>
   </div>
 
   <div id="err-overlay" style="display:none;position:fixed;top:12px;right:12px;z-index:9999;max-width:480px;padding:10px 14px;
-    border:1px solid #f87171;border-radius:8px;background:rgba(40,8,12,0.92);color:#ffd1d1;font-size:11px;font-family:Menlo;
-    box-shadow:0 0 20px rgba(248,113,113,0.5)">
-    <b style="color:#ff5b6f">⚠ JS ERROR</b>
+    border:1px solid var(--shu);background:rgba(155,90,74,0.08);color:var(--shu);font-size:10px;font-family:'JetBrains Mono',monospace;
+    box-shadow:0 2px 12px oklch(0 0 0/0.1)">
+    <b style="color:var(--shu)">JS ERROR</b>
     <pre id="err-body" style="margin:6px 0 0;white-space:pre-wrap"></pre>
   </div>
 
@@ -257,20 +390,29 @@
         <div class="twin-controls" id="layer-ctrls">
           <button class="layer-btn" data-layer="room"><span><span class="swatch" style="background:#444"></span> 机房外壳 ROOM</span><span>S</span></button>
           <button class="layer-btn" data-layer="floor"><span><span class="swatch" style="background:#5b7bb5"></span> 高架地板 FLOOR</span><span>F</span></button>
-          <button class="layer-btn" data-layer="pipe"><span><span class="swatch" style="background:#06ffa5"></span> 地板下 SUBFLOOR</span><span>P</span></button>
-          <button class="layer-btn" data-layer="busway"><span><span class="swatch" style="background:#a78bfa"></span> 母线槽 BUSWAY</span><span>B</span></button>
+          <button class="layer-btn" data-layer="pipe"><span><span class="swatch" style="background:#8a8378"></span> 地板下 SUBFLOOR</span><span>P</span></button>
+          <button class="layer-btn" data-layer="busway"><span><span class="swatch" style="background:#8a8378"></span> 母线槽 BUSWAY</span><span>B</span></button>
           <button class="layer-btn" data-layer="cable"><span><span class="swatch" style="background:#00cc44"></span> 配电线 CABLES</span><span>L</span></button>
           <button class="layer-btn" data-layer="pdu"><span><span class="swatch" style="background:#ff8800"></span> PDU 配线</span><span>D</span></button>
-          <button class="layer-btn" data-layer="rack"><span><span class="swatch" style="background:#22c4ff"></span> 机柜 RACK 64柜</span><span>R</span></button>
-          <button class="layer-btn" data-layer="airflow"><span><span class="swatch" style="background:#22d3ee"></span> 流体矢量场 AIRFLOW</span><span>W</span></button>
-          <button class="layer-btn" data-layer="cadGrid"><span><span class="swatch" style="background:#38bdf8"></span> CAD 格线图</span><span>G</span></button>
-          <button class="layer-btn" data-layer="sensor"><span><span class="swatch" style="background:#22d3ee"></span> LoRA 热场</span><span>T</span></button>
-          <button class="layer-btn" data-layer="sensoryMesh" style="border:1px solid #ffd700;background:rgba(255,215,0,0.08)"><span><span class="swatch" style="background:linear-gradient(135deg,#22c4ff,#ffd700)"></span> 🔬 感官织网 · 分层展开</span><span>N</span></button>
-          <div id="explode-ctrls" style="display:none;flex-direction:column;gap:4px;margin-left:10px;padding-left:10px;border-left:2px solid rgba(255,215,0,0.35)">
-            <button class="layer-btn" data-explode="equipment" style="border-color:#22c4ff"><span><span class="swatch" style="background:#22c4ff"></span> L1 Equipment · 设备微观</span><span>1</span></button>
-            <button class="layer-btn" data-explode="facility" style="border-color:#a78bfa"><span><span class="swatch" style="background:#a78bfa"></span> L2 Facility · 设施宏观</span><span>2</span></button>
-            <button class="layer-btn" data-explode="environment" style="border-color:#22d3ee"><span><span class="swatch" style="background:#22d3ee"></span> L3 Environment · 环境上下文</span><span>3</span></button>
-            <button class="layer-btn" data-explode="process" style="border-color:#fbbf24"><span><span class="swatch" style="background:#fbbf24"></span> L4 Process · 流程运营</span><span>4</span></button>
+          <button class="layer-btn" data-layer="rack"><span><span class="swatch" style="background:#4a4640"></span> 机柜 RACK 64柜</span><span>R</span></button>
+          <button class="layer-btn" data-layer="airflow"><span><span class="swatch" style="background:#7a9b7a"></span> 流体矢量场 AIRFLOW</span><span>W</span></button>
+          <button class="layer-btn" data-layer="cadGrid"><span><span class="swatch" style="background:#8a8378"></span> CAD 格线图</span><span>G</span></button>
+          <button class="layer-btn" data-layer="sensor"><span><span class="swatch" style="background:#7a9b7a"></span> LoRA 热场</span><span>T</span></button>
+          <button class="layer-btn" data-layer="sensoryMesh"><span><span class="swatch" style="background:var(--sumi)"></span> 感官织网 · Sensory Mesh</span><span>N</span></button>
+          <div id="explode-ctrls" style="display:none;flex-direction:column;gap:4px;margin-left:10px;padding-left:10px;border-left:2px solid var(--kitsune)">
+            <button class="layer-btn sm-lyr-btn active" data-sm-layer="equipment" onclick="smToggleLayer('equipment')"><span><span class="swatch" style="background:#4a4640"></span> L1 设备层 · Device</span><span>1</span></button>
+            <button class="layer-btn sm-lyr-btn active" data-sm-layer="facility" onclick="smToggleLayer('facility')"><span><span class="swatch" style="background:#8a8378"></span> L2 设施层 · Facility</span><span>2</span></button>
+            <button class="layer-btn sm-lyr-btn active" data-sm-layer="environment" onclick="smToggleLayer('environment')"><span><span class="swatch" style="background:#7a9b7a"></span> L3 环境层 · Environ</span><span>3</span></button>
+            <button class="layer-btn sm-lyr-btn active" data-sm-layer="process" onclick="smToggleLayer('process')"><span><span class="swatch" style="background:#a89060"></span> L4 流程层 · Process</span><span>4</span></button>
+            <div style="display:flex;gap:4px;margin-top:2px">
+              <button class="layer-btn" onclick="smShowAll()" style="flex:1"><span>全部显示</span><span>0</span></button>
+              <button class="layer-btn" id="btn-sm-explode" onclick="smExplodeToggle()" style="flex:1"><span>分层展开</span><span>E</span></button>
+            </div>
+            <div id="sm-explode-slider-wrap" style="display:none;padding:4px 0">
+              <label style="font-size:8px;color:var(--muted);letter-spacing:1px;font-family:'JetBrains Mono',monospace">层间距</label>
+              <input type="range" id="sm-explode-slider" min="0" max="100" value="0" style="width:100%;accent-color:var(--kitsune)">
+              <span id="sm-explode-val" style="font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace">0%</span>
+            </div>
           </div>
         </div>
         <div class="twin-legend">
@@ -304,6 +446,41 @@
     <div class="panel">
       <h2>物理↔数字 对象映射 <span class="badge">SLIDE-1 SOURCE OF TRUTH</span></h2>
       <div class="map-list" id="map-list"></div>
+      <!-- ═══ SENSORY MESH LAYER CARDS ═══ -->
+      <div id="sm-layer-cards" style="display:none;margin-top:14px">
+        <h2 style="margin:0 0 8px;font-family:'Noto Serif SC',serif;font-size:12px;letter-spacing:2px;color:var(--sumi)">SENSORY MESH · 分层概览</h2>
+        <div class="sm-card" data-sm-card="equipment" onclick="smSoloLayer('equipment')" style="padding:8px 10px;margin-bottom:6px;background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04);cursor:pointer;border-left:3px solid #4a4640">
+          <div style="font-weight:600;font-size:11px;color:#4a4640;letter-spacing:1px">L1 设备层 · Device Layer</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">服务器/GPU/CPU/Memory 组件级监控 · 单机功耗 · 温度 · 利用率</div>
+          <div style="font-size:10px;color:var(--text);font-family:'JetBrains Mono',monospace"><span id="smc-dev-cnt">0</span> 设备 · <span id="smc-dev-pw">0</span> kW</div>
+        </div>
+        <div class="sm-card" data-sm-card="facility" onclick="smSoloLayer('facility')" style="padding:8px 10px;margin-bottom:6px;background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04);cursor:pointer;border-left:3px solid #8a8378">
+          <div style="font-weight:600;font-size:11px;color:#8a8378;letter-spacing:1px">L2 设施层 · Facility Layer</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">机柜 · 配电柜 · 线缆 · CDU · CRAC · 冷却回路</div>
+          <div style="font-size:10px;color:var(--text);font-family:'JetBrains Mono',monospace"><span id="smc-fac-cnt">0</span> 机柜 · <span id="smc-fac-cdu">0</span> CDU</div>
+        </div>
+        <div class="sm-card" data-sm-card="environment" onclick="smSoloLayer('environment')" style="padding:8px 10px;margin-bottom:6px;background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04);cursor:pointer;border-left:3px solid #7a9b7a">
+          <div style="font-weight:600;font-size:11px;color:#7a9b7a;letter-spacing:1px">L3 环境层 · Environment Layer</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">LoRa 温湿度传感器 · 冷热通道 · 气流场</div>
+          <div style="font-size:10px;color:var(--text);font-family:'JetBrains Mono',monospace"><span id="smc-env-cnt">0</span> 传感器 · <span id="smc-env-temp">--</span> °C avg</div>
+        </div>
+        <div class="sm-card" data-sm-card="process" onclick="smSoloLayer('process')" style="padding:8px 10px;margin-bottom:6px;background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04);cursor:pointer;border-left:3px solid #a89060">
+          <div style="font-weight:600;font-size:11px;color:#a89060;letter-spacing:1px">L4 流程层 · Process Layer</div>
+          <div style="font-size:9px;color:var(--muted);margin:2px 0">作业调度 · GPU/CPU 任务流 · 节点流转</div>
+          <div style="font-size:10px;color:var(--text);font-family:'JetBrains Mono',monospace"><span id="smc-proc-jobs">0</span> 作业 · <span id="smc-proc-util">0</span>% 利用率</div>
+        </div>
+        <!-- Health Matrix + Job Flow -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div style="padding:8px 10px;background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04)">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;margin-bottom:6px">HEALTH MATRIX</div>
+            <div id="sm-health-matrix" style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px"></div>
+          </div>
+          <div style="padding:8px 10px;background:oklch(0.93 0.003 110);box-shadow:inset 0 1px 3px oklch(0 0 0/0.04)">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;margin-bottom:6px">JOB FLOW TIMELINE</div>
+            <div id="sm-job-flow" style="display:flex;flex-direction:column;gap:3px;max-height:120px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -338,19 +515,60 @@
       <div style="margin:10px 0 4px;font-size:11px;color:var(--muted)">PLC 毫秒级风机调频 ↓ LoRA 感知 ↓ 棘轮锁定</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0">
         <input id="plc-dev" placeholder="设备 (crac / svr-ai-01)" value="crac"
-          style="flex:1;min-width:120px;padding:5px 8px;background:rgba(0,0,0,0.4);border:1px solid var(--line);
-          color:var(--text);border-radius:6px;font:inherit;font-size:11px">
+          style="flex:1;min-width:120px;padding:5px 8px;background:oklch(0.93 0.003 110);border:1px solid var(--groove);
+          color:var(--text);font:inherit;font-size:10px">
         <input id="plc-dhz" type="number" step="0.5" value="2.0" style="width:70px;padding:5px 8px;
-          background:rgba(0,0,0,0.4);border:1px solid var(--line);color:var(--text);border-radius:6px;font:inherit;font-size:11px">
+          background:oklch(0.93 0.003 110);border:1px solid var(--groove);color:var(--text);font:inherit;font-size:10px">
         <span style="font-size:10px;color:var(--muted)">Hz</span>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button onclick="plcFan(1)">▲ 风机 +Δ</button>
         <button onclick="plcFan(-1)">▼ 风机 -Δ</button>
-        <button class="primary" onclick="lockRatchet()">🔒 棘轮锁定基线</button>
+        <button class="primary" onclick="lockRatchet()">棘轮锁定基线</button>
       </div>
       <div id="sens-ledger" style="margin-top:10px;font-size:10px;color:var(--muted);max-height:120px;overflow-y:auto"></div>
     </div>
+  </div>
+
+  <!-- PUE TREND + FORECAST -->
+  <div class="section-title">PUE 趋势 + 24h 预测 · TREND &amp; FORECAST</div>
+  <div class="grid-21">
+    <div class="panel">
+      <h2>PUE 时间序列 <span class="badge">CANVAS CHART</span></h2>
+      <div class="pue-chart-wrap"><canvas id="pue-canvas"></canvas></div>
+      <div class="pue-chart-legend">
+        <span><span class="dot" style="background:#4a4640"></span> 历史 PUE</span>
+        <span><span class="dot" style="background:#7a9b7a"></span> 预测 PUE</span>
+        <span><span class="dot" style="background:rgba(251,191,36,0.4)"></span> 负载因子</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button onclick="loadPueChart()">REFRESH</button>
+        <button class="primary" onclick="api('/api/v1/datacenter/simulate-tick',{},'POST').then(()=>{loadPueChart();refreshAll()})">TICK</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>AI 洞察 + 节能推荐 <span class="badge" id="ai-badge">READY</span></h2>
+      <div id="ai-insight" class="insight-card"><div class="it">点击加载 AI 洞察</div></div>
+      <div style="margin:8px 0 4px;font-size:10px;color:var(--muted);letter-spacing:1px">TOP RECOMMENDATIONS</div>
+      <div id="ai-recs" style="max-height:200px;overflow-y:auto"></div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="primary" onclick="loadAIInsight()">AI INSIGHT</button>
+        <button onclick="loadRecommendations()">📋 刷新推荐</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANOMALY COMMAND CENTER -->
+  <div class="section-title">异常指挥中心 · ANOMALY COMMAND · 点击定位到 3D 视图</div>
+  <div class="panel">
+    <h2>实时异常检测 <span class="badge" id="anom-badge">SCANNING</span></h2>
+    <div class="anom-strip">
+      <div class="anom-kpi crit"><div class="al">CRITICAL</div><div class="av" id="anom-crit">0</div></div>
+      <div class="anom-kpi high"><div class="al">HIGH</div><div class="av" id="anom-high">0</div></div>
+      <div class="anom-kpi med"><div class="al">MEDIUM</div><div class="av" id="anom-med">0</div></div>
+      <div class="anom-kpi low"><div class="al">LOW</div><div class="av" id="anom-low">0</div></div>
+    </div>
+    <div id="anom-list" style="max-height:240px;overflow-y:auto"></div>
   </div>
 
   <!-- RATCHET LOOP -->
@@ -368,12 +586,61 @@
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="primary" onclick="api('/api/v1/datacenter/loop/tick',{},'POST').then(()=>{animateRatchet();refreshAll();})">▶ EXECUTE RATCHET CYCLE</button>
-      <button onclick="api('/api/v1/datacenter/simulate-tick',{},'POST').then(refreshAll)">⚡ TICK THERMAL</button>
-      <button onclick="toggleAuto()" id="auto-btn">⚙ AUTO LOOP</button>
+      <button onclick="api('/api/v1/datacenter/simulate-tick',{},'POST').then(refreshAll)">TICK THERMAL</button>
+      <button onclick="toggleAuto()" id="auto-btn">AUTO LOOP</button>
     </div>
   </div>
 
-  <div class="footer">DIGITAL TWIN · 物理↔数字一一映射 · POSEIDON-X · v1.1</div>
+  <div class="footer">DIGITAL TWIN · 物理↔数字一一映射 · POSEIDON-X · v1.2</div>
+</div>
+
+<!-- KEYBOARD HELP OVERLAY -->
+<div class="kb-overlay" id="kb-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="kb-box">
+    <h3>⌨ 键盘快捷键</h3>
+    <div class="kb-row"><span class="k">M</span><span class="desc">测量模式 — 点击两点测距离</span></div>
+    <div class="kb-row"><span class="k">N</span><span class="desc">感官织网 — 4 层爆炸分层视图</span></div>
+    <div class="kb-row"><span class="k">1-4</span><span class="desc">聚焦感官织网层 (Device/Facility/Environment/Process)</span></div>
+    <div class="kb-row"><span class="k">0</span><span class="desc">全部显示 — 重置所有图层</span></div>
+    <div class="kb-row"><span class="k">E</span><span class="desc">分层展开/折叠 切换</span></div>
+    <div class="kb-row"><span class="k">H</span><span class="desc">显示/隐藏本帮助面板</span></div>
+    <div class="kb-row"><span class="k">S</span><span class="desc">切换机房外壳</span></div>
+    <div class="kb-row"><span class="k">F</span><span class="desc">切换高架地板</span></div>
+    <div class="kb-row"><span class="k">R</span><span class="desc">切换机柜</span></div>
+    <div class="kb-row"><span class="k">T</span><span class="desc">切换 LoRA 热场</span></div>
+    <div class="kb-row"><span class="k">W</span><span class="desc">切换气流矢量场</span></div>
+    <div class="kb-row"><span class="k">G</span><span class="desc">切换 CAD 格线</span></div>
+    <div class="kb-row"><span class="k">Esc</span><span class="desc">关闭弹出面板</span></div>
+    <div style="text-align:center;margin-top:14px;font-size:10px;color:var(--muted)">按 <span class="k">H</span> 或点击空白区域关闭</div>
+  </div>
+</div>
+
+<!-- BUILD TEAM CHAT -->
+<div class="chat-fab" id="chat-fab" onclick="toggleChat()" title="Build Team 对话">▣</div>
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-head" id="chat-head">
+    <div>
+      <h3>Build Team · 任务派发</h3>
+      <div class="ch-sub">DATACENTER DIGITAL TWIN · AGENT PIPELINE</div>
+    </div>
+    <span class="ch-close" onclick="toggleChat()">&times;</span>
+  </div>
+  <div class="chat-quick">
+    <button onclick="quickChat('当前数据中心数字孪生有哪些可优化项？')">优化建议</button>
+    <button onclick="quickChat('检查当前异常並給出修复方案')">异常診斷</button>
+    <button onclick="quickChat('分析 PUE 趨勢並提出节能策略')">PUE 分析</button>
+    <button class="task" onclick="quickChat('请 build 团队优化 3D 热场渲染性能')">性能优化</button>
+    <button class="task" onclick="quickChat('请 build 团队添加机柜容量预警功能')">新功能</button>
+    <button class="task" onclick="quickChat('请 build 团队修复温度单位显示问题')">Bug修复</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="chat-msg sys">数据中心数字孪生 AI 助手已就緒 · 输入问题或直接派发任务給 Build Team</div>
+  </div>
+  <div class="chat-typing" id="chat-typing">AI 正在思考…</div>
+  <div class="chat-input-row">
+    <input id="chat-input" placeholder="描述问题或任务… (含 'build团队' / '分配任务' 自动派发)" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="send-btn" onclick="sendChat()">发送</button>
+  </div>
 </div>
 
 <script type="importmap">
@@ -443,21 +710,79 @@ let deviceMeshes=[];
 let cableMeshes=[];
 let pduCables=[];
 let subfloorGroup, cadGridGroup, cableTrays=[];
+let roomGroup, floorGroup, buswayGroup;
 let heatFieldMesh=null, sensorSprites=[], pipeShaders=[];
 let selected=null;
 let measureMode=false, measurePts=[], measureLines=[];
+let rafId=null;
+let refreshTimer=null;
+let refreshInFlight=false;
+let pendingRefresh=false;
+let datacenterWS=null;
+let wsRefreshScheduled=false;
+let lastRenderAt=0;
+
+function disposeMaterial(mat){
+  if(!mat) return;
+  Object.keys(mat).forEach(k=>{
+    const v=mat[k];
+    if(v && v.isTexture) v.dispose();
+  });
+  mat.dispose();
+}
+
+function disposeObject3D(obj){
+  if(!obj) return;
+  obj.traverse(node=>{
+    if(node.geometry) node.geometry.dispose();
+    if(Array.isArray(node.material)) node.material.forEach(disposeMaterial);
+    else if(node.material) disposeMaterial(node.material);
+  });
+  if(obj.parent) obj.parent.remove(obj);
+}
+
+function getRefreshIntervalMs(){
+  return document.hidden ? 20000 : 8000;
+}
+
+function stopRefreshLoop(){
+  if(refreshTimer){
+    clearInterval(refreshTimer);
+    refreshTimer=null;
+  }
+}
+
+function startRefreshLoop(){
+  stopRefreshLoop();
+  refreshTimer=setInterval(()=>{ refreshAll(); }, getRefreshIntervalMs());
+}
+
+function scheduleRefresh(delayMs=1200){
+  if(wsRefreshScheduled) return;
+  wsRefreshScheduled=true;
+  setTimeout(()=>{
+    wsRefreshScheduled=false;
+    refreshAll();
+  }, delayMs);
+}
+
+function applyRenderQuality(){
+  if(!renderer) return;
+  const maxPr = document.hidden ? 1.25 : 2;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPr));
+}
 
 function init3D(){
   const wrap=$('twin-viewport');
   const W=wrap.clientWidth, H=wrap.clientHeight;
   clock=new THREE.Clock();
   scene=new THREE.Scene();
-  scene.fog=new THREE.Fog(0x040912, 80, 300);
+  scene.fog=new THREE.Fog(0xddd9d2, 80, 300);
   camera=new THREE.PerspectiveCamera(42, W/H, 0.1, 600);
   camera.position.set(70, 55, 70);
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   renderer.setSize(W,H);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  applyRenderQuality();
   renderer.setClearColor(0x000000,0);
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -469,20 +794,20 @@ function init3D(){
   controls.minDistance=8; controls.maxDistance=200;
   controls.maxPolarAngle=Math.PI/2.05;
 
-  // Lighting
-  const amb=new THREE.AmbientLight(0xb0c8ff,0.5); scene.add(amb);
-  const dir=new THREE.DirectionalLight(0xffffff,1.0);
+  // Lighting — wabi-sabi warm neutral
+  const amb=new THREE.AmbientLight(0xe8e4de,0.6); scene.add(amb);
+  const dir=new THREE.DirectionalLight(0xfaf8f4,1.0);
   dir.position.set(40,60,30); dir.castShadow=true;
   dir.shadow.mapSize.set(2048,2048);
   dir.shadow.camera.left=-60; dir.shadow.camera.right=60;
   dir.shadow.camera.top=40; dir.shadow.camera.bottom=-40;
   scene.add(dir);
-  const fill=new THREE.DirectionalLight(0x38bdf8,0.3);
+  const fill=new THREE.DirectionalLight(0xd5d0c8,0.3);
   fill.position.set(-30,20,-20); scene.add(fill);
 
   // PMREM env
   const pmrem=new THREE.PMREMGenerator(renderer);
-  const envScene=new THREE.Scene(); envScene.background=new THREE.Color(0x0a1830);
+  const envScene=new THREE.Scene(); envScene.background=new THREE.Color(0xddd9d2);
   scene.environment=pmrem.fromScene(envScene,0.04).texture;
 
   buildRoom();
@@ -504,51 +829,58 @@ function init3D(){
     renderer.setSize(W,H); camera.aspect=W/H; camera.updateProjectionMatrix();
   });
   window.addEventListener('keydown', e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
     if(e.key==='m'||e.key==='M') toggleMeasure();
     if(e.key==='n'||e.key==='N') toggleExplodedView();
-    if(smExploded&&e.key>='1'&&e.key<='4') focusLayer(LAYER_ORDER[+e.key-1]);
+    if(e.key==='h'||e.key==='H') $('kb-overlay').classList.toggle('show');
+    if(e.key==='Escape'){ $('kb-overlay').classList.remove('show'); $('readout').classList.remove('show'); $('mesh-popup').style.display='none'; $('layer-hud').style.display='none'; }
+    if(smExploded&&e.key>='1'&&e.key<='4'){ smSoloLayer(LAYER_ORDER[+e.key-1]); }
+    if(smExploded&&e.key==='0') smShowAll();
+    if(smExploded&&(e.key==='e'||e.key==='E')) smExplodeToggle();
   });
   animate();
 }
 
 /* ════════ ROOM SHELL ════════ */
 function buildRoom(){
+  roomGroup=new THREE.Group(); roomGroup.name='room'; scene.add(roomGroup);
+  floorGroup=new THREE.Group(); floorGroup.name='floor'; scene.add(floorGroup);
   // Floor slab
   const floorGeo=new THREE.BoxGeometry(ROOM_W+4,0.3,ROOM_D+4);
-  const floorMat=new THREE.MeshStandardMaterial({color:0x111e34,roughness:0.85,metalness:0.1});
+  const floorMat=new THREE.MeshStandardMaterial({color:0xc8c3ba,roughness:0.92,metalness:0.02});
   const floor=new THREE.Mesh(floorGeo,floorMat);
-  floor.position.y=-0.15; floor.receiveShadow=true; scene.add(floor);
+  floor.position.y=-0.15; floor.receiveShadow=true; roomGroup.add(floor);
   // Raised floor tiles (perforated)
-  const tileMat=new THREE.MeshStandardMaterial({color:0x5b7bb5,metalness:0.3,roughness:0.6,transparent:true,opacity:0.45});
-  const ventMat=new THREE.MeshStandardMaterial({color:0x06ffa5,emissive:0x06ffa5,emissiveIntensity:0.3,transparent:true,opacity:0.5});
+  const tileMat=new THREE.MeshStandardMaterial({color:0xd5d0c8,metalness:0.02,roughness:0.85,transparent:true,opacity:0.55});
+  const ventMat=new THREE.MeshStandardMaterial({color:0x7a9b7a,emissive:0x7a9b7a,emissiveIntensity:0.15,transparent:true,opacity:0.5});
   for(let x=-ROOM_W/2+1;x<ROOM_W/2;x+=2){
     for(let z=-ROOM_D/2+1;z<ROOM_D/2;z+=2){
       const isVent=Math.abs(z%8)<1.5;
       const t=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.08,1.9),isVent?ventMat:tileMat);
-      t.position.set(x,0.55,z); t.receiveShadow=true; scene.add(t);
+      t.position.set(x,0.55,z); t.receiveShadow=true; floorGroup.add(t);
     }
   }
   // Walls (transparent)
-  const wm=new THREE.MeshStandardMaterial({color:0x2a3a5c,transparent:true,opacity:0.04,side:THREE.DoubleSide});
+  const wm=new THREE.MeshStandardMaterial({color:0xbfb9b0,transparent:true,opacity:0.04,side:THREE.DoubleSide});
   [[-ROOM_W/2,0],[ROOM_W/2,0]].forEach(([x])=>{
     const w=new THREE.Mesh(new THREE.BoxGeometry(0.15,ROOM_H,ROOM_D),wm);
-    w.position.set(x,ROOM_H/2,0); scene.add(w);
+    w.position.set(x,ROOM_H/2,0); roomGroup.add(w);
   });
   [[0,-ROOM_D/2],[0,ROOM_D/2]].forEach(([_,z])=>{
     const w=new THREE.Mesh(new THREE.BoxGeometry(ROOM_W,ROOM_H,0.15),wm);
-    w.position.set(0,ROOM_H/2,z); scene.add(w);
+    w.position.set(0,ROOM_H/2,z); roomGroup.add(w);
   });
   // Ceiling frame
   const edges=new THREE.EdgesGeometry(new THREE.BoxGeometry(ROOM_W,ROOM_H,ROOM_D));
-  const frame=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({color:0x38bdf8,transparent:true,opacity:0.35}));
-  frame.position.y=ROOM_H/2; scene.add(frame);
+  const frame=new THREE.LineSegments(edges,new THREE.LineBasicMaterial({color:0x8a8378,transparent:true,opacity:0.35}));
+  frame.position.y=ROOM_H/2; roomGroup.add(frame);
 }
 
 /* ════════ CAD GRID OVERLAY (feature 6) ════════ */
 function buildCADGrid(){
   cadGridGroup=new THREE.Group(); cadGridGroup.name='cadGrid'; scene.add(cadGridGroup);
   // Grid lines every 5ft (≈1.5m) matching CAD
-  const gridMat=new THREE.LineBasicMaterial({color:0x38bdf8,transparent:true,opacity:0.12});
+  const gridMat=new THREE.LineBasicMaterial({color:0x8a8378,transparent:true,opacity:0.10});
   const step=2.5;
   for(let x=-ROOM_W/2;x<=ROOM_W/2;x+=step){
     const pts=[new THREE.Vector3(x,0.02,-ROOM_D/2),new THREE.Vector3(x,0.02,ROOM_D/2)];
@@ -561,12 +893,12 @@ function buildCADGrid(){
   // Column markers (A,B,C on Z axis; 1-5 on X axis from CAD)
   const colLabels=['A','B','C'];
   colLabels.forEach((l,i)=>{
-    const sp=makeLabel(l,'#38bdf8');
+    const sp=makeLabel(l,'#8a8378');
     sp.position.set(ROOM_W/2+2, 0.5, -ROOM_D/2+i*(ROOM_D/2));
     sp.scale.set(2,0.6,1); cadGridGroup.add(sp);
   });
   for(let i=1;i<=5;i++){
-    const sp=makeLabel(''+i,'#38bdf8');
+    const sp=makeLabel(''+i,'#8a8378');
     sp.position.set(-ROOM_W/2+(i-1)*(ROOM_W/4), 0.5, -ROOM_D/2-2);
     sp.scale.set(2,0.6,1); cadGridGroup.add(sp);
   }
@@ -575,9 +907,9 @@ function buildCADGrid(){
 /* ════════ SUB-FLOOR CABLE TRAYS (feature 5) ════════ */
 function buildSubfloor(){
   subfloorGroup=new THREE.Group(); subfloorGroup.name='subfloor'; scene.add(subfloorGroup);
-  const trayMat=new THREE.MeshStandardMaterial({color:0x06ffa5,emissive:0x06ffa5,emissiveIntensity:0.2,transparent:true,opacity:0.6,metalness:0.5,roughness:0.4});
-  const pipeMat=makePipeShader(0x38bdf8,+1);
-  const retMat=makePipeShader(0x06ffa5,-1);
+  const trayMat=new THREE.MeshStandardMaterial({color:0x8a8378,emissive:0x8a8378,emissiveIntensity:0.1,transparent:true,opacity:0.6,metalness:0.3,roughness:0.6});
+  const pipeMat=makePipeShader(0x7a9b7a,+1);
+  const retMat=makePipeShader(0x9b8a7a,-1);
   // Main horizontal cable trays (matching CAD cyan paths)
   const trays=[
     {x1:-35,x2:35,z:-12,w:3}, // north tray
@@ -628,24 +960,25 @@ function makePipeShader(baseColor,dir=1){
 
 /* ════════ BUSWAY (overhead) ════════ */
 function buildBusway(){
-  const mat=new THREE.MeshStandardMaterial({color:0x06ffa5,emissive:0x06ffa5,emissiveIntensity:0.25,metalness:0.5,roughness:0.4});
+  buswayGroup=new THREE.Group(); buswayGroup.name='busway'; scene.add(buswayGroup);
+  const mat=new THREE.MeshStandardMaterial({color:0x8a8378,emissive:0x8a8378,emissiveIntensity:0.12,metalness:0.3,roughness:0.6});
   // Main bus runs along the full length at y=ROOM_H-1
   const bus=new THREE.Mesh(new THREE.BoxGeometry(ROOM_W-4,0.5,1.2),mat);
-  bus.position.set(0,ROOM_H-1.5,0); scene.add(bus);
+  bus.position.set(0,ROOM_H-1.5,0); buswayGroup.add(bus);
   // Tap-offs to each row
   for(let row=1;row<=8;row++){
     const x=-32+(row-1)*ROW_SPACING;
     const tap=new THREE.Mesh(new THREE.BoxGeometry(0.3,1.5,0.3),mat);
-    tap.position.set(x,ROOM_H-2.5,0); scene.add(tap);
+    tap.position.set(x,ROOM_H-2.5,0); buswayGroup.add(tap);
   }
   // Label
-  const lab=makeLabel('BUSWAY 400A','#06ffa5');
-  lab.position.set(0,ROOM_H-0.5,0); lab.scale.set(5,1,1); scene.add(lab);
+  const lab=makeLabel('BUSWAY 400A','#8a8378');
+  lab.position.set(0,ROOM_H-0.5,0); lab.scale.set(5,1,1); buswayGroup.add(lab);
 }
 
 /* ════════ AC UNITS (perimeter, feature 1 detail) ════════ */
 function buildACUnits(){
-  const mat=new THREE.MeshStandardMaterial({color:0x06ffa5,emissive:0x06ffa5,emissiveIntensity:0.2,metalness:0.5,roughness:0.5});
+  const mat=new THREE.MeshStandardMaterial({color:0x9b9589,emissive:0x9b9589,emissiveIntensity:0.1,metalness:0.3,roughness:0.6});
   const positions=[
     {x:-38,z:-18,id:'AC-7'},{x:-38,z:-6,id:'AC-8'},  // left wall
     {x:-20,z:-22,id:'AC-6'},{x:-5,z:-22,id:'AC-5'},{x:10,z:-22,id:'AC-4'},{x:25,z:-22,id:'AC-3'}, // top wall
@@ -659,11 +992,11 @@ function buildACUnits(){
     // Fan grille (circles)
     for(let fy=1;fy<5;fy+=1.5){
       const ring=new THREE.Mesh(new THREE.RingGeometry(0.5,0.7,24),
-        new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
+        new THREE.MeshBasicMaterial({color:0x7a9b7a,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
       ring.position.set(0,fy,1.55); g.add(ring);
     }
     // Label
-    const lab=makeLabel(p.id,'#06ffa5');
+    const lab=makeLabel(p.id,'#7a9b7a');
     lab.position.set(0,5.8,0); lab.scale.set(2.5,0.7,1); g.add(lab);
     g.position.set(p.x,0,p.z);
     g.userData={kind:'AC',id:p.id};
@@ -674,7 +1007,7 @@ function buildACUnits(){
 /* ════════ PDUs (feature 4) ════════ */
 let pduPositions=[];
 function buildPDUs(){
-  const mat=new THREE.MeshStandardMaterial({color:0xfbbf24,emissive:0xfbbf24,emissiveIntensity:0.2,metalness:0.5,roughness:0.4});
+  const mat=new THREE.MeshStandardMaterial({color:0xa89060,emissive:0xa89060,emissiveIntensity:0.12,metalness:0.3,roughness:0.5});
   pduPositions=[
     {x:-28,z:20,id:'PDU-1',rows:[1,2]},{x:-12,z:20,id:'PDU-2',rows:[3,4]},
     {x:4,z:20,id:'PDU-3',rows:[5,6]},{x:20,z:20,id:'PDU-4',rows:[7,8]},
@@ -682,7 +1015,7 @@ function buildPDUs(){
   pduPositions.forEach(p=>{
     const body=new THREE.Mesh(new THREE.BoxGeometry(2,5,1.5),mat);
     body.position.set(p.x,2.5,p.z); body.castShadow=true; scene.add(body);
-    const lab=makeLabel(p.id,'#fbbf24');
+    const lab=makeLabel(p.id,'#a89060');
     lab.position.set(p.x,5.8,p.z); lab.scale.set(2.5,0.7,1); scene.add(lab);
   });
 }
@@ -694,7 +1027,7 @@ function buildAisles(){
     const x1=-32+(row-1)*ROW_SPACING;
     const x2=-32+row*ROW_SPACING;
     const cold=new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(x2-x1),ROOM_D-10),
-      new THREE.MeshBasicMaterial({color:0x06ffa5,transparent:true,opacity:0.12}));
+      new THREE.MeshBasicMaterial({color:0x7a9b7a,transparent:true,opacity:0.08}));
     cold.rotation.x=-Math.PI/2; cold.position.set((x1+x2)/2,0.58,0); scene.add(cold);
   }
 }
@@ -713,7 +1046,7 @@ function buildAirflow(){
   ];
   dirs.forEach(({p,d})=>{
     const dir=new THREE.Vector3(...d).normalize();
-    const arr=new THREE.ArrowHelper(dir,new THREE.Vector3(...p),3,d[1]>0.5?0xff5b6f:0x22d3ee,0.8,0.4);
+    const arr=new THREE.ArrowHelper(dir,new THREE.Vector3(...p),3,d[1]>0.5?0x9b6a5a:0x7a9b7a,0.8,0.4);
     airflowGroup.add(arr);
   });
   // Flow particles
@@ -726,7 +1059,7 @@ function buildAirflow(){
     pos[i*3+2]=(Math.random()-0.5)*ROOM_D*0.8;
   }
   geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0x22d3ee,size:0.1,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false}));
+  const pts=new THREE.Points(geo,new THREE.PointsMaterial({color:0x7a9b7a,size:0.1,transparent:true,opacity:0.4,blending:THREE.AdditiveBlending,depthWrite:false}));
   airflowGroup.add(pts);
   airflowGroup.userData.flowPts={pos,geo};
 }
@@ -734,10 +1067,10 @@ function buildAirflow(){
 /* ════════ BUILD RACKS + DEVICES (features 1,2) ════════ */
 function buildRacks(devices){
   // Clear old
-  Object.values(rackMeshes).forEach(g=>scene.remove(g));
+  Object.values(rackMeshes).forEach(g=>disposeObject3D(g));
   rackMeshes={}; deviceMeshes=[];
-  cableMeshes.forEach(m=>scene.remove(m)); cableMeshes=[];
-  pduCables.forEach(m=>scene.remove(m)); pduCables=[];
+  cableMeshes.forEach(m=>disposeObject3D(m)); cableMeshes=[];
+  pduCables.forEach(m=>disposeObject3D(m)); pduCables=[];
   if(!devices||!devices.length) return;
 
   // Group devices by rack
@@ -750,9 +1083,9 @@ function buildRacks(devices){
   });
 
   // Rack materials
-  const frameMat=new THREE.MeshStandardMaterial({color:0x1a2a40,metalness:0.7,roughness:0.35});
-  const glassMat=new THREE.MeshStandardMaterial({color:0x4488cc,transparent:true,opacity:0.12,side:THREE.DoubleSide});
-  const railMat=new THREE.MeshStandardMaterial({color:0x333f55,metalness:0.8,roughness:0.3});
+  const frameMat=new THREE.MeshStandardMaterial({color:0x4a4640,metalness:0.4,roughness:0.55});
+  const glassMat=new THREE.MeshStandardMaterial({color:0xa8a298,transparent:true,opacity:0.10,side:THREE.DoubleSide});
+  const railMat=new THREE.MeshStandardMaterial({color:0x6b6560,metalness:0.5,roughness:0.45});
 
   Object.entries(byRack).forEach(([rk, devs])=>{
     const row=parseInt(rk[0]); const col=rk[1];
@@ -793,12 +1126,12 @@ function buildRacks(devices){
       const uHeight=isGPU?0.6:isStorage?0.5:0.28;
       const yOff=0.7+i*(RACK_H/devs.length);
       const t=Math.max(0,Math.min(1,((d.intake_temp_c||22)-20)/15));
-      const color=new THREE.Color().setHSL((1-t)*0.55,0.8,0.45);
+      const color=new THREE.Color().setHSL((1-t)*0.28+0.08,0.25,0.45);
 
       // Server body
       const body=new THREE.Mesh(
         new THREE.BoxGeometry(RACK_W-0.2, uHeight, RACK_D-0.2),
-        new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:0.3,metalness:0.5,roughness:0.4})
+        new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:0.15,metalness:0.3,roughness:0.6})
       );
       body.position.set(0,yOff,0);
       body.userData={kind:'SERVER',id:d.device_id,device:d,
@@ -828,50 +1161,50 @@ function buildRacks(devices){
       }
       // Status LED
       const led=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8),
-        new THREE.MeshBasicMaterial({color:d.healthy?0x06ffa5:0xf87171}));
+        new THREE.MeshBasicMaterial({color:d.healthy?0x7a9b7a:0x9b5a4a}));
       led.position.set(RACK_W/2-0.15, yOff+uHeight/2-0.05, RACK_D/2+0.01); g.add(led);
       // PSU dual indicators
       if(i%2===0){
         [-0.3,0.3].forEach(ox=>{
           const psu=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6),
-            new THREE.MeshBasicMaterial({color:0x06ffa5}));
+            new THREE.MeshBasicMaterial({color:0x7a9b7a}));
           psu.position.set(ox,yOff,-RACK_D/2-0.01); g.add(psu);
         });
       }
     });
 
     // ═══ RACK LABEL (like "2H" in screenshot) ═══
-    const lab=makeLabel(rk,'#38bdf8');
+    const lab=makeLabel(rk,'#4a4640');
     lab.position.set(0,RACK_H+1.5,0); lab.scale.set(2.5,0.8,1); g.add(lab);
 
     // ═══ POWER BADGE (feature 2: "Actual X of 6.0 kW / Budget Y kW") ═══
     const pwBadge=makeLabel(
       `Actual: ${fmt(totalPower,1)} of 6.0 kW\nBudget: ${fmt(devs[0]?.power_cap_kw||6,1)} kW`,
-      '#e2f2ff');
+      '#4a4640');
     pwBadge.position.set(0,RACK_H+2.8,0); pwBadge.scale.set(3,1.2,1); g.add(pwBadge);
 
     // ═══ TEMP SENSORS on rack faces (feature 2) ═══
     // Front sensor (intake)
     const frontT=devs.length?devs[Math.floor(devs.length/2)].intake_temp_c:22;
-    const tCol=frontT>30?'#f87171':frontT>27?'#fbbf24':'#06ffa5';
-    const tLabel=makeLabel(`${fmt(frontT,1)}\n°F`,'#333');  // match screenshot style
+    const tCol=frontT>30?'#9b5a4a':frontT>27?'#a89060':'#7a9b7a';
+    const tLabel=makeLabel(`${fmt(frontT,1)}\n°C`,'#333');
     tLabel.position.set(-RACK_W/2-0.5,RACK_H*0.4,0); tLabel.scale.set(1.5,0.8,1);
-    tLabel.material = new THREE.SpriteMaterial({map:makeBadgeTex(fmt(frontT,1)+'°F',tCol,'#f0f0f0')});
+    tLabel.material = new THREE.SpriteMaterial({map:makeBadgeTex(fmt(frontT,1)+'°C',tCol,'#e8e4de')});
     g.add(tLabel);
     // Back sensor (exhaust, +8-12°C higher)
     const backT=frontT+8+Math.random()*4;
-    const tLabel2=new THREE.Sprite(new THREE.SpriteMaterial({map:makeBadgeTex(fmt(backT,1)+'°F',
-      backT>35?'#f87171':'#fbbf24','#f0f0f0')}));
+    const tLabel2=new THREE.Sprite(new THREE.SpriteMaterial({map:makeBadgeTex(fmt(backT,1)+'°C',
+      backT>35?'#9b5a4a':'#a89060','#e8e4de')}));
     tLabel2.position.set(RACK_W/2+0.5,RACK_H*0.6,0); tLabel2.scale.set(1.5,0.8,1); g.add(tLabel2);
     // Humidity (n/a for most)
-    const hLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeBadgeTex('n/a\n%','#999','#f0f0f0')}));
+    const hLabel=new THREE.Sprite(new THREE.SpriteMaterial({map:makeBadgeTex('n/a\n%','#8a8378','#e8e4de')}));
     hLabel.position.set(-RACK_W/2-0.5,RACK_H*0.7,0); hLabel.scale.set(1.2,0.7,1); g.add(hLabel);
 
     // ═══ Hot/cold aisle indicators ═══
     // Front face color strip (cold=blue, hot=red based on position)
     const colIdx=col.charCodeAt(0)-65;
     const isHotSide=colIdx%2===1;
-    const stripColor=isHotSide?0xcc2222:0x2266cc;
+    const stripColor=isHotSide?0x9b5a4a:0x5a7a9b;
     const strip=new THREE.Mesh(new THREE.BoxGeometry(0.06,RACK_H,RACK_D+0.2),
       new THREE.MeshBasicMaterial({color:stripColor,transparent:true,opacity:0.25}));
     strip.position.set(isHotSide?RACK_W/2+0.06:-RACK_W/2-0.06,RACK_H/2+0.6,0); g.add(strip);
@@ -888,8 +1221,8 @@ function buildRacks(devices){
 
 /* ════════ POWER CABLES (feature 3) ════════ */
 function buildPowerCables(byRack){
-  cableMeshes.forEach(m=>scene.remove(m)); cableMeshes=[];
-  const cableColors=[0x00cc44, 0xcc0000, 0x000000, 0xff8800]; // green, red, black, orange (like screenshots)
+  cableMeshes.forEach(m=>disposeObject3D(m)); cableMeshes=[];
+  const cableColors=[0x7a9b7a, 0x9b5a4a, 0x4a4640, 0xa89060]; // muted koke, shu, sumi, kitsune
   Object.keys(byRack).forEach((rk,i)=>{
     const row=parseInt(rk[0]),col=rk[1];
     if(isNaN(row)) return;
@@ -913,15 +1246,15 @@ function buildPowerCables(byRack){
       cable_length_m: curve.getLength().toFixed(2)};
     scene.add(tube); cableMeshes.push(tube);
     // Connection endpoint sphere
-    const ep=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshBasicMaterial({color:0x06ffa5}));
+    const ep=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshBasicMaterial({color:0x7a9b7a}));
     ep.position.set(x,rackTop+0.1,z); scene.add(ep); cableMeshes.push(ep);
   });
 }
 
 /* ════════ PDU → RACK WIRING (feature 4) ════════ */
 function buildPDUWiring(byRack){
-  pduCables.forEach(m=>scene.remove(m)); pduCables=[];
-  const wireMat=new THREE.MeshStandardMaterial({color:0xff8800,metalness:0.4,roughness:0.5});
+  pduCables.forEach(m=>disposeObject3D(m)); pduCables=[];
+  const wireMat=new THREE.MeshStandardMaterial({color:0xa89060,metalness:0.3,roughness:0.55});
   pduPositions.forEach(pdu=>{
     pdu.rows.forEach(rowNum=>{
       COLS.forEach(col=>{
@@ -958,10 +1291,10 @@ function buildHeatField(){
   const mat=new THREE.ShaderMaterial({uniforms,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     vertexShader:`varying vec3 vW;void main(){vW=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
     fragmentShader:`uniform float uTime;uniform int uCount;uniform vec3 uPoints[${MAX_SENSORS}];uniform float uValues[${MAX_SENSORS}];uniform float uMinT,uMaxT;varying vec3 vW;
-      vec3 ramp(float t){vec3 c0=vec3(0.055,0.647,0.914);vec3 c1=vec3(0.133,0.773,0.369);vec3 c2=vec3(0.984,0.749,0.141);vec3 c3=vec3(0.937,0.267,0.267);
+      vec3 ramp(float t){vec3 c0=vec3(0.47,0.60,0.47);vec3 c1=vec3(0.65,0.62,0.55);vec3 c2=vec3(0.66,0.56,0.38);vec3 c3=vec3(0.61,0.35,0.29);
         if(t<0.333)return mix(c0,c1,smoothstep(0.0,0.333,t));if(t<0.666)return mix(c1,c2,smoothstep(0.333,0.666,t));return mix(c2,c3,smoothstep(0.666,1.0,t));}
       void main(){if(uCount<=0)discard;float num=0.0,den=0.0;for(int i=0;i<${MAX_SENSORS};i++){if(i>=uCount)break;float d=max(0.5,distance(vW.xz,uPoints[i].xz));float w=1.0/(d*d);num+=uValues[i]*w;den+=w;}
-        float t=num/max(den,1e-4);float k=clamp((t-uMinT)/(uMaxT-uMinT),0.0,1.0);vec3 col=ramp(k);float pulse=0.35+0.25*sin(uTime*1.2+vW.x*0.1);gl_FragColor=vec4(col,0.4*pulse);}`
+        float t=num/max(den,1e-4);float k=clamp((t-uMinT)/(uMaxT-uMinT),0.0,1.0);vec3 col=ramp(k);float pulse=0.25+0.15*sin(uTime*1.0+vW.x*0.1);gl_FragColor=vec4(col,0.35*pulse);}`
   });
   const plane=new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W-4,ROOM_D-4,1,1),mat);
   plane.rotation.x=-Math.PI/2; plane.position.y=0.62;
@@ -970,7 +1303,7 @@ function buildHeatField(){
 }
 function updateSensorField(fieldData){
   buildHeatField();
-  sensorSprites.forEach(s=>scene.remove(s)); sensorSprites=[];
+  sensorSprites.forEach(s=>disposeObject3D(s)); sensorSprites=[];
   if(!fieldData||!fieldData.sensors) return;
   const th=fieldData.sensors.filter(s=>s.kind==='lora_th'&&s.value!=null&&s.coord);
   const n=Math.min(MAX_SENSORS,th.length);
@@ -988,7 +1321,7 @@ function updateSensorField(fieldData){
     scene.add(sph); sensorSprites.push(sph);
     if(s.classification==='hotspot'){
       const halo=new THREE.Mesh(new THREE.RingGeometry(0.35,0.55,20),
-        new THREE.MeshBasicMaterial({color:0xff5b6f,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
+        new THREE.MeshBasicMaterial({color:0x9b5a4a,transparent:true,opacity:0.4,side:THREE.DoubleSide}));
       halo.rotation.x=-Math.PI/2; halo.position.set(s.coord.x,0.65,s.coord.z);
       halo.userData={pulse:true}; scene.add(halo); sensorSprites.push(halo);
     }
@@ -996,9 +1329,9 @@ function updateSensorField(fieldData){
 }
 function tempColor(t){
   const k=Math.max(0,Math.min(1,(t-18)/(40-18)));
-  if(k<0.333) return new THREE.Color().lerpColors(new THREE.Color(0x0ea5e9),new THREE.Color(0x22c55e),k/0.333);
-  if(k<0.666) return new THREE.Color().lerpColors(new THREE.Color(0x22c55e),new THREE.Color(0xfbbf24),(k-0.333)/0.333);
-  return new THREE.Color().lerpColors(new THREE.Color(0xfbbf24),new THREE.Color(0xef4444),(k-0.666)/0.334);
+  if(k<0.333) return new THREE.Color().lerpColors(new THREE.Color(0x7a9b7a),new THREE.Color(0x8a8378),k/0.333);
+  if(k<0.666) return new THREE.Color().lerpColors(new THREE.Color(0x8a8378),new THREE.Color(0xa89060),(k-0.333)/0.333);
+  return new THREE.Color().lerpColors(new THREE.Color(0xa89060),new THREE.Color(0x9b5a4a),(k-0.666)/0.334);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1014,16 +1347,16 @@ let smTierObjects=[];       // tier detail objects (pyramid view)
 let smOrigPositions=new Map(); // original Y positions for all scene children
 
 const LAYER_CFG={
-  equipment: {y:0, explodeY:-2,  color:0x22c4ff, label:'L1 · Equipment (Micro)',
+  equipment: {y:0, explodeY:-2,  color:0x4a4640, label:'L1 · Equipment (Micro)',
     desc:'Tracking server-level power draw and localized CPU/GPU thermal output.',
     tiers:['LoRa Networks · 温湿度遥测','MC-RFID · 资产毫秒追踪','Channel Hub · 多模态AI汇聚']},
-  facility:  {y:0, explodeY:18,  color:0xa78bfa, label:'L2 · Facility (Macro)',
+  facility:  {y:0, explodeY:18,  color:0x8a8378, label:'L2 · Facility (Macro)',
     desc:'Orchestrating chillers, cooling towers, and power distribution units.',
     tiers:['LoRa Networks · CRAC/冷水机遥测','MC-RFID · PDU/母线资产','Channel Hub · 设施闭环控制']},
-  environment:{y:0,explodeY:38,  color:0x22d3ee, label:'L3 · Environment (Context)',
+  environment:{y:0,explodeY:38,  color:0x7a9b7a, label:'L3 · Environment (Context)',
     desc:'Ingesting ambient weather, humidity, and external thermodynamic variables.',
     tiers:['LoRa Networks · 64节点温湿场','MC-RFID · 气流路径追踪','Channel Hub · 热岛AI检测']},
-  process:   {y:0, explodeY:58,  color:0xfbbf24, label:'L4 · Process (Operations)',
+  process:   {y:0, explodeY:58,  color:0xa89060, label:'L4 · Process (Operations)',
     desc:'Dynamically routing workload schedules and maintenance windows based on thermal states.',
     tiers:['LoRa Networks · 闭环反馈感知','MC-RFID · 工单/人员定位','Channel Hub · Darwin棘轮决策']},
 };
@@ -1071,6 +1404,11 @@ function toggleExplodedView(){
   // Show/hide layer selector buttons
   $('explode-ctrls').style.display=smExploded?'flex':'none';
 
+  // Show/hide explode slider + layer cards
+  const slWrap=$('sm-explode-slider-wrap'); if(slWrap) slWrap.style.display=smExploded?'block':'none';
+  smUpdateLayerCards();
+  if(smExploded){ smBuildHealthMatrix(); smBuildJobFlow(); }
+
   if(smExploded){
     // Save originals & reparent scene objects into layer groups
     smOrigPositions.clear();
@@ -1097,6 +1435,9 @@ function toggleExplodedView(){
     smFocusLayer=null;
     _smClearTierDetail();
     _smClearLabels();
+    // Reset SM layer visibility state
+    for(const k in SM_LAYERS){ SM_LAYERS[k]=true; if(smLayerGroups[k]) smLayerGroups[k].visible=true; }
+    document.querySelectorAll('.sm-lyr-btn').forEach(b=>{b.classList.remove('off');b.classList.add('active');});
     _smAnimateLayers(false);
   }
 }
@@ -1131,6 +1472,8 @@ function _smAnimateLayers(explode){
           obj.position.y=saved.y;
         });
         smOrigPositions.clear();
+        // Sync regular layer button states with actual visibility
+        _syncLayerButtonStates();
       }
     }
   }
@@ -1196,7 +1539,7 @@ function _smClearLabels(){
 /* ═══ Inter-layer data flow connectors ═══ */
 function _smBuildConnectors(){
   _smClearConnectors();
-  const mat=new THREE.LineDashedMaterial({color:0xffd700,transparent:true,opacity:0.5,dashSize:1.5,gapSize:1});
+  const mat=new THREE.LineDashedMaterial({color:0x8a8378,transparent:true,opacity:0.4,dashSize:1.5,gapSize:1});
   for(let i=0;i<LAYER_ORDER.length-1;i++){
     const ya=LAYER_CFG[LAYER_ORDER[i]].explodeY+8;
     const yb=LAYER_CFG[LAYER_ORDER[i+1]].explodeY-1;
@@ -1263,16 +1606,16 @@ function _smBuildTierDetail(layerKey){
   const cx=0,cz=0;
 
   // Tier 3 (bottom) - LoRa Networks - wide base
-  _smAddTierBox(cx,baseY+1,cz, 28,1.5,20, 0x22d3ee,0.3, cfg.tiers[0], layerKey+'-t3');
+  _smAddTierBox(cx,baseY+1,cz, 28,1.5,20, 0x7a9b7a,0.3, cfg.tiers[0], layerKey+'-t3');
   // LoRa sensor dots
   for(let x=-12;x<=12;x+=4) for(let z=-8;z<=8;z+=4){
     const dot=new THREE.Mesh(new THREE.SphereGeometry(0.25,8,8),
-      new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:0.7}));
+      new THREE.MeshBasicMaterial({color:0x7a9b7a,transparent:true,opacity:0.6}));
     dot.position.set(cx+x,baseY+2.5,cz+z);
     scene.add(dot); smTierObjects.push(dot);
     // Signal rings
     const ring=new THREE.Mesh(new THREE.RingGeometry(0.4,0.6,16),
-      new THREE.MeshBasicMaterial({color:0x22d3ee,transparent:true,opacity:0.3,side:THREE.DoubleSide}));
+      new THREE.MeshBasicMaterial({color:0x7a9b7a,transparent:true,opacity:0.25,side:THREE.DoubleSide}));
     ring.position.copy(dot.position); ring.position.y+=0.1;
     ring.rotation.x=-Math.PI/2;
     ring.userData._pulse=true;
@@ -1280,18 +1623,18 @@ function _smBuildTierDetail(layerKey){
   }
 
   // Tier 2 (middle) - MC-RFID - medium
-  _smAddTierBox(cx,baseY+5,cz, 18,1.5,14, 0xfbbf24,0.3, cfg.tiers[1], layerKey+'-t2');
+  _smAddTierBox(cx,baseY+5,cz, 18,1.5,14, 0xa89060,0.3, cfg.tiers[1], layerKey+'-t2');
   // RFID readers
   [-6,0,6].forEach(x=>[-4,4].forEach(z=>{
     const rd=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.4,0.8),
-      new THREE.MeshStandardMaterial({color:0xfbbf24,emissive:0xfbbf24,emissiveIntensity:0.3,metalness:0.5}));
+      new THREE.MeshStandardMaterial({color:0xa89060,emissive:0xa89060,emissiveIntensity:0.15,metalness:0.3}));
     rd.position.set(cx+x,baseY+6.5,cz+z); scene.add(rd); smTierObjects.push(rd);
   }));
 
   // Tier 1 (apex) - Channel Hub - small cube
-  _smAddTierBox(cx,baseY+9,cz, 10,2,8, 0xff6b35,0.35, cfg.tiers[2], layerKey+'-t1');
-  // Hub core (glowing cube)
-  const hubMat=new THREE.MeshStandardMaterial({color:0xff6b35,emissive:0xff6b35,emissiveIntensity:0.6,metalness:0.7,roughness:0.2});
+  _smAddTierBox(cx,baseY+9,cz, 10,2,8, 0x6b5a4a,0.3, cfg.tiers[2], layerKey+'-t1');
+  // Hub core
+  const hubMat=new THREE.MeshStandardMaterial({color:0x6b5a4a,emissive:0x6b5a4a,emissiveIntensity:0.3,metalness:0.4,roughness:0.4});
   const hub=new THREE.Mesh(new THREE.BoxGeometry(2.5,2.5,2.5),hubMat);
   hub.position.set(cx,baseY+10.5,cz);
   hub.userData._hubSpin=true;
@@ -1299,18 +1642,18 @@ function _smBuildTierDetail(layerKey){
   // Hub wireframe
   const hubWire=new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.BoxGeometry(3,3,3)),
-    new THREE.LineBasicMaterial({color:0xff6b35,transparent:true,opacity:0.6}));
+    new THREE.LineBasicMaterial({color:0x6b5a4a,transparent:true,opacity:0.5}));
   hubWire.position.copy(hub.position);
   hubWire.userData._hubSpin=true;
   scene.add(hubWire); smTierObjects.push(hubWire);
 
   // Data flow arrows between tiers
-  const arrMat=new THREE.MeshBasicMaterial({color:0xffd700,transparent:true,opacity:0.7});
+  const arrMat=new THREE.MeshBasicMaterial({color:0x8a8378,transparent:true,opacity:0.5});
   [{y1:baseY+2.8,y2:baseY+4.8},{y1:baseY+6.8,y2:baseY+8.8}].forEach(({y1,y2})=>{
     [-5,0,5].forEach(x=>{
       const dir=new THREE.Vector3(0,1,0);
       const origin=new THREE.Vector3(cx+x,(y1+y2)/2,cz);
-      const arr=new THREE.ArrowHelper(dir,origin,(y2-y1)*0.6,0xffd700,0.6,0.4);
+      const arr=new THREE.ArrowHelper(dir,origin,(y2-y1)*0.6,0x8a8378,0.6,0.4);
       scene.add(arr); smTierObjects.push(arr);
     });
   });
@@ -1359,10 +1702,10 @@ function _smShowLayerHUD(layerKey){
   $('lh-desc').textContent=cfg.desc;
   $('lh-tiers').innerHTML=cfg.tiers.map((t,i)=>{
     const tierNames=['Tier 3 · LoRa','Tier 2 · MC-RFID','Tier 1 · Channel Hub'];
-    const tierCols=['#22d3ee','#fbbf24','#ff6b35'];
-    return `<div style="padding:6px 8px;border:1px solid ${tierCols[i]};border-radius:6px;background:rgba(0,0,0,0.3)">
-      <div style="color:${tierCols[i]};font-weight:700;font-size:10px">${tierNames[i]}</div>
-      <div style="color:var(--accent-2);margin-top:2px">${t}</div></div>`;
+    const tierCols=['#7a9b7a','#a89060','#6b5a4a'];
+    return `<div style="padding:6px 8px;border:1px solid ${tierCols[i]};background:oklch(0.91 0.004 110)">
+      <div style="color:${tierCols[i]};font-weight:600;font-size:10px;font-family:'JetBrains Mono',monospace">${tierNames[i]}</div>
+      <div style="color:var(--text);margin-top:2px">${t}</div></div>`;
   }).join('');
   hud.style.display='block';
   hud.style.borderColor=cs;
@@ -1380,9 +1723,226 @@ function updateSensoryMesh(dt,t){
   });
 }
 
-/* ═══ Live data → update (minimal, PUE only) ═══ */
+/* ════════════════════════════════════════════════════════════════
+   SENSORY MESH LAYER CONTROLS — 与 datacenter-sensory-mesh.html 同步
+   toggleLayer / soloLayer / explodeToggle / slider / layer cards / health matrix / job flow
+   ════════════════════════════════════════════════════════════════ */
+const SM_LAYERS = {equipment:true, facility:true, environment:true, process:true};
+
+function smToggleLayer(name){
+  if(!smExploded) return;
+  SM_LAYERS[name] = !SM_LAYERS[name];
+  if(smLayerGroups[name]) smLayerGroups[name].visible = SM_LAYERS[name];
+  const btn = document.querySelector(`.sm-lyr-btn[data-sm-layer="${name}"]`);
+  if(btn) btn.classList.toggle('off', !SM_LAYERS[name]);
+  if(btn) btn.classList.toggle('active', SM_LAYERS[name]);
+}
+window.smToggleLayer = smToggleLayer;
+
+function smShowAll(){
+  if(!smExploded) return;
+  for(const k in SM_LAYERS){ SM_LAYERS[k]=true; if(smLayerGroups[k]) smLayerGroups[k].visible=true; }
+  document.querySelectorAll('.sm-lyr-btn[data-sm-layer]').forEach(b=>{b.classList.remove('off');b.classList.add('active');});
+  smFocusLayer=null;_smClearTierDetail();_smRestoreLayerOpacity();
+}
+window.smShowAll = smShowAll;
+
+function smSoloLayer(name){
+  if(!smExploded){
+    // Auto-enter exploded view first
+    toggleExplodedView();
+    setTimeout(()=>smSoloLayer(name), 900);
+    return;
+  }
+  for(const k in SM_LAYERS){
+    SM_LAYERS[k]=(k===name);
+    if(smLayerGroups[k]) smLayerGroups[k].visible = SM_LAYERS[k];
+  }
+  document.querySelectorAll('.sm-lyr-btn[data-sm-layer]').forEach(b=>{
+    const on = b.dataset.smLayer===name;
+    b.classList.toggle('off', !on);
+    b.classList.toggle('active', on);
+  });
+  focusLayer(name);
+}
+window.smSoloLayer = smSoloLayer;
+
+function smExplodeToggle(){
+  if(!smExploded){
+    toggleExplodedView();
+  }
+  const wrap = $('sm-explode-slider-wrap');
+  if(wrap) wrap.style.display = smExploded ? 'block' : 'none';
+  const btn = $('btn-sm-explode');
+  if(btn) btn.classList.toggle('active', smExploded);
+}
+window.smExplodeToggle = smExplodeToggle;
+
+// Explode slider
+(function(){
+  const slider = $('sm-explode-slider');
+  if(!slider) return;
+  slider.addEventListener('input', e=>{
+    if(!smExploded) return;
+    const pct = parseFloat(e.target.value);
+    const spread = pct / 100;
+    LAYER_ORDER.forEach(k=>{
+      if(smLayerGroups[k]) smLayerGroups[k].position.y = LAYER_CFG[k].explodeY * spread;
+    });
+    const valEl = $('sm-explode-val');
+    if(valEl) valEl.textContent = Math.round(pct) + '%';
+  });
+})();
+
+/* ═══ Show/hide layer cards panel when entering/exiting mesh mode ═══ */
+const _origToggleExplodedView = toggleExplodedView;
+
+/* ═══ Sensory Mesh Layer Cards Live Data ═══ */
+function smUpdateLayerCards(){
+  const cards = $('sm-layer-cards');
+  if(!cards) return;
+  cards.style.display = smExploded ? 'block' : 'none';
+
+  // Count devices/racks in equipment layer
+  let devCnt=0, devPw=0;
+  if(typeof devices!=='undefined') devices.forEach(d=>{devCnt++;devPw+=d.power||0;});
+  const devCntEl=$('smc-dev-cnt'); if(devCntEl) devCntEl.textContent=devCnt;
+  const devPwEl=$('smc-dev-pw'); if(devPwEl) devPwEl.textContent=(devPw/1000).toFixed(1);
+
+  // Facility: count racks + CDUs (AC units)
+  let rackCnt=Object.keys(rackMeshes||{}).length;
+  const facCntEl=$('smc-fac-cnt'); if(facCntEl) facCntEl.textContent=rackCnt;
+  const facCduEl=$('smc-fac-cdu'); if(facCduEl) facCduEl.textContent=typeof acUnits!=='undefined'?acUnits.length:4;
+
+  // Environment: LoRa sensors
+  let sensorCnt=typeof sensorSprites!=='undefined'?sensorSprites.length:0;
+  const envCntEl=$('smc-env-cnt'); if(envCntEl) envCntEl.textContent=sensorCnt;
+  let avgTemp=0;
+  if(typeof sensorData!=='undefined'&&sensorData.length){
+    avgTemp=(sensorData.reduce((s,d)=>s+(d.temp||22),0)/sensorData.length).toFixed(1);
+  }
+  const envTempEl=$('smc-env-temp'); if(envTempEl) envTempEl.textContent=avgTemp||'--';
+
+  // Process: simulated job data
+  const procJobsEl=$('smc-proc-jobs'); if(procJobsEl) procJobsEl.textContent=Math.floor(20+Math.random()*30);
+  const procUtilEl=$('smc-proc-util'); if(procUtilEl) procUtilEl.textContent=Math.floor(55+Math.random()*35);
+}
+
+/* ═══ Health Matrix — 8x4 grid of rack health ═══ */
+function smBuildHealthMatrix(){
+  const el=$('sm-health-matrix'); if(!el) return;
+  el.innerHTML='';
+  const rows=4, cols=8;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const idx=r*cols+c;
+    const health=Math.random();
+    let color;
+    if(health>0.85) color='var(--koke)';       // healthy
+    else if(health>0.6) color='var(--kitsune)'; // warning
+    else color='var(--shu)';                    // critical
+    const cell=document.createElement('div');
+    cell.style.cssText=`width:100%;aspect-ratio:1;background:${color};opacity:${0.4+health*0.6};cursor:pointer;transition:opacity 0.2s`;
+    cell.title=`Rack ${idx+1}: ${(health*100).toFixed(0)}%`;
+    cell.addEventListener('mouseenter',()=>cell.style.opacity='1');
+    cell.addEventListener('mouseleave',()=>cell.style.opacity=String(0.4+health*0.6));
+    el.appendChild(cell);
+  }
+}
+
+/* ═══ Job Flow Timeline — simulated GPU/CPU jobs ═══ */
+function smBuildJobFlow(){
+  const el=$('sm-job-flow'); if(!el) return;
+  el.innerHTML='';
+  const jobs=[
+    {id:'JOB-001',task:'GPU Training Batch',node:'Node-12',status:'running',pct:72},
+    {id:'JOB-002',task:'CPU Inference',node:'Node-05',status:'running',pct:45},
+    {id:'JOB-003',task:'Data Pipeline ETL',node:'Node-08',status:'queued',pct:0},
+    {id:'JOB-004',task:'Model Validation',node:'Node-03',status:'running',pct:91},
+    {id:'JOB-005',task:'Backup Snapshot',node:'Node-15',status:'completed',pct:100},
+    {id:'JOB-006',task:'LoRa Telemetry Sync',node:'Node-01',status:'running',pct:33},
+  ];
+  jobs.forEach(j=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:60px 1fr 50px;gap:6px;align-items:center;font-size:9px;font-family:"JetBrains Mono",monospace;padding:2px 0';
+    const statusColor=j.status==='running'?'var(--koke)':j.status==='queued'?'var(--kitsune)':'var(--muted)';
+    row.innerHTML=`<span style="color:${statusColor};font-weight:600">${j.id}</span>
+      <span style="color:var(--text)">${j.task}<span style="color:var(--muted);margin-left:4px">@${j.node}</span></span>
+      <span style="text-align:right;color:var(--sumi)">${j.pct}%</span>`;
+    el.appendChild(row);
+  });
+}
+
+/* ═══ Live data → update anomaly panel + sensory mesh ═══ */
 function updateSensoryMeshData(status,anomalyRes){
-  // Could update layer HUD with live data in future
+  renderAnomalyPanel(anomalyRes);
+}
+
+function renderAnomalyPanel(anomRes){
+  const anomalies=(anomRes&&anomRes.anomalies)||[];
+  const bySev=anomRes&&anomRes.by_severity||{};
+  $('anom-crit').textContent=bySev.critical||0;
+  $('anom-high').textContent=bySev.high||0;
+  $('anom-med').textContent=bySev.medium||0;
+  $('anom-low').textContent=bySev.low||0;
+  const total=anomRes&&anomRes.total||0;
+  const badge=$('anom-badge');
+  if(total===0){badge.textContent='ALL CLEAR';badge.style.color='var(--koke)';}
+  else{badge.textContent=total+' ANOMALIES';badge.style.color=(bySev.critical||bySev.high)?'var(--shu)':'var(--kitsune)';}
+  const list=$('anom-list'); list.innerHTML='';
+  if(!anomalies.length){
+    list.innerHTML='<div style="padding:10px;color:var(--koke);text-align:center">✓ 无异常 · 系统运行正常</div>';
+    return;
+  }
+  anomalies.forEach(a=>{
+    const row=document.createElement('div');
+    row.className='anom-item';
+    const kind=a.kind||'unknown';
+    const id=a.device_id||a.sensor_id||'';
+    const sevClass=a.severity||'low';
+    row.innerHTML=`<span class="sev ${sevClass}"></span>
+      <div><span class="ak">${kindLabel(kind)}</span> <b>${escHtml(id)}</b>
+        ${a.value!=null?'<span style="color:var(--accent-2)"> '+a.value+(kind.includes('thermal')?'°C':kind.includes('overload')?'%':'')+' </span>':''}
+        ${a.z_score?'<span style="color:var(--muted)">z='+a.z_score+'</span>':''}
+        <div class="act">${escHtml(a.suggested_action||'')}</div>
+      </div>
+      <span style="font-size:9px;color:var(--muted)">${sevClass.toUpperCase()}</span>`;
+    row.onclick=()=>focusAnomaly(a);
+    list.appendChild(row);
+  });
+}
+
+function kindLabel(k){
+  const map={thermal_hotspot:'热点',device_overload:'过载',device_unhealthy:'故障',sensor_offline:'离线',pue_drift:'PUE漂移'};
+  return map[k]||k;
+}
+
+function focusAnomaly(a){
+  // Try to find device/sensor in 3D
+  const devId=a.device_id||'';
+  const sensId=a.sensor_id||'';
+  // Search racks for device
+  for(const [rk,g] of Object.entries(rackMeshes)){
+    const devs=g.userData.devices||[];
+    if(devs.some(d=>d.device_id===devId)){
+      smoothFocus(g.position,12);
+      flashObject(g);
+      showToast('🎯 定位到 '+devId+' @ rack-'+rk);
+      return;
+    }
+  }
+  // Search sensors
+  for(const spr of sensorSprites){
+    if(spr.userData&&spr.userData.id===sensId){
+      smoothFocus(spr.position,8);
+      showToast('🎯 定位到传感器 '+sensId);
+      return;
+    }
+  }
+  // PUE drift — zoom out
+  if(a.kind==='pue_drift'){
+    smoothFocus(new THREE.Vector3(0,4,0),80);
+    showToast('📈 PUE 漂移 Δ'+fmt(a.delta,3));
+  }
 }
 
 /* ═══ Mesh Node Click (for focused tier objects) ═══ */
@@ -1424,9 +1984,9 @@ function addMeasurePoint(pt){
 function makeLabel(text,color){
   const c=document.createElement('canvas'); c.width=256; c.height=96;
   const ctx=c.getContext('2d');
-  ctx.fillStyle='rgba(4,9,18,0.85)'; ctx.fillRect(0,0,256,96);
-  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.strokeRect(2,2,252,92);
-  ctx.fillStyle=color; ctx.font='bold 24px Menlo'; ctx.textAlign='center';
+  ctx.fillStyle='rgba(221,217,210,0.9)'; ctx.fillRect(0,0,256,96);
+  ctx.strokeStyle=color; ctx.lineWidth=1; ctx.strokeRect(2,2,252,92);
+  ctx.fillStyle=color; ctx.font='bold 24px "JetBrains Mono",Menlo,monospace'; ctx.textAlign='center';
   const lines=text.split('\n');
   lines.forEach((l,i)=>ctx.fillText(l,128,36+i*28));
   const tex=new THREE.CanvasTexture(c);
@@ -1435,10 +1995,10 @@ function makeLabel(text,color){
 function makeBadgeTex(text,borderColor,bgColor){
   const c=document.createElement('canvas'); c.width=128; c.height=80;
   const ctx=c.getContext('2d');
-  ctx.fillStyle=bgColor||'#f0f0f0'; ctx.strokeStyle=borderColor||'#333';
-  ctx.lineWidth=4;
-  ctx.beginPath(); ctx.roundRect(4,4,120,72,6); ctx.fill(); ctx.stroke();
-  ctx.fillStyle='#333'; ctx.font='bold 22px Menlo'; ctx.textAlign='center';
+  ctx.fillStyle=bgColor||'#e8e4de'; ctx.strokeStyle=borderColor||'#4a4640';
+  ctx.lineWidth=3;
+  ctx.beginPath(); ctx.roundRect(4,4,120,72,2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#4a4640'; ctx.font='bold 22px "JetBrains Mono",Menlo,monospace'; ctx.textAlign='center';
   const lines=text.split('\n');
   lines.forEach((l,i)=>ctx.fillText(l,64,32+i*24));
   return new THREE.CanvasTexture(c);
@@ -1503,28 +2063,43 @@ function showReadout(o){
 /* ════════ LAYER TOGGLE ════════ */
 $('layer-ctrls').addEventListener('click',e=>{
   const btn=e.target.closest('.layer-btn'); if(!btn) return;
+  // Skip SM layer buttons (handled by their own onclick)
+  if(btn.dataset.smLayer) return;
   const k=btn.dataset.layer;
+  if(!k) return; // no data-layer → handled by inline onclick (全部显示, 分层展开)
   let target=null;
-  if(k==='room') return; // always visible
-  if(k==='floor') return;
+  if(k==='room') target=roomGroup;
+  if(k==='floor') target=floorGroup;
   if(k==='pipe'||k==='subfloor') target=subfloorGroup;
-  if(k==='busway') return; // find busway meshes
+  if(k==='busway') target=buswayGroup;
   if(k==='airflow') target=airflowGroup;
-  if(k==='cadGrid'||k==='cable') target=cadGridGroup;
+  if(k==='cadGrid') target=cadGridGroup;
   if(k==='sensor') target=heatFieldMesh;
+  if(k==='rack'){ const vis=!Object.values(rackMeshes)[0]?.visible; Object.values(rackMeshes).forEach(g=>g.visible=vis); btn.classList.toggle('off',!vis); return; }
   if(k==='sensoryMesh'){ toggleExplodedView(); btn.classList.toggle('off',!smExploded); return; }
-  // toggle cable/pdu visibility
-  if(k==='cable'){ cableMeshes.forEach(m=>m.visible=!m.visible); btn.classList.toggle('off'); return; }
-  if(k==='pdu'){ pduCables.forEach(m=>m.visible=!m.visible); btn.classList.toggle('off'); return; }
+  // toggle cable/pdu visibility — works whether SM is active or not
+  if(k==='cable'){
+    const newVis = cableMeshes.length ? !cableMeshes[0].visible : true;
+    cableMeshes.forEach(m=>m.visible=newVis);
+    btn.classList.toggle('off',!newVis);
+    return;
+  }
+  if(k==='pdu'){
+    const newVis = pduCables.length ? !pduCables[0].visible : true;
+    pduCables.forEach(m=>m.visible=newVis);
+    btn.classList.toggle('off',!newVis);
+    return;
+  }
   if(target){ target.visible=!target.visible; btn.classList.toggle('off',!target.visible); }
 });
-// Exploded layer click handler
+// Exploded layer click handler (for data-explode buttons only)
 $('explode-ctrls').addEventListener('click',e=>{
+  e.stopPropagation(); // Prevent layer-ctrls from also handling this click
   const btn=e.target.closest('.layer-btn'); if(!btn) return;
   const k=btn.dataset.explode; if(!k) return;
   focusLayer(k);
   // highlight active button
-  $('explode-ctrls').querySelectorAll('.layer-btn').forEach(b=>b.classList.remove('active'));
+  $('explode-ctrls').querySelectorAll('[data-explode]').forEach(b=>b.classList.remove('active'));
   if(smFocusLayer===k) btn.classList.add('active');
 });
 
@@ -1532,16 +2107,16 @@ $('explode-ctrls').addEventListener('click',e=>{
 const MAPPING=[
   {key:'room',name:'机房外壳 ROOM',phys:'24m×15m×4.5m',swatch:'#2a3a5c'},
   {key:'floor',name:'高架地板 FLOOR',phys:'600mm 高架 · 散热孔板',swatch:'#5b7bb5'},
-  {key:'subfloor',name:'地板下 SUBFLOOR',phys:'电缆桥架 + 液冷管道',swatch:'#06ffa5'},
-  {key:'busway',name:'母线槽 BUSWAY',phys:'400A 高架母线',swatch:'#a78bfa'},
+  {key:'subfloor',name:'地板下 SUBFLOOR',phys:'电纜橋架 + 液冷管道',swatch:'#8a8378'},
+  {key:'busway',name:'母线槽 BUSWAY',phys:'400A 高架母线',swatch:'#8a8378'},
   {key:'cable',name:'配电线 CABLES',phys:'CatmullRomCurve3 布线',swatch:'#ffae00'},
-  {key:'pdu',name:'PDU 配线',phys:'PDU→机柜 分支线',swatch:'#fbbf24'},
-  {key:'rack',name:'42U 机柜 RACK',phys:'8 row × 8 col 布局',swatch:'#22c4ff'},
-  {key:'server',name:'服务器 SERVER',phys:'含GPU/Storage/Network详细建模',swatch:'#06ffa5'},
-  {key:'airflow',name:'流体矢量场 AIRFLOW',phys:'CRAC→冷通道→热通道→天花板',swatch:'#22d3ee'},
-  {key:'cadGrid',name:'CAD 格线图 GRID',phys:'与简要CAD 1:1映射',swatch:'#38bdf8'},
-  {key:'sensor',name:'LoRA 传感器 · 热场',phys:'IDW GPU Shader 插值',swatch:'#22d3ee'},
-  {key:'sensoryMesh',name:'感官织网 SENSORY MESH',phys:'4层拓扑 · Neural Wireframe + Hub Pulse',swatch:'#ffd700'},
+  {key:'pdu',name:'PDU 配线',phys:'PDU→机柜 分支线',swatch:'#a89060'},
+  {key:'rack',name:'42U 机柜 RACK',phys:'8 row × 8 col 布局',swatch:'#4a4640'},
+  {key:'server',name:'服务器 SERVER',phys:'含GPU/Storage/Network详细建模',swatch:'#6b5a4a'},
+  {key:'airflow',name:'流体矢量场 AIRFLOW',phys:'CRAC→冷通道→热通道→天花板',swatch:'#7a9b7a'},
+  {key:'cadGrid',name:'CAD 格线图 GRID',phys:'与簡要CAD 1:1映射',swatch:'#8a8378'},
+  {key:'sensor',name:'LoRA 传感器 · 热场',phys:'IDW GPU Shader 插值',swatch:'#7a9b7a'},
+  {key:'sensoryMesh',name:'感官织网 SENSORY MESH',phys:'4层拓扑 · Neural Wireframe + Hub Pulse',swatch:'#4a4640'},
 ];
 function renderMapping(){
   const list=$('map-list'); list.innerHTML='';
@@ -1558,11 +2133,11 @@ function renderMapping(){
 function drawFlow(it,cool,ups){
   const svg=$('flow-svg'); svg.innerHTML='';
   const stages=[
-    {n:'GRID',sub:'10kV',x:30,c:'#a78bfa'},{n:'ATS',sub:'<25ms',x:200,c:'#f87171'},
-    {n:'UPS',sub:'2N',x:370,c:'#fbbf24'},{n:'PDU',sub:'400V',x:540,c:'#fbbf24'},
-    {n:'BUSWAY',sub:'400A',x:720,c:'#a78bfa'},{n:'RACK',sub:'64柜',x:900,c:'#22c4ff'},
-    {n:'SERVER',sub:'CPU/GPU',x:1080,c:'#06ffa5'},{n:'HEAT',sub:'Q→',x:1260,c:'#ff5b6f'},
-    {n:'CRAC',sub:'8×AC',x:1440,c:'#06ffa5'},{n:'LIQUID',sub:'冷塔',x:1620,c:'#38bdf8'},
+    {n:'GRID',sub:'10kV',x:30,c:'#8a8378'},{n:'ATS',sub:'<25ms',x:200,c:'#9b5a4a'},
+    {n:'UPS',sub:'2N',x:370,c:'#a89060'},{n:'PDU',sub:'400V',x:540,c:'#a89060'},
+    {n:'BUSWAY',sub:'400A',x:720,c:'#8a8378'},{n:'RACK',sub:'64柜',x:900,c:'#4a4640'},
+    {n:'SERVER',sub:'CPU/GPU',x:1080,c:'#6b5a4a'},{n:'HEAT',sub:'Q→',x:1260,c:'#9b5a4a'},
+    {n:'CRAC',sub:'8×AC',x:1440,c:'#7a9b7a'},{n:'LIQUID',sub:'冷塔',x:1620,c:'#5a7a9b'},
   ];
   for(let i=0;i<stages.length-1;i++){
     const a=stages[i],b=stages[i+1];
@@ -1581,22 +2156,26 @@ function drawFlow(it,cool,ups){
   stages.forEach(s=>{
     const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
     r.setAttribute('x',s.x);r.setAttribute('y',110);r.setAttribute('width',60);r.setAttribute('height',60);
-    r.setAttribute('rx',6);r.setAttribute('fill','rgba(15,32,55,0.85)');
-    r.setAttribute('stroke',s.c);r.setAttribute('stroke-width','1.8');svg.appendChild(r);
+    r.setAttribute('rx',6);r.setAttribute('fill','rgba(221,217,210,0.9)');
+    r.setAttribute('stroke',s.c);r.setAttribute('stroke-width','1.2');svg.appendChild(r);
     const t=document.createElementNS('http://www.w3.org/2000/svg','text');
     t.setAttribute('x',s.x+30);t.setAttribute('y',144);t.setAttribute('text-anchor','middle');
-    t.setAttribute('fill',s.c);t.setAttribute('font-family','Menlo');t.setAttribute('font-size','12');
+    t.setAttribute('fill',s.c);t.setAttribute('font-family','JetBrains Mono,Menlo');t.setAttribute('font-size','11');
     t.setAttribute('font-weight','700');t.textContent=s.n;svg.appendChild(t);
     const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
     t2.setAttribute('x',s.x+30);t2.setAttribute('y',162);t2.setAttribute('text-anchor','middle');
-    t2.setAttribute('fill','#6b8cae');t2.setAttribute('font-family','Menlo');t2.setAttribute('font-size','9');
+    t2.setAttribute('fill','#8a8378');t2.setAttribute('font-family','JetBrains Mono,Menlo');t2.setAttribute('font-size','9');
     t2.textContent=s.sub;svg.appendChild(t2);
   });
 }
 
 /* ════════ ANIMATE ════════ */
 function animate(){
-  requestAnimationFrame(animate);
+  rafId=requestAnimationFrame(animate);
+  const now=performance.now();
+  const minFrameMs=document.hidden?80:16;
+  if(now-lastRenderAt<minFrameMs) return;
+  lastRenderAt=now;
   controls.update();
   const dt=clock.getDelta(), t=clock.getElapsedTime();
   pipeShaders.forEach(u=>{u.uTime.value=t;});
@@ -1617,6 +2196,12 @@ function animate(){
 
 /* ════════ LIVE DATA REFRESH ════════ */
 async function refreshAll(){
+  if(refreshInFlight){
+    pendingRefresh=true;
+    return;
+  }
+  refreshInFlight=true;
+  try{
   const [status,devsRes,hub,sensRes,hiRes,anomRes]=await Promise.all([
     api('/api/v1/datacenter/status'),api('/api/v1/datacenter/devices'),
     api('/api/v1/datacenter/iot/hub'),
@@ -1671,7 +2256,7 @@ async function refreshAll(){
     c.onclick=()=>{
       const rk=d.location.replace('rack-','');
       const g=rackMeshes[rk];
-      if(g){controls.target.copy(g.position);controls.target.y=4;}
+      if(g){smoothFocus(g.position,14);flashObject(g);showToast('🎯 '+d.device_id+' @ rack-'+rk);}
     };
     dg.appendChild(c);
   });
@@ -1679,6 +2264,13 @@ async function refreshAll(){
   // Sensing layer
   updateSensorField(sensRes);
   renderSensingUI(sensRes,hiRes,status);
+  } finally {
+    refreshInFlight=false;
+    if(pendingRefresh){
+      pendingRefresh=false;
+      queueMicrotask(()=>refreshAll());
+    }
+  }
 }
 function renderSensingUI(field,hi,status){
   const stats=(field&&field.stats)||{};
@@ -1689,16 +2281,28 @@ function renderSensingUI(field,hi,status){
   const alert=(hi&&hi.alert_level)||'green';
   const aBadge=$('sens-alert');
   aBadge.textContent='ALERT · '+alert.toUpperCase();
-  aBadge.style.color=alert==='red'?'#f87171':alert==='yellow'?'#fbbf24':'#06ffa5';
+  aBadge.style.color=alert==='red'?'var(--shu)':alert==='yellow'?'var(--kitsune)':'var(--koke)';
   const sl=$('sensor-list'); sl.innerHTML='';
   (field&&field.sensors||[]).forEach(s=>{
     const cls=s.classification||'normal';
-    const col=cls==='hotspot'?'#f87171':cls==='warm'?'#fbbf24':cls==='overcool'?'#0ea5e9':'#06ffa5';
+    const col=cls==='hotspot'?'var(--shu)':cls==='warm'?'var(--kitsune)':cls==='overcool'?'#5a7a9b':'var(--koke)';
     const row=document.createElement('div');
-    row.style.cssText='padding:5px 8px;border:1px solid var(--line);border-radius:5px;background:rgba(15,32,55,0.4);display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;font-size:10px';
+    row.style.cssText='padding:5px 8px;border-bottom:1px solid var(--groove);background:oklch(0.93 0.003 110);display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;font-size:10px;cursor:pointer;transition:all 0.12s';
     row.innerHTML=`<div><b>${s.sensor_id}</b> <span style="color:var(--muted)">${s.location||''}</span></div>
       <span style="color:${col};font-weight:700">${s.value!=null?fmt(s.value,1):'—'}${s.unit||''}</span>
       <span style="font-size:8px;border:1px solid ${col};border-radius:3px;padding:1px 4px;color:${col}">${cls.toUpperCase()}</span>`;
+    row.onmouseenter=()=>{row.style.borderColor=col;row.style.transform='translateX(2px)';};
+    row.onmouseleave=()=>{row.style.borderColor='var(--line)';row.style.transform='none';};
+    row.onclick=()=>{
+      for(const spr of sensorSprites){
+        if(spr.userData&&spr.userData.id===s.sensor_id){
+          smoothFocus(spr.position,8);
+          showToast('📡 '+s.sensor_id+' '+fmt(s.value,1)+(s.unit||''));
+          return;
+        }
+      }
+      showToast('📡 '+s.sensor_id+' (3D 中未找到)');
+    };
     sl.appendChild(row);
   });
   const hl=$('heat-island-list'); hl.innerHTML='';
@@ -1706,8 +2310,21 @@ function renderSensingUI(field,hi,status){
   if(!islands.length) hl.innerHTML='<div style="padding:6px;color:var(--accent-2)">✓ 温场均衡</div>';
   else islands.forEach(h=>{
     const r=document.createElement('div');
-    r.style.cssText='padding:5px;border:1px solid rgba(248,113,113,0.4);border-radius:5px;background:rgba(248,113,113,0.06);margin:3px 0;font-size:10px';
-    r.innerHTML=`<b style="color:#f87171">🔥 ${h.sensor_id}</b> Δ${fmt(h.delta_c,1)}℃ T=${fmt(h.temp_c,1)}℃<div style="color:var(--muted)">${h.probable_cause||''}</div>`;
+    r.style.cssText='padding:5px;border-bottom:1px solid var(--shu);background:oklch(0.93 0.003 110);margin:3px 0;font-size:10px;cursor:pointer;transition:all 0.12s';
+    r.innerHTML=`<b style="color:var(--shu)">热岛 ${h.sensor_id}</b> Δ${fmt(h.delta_c,1)}℃ T=${fmt(h.temp_c,1)}℃<div style="color:var(--muted)">${h.probable_cause||''}</div>`;
+    r.onmouseenter=()=>{r.style.borderColor='var(--shu)';r.style.transform='translateX(2px)';};
+    r.onmouseleave=()=>{r.style.borderColor='var(--groove)';r.style.transform='none';};
+    r.onclick=()=>{
+      // Focus sensor in 3D
+      for(const spr of sensorSprites){
+        if(spr.userData&&spr.userData.id===h.sensor_id){
+          smoothFocus(spr.position,8);
+          showToast('🔥 热岛 '+h.sensor_id+' T='+fmt(h.temp_c,1)+'℃');
+          return;
+        }
+      }
+      showToast('🔥 '+h.sensor_id+' (3D 中未找到)');
+    };
     hl.appendChild(r);
   });
   const led=$('sens-ledger');
@@ -1731,12 +2348,49 @@ async function lockRatchet(){
 function showToast(msg){
   let t=document.getElementById('toast');
   if(!t){t=document.createElement('div');t.id='toast';
-    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 18px;background:rgba(8,18,34,0.95);border:1px solid var(--accent);color:var(--accent-2);border-radius:8px;font:12px Menlo;z-index:9999;transition:opacity 0.3s';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 18px;background:rgba(42,38,34,0.92);color:#e8e4de;font:11px "JetBrains Mono",Menlo;z-index:9999;transition:opacity 0.3s';
     document.body.appendChild(t);}
   t.textContent=msg;t.style.opacity='1';
   clearTimeout(t._to);t._to=setTimeout(()=>{t.style.opacity='0';},2500);
 }
 window.plcFan=plcFan;window.lockRatchet=lockRatchet;window.toggleMeasure=toggleMeasure;
+
+/* ════════ SMOOTH CAMERA FOCUS ════════ */
+function smoothFocus(targetPos,dist){
+  if(!targetPos) return;
+  const target=targetPos.clone?targetPos.clone():new THREE.Vector3(targetPos.x||0,targetPos.y||0,targetPos.z||0);
+  target.y=Math.max(target.y,4);
+  // Animate controls target
+  const startTarget=controls.target.clone();
+  const startPos=camera.position.clone();
+  const endTarget=target;
+  const dir=new THREE.Vector3().subVectors(camera.position,controls.target).normalize();
+  const endPos=endTarget.clone().add(dir.multiplyScalar(dist||20));
+  endPos.y=Math.max(endPos.y,8);
+  let t=0;
+  const dur=600;
+  const startTime=performance.now();
+  function tick(){
+    t=Math.min(1,(performance.now()-startTime)/dur);
+    const ease=t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; // easeInOutQuad
+    controls.target.lerpVectors(startTarget,endTarget,ease);
+    camera.position.lerpVectors(startPos,endPos,ease);
+    if(t<1) requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function flashObject(obj){
+  if(!obj) return;
+  // Temporarily highlight the rack
+  const children=[];
+  obj.traverse(n=>{if(n.material&&n.material.emissive) children.push(n);});
+  children.forEach(n=>{
+    const orig=n.material.emissiveIntensity;
+    n.material.emissiveIntensity=2.0;
+    setTimeout(()=>{n.material.emissiveIntensity=orig;},800);
+  });
+}
 
 /* ════════ RATCHET ANIMATION ════════ */
 function animateRatchet(){
@@ -1751,18 +2405,182 @@ function animateRatchet(){
 async function toggleAuto(){
   const on=$('auto-btn').classList.toggle('primary');
   await api('/api/v1/datacenter/auto-loop',{enabled:on,interval_s:30},'POST');
-  $('auto-btn').textContent=on?'⚙ AUTO LOOP · ON':'⚙ AUTO LOOP';
+  $('auto-btn').textContent=on?'AUTO LOOP · ON':'AUTO LOOP';
 }
 window.animateRatchet=animateRatchet;window.toggleAuto=toggleAuto;
+
+/* ════════ PUE TREND + FORECAST CHART (Canvas) ════════ */
+let pueHistoryData=[], pueForecastData=[];
+
+async function loadPueChart(){
+  const [histRes,fcRes]=await Promise.all([
+    api('/api/v1/datacenter/pue-history?limit=120'),
+    api('/api/v1/datacenter/forecast?hours=12&step_min=30'),
+  ]);
+  pueHistoryData=(histRes&&histRes.history)||[];
+  pueForecastData=(fcRes&&fcRes.points)||[];
+  drawPueChart();
+}
+window.loadPueChart=loadPueChart;
+
+function drawPueChart(){
+  const canvas=$('pue-canvas');
+  if(!canvas) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const W=Math.floor(rect.width), H=Math.floor(rect.height);
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  const hist=pueHistoryData, fc=pueForecastData;
+  if(!hist.length&&!fc.length){
+    ctx.fillStyle='#6b8cae'; ctx.font='12px Menlo'; ctx.textAlign='center';
+    ctx.fillText('暂无数据 · 点击刷新或执行 Tick',W/2,H/2);
+    return;
+  }
+
+  // Combine for axis range
+  const allPue=[...hist.map(p=>p.pue),...fc.map(p=>p.pue)];
+  const minP=Math.min(...allPue)-0.02, maxP=Math.max(...allPue)+0.02;
+  const allTs=[...hist.map(p=>p.ts),...fc.map(p=>p.ts)];
+  const minT=Math.min(...allTs), maxT=Math.max(...allTs);
+  const pad={l:50,r:16,t:16,b:30};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+
+  function tx(ts){ return pad.l+((ts-minT)/(maxT-minT||1))*cw; }
+  function ty(pue){ return pad.t+ch-(((pue-minP)/(maxP-minP||1))*ch); }
+
+  // Grid
+  ctx.strokeStyle='rgba(138,131,120,0.12)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+ch*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8a8378'; ctx.font='9px "JetBrains Mono",Menlo'; ctx.textAlign='right';
+    ctx.fillText((maxP-(maxP-minP)*i/4).toFixed(3),pad.l-4,y+3);
+  }
+
+  // Forecast area fill
+  if(fc.length>1){
+    ctx.beginPath();
+    ctx.moveTo(tx(fc[0].ts),ty(fc[0].pue));
+    fc.forEach(p=>ctx.lineTo(tx(p.ts),ty(p.pue)));
+    ctx.lineTo(tx(fc[fc.length-1].ts),pad.t+ch);
+    ctx.lineTo(tx(fc[0].ts),pad.t+ch);
+    ctx.closePath();
+    ctx.fillStyle='rgba(122,155,122,0.06)'; ctx.fill();
+  }
+
+  // History line
+  if(hist.length>1){
+    ctx.beginPath(); ctx.strokeStyle='#4a4640'; ctx.lineWidth=1.8;
+    hist.forEach((p,i)=>{i===0?ctx.moveTo(tx(p.ts),ty(p.pue)):ctx.lineTo(tx(p.ts),ty(p.pue));});
+    ctx.stroke();
+    // Dots
+    ctx.fillStyle='#4a4640';
+    hist.forEach(p=>{ctx.beginPath();ctx.arc(tx(p.ts),ty(p.pue),2,0,Math.PI*2);ctx.fill();});
+  }
+
+  // Forecast line
+  if(fc.length>1){
+    ctx.beginPath(); ctx.strokeStyle='#7a9b7a'; ctx.lineWidth=1.5;
+    ctx.setLineDash([6,4]);
+    fc.forEach((p,i)=>{i===0?ctx.moveTo(tx(p.ts),ty(p.pue)):ctx.lineTo(tx(p.ts),ty(p.pue));});
+    ctx.stroke(); ctx.setLineDash([]);
+    // Load factor bars
+    const barW=Math.max(2,cw/fc.length*0.4);
+    fc.forEach(p=>{
+      if(p.load_factor==null) return;
+      const bh=ch*p.load_factor*0.3;
+      ctx.fillStyle='rgba(168,144,96,0.12)';
+      ctx.fillRect(tx(p.ts)-barW/2,pad.t+ch-bh,barW,bh);
+    });
+  }
+
+  // Time labels
+  ctx.fillStyle='#8a8378'; ctx.font='9px "JetBrains Mono",Menlo'; ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(allTs.length/6));
+  allTs.filter((_,i)=>i%step===0).forEach(ts=>{
+    const d=new Date(ts*1000);
+    ctx.fillText(d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'),tx(ts),H-4);
+  });
+
+  // Boundary label
+  if(hist.length&&fc.length){
+    const bx=tx(fc[0].ts);
+    ctx.strokeStyle='rgba(138,131,120,0.4)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(bx,pad.t); ctx.lineTo(bx,pad.t+ch); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#8a8378'; ctx.font='9px "JetBrains Mono",Menlo'; ctx.textAlign='center';
+    ctx.fillText('← 歴史 | 予测 →',bx,pad.t+10);
+  }
+}
+
+/* ════════ AI INSIGHT + RECOMMENDATIONS ════════ */
+async function loadAIInsight(){
+  $('ai-badge').textContent='LOADING...'; $('ai-badge').style.color='var(--warn)';
+  const res=await api('/api/v1/datacenter/ai-insight',{focus:'overall'},'POST');
+  $('ai-badge').textContent='DONE'; $('ai-badge').style.color='var(--accent-2)';
+  const div=$('ai-insight');
+  if(!res||!res.ok){
+    div.innerHTML='<div class="it">⚠ AI 洞察不可用</div>';
+    return;
+  }
+  let html='<div class="it">'+escHtml(res.summary||'')+'</div>';
+  if(res.bullets&&res.bullets.length){
+    html+='<ul>'+res.bullets.map(b=>'<li>'+escHtml(b)+'</li>').join('')+'</ul>';
+  }
+  if(res.top_recommendations&&res.top_recommendations.length){
+    html+='<div style="margin-top:6px;font-size:9px;color:var(--muted)">TOP ACTIONS:</div>';
+    res.top_recommendations.forEach(r=>{
+      html+=`<div style="padding:4px 0;font-size:10px"><b style="color:var(--accent-2)">${escHtml(r.title)}</b>
+        <span style="color:var(--muted)"> · 省 ${r.expected_saving_kwh_day||0} kWh/d · ¥${(r.expected_saving_cny_year||0).toLocaleString()}/y</span></div>`;
+    });
+  }
+  div.innerHTML=html;
+}
+window.loadAIInsight=loadAIInsight;
+
+async function loadRecommendations(){
+  const res=await api('/api/v1/datacenter/recommend?top_n=5');
+  const list=$('ai-recs'); list.innerHTML='';
+  const recs=(res&&res.recommendations)||[];
+  if(!recs.length){
+    list.innerHTML='<div style="padding:8px;color:var(--muted);text-align:center">暂无推荐</div>';
+    return;
+  }
+  recs.forEach(r=>{
+    const row=document.createElement('div');
+    row.className='rec-item';
+    row.innerHTML=`<div class="ri-score">${(r.score*100).toFixed(0)}</div>
+      <div><div class="ri-title">${escHtml(r.title)}</div>
+        <div class="ri-save">${escHtml(r.rationale||'')} · 省 ${r.expected_saving_kwh_day||0} kWh/d · CO₂ ${r.expected_co2_saving_ton_year||0}t/y</div>
+      </div>
+      <span style="font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid var(--line);color:var(--muted)">${r.kind||''}</span>`;
+    row.onclick=()=>showToast('💡 '+r.title+' — score '+r.score);
+    list.appendChild(row);
+  });
+}
+window.loadRecommendations=loadRecommendations;
 
 /* ════════ WS + BOOT ════════ */
 function initWS(){
   try{
+    if(datacenterWS){
+      try{ datacenterWS.close(); }catch(e){}
+    }
     const proto=location.protocol==='https:'?'wss':'ws';
-    const ws=new WebSocket(`${proto}://${location.host}/ws/datacenter`);
-    ws.onopen=()=>{$('pill-ws').textContent='WS · LIVE';$('pill-ws').classList.add('ws');$('pill-ws').classList.remove('off');};
-    ws.onclose=()=>{$('pill-ws').textContent='WS · OFF';$('pill-ws').classList.add('off');$('pill-ws').classList.remove('ws');setTimeout(initWS,3000);};
-    ws.onmessage=ev=>{try{const d=JSON.parse(ev.data);if(d.pue_point)$('kpi-pue').textContent=fmt(d.pue_point.pue,3);}catch(e){}};
+    datacenterWS=new WebSocket(`${proto}://${location.host}/ws/datacenter`);
+    datacenterWS.onopen=()=>{$('pill-ws').textContent='WS · LIVE';$('pill-ws').classList.add('ws');$('pill-ws').classList.remove('off');};
+    datacenterWS.onclose=()=>{$('pill-ws').textContent='WS · OFF';$('pill-ws').classList.add('off');$('pill-ws').classList.remove('ws');setTimeout(initWS,3000);};
+    datacenterWS.onmessage=ev=>{
+      try{
+        const d=JSON.parse(ev.data);
+        if(d.pue_point) $('kpi-pue').textContent=fmt(d.pue_point.pue,3);
+        if(d.pue_point||d.status||d.alert||d.round!=null) scheduleRefresh(1500);
+      }catch(e){}
+    };
   }catch(e){setTimeout(initWS,3000);}
 }
 function boot(){
@@ -1770,11 +2588,187 @@ function boot(){
   renderMapping();
   refreshAll();
   initWS();
-  setInterval(refreshAll,8000);
+  startRefreshLoop();
+  loadPueChart();
+  loadRecommendations();
+  document.addEventListener('visibilitychange',()=>{
+    applyRenderQuality();
+    startRefreshLoop();
+    if(!document.hidden) refreshAll();
+  });
+  window.addEventListener('beforeunload',()=>{
+    stopRefreshLoop();
+    if(rafId) cancelAnimationFrame(rafId);
+    if(datacenterWS){
+      try{ datacenterWS.close(); }catch(e){}
+    }
+  });
   setTimeout(animateRatchet,1200);
 }
 if(window.THREE){window.addEventListener('load',boot);}
 else{window.addEventListener('three-ready',()=>{if(document.readyState==='complete')boot();else window.addEventListener('load',boot);});}
+
+/* ════════════════════════════════════════════
+   BUILD TEAM CHAT — 对话 + 任务派发
+   ════════════════════════════════════════════ */
+const CHAT_SESSION='dc-twin-'+Date.now().toString(36);
+let chatOpen=false;
+
+function toggleChat(){
+  chatOpen=!chatOpen;
+  $('chat-panel').classList.toggle('open',chatOpen);
+  if(chatOpen) $('chat-input').focus();
+}
+window.toggleChat=toggleChat;
+
+function quickChat(text){
+  $('chat-input').value=text;
+  sendChat();
+}
+window.quickChat=quickChat;
+
+// Gather live datacenter context to enrich the prompt
+function gatherDCContext(){
+  const pue=$('kpi-pue')?.textContent||'—';
+  const it=$('kpi-it')?.textContent||'—';
+  const cool=$('kpi-cool')?.textContent||'—';
+  const hot=$('kpi-hot')?.textContent||'—';
+  const hotId=$('kpi-hot-id')?.textContent||'';
+  const heritage=$('kpi-heritage')?.textContent||'0';
+  const round=$('kpi-round')?.textContent||'0';
+  const alert=$('sens-alert')?.textContent||'';
+  return `[DC-TWIN STATUS] PUE=${pue} IT=${it} COOL=${cool} HOT=${hot}(${hotId}) HERITAGE=${heritage} ROUND=${round} ALERT=${alert}`;
+}
+
+// Build-team task keywords (same as backend detection)
+const TASK_KW=['build团队','build team','分配任务','派发任务','请开发','请修复','请添加','请优化','PM智能体','提交任务'];
+function isTaskIntent(text){
+  const lower=text.toLowerCase();
+  return TASK_KW.some(k=>lower.includes(k));
+}
+
+function appendMsg(role,html){
+  const box=$('chat-msgs');
+  const div=document.createElement('div');
+  div.className='chat-msg '+role;
+  div.innerHTML=html;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+function setTyping(on){
+  $('chat-typing').classList.toggle('show',on);
+}
+
+async function sendChat(){
+  const input=$('chat-input');
+  const text=(input.value||'').trim();
+  if(!text) return;
+  input.value='';
+  appendMsg('user',escHtml(text));
+  setTyping(true);
+
+  const isTask=isTaskIntent(text);
+  const ctx=gatherDCContext();
+  const enriched=ctx+'\n用户说: '+text;
+
+  try{
+    // 1. Always try bridge-chat for conversational reply + auto task dispatch
+    const res=await fetch('/api/v1/bridge-chat/send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        message: enriched,
+        session_id: CHAT_SESSION,
+        agent_id: 'ship_navigator'
+      })
+    });
+    const data=await res.json();
+    setTyping(false);
+
+    const reply=data.reply||data.detail||'(无响应)';
+    let replyHtml=escHtml(reply).replace(/\n/g,'<br>');
+
+    // If backend auto-created a task
+    if(data.task_id){
+      replyHtml+='<div class="task-tag">✅ 任务已创建 · '+escHtml(data.task_id)+'</div>';
+    }
+    appendMsg('bot',replyHtml);
+
+    // 2. If user explicitly wants a task but backend didn't create one, do it directly
+    if(isTask && !data.task_id){
+      await submitDirectTask(text);
+    }
+  }catch(err){
+    setTyping(false);
+    // Fallback: if bridge-chat is unreachable, try direct task submission
+    if(isTask){
+      await submitDirectTask(text);
+    } else {
+      appendMsg('bot','⚠ 连接失败: '+escHtml(err.message||err+'')+'<br>如需派发任务，请在消息中包含 <b>build团队</b> 关键词。');
+    }
+  }
+}
+window.sendChat=sendChat;
+
+async function submitDirectTask(text){
+  try{
+    const teamId='default';
+    const res=await fetch('/api/v1/agent-config/teams/'+encodeURIComponent(teamId)+'/tasks',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        title: text.slice(0,80),
+        description: text+'\n\n'+gatherDCContext(),
+        agent_id: 'build_pm',
+        priority: 2,
+        metadata: {
+          source: 'datacenter_digital_twin_chat',
+          page: 'datacenter-digital-twin.html',
+          issued_at: new Date().toISOString()
+        }
+      })
+    });
+    const data=await res.json();
+    if(data.task_id||data.id){
+      appendMsg('sys','📋 任务已提交 Build Team<div class="task-tag">ID: '+(data.task_id||data.id)+'</div>');
+      $('chat-fab').classList.add('has-badge');
+    } else {
+      appendMsg('sys','⚠ 任务提交响应: '+escHtml(JSON.stringify(data).slice(0,200)));
+    }
+  }catch(e2){
+    appendMsg('sys','⚠ 任务提交失败: '+escHtml(e2.message||e2+''));
+  }
+}
+
+function escHtml(s){
+  const d=document.createElement('div');
+  d.textContent=s;
+  return d.innerHTML;
+}
+
+// Draggable chat header
+(function(){
+  const head=$('chat-head'), panel=$('chat-panel');
+  if(!head||!panel) return;
+  let dx=0,dy=0,dragging=false;
+  head.addEventListener('mousedown',e=>{
+    if(e.target.closest('.ch-close')) return;
+    dragging=true;
+    dx=e.clientX-panel.getBoundingClientRect().left;
+    dy=e.clientY-panel.getBoundingClientRect().top;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!dragging) return;
+    panel.style.left=(e.clientX-dx)+'px';
+    panel.style.top=(e.clientY-dy)+'px';
+    panel.style.right='auto';
+    panel.style.bottom='auto';
+  });
+  document.addEventListener('mouseup',()=>{dragging=false;});
+})();
 </script>
+<script src="/js/i18n.js"></script>
 </body>
 </html>

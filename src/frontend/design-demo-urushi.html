@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Design Demo E · 漆器仪表 · Urushi Instruments</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   漆器仪表 · Urushi Instruments
+   ─────────────────────────────────────────────────────────────
+   设计源流（跳出 20 种预设，原创方向）：
+   ● Softimage|XSI (1998-2015) — 乳胶/橡胶质感按钮、物理触觉、
+     阴影分层模拟真实材质深度、按下即反转的 press state
+   ● 日本漆器 Urushi — 湿润的黑不是死黑，是有光泽的活黑、
+     金箔（金蒔绘）点睛、木胎的温暖底色透出来
+   ● 潜水艇仪表盘 — 精密仪器感、铜/黄铜表圈、嵌入式表盘、
+     信息密度高但秩序井然
+   ─────────────────────────────────────────────────────────────
+   品牌：PoseidonX — 深海 + 精密 + 温度
+   ─────────────────────────────────────────────────────────────
+   与 AI slop 的距离：
+   ✅ 无紫渐变 · ✅ 无 emoji · ✅ 无圆角+左border accent
+   ✅ oklch() 色彩 · ✅ 「」引号 · ✅ text-wrap: pretty
+   ✅ 无玻璃模糊 · ✅ 无霓虹发光 · ✅ 无 #0D1117 GitHub dark
+   ✅ 签名细节120%：乳胶按钮系统（layered shadow + press invert）
+   ═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root {
+  /* ── 漆面色阶：温暖的黑，不是冷蓝黑 ── */
+  --lacquer:     oklch(0.09 0.01 40);   /* 漆黑 — 日本漆器的底 */
+  --lacquer-wet: oklch(0.12 0.015 40);  /* 湿漆 — 有微反光 */
+  --surface:     oklch(0.18 0.015 40);  /* 橡胶面 — Softimage 按钮底色 */
+  --raised:      oklch(0.24 0.02 45);   /* 凸起面 — 按钮/卡片 */
+  --pressed:     oklch(0.13 0.01 40);   /* 按下面 */
+
+  /* ── 金属 / 材质 ── */
+  --gold-leaf:   oklch(0.70 0.10 75);   /* 金蒔绘 — 金箔 */
+  --gold-dim:    oklch(0.70 0.10 75 / 0.08);
+  --gold-mid:    oklch(0.70 0.10 75 / 0.25);
+  --brass:       oklch(0.55 0.08 75);   /* 黄铜 — 仪表圈 */
+  --brass-dim:   oklch(0.55 0.08 75 / 0.15);
+
+  /* ── 状态色（克制、去饱和） ── */
+  --jade:        oklch(0.68 0.08 165);  /* 翡翠 — 正常/好 */
+  --cinnabar:    oklch(0.55 0.16 25);   /* 朱砂 — 危险 */
+  --amber:       oklch(0.68 0.12 70);   /* 琥珀 — 警告 */
+
+  /* ── 文字 ── */
+  --text:        oklch(0.82 0.02 60);   /* 暖白 — 像老纸 */
+  --text-2:      oklch(0.55 0.02 55);   /* 暖灰 */
+  --text-3:      oklch(0.38 0.015 50);  /* 暗灰 */
+
+  /* ── 边界 ── */
+  --groove:      oklch(0.06 0.01 40);   /* 凹槽阴影 */
+  --ridge:       oklch(0.28 0.02 50 / 0.4); /* 凸棱高光 */
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--lacquer);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════════════════
+   漆面底层 — 不是平黑，是有微光的漆
+   湿漆反光 + 木纹透底 + 橡胶颗粒
+   ════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  /* 漆面微反光 — 像真漆器在灯光下 */
+  background:
+    radial-gradient(ellipse 50% 30% at 35% 15%, oklch(0.18 0.02 60 / 0.06), transparent),
+    radial-gradient(ellipse 40% 25% at 70% 25%, oklch(0.15 0.01 45 / 0.04), transparent);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 0;
+  /* 橡胶表面颗粒纹理 — Softimage 的触觉 */
+  background-image:
+    radial-gradient(oklch(1 0 0 / 0.012) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+.frame {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 48px;
+  position: relative; z-index: 1;
+}
+
+/* ════════════════════════════════════════════
+   签名系统 · 乳胶按钮 (120% 做到极致)
+   ─────────────────────────────────────────
+   Softimage|XSI 的按钮视觉解剖：
+   - 表面略微凸起（上亮下暗的内阴影）
+   - 橡胶质感（微颗粒纹理 + 非光泽高光）
+   - 按下时阴影完全反转（凸→凹）
+   - 放开时弹回（transition 模拟回弹）
+   ════════════════════════════════════════════ */
+.rubber-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: var(--raised);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  border: none; cursor: pointer;
+  position: relative;
+  /* ── 乳胶深度：4 层阴影叠加 ── */
+  box-shadow:
+    /* 外底阴影 — 按钮浮在面板上 */
+    0 2px 6px oklch(0 0 0 / 0.6),
+    /* 外右下 — 增加立体感 */
+    1px 1px 2px oklch(0 0 0 / 0.3),
+    /* 内顶高光 — 橡胶表面微反光 */
+    inset 0 1px 0 oklch(1 0 0 / 0.06),
+    /* 内底暗边 — 凸起的底部切线 */
+    inset 0 -1px 0 oklch(0 0 0 / 0.3);
+  /* 橡胶表面微颗粒 */
+  background-image:
+    radial-gradient(oklch(1 0 0 / 0.015) 1px, transparent 1px);
+  background-size: 3px 3px;
+  transition: all 0.08s ease-out;
+  user-select: none;
+}
+/* 按下 — 阴影反转 = 凸变凹 */
+.rubber-btn:active {
+  box-shadow:
+    inset 0 2px 6px oklch(0 0 0 / 0.6),
+    inset 1px 1px 2px oklch(0 0 0 / 0.3),
+    0 0 0 oklch(0 0 0 / 0),
+    inset 0 -1px 0 oklch(1 0 0 / 0.03);
+  transform: translateY(1px);
+  background-color: var(--pressed);
+}
+.rubber-btn:hover {
+  background-color: oklch(0.27 0.025 50);
+}
+/* 激活态 — 金箔镶边 */
+.rubber-btn.active {
+  box-shadow:
+    0 2px 6px oklch(0 0 0 / 0.6),
+    1px 1px 2px oklch(0 0 0 / 0.3),
+    inset 0 1px 0 oklch(0.70 0.10 75 / 0.15),
+    inset 0 -1px 0 oklch(0 0 0 / 0.3),
+    0 0 0 1px var(--gold-mid);
+  color: var(--gold-leaf);
+}
+
+/* ════════════════════════════════════════════
+   嵌入式面板 — 仪器凹陷
+   ════════════════════════════════════════════ */
+.inset-panel {
+  background: var(--lacquer-wet);
+  /* 凹陷效果 — 上暗下亮（和按钮反过来） */
+  box-shadow:
+    inset 0 2px 8px oklch(0 0 0 / 0.7),
+    inset 0 1px 2px oklch(0 0 0 / 0.4),
+    0 1px 0 var(--ridge);
+}
+
+/* ════════════════════════════════════════════
+   凸起面板 — 仪器突出
+   ════════════════════════════════════════════ */
+.raised-panel {
+  background: var(--surface);
+  box-shadow:
+    0 3px 10px oklch(0 0 0 / 0.5),
+    0 1px 3px oklch(0 0 0 / 0.3),
+    inset 0 1px 0 var(--ridge);
+  background-image:
+    radial-gradient(oklch(1 0 0 / 0.01) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* ════════════════════════════════════════════
+   顶栏 — 仪表台横梁
+   ════════════════════════════════════════════ */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 24px 0;
+  border-bottom: 1px solid oklch(0.06 0.01 40);
+  /* 横梁底部的微高光 — 像金属边 */
+  box-shadow: 0 1px 0 var(--ridge);
+}
+.brand {
+  display: flex; align-items: center; gap: 16px;
+}
+/* 方印 — 金蒔绘风格 */
+.sigil {
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 20px; font-weight: 900;
+  color: var(--gold-leaf);
+  background: var(--lacquer);
+  box-shadow:
+    inset 0 1px 4px oklch(0 0 0 / 0.6),
+    0 1px 0 oklch(0.70 0.10 75 / 0.1);
+  position: relative;
+}
+/* 金箔边框效果 */
+.sigil::after {
+  content: '';
+  position: absolute; inset: 2px;
+  border: 1px solid oklch(0.70 0.10 75 / 0.2);
+}
+.wordmark {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 3px; color: var(--text-2);
+}
+.wordmark strong { color: var(--text); font-weight: 600; }
+.status-bar {
+  display: flex; align-items: center; gap: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-3); letter-spacing: 1px;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--jade);
+  box-shadow: 0 0 6px oklch(0.68 0.08 165 / 0.5);
+  display: inline-block; vertical-align: middle; margin-right: 6px;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ════════════════════════════════════════════
+   英雄区 — 漆器铭文
+   ════════════════════════════════════════════ */
+.hero {
+  padding: 72px 0 56px;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 56px;
+  align-items: end;
+}
+.hero-title {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 200;
+  line-height: 1.15;
+}
+.hero-title .zh {
+  font-size: 48px;
+  letter-spacing: 8px;
+  color: var(--text);
+  display: block;
+}
+.hero-title .accent {
+  color: var(--gold-leaf);
+}
+.hero-title .en {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 400;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--text-3);
+  margin-top: 16px;
+}
+.hero-desc {
+  padding-left: 28px;
+  border-left: 2px solid var(--brass-dim);
+}
+.hero-desc p {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px; font-weight: 300;
+  line-height: 2; color: var(--text-2);
+  text-wrap: pretty;
+}
+.hero-desc em {
+  font-style: normal; color: var(--gold-leaf);
+}
+.divider {
+  height: 1px; border: none;
+  background: var(--groove);
+  box-shadow: 0 1px 0 var(--ridge);
+}
+
+/* ════════════════════════════════════════════
+   KPI 仪表组 — 嵌入式仪表盘
+   每个 KPI 像一个独立的物理仪表
+   ════════════════════════════════════════════ */
+.gauge-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  padding: 28px 0;
+}
+.gauge {
+  padding: 20px 14px;
+  text-align: center;
+  position: relative;
+  /* 凹陷仪表窗 */
+  background: var(--lacquer);
+  box-shadow:
+    inset 0 2px 8px oklch(0 0 0 / 0.8),
+    inset 0 0 2px oklch(0 0 0 / 0.5),
+    0 1px 0 oklch(1 0 0 / 0.03);
+}
+/* 黄铜表圈 */
+.gauge::before {
+  content: '';
+  position: absolute; inset: 0;
+  border: 1px solid var(--brass-dim);
+  pointer-events: none;
+}
+.gauge-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 10px;
+}
+.gauge-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 30px; font-weight: 600;
+  color: var(--text);
+  font-feature-settings: 'tnum';
+  line-height: 1;
+  /* 仪表数字的微光 — 像背光 LCD */
+  text-shadow: 0 0 20px oklch(0.70 0.10 75 / 0.08);
+}
+.gauge-val .unit {
+  font-size: 10px; font-weight: 400; color: var(--text-3); margin-left: 2px;
+}
+.gauge-delta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; margin-top: 8px;
+}
+.gauge-delta.good { color: var(--jade); }
+.gauge-delta.warn { color: var(--cinnabar); }
+.gauge-delta.neutral { color: var(--text-3); }
+
+/* ════════════════════════════════════════════
+   3D 视口 — 潜望镜视窗
+   ════════════════════════════════════════════ */
+.viewport-section {
+  margin: 28px -48px;
+  padding: 6px;
+  background: var(--surface);
+  box-shadow:
+    inset 0 2px 12px oklch(0 0 0 / 0.6),
+    0 2px 0 var(--ridge);
+}
+.viewport {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  background: var(--lacquer);
+  position: relative;
+  overflow: hidden;
+  /* 深凹陷 — 像潜水艇的观察窗嵌在仪表台里 */
+  box-shadow:
+    inset 0 3px 15px oklch(0 0 0 / 0.9),
+    inset 0 -1px 0 oklch(1 0 0 / 0.02);
+}
+/* 漆面深处的微光 */
+.viewport .deep-glow {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 35% 45% at 40% 40%, oklch(0.15 0.02 60 / 0.08), transparent),
+    radial-gradient(ellipse 25% 35% at 65% 55%, oklch(0.12 0.01 45 / 0.05), transparent);
+  animation: deep-shift 15s ease-in-out infinite alternate;
+}
+@keyframes deep-shift {
+  0% { opacity: 1; transform: translate(0,0); }
+  100% { opacity: 0.7; transform: translate(-10px, 5px); }
+}
+/* 视口角标 — 蚀刻在金属框上的铭文 */
+.viewport .etch {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px;
+  color: var(--brass);
+  opacity: 0.4;
+}
+.viewport .etch.tl { top: 14px; left: 18px; }
+.viewport .etch.tr { top: 14px; right: 18px; text-align: right; }
+.viewport .etch.bl { bottom: 14px; left: 18px; }
+.viewport .etch.br { bottom: 14px; right: 18px; text-align: right; line-height: 1.8; }
+/* 中心 — 大字 */
+.viewport .center-mark {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.viewport .center-mark .kanji {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 130px; font-weight: 900;
+  color: oklch(0.15 0.015 45);
+  line-height: 1;
+  /* 金蒔绘效果 — 金粉散布在漆面上 */
+  text-shadow:
+    0 0 40px oklch(0.70 0.10 75 / 0.04),
+    0 1px 0 oklch(1 0 0 / 0.02);
+  user-select: none;
+}
+.viewport .center-mark .sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 6px; text-transform: uppercase;
+  color: var(--text-3); margin-top: 14px;
+}
+/* 十字标线 — 精密仪器的瞄准 */
+.viewport .reticle {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px; height: 80px;
+  pointer-events: none;
+}
+.viewport .reticle::before, .viewport .reticle::after {
+  content: '';
+  position: absolute;
+  background: oklch(0.55 0.08 75 / 0.12);
+}
+.viewport .reticle::before {
+  top: 0; left: 50%; width: 1px; height: 100%;
+}
+.viewport .reticle::after {
+  top: 50%; left: 0; width: 100%; height: 1px;
+}
+/* 图层控制 — 乳胶按钮组 */
+.layer-rack {
+  position: absolute; left: 14px; top: 44px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.layer-rack .rubber-btn {
+  padding: 5px 12px;
+  font-size: 9px;
+  min-width: 170px;
+  justify-content: space-between;
+  /* 嵌在仪表台上的小按钮 — 更微妙的深度 */
+  box-shadow:
+    0 1px 4px oklch(0 0 0 / 0.5),
+    inset 0 1px 0 oklch(1 0 0 / 0.05),
+    inset 0 -1px 0 oklch(0 0 0 / 0.25);
+}
+.layer-rack .rubber-btn .dot {
+  display: inline-block; width: 6px; height: 6px;
+}
+
+/* ════════════════════════════════════════════
+   双栏 — 设备矩阵 + 异常指挥
+   ════════════════════════════════════════════ */
+.twin-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 28px 0;
+}
+.panel-frame {
+  padding: 6px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 8px oklch(0 0 0 / 0.4),
+    inset 0 1px 0 var(--ridge);
+  background-image:
+    radial-gradient(oklch(1 0 0 / 0.008) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+.panel-inner {
+  background: var(--lacquer-wet);
+  box-shadow:
+    inset 0 1px 6px oklch(0 0 0 / 0.6);
+  padding: 24px;
+}
+.panel-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 400;
+  letter-spacing: 2px;
+  color: var(--gold-leaf);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid oklch(0.06 0.01 40);
+  box-shadow: 0 1px 0 var(--ridge);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.panel-title .sub-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--text-3); letter-spacing: 1.5px;
+}
+
+/* 设备表 */
+.dev-table { width: 100%; border-collapse: collapse; }
+.dev-table th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--brass);
+  text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid oklch(0.10 0.01 40);
+}
+.dev-table td {
+  padding: 10px 8px;
+  font-size: 12px; color: var(--text);
+  border-bottom: 1px solid oklch(0.08 0.01 40);
+  font-feature-settings: 'tnum';
+}
+.dev-table tr { cursor: pointer; transition: background 0.1s; }
+.dev-table tr:hover td { background: oklch(0.14 0.015 40); }
+.id-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600; color: var(--jade); letter-spacing: 0.5px;
+}
+.val-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+/* 状态灯 — 像仪表盘上的 LED */
+.led {
+  display: inline-block; width: 7px; height: 7px;
+}
+.led.ok {
+  background: var(--jade);
+  box-shadow: 0 0 4px oklch(0.68 0.08 165 / 0.5), inset 0 1px 0 oklch(1 0 0 / 0.2);
+}
+.led.warn {
+  background: var(--amber);
+  box-shadow: 0 0 4px oklch(0.68 0.12 70 / 0.5), inset 0 1px 0 oklch(1 0 0 / 0.2);
+}
+.led.crit {
+  background: var(--cinnabar);
+  box-shadow: 0 0 6px oklch(0.55 0.16 25 / 0.6), inset 0 1px 0 oklch(1 0 0 / 0.15);
+  animation: crit-flash 1.5s ease-in-out infinite;
+}
+@keyframes crit-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 异常流 */
+.anom-stream { display: flex; flex-direction: column; gap: 8px; }
+.anom-card {
+  padding: 14px 18px;
+  background: oklch(0.10 0.01 40);
+  /* 凹陷窗口 */
+  box-shadow:
+    inset 0 1px 4px oklch(0 0 0 / 0.5),
+    0 1px 0 oklch(1 0 0 / 0.02);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+.anom-card:hover { background: oklch(0.12 0.015 40); }
+/* 左侧状态标记 — 用凹槽而非border accent */
+.anom-card::before {
+  content: '';
+  position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+  box-shadow: inset 1px 0 2px oklch(0 0 0 / 0.5);
+}
+.anom-card.critical::before { background: var(--cinnabar); box-shadow: 0 0 6px oklch(0.55 0.16 25 / 0.3); }
+.anom-card.high::before { background: var(--amber); box-shadow: 0 0 4px oklch(0.68 0.12 70 / 0.2); }
+.anom-card.medium::before { background: var(--jade); box-shadow: 0 0 4px oklch(0.68 0.08 165 / 0.2); }
+.anom-sev {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.anom-card.critical .anom-sev { color: var(--cinnabar); }
+.anom-card.high .anom-sev { color: var(--amber); }
+.anom-card.medium .anom-sev { color: var(--jade); }
+.anom-desc { font-size: 12px; line-height: 1.7; color: var(--text); }
+.anom-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); margin-top: 5px;
+}
+
+/* ════════════════════════════════════════════
+   PUE 趋势 — 示波器窗
+   ════════════════════════════════════════════ */
+.scope-section {
+  padding: 36px 0;
+}
+.scope-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 16px;
+}
+.scope-header h3 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 400; letter-spacing: 2px; color: var(--gold-leaf);
+}
+.scope-legend {
+  display: flex; gap: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text-3); letter-spacing: 1px;
+}
+.leg-line { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
+.scope-window {
+  padding: 6px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 8px oklch(0 0 0 / 0.4),
+    inset 0 1px 0 var(--ridge);
+}
+.scope-screen {
+  width: 100%; height: 180px;
+  background: var(--lacquer);
+  box-shadow:
+    inset 0 2px 10px oklch(0 0 0 / 0.8);
+  position: relative; overflow: hidden;
+}
+/* 示波器栅格 */
+.scope-screen::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(oklch(0.55 0.08 75 / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.55 0.08 75 / 0.03) 1px, transparent 1px);
+  background-size: 40px 36px;
+}
+/* 波形 — jade 色描绘 */
+.scope-screen .wave {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 70%;
+  background: linear-gradient(0deg,
+    oklch(0.68 0.08 165 / 0.08) 0%,
+    oklch(0.68 0.08 165 / 0.02) 50%,
+    transparent 100%);
+  clip-path: polygon(
+    0% 75%, 3% 60%, 7% 66%, 10% 52%, 14% 55%,
+    18% 42%, 22% 45%, 26% 35%, 30% 39%, 34% 30%,
+    38% 36%, 42% 26%, 46% 32%, 50% 24%, 54% 28%,
+    58% 22%, 62% 26%, 66% 18%, 70% 24%, 74% 16%,
+    78% 22%, 82% 28%, 86% 24%, 90% 32%, 94% 26%, 100% 34%,
+    100% 100%, 0% 100%
+  );
+}
+/* 波形线 */
+.scope-screen .wave-line {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 70%;
+  border-top: 2px solid oklch(0.68 0.08 165 / 0.4);
+  clip-path: polygon(
+    0% 75%, 3% 60%, 7% 66%, 10% 52%, 14% 55%,
+    18% 42%, 22% 45%, 26% 35%, 30% 39%, 34% 30%,
+    38% 36%, 42% 26%, 46% 32%, 50% 24%, 54% 28%,
+    58% 22%, 62% 26%, 66% 18%, 70% 24%, 74% 16%,
+    78% 22%, 82% 28%, 86% 24%, 90% 32%, 94% 26%, 100% 34%,
+    100% 34.5%, 0% 75.5%
+  );
+}
+/* 预测区域 */
+.scope-screen .forecast {
+  position: absolute; top: 0; bottom: 0; right: 0; width: 32%;
+  background: repeating-linear-gradient(
+    90deg,
+    oklch(0.70 0.10 75 / 0.02),
+    oklch(0.70 0.10 75 / 0.02) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+}
+.scope-screen .target {
+  position: absolute; top: 28%; left: 0; right: 0;
+  border-top: 1px dashed oklch(0.70 0.10 75 / 0.25);
+}
+.scope-screen .target-label {
+  position: absolute; top: 26%; right: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--gold-leaf); opacity: 0.5; letter-spacing: 1px;
+}
+
+/* ════════════════════════════════════════════
+   AI 洞察 — 漆器匣中的金箔书
+   ════════════════════════════════════════════ */
+.insight-section {
+  padding: 36px 0;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+.insight-seal {
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: 16px;
+}
+/* 金蒔绘方印 — 漆器匣上的印记 */
+.maki-e {
+  width: 100px; height: 100px;
+  background: var(--lacquer);
+  box-shadow:
+    inset 0 2px 8px oklch(0 0 0 / 0.8),
+    0 1px 0 oklch(1 0 0 / 0.03);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.maki-e::before {
+  content: '';
+  position: absolute; inset: 4px;
+  border: 1px solid oklch(0.70 0.10 75 / 0.15);
+}
+.maki-e .char {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 48px; font-weight: 900;
+  color: var(--gold-leaf);
+  text-shadow: 0 0 20px oklch(0.70 0.10 75 / 0.1);
+}
+.maki-e-label {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px; font-weight: 300;
+  letter-spacing: 4px; color: var(--text-3);
+  margin-top: 16px;
+}
+
+.insight-body { padding-top: 4px; }
+.insight-tag {
+  display: inline-block;
+  padding: 5px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold-leaf);
+  /* 凹刻标签 — 不是border，是嵌进去的 */
+  background: var(--lacquer);
+  box-shadow:
+    inset 0 1px 3px oklch(0 0 0 / 0.5),
+    0 1px 0 var(--ridge);
+  margin-bottom: 16px;
+}
+.insight-body p {
+  font-size: 14px; line-height: 2;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+.insight-body p strong { color: var(--text); font-weight: 500; }
+.rec-list {
+  list-style: none; margin-top: 24px;
+}
+.rec-list li {
+  padding: 11px 16px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-2);
+  line-height: 1.7;
+  /* 不用 border-left accent — 用凹槽分隔 */
+  border-bottom: 1px solid oklch(0.06 0.01 40);
+  box-shadow: 0 1px 0 oklch(1 0 0 / 0.015);
+  transition: background 0.1s;
+}
+.rec-list li:hover { background: oklch(0.12 0.015 40); color: var(--text); }
+.rec-list .rn {
+  font-family: 'Noto Serif SC', serif;
+  color: var(--gold-leaf); font-weight: 600; margin-right: 8px;
+  font-size: 11px;
+}
+
+/* ════════════════════════════════════════════
+   能量流 — 管道仪表组
+   ════════════════════════════════════════════ */
+.flow-section { padding: 36px 0; }
+.flow-rack {
+  display: flex; align-items: center; gap: 0;
+  margin-top: 24px;
+}
+.flow-gauge {
+  flex: 1;
+  padding: 6px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 6px oklch(0 0 0 / 0.4),
+    inset 0 1px 0 var(--ridge);
+}
+.flow-gauge-inner {
+  padding: 20px 10px;
+  background: var(--lacquer);
+  box-shadow: inset 0 1px 6px oklch(0 0 0 / 0.7);
+  text-align: center;
+}
+.flow-gauge .fg-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--brass);
+}
+.flow-gauge .fg-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px; font-weight: 600; color: var(--text);
+  margin-top: 6px; font-feature-settings: 'tnum';
+  text-shadow: 0 0 15px oklch(0.70 0.10 75 / 0.06);
+}
+.flow-gauge .fg-unit { font-size: 9px; color: var(--text-3); }
+.flow-gauge.primary .fg-val { color: var(--gold-leaf); }
+.flow-pipe {
+  width: 20px; height: 2px;
+  background: var(--brass-dim);
+  position: relative;
+  flex-shrink: 0;
+}
+.flow-pipe::after {
+  content: '';
+  position: absolute; right: -3px; top: -2.5px;
+  width: 6px; height: 6px;
+  border-right: 1.5px solid var(--brass);
+  border-top: 1.5px solid var(--brass);
+  transform: rotate(45deg);
+}
+
+/* ════════════════════════════════════════════
+   棘轮 — 四步旋钮
+   ════════════════════════════════════════════ */
+.ratchet-section { padding: 36px 0; }
+.ratchet-rack {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-top: 24px;
+}
+.ratchet-step {
+  padding: 6px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 6px oklch(0 0 0 / 0.3),
+    inset 0 1px 0 var(--ridge);
+}
+.ratchet-inner {
+  padding: 24px 18px;
+  background: var(--lacquer-wet);
+  box-shadow: inset 0 1px 4px oklch(0 0 0 / 0.5);
+}
+.ratchet-step.active .ratchet-inner {
+  background: oklch(0.10 0.015 45);
+  box-shadow:
+    inset 0 1px 4px oklch(0 0 0 / 0.5),
+    inset 0 0 20px oklch(0.70 0.10 75 / 0.03);
+}
+.ratchet-inner .sn {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 36px; font-weight: 200;
+  color: var(--text-3); line-height: 1;
+}
+.ratchet-step.active .ratchet-inner .sn { color: var(--gold-leaf); }
+.ratchet-inner h4 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px; font-weight: 500; letter-spacing: 2px;
+  margin-top: 10px; color: var(--text);
+}
+.ratchet-inner p {
+  font-size: 11px; color: var(--text-3);
+  margin-top: 5px; line-height: 1.7;
+}
+
+/* ════════════════════════════════════════════
+   底栏
+   ════════════════════════════════════════════ */
+.foot {
+  padding: 32px 0;
+  border-top: 1px solid var(--groove);
+  box-shadow: 0 -1px 0 oklch(1 0 0 / 0.015);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text-3);
+}
+.foot .sig {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 11px; color: var(--gold-leaf); letter-spacing: 3px;
+}
+
+/* ════════════════════════════════════════════
+   按钮交互演示区 — 让用户亲手感受
+   ════════════════════════════════════════════ */
+.demo-buttons {
+  padding: 36px 0;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  align-items: center;
+}
+.demo-buttons .demo-label {
+  width: 100%;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 12px; letter-spacing: 2px;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--groove);
+  box-shadow: 0 1px 0 oklch(1 0 0 / 0.015);
+}
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- ── 顶栏 ── -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="sigil">海</div>
+      <div class="wordmark"><strong>PoseidonX</strong> · 数据中心数字孪生</div>
+    </div>
+    <div class="status-bar">
+      <span><span class="live-dot"></span>LIVE SYNC</span>
+      <span>12:04:32 UTC+8</span>
+      <span>8×8 RACK MATRIX</span>
+    </div>
+  </header>
+
+  <!-- ── 英雄区 ── -->
+  <section class="hero">
+    <div>
+      <h1 class="hero-title">
+        <span class="zh">物理 ↔ 数字</span>
+        <span class="zh"><span class="accent">触手可及</span></span>
+        <span class="en">Urushi Instruments · Tactile Digital Twin</span>
+      </h1>
+    </div>
+    <div class="hero-desc">
+      <p>
+        这不是一块屏幕，而是一台<em>仪器</em>。六十四台机柜如同潜艇的机关——每个旋钮、每个按钮、每块表盘，都为手指而生。漆器的温度加上橡胶的握感，让数据从冰冷的数字变成<em>触觉的记忆</em>。
+      </p>
+    </div>
+  </section>
+  <hr class="divider"/>
+
+  <!-- ── 按钮演示 · 亲手按一下 ── -->
+  <div class="demo-buttons">
+    <div class="demo-label">触觉系统 · 按下每一个按钮感受回弹</div>
+    <button class="rubber-btn active">机房总览</button>
+    <button class="rubber-btn">温度场</button>
+    <button class="rubber-btn">功耗分析</button>
+    <button class="rubber-btn">气流仿真</button>
+    <button class="rubber-btn">异常告警</button>
+    <button class="rubber-btn">AI 洞察</button>
+    <button class="rubber-btn">PUE 追踪</button>
+    <button class="rubber-btn">运维工单</button>
+  </div>
+
+  <!-- ── KPI 仪表组 ── -->
+  <section class="gauge-strip">
+    <div class="gauge">
+      <div class="gauge-label">PUE</div>
+      <div class="gauge-val">1.18</div>
+      <div class="gauge-delta good">↓ 0.03</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">IT Load</div>
+      <div class="gauge-val">847<span class="unit">kW</span></div>
+      <div class="gauge-delta good">↓ 2.1%</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Cooling</div>
+      <div class="gauge-val">142<span class="unit">kW</span></div>
+      <div class="gauge-delta good">↓ 5.8%</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Temp</div>
+      <div class="gauge-val">24.3<span class="unit">°C</span></div>
+      <div class="gauge-delta neutral">—</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Humidity</div>
+      <div class="gauge-val">48<span class="unit">%</span></div>
+      <div class="gauge-delta neutral">—</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Devices</div>
+      <div class="gauge-val">64</div>
+      <div class="gauge-delta neutral">8×8 Rack</div>
+    </div>
+    <div class="gauge">
+      <div class="gauge-label">Anomaly</div>
+      <div class="gauge-val" style="color:var(--cinnabar)">3</div>
+      <div class="gauge-delta warn">1 严重</div>
+    </div>
+  </section>
+
+  <!-- ── 3D 视口 · 潜望镜 ── -->
+  <section class="viewport-section">
+    <div class="viewport">
+      <div class="deep-glow"></div>
+      <div class="reticle"></div>
+      <div class="center-mark">
+        <div class="kanji">孪</div>
+        <div class="sub">Three.js · WebGL · Real-Time</div>
+      </div>
+      <div class="etch tl">数字孪生 · 自由轨道</div>
+      <div class="etch tr">THREE.JS v0.158 · GPU HEAT FIELD</div>
+      <div class="etch bl">LIVE · 8s REFRESH</div>
+      <div class="etch br">ROOM 80×50×12<br/>PDU · BUSWAY<br/>COLD / HOT AISLE</div>
+      <div class="layer-rack">
+        <button class="rubber-btn active"><span><span class="dot" style="background:var(--jade)"></span> 机柜 64</span><span>R</span></button>
+        <button class="rubber-btn"><span><span class="dot" style="background:#5b7bb5"></span> 高架地板</span><span>F</span></button>
+        <button class="rubber-btn"><span><span class="dot" style="background:var(--jade)"></span> 液冷管路</span><span>P</span></button>
+        <button class="rubber-btn"><span><span class="dot" style="background:var(--brass)"></span> 母线槽</span><span>B</span></button>
+        <button class="rubber-btn"><span><span class="dot" style="background:#444"></span> 机房外壳</span><span>S</span></button>
+        <button class="rubber-btn"><span><span class="dot" style="background:#22d3ee"></span> 气流矢量</span><span>W</span></button>
+        <button class="rubber-btn"><span><span class="dot" style="background:var(--gold-leaf)"></span> 感官织网</span><span>N</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 设备 + 异常 ── -->
+  <div class="twin-panels">
+    <div class="panel-frame">
+      <div class="panel-inner">
+        <div class="panel-title">
+          <span>设备矩阵 · 六十四台</span>
+          <span class="sub-label">SOURCE OF TRUTH</span>
+        </div>
+        <table class="dev-table">
+          <thead><tr><th>编号</th><th>类型</th><th>功耗</th><th>温度</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="id-cell">R1-01</td><td>GPU Server</td><td class="val-cell">18.2 kW</td><td>67.3°C</td><td><span class="led crit"></span></td></tr>
+            <tr><td class="id-cell">R1-02</td><td>GPU Server</td><td class="val-cell">16.8 kW</td><td>52.1°C</td><td><span class="led ok"></span></td></tr>
+            <tr><td class="id-cell">R2-01</td><td>Storage</td><td class="val-cell">4.5 kW</td><td>38.7°C</td><td><span class="led ok"></span></td></tr>
+            <tr><td class="id-cell">R2-02</td><td>Network</td><td class="val-cell">2.1 kW</td><td>34.2°C</td><td><span class="led ok"></span></td></tr>
+            <tr><td class="id-cell">R3-01</td><td>GPU Server</td><td class="val-cell">17.4 kW</td><td>58.9°C</td><td><span class="led warn"></span></td></tr>
+            <tr><td class="id-cell">R3-02</td><td>CPU Server</td><td class="val-cell">8.6 kW</td><td>45.0°C</td><td><span class="led ok"></span></td></tr>
+            <tr><td class="id-cell">R4-01</td><td>GPU Server</td><td class="val-cell">19.1 kW</td><td>71.2°C</td><td><span class="led crit"></span></td></tr>
+            <tr><td class="id-cell">R4-02</td><td>UPS</td><td class="val-cell">1.2 kW</td><td>29.8°C</td><td><span class="led ok"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel-frame">
+      <div class="panel-inner">
+        <div class="panel-title">
+          <span>异常指挥</span>
+          <span class="sub-label">ANOMALY COMMAND</span>
+        </div>
+        <div class="anom-stream">
+          <div class="anom-card critical">
+            <div class="anom-sev">严重 · CRITICAL</div>
+            <div class="anom-desc">R4-01 温度超限 71.2°C — 冷通道回风受阻，建议立即检查 CRAH-04 风机</div>
+            <div class="anom-meta">12:04:32 · z-score 3.8 · 影响范围 Row4</div>
+          </div>
+          <div class="anom-card high">
+            <div class="anom-sev">警告 · HIGH</div>
+            <div class="anom-desc">R1-01 功耗持续高位 18.2kW — GPU 利用率 98%，建议迁移部分负载</div>
+            <div class="anom-meta">12:01:15 · z-score 2.9</div>
+          </div>
+          <div class="anom-card medium">
+            <div class="anom-sev">提示 · MEDIUM</div>
+            <div class="anom-desc">PDU-B2 相位不平衡 — L1/L2 差异 8.3A，建议重新分配回路负载</div>
+            <div class="anom-meta">11:58:40 · z-score 2.1</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PUE 趋势 · 示波器 ── -->
+  <section class="scope-section">
+    <div class="scope-header">
+      <h3>能效趋势 · 二十四小时</h3>
+      <div class="scope-legend">
+        <span><span class="leg-line" style="background:var(--jade)"></span>实际 PUE</span>
+        <span><span class="leg-line" style="background:var(--gold-leaf)"></span>预测</span>
+        <span><span class="leg-line" style="background:var(--brass-dim);height:1px;border-top:1px dashed var(--gold-leaf)"></span>目标 1.20</span>
+      </div>
+    </div>
+    <div class="scope-window">
+      <div class="scope-screen">
+        <div class="wave"></div>
+        <div class="wave-line"></div>
+        <div class="forecast"></div>
+        <div class="target"></div>
+        <div class="target-label">PUE 1.20 TARGET</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AI 洞察 ── -->
+  <section class="insight-section">
+    <div class="insight-seal">
+      <div class="maki-e">
+        <div class="char">智</div>
+      </div>
+      <div class="maki-e-label">人工智慧洞察</div>
+    </div>
+    <div class="insight-body">
+      <div class="insight-tag">Energy Optimization</div>
+      <p>
+        <strong>当前 PUE 为 1.18，处于优秀水平</strong>。主要能耗集中在第一排与第四排 GPU 集群，冷通道存在热岛效应。建议将 R4-01 负载迁移至低温区 R6，调高 CRAH-04 风速至 85%，启用液冷辅助回路。预计可将 PUE 降至 1.15，年节省约四十八万元电费。
+      </p>
+      <ul class="rec-list">
+        <li><span class="rn">壹</span>迁移 R4-01 GPU 负载至 R6-03（预计降温 12°C）</li>
+        <li><span class="rn">贰</span>CRAH-04 风速 65% → 85%（消除热岛效应）</li>
+        <li><span class="rn">叁</span>启用液冷辅助回路（PUE ↓ 0.03）</li>
+        <li><span class="rn">肆</span>PDU-B2 回路负载再平衡（降低谐波损耗 2.1%）</li>
+        <li><span class="rn">伍</span>夜间低负载时段关闭 UPS-02 旁路（省电 1.8kW）</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── 能量流 ── -->
+  <section class="flow-section">
+    <div class="panel-title">
+      <span>能量流 · 物理链路</span>
+      <span class="sub-label">GRID → IT LOAD → HEAT</span>
+    </div>
+    <div class="flow-rack">
+      <div class="flow-gauge"><div class="flow-gauge-inner"><div class="fg-name">市电输入</div><div class="fg-val">998</div><div class="fg-unit">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-gauge"><div class="flow-gauge-inner"><div class="fg-name">UPS</div><div class="fg-val">982</div><div class="fg-unit">kW · η98.4%</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-gauge"><div class="flow-gauge-inner"><div class="fg-name">PDU</div><div class="fg-val">968</div><div class="fg-unit">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-gauge primary"><div class="flow-gauge-inner"><div class="fg-name">IT 负载</div><div class="fg-val">847</div><div class="fg-unit">kW</div></div></div>
+      <div class="flow-pipe"></div>
+      <div class="flow-gauge"><div class="flow-gauge-inner"><div class="fg-name">制冷</div><div class="fg-val">142</div><div class="fg-unit">kW</div></div></div>
+    </div>
+  </section>
+
+  <!-- ── 棘轮循环 ── -->
+  <section class="ratchet-section">
+    <div class="panel-title">
+      <span>无限棘轮 · 永不回退闭环</span>
+      <span class="sub-label">MUSK 五步法 · xFIRST PRINCIPLE</span>
+    </div>
+    <div class="ratchet-rack">
+      <div class="ratchet-step active">
+        <div class="ratchet-inner">
+          <div class="sn">壹</div>
+          <h4>感知 · Sense</h4>
+          <p>IoT 传感器 + 边缘 PLC 采集全维度遥测</p>
+        </div>
+      </div>
+      <div class="ratchet-step">
+        <div class="ratchet-inner">
+          <div class="sn">贰</div>
+          <h4>解析 · Analyze</h4>
+          <p>四视角 AI 并行评估 — 设备 / 设施 / 环境 / 流程</p>
+        </div>
+      </div>
+      <div class="ratchet-step">
+        <div class="ratchet-inner">
+          <div class="sn">叁</div>
+          <h4>执行 · Actuate</h4>
+          <p>SBC + PLC 边缘 Agent 调节阀门、风机、负载</p>
+        </div>
+      </div>
+      <div class="ratchet-step">
+        <div class="ratchet-inner">
+          <div class="sn">肆</div>
+          <h4>锁定 · Ratchet</h4>
+          <p>验证能耗下降 → 锁定基线 → 重训模型 → 永不回退</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 底栏 ── -->
+  <footer class="foot">
+    <span class="sig">PoseidonX</span>
+    <span>数据中心数字孪生 · 漆器仪表</span>
+    <span>DEMO E · URUSHI × SOFTIMAGE × SUBMARINE</span>
+  </footer>
+
+</div>
+
+<script>
+// 按钮交互 — 点击切换 active 状态
+document.querySelectorAll('.demo-buttons .rubber-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.demo-buttons .rubber-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+// 图层按钮 — 独立 toggle
+document.querySelectorAll('.layer-rack .rubber-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('active');
+  });
+});
+</script>
+
+</body>
+</html>

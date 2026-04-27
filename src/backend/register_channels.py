@@ -68,6 +68,7 @@ from channels.navigational_lights import NavigationalLightsChannel
 from channels.voyage_data_analyzer import VoyageDataAnalyzerChannel
 from channels.maintenance_planner import MaintenancePlannerChannel
 from channels.bridge_chat import BridgeChatChannel
+from channels.cargo_orbit_telemetry import CargoOrbitTelemetryChannel
 from datetime import datetime
 from channels.agent_set_protocol import create_coordination_bus
 from channels.agent_set_coordinator import AgentSetCoordinator
@@ -854,6 +855,37 @@ def register_marine_datacenter_energy():
     return channel
 
 
+def register_cargo_orbit_telemetry():
+    """注册货船轨道遥测上报 Channel."""
+    channel = CargoOrbitTelemetryChannel()
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+        status = channel.get_status()
+        print(f"   状态：{status['health']}")
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
+
+
+def register_aiot_mesh():
+    """注册 AIoT Mesh (BIOS + LoRA + MC-RFID + 带外通信) 关联学习 Channel."""
+    from channels.aiot_mesh_channel import AIoTMeshChannel
+    channel = AIoTMeshChannel()
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+        status = channel.get_status()
+        c = status.get("counts", {})
+        print(f"   状态：{status['health']}  BIOS={c.get('bios',0)} "
+              f"LoRA={c.get('lora',0)} RFID={c.get('rfid',0)} OOB={c.get('oob_queue',0)}")
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
+
+
 def list_registered_channels():
     """列出所有已注册的 Channel."""
     registry = get_default_registry()
@@ -922,5 +954,7 @@ if __name__ == "__main__":
     register_agent_sets()
     register_system_evolution()
     register_marine_datacenter_energy()
+    register_cargo_orbit_telemetry()
+    register_aiot_mesh()
     list_registered_channels()
     print("\n✅ Channel 注册完成")

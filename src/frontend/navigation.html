@@ -19,11 +19,12 @@
         .wp-idx{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ob-accent-light);color:var(--ob-accent);font-weight:670;font-size:11px;flex-shrink:0;}
         .wp-active .wp-idx{background:var(--ob-accent);color:var(--ob-accent-text);}
         .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:13px;}
-        .toggle-switch{width:36px;height:20px;border-radius:10px;background:var(--ob-border-subtle);position:relative;cursor:pointer;transition:background .2s;}
+        .toggle-switch{width:36px;height:20px;border-radius:0;background:var(--ob-border-subtle);position:relative;cursor:pointer;transition:background .2s;}
         .toggle-switch.on{background:var(--ob-running);}
         .toggle-switch::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:var(--ob-text-primary);top:2px;left:2px;transition:left .2s;}
         .toggle-switch.on::after{left:18px;background:var(--ob-on-alarm);}
     </style>
+<link rel="stylesheet" href="/css/ws-theme-bridge.css">
 </head>
 <body>
     <div class="nav-layout">
@@ -35,7 +36,7 @@
             <div class="ob-readout"><span class="ob-readout-label">XTE</span><span class="ob-readout-value ob-status-ok">0.02<span class="ob-readout-unit">nm</span></span></div>
             <div class="ob-readout"><span class="ob-readout-label">DTG</span><span class="ob-readout-value">156.2<span class="ob-readout-unit">nm</span></span></div>
             <a href="/navigation-v2.html" class="ob-readout" style="text-decoration:none;cursor:pointer;border:1px solid var(--ob-accent);border-radius:var(--ob-radius-sm)" title="K-Bridge V2 Workstation"><span class="ob-readout-label" style="color:var(--ob-accent)">V2 →</span><span class="ob-readout-value" style="font-size:11px;color:var(--ob-accent)">K-Bridge</span></a>
-            <a href="/navigation-v3.html" class="ob-readout" style="text-decoration:none;cursor:pointer;border:1px solid #38BDF8;border-radius:var(--ob-radius-sm)" title="Next-Gen ECDIS S-100"><span class="ob-readout-label" style="color:#38BDF8">V3 →</span><span class="ob-readout-value" style="font-size:11px;color:#38BDF8">ECDIS</span></a>
+            <a href="/navigation-v3.html" class="ob-readout" style="text-decoration:none;cursor:pointer;border:1px solid oklch(0.52 0.04 160);border-radius:var(--ob-radius-sm)" title="Next-Gen ECDIS S-100"><span class="ob-readout-label" style="color:oklch(0.52 0.04 160)">V3 →</span><span class="ob-readout-value" style="font-size:11px;color:oklch(0.52 0.04 160)">ECDIS</span></a>
         </div>
         <div class="nav-center">
             <div class="ob-card" style="display:flex;flex-direction:column;">
@@ -80,7 +81,8 @@
             <span style="font-size:12px;font-weight:570;">42% — WP02 → WP03</span>
         </div></div>
     </div>
-    <script src="/js/nav-sidebar.js" data-active="navigation"></script>
+    <script src="/js/i18n.js"></script>
+<script src="/js/nav-sidebar.js" data-active="navigation"></script>
     <script>
     (function(){
         try {

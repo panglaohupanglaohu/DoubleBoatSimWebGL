@@ -11,16 +11,34 @@
       "api_key": "",
       "api_base_url": ""
     },
-    "deepseek": {
-      "model_id": "deepseek",
+    "deepseek_v4": {
+      "model_id": "deepseek_v4",
       "provider": "deepseek",
       "name": "deepseek-chat",
-      "max_tokens": 8192,
+      "max_tokens": 65536,
+      "context_window": 131072,
       "temperature": 0.2,
+      "top_p": 0.95,
       "is_default": true,
       "enabled": true,
       "api_key": "sk-21cf5443859b4b4f8c41864fe0da8cba",
-      "api_base_url": "https://api.deepseek.com/v1"
+      "api_base_url": "https://api.deepseek.com/v1",
+      "supports_function_calling": true,
+      "notes": "DeepSeek V4 (chat alias) — 128K ctx, 64K output"
+    },
+    "deepseek_reasoner": {
+      "model_id": "deepseek_reasoner",
+      "provider": "deepseek",
+      "name": "deepseek-reasoner",
+      "max_tokens": 65536,
+      "context_window": 131072,
+      "temperature": 0.0,
+      "is_default": false,
+      "enabled": true,
+      "api_key": "sk-21cf5443859b4b4f8c41864fe0da8cba",
+      "api_base_url": "https://api.deepseek.com/v1",
+      "supports_function_calling": false,
+      "notes": "DeepSeek V4 Reasoner — for architecture/QA reasoning steps"
     }
   },
   "execution_system": {
@@ -35,16 +53,19 @@
       "api_key": "",
       "api_base_url": ""
     },
-    "deepseek_v3": {
-      "model_id": "deepseek_v3",
+    "deepseek_v4": {
+      "model_id": "deepseek_v4",
       "provider": "deepseek",
       "name": "deepseek-chat",
-      "max_tokens": 8192,
+      "max_tokens": 65536,
+      "context_window": 131072,
       "temperature": 0.2,
       "is_default": true,
       "enabled": true,
-      "api_key": "",
-      "api_base_url": "https://api.deepseek.com/v1"
+      "api_key": "sk-21cf5443859b4b4f8c41864fe0da8cba",
+      "api_base_url": "https://api.deepseek.com/v1",
+      "supports_function_calling": true,
+      "notes": "DeepSeek V4 (chat alias) — 128K ctx, 64K output"
     }
   }
 }

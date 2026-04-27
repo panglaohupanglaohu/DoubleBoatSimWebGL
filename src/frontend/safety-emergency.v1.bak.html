@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-obc-theme="dusk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="ob-title" content="安全应急">
+<meta name="ob-subtitle" content="K-Safe — 消防监测与应急管理">
+<title>安全应急 — PoseidonX</title>
+<link rel="stylesheet" href="/css/openbridge-theme.css">
+<style>
+:root{--sf-glass:rgba(24,28,36,.72);--sf-border:oklch(1 0 0 / .08);--sf-ok:oklch(0.52 0.04 160);--sf-warn:oklch(0.56 0.05 70);--sf-alarm:oklch(0.48 0.07 22);--sf-cyan:oklch(0.52 0.04 160);--sf-red:oklch(0.48 0.07 22);}
+*{box-sizing:border-box}
+body{margin:0;padding:var(--ob-topbar-height,48px) 16px 16px 80px;background:var(--ob-bg-global);color:var(--ob-text-primary);font-family:var(--ob-font,system-ui,sans-serif);overflow-x:hidden}
+.safety-wrap{display:flex;flex-direction:column;gap:14px;min-height:calc(100vh - 80px)}
+/* ── Hero Alert Bar ── */
+.alert-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.alert-card{background:var(--sf-glass);backdrop-filter:blur(14px);border:1px solid var(--sf-border);border-radius:0;padding:14px;text-align:center;position:relative;overflow:hidden}
+.alert-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.alert-card:nth-child(1)::before{background:var(--sf-ok)}
+.alert-card:nth-child(2)::before{background:var(--sf-warn)}
+.alert-card:nth-child(3)::before{background:var(--sf-alarm)}
+.alert-card:nth-child(4)::before{background:var(--sf-cyan)}
+.alert-card:nth-child(5)::before{background:linear-gradient(90deg,var(--sf-ok),var(--sf-cyan))}
+.alert-num{font-size:28px;font-weight:800;line-height:1}
+.alert-lbl{font-size:10px;color:var(--ob-text-tertiary);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+/* ── Top Row ── */
+.top-row{display:grid;grid-template-columns:1fr 320px;gap:14px}
+/* Fire Matrix */
+.fire-panel{background:var(--sf-glass);backdrop-filter:blur(14px);border:1px solid var(--sf-border);border-radius:0;padding:18px}
+.fire-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.fire-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sf-alarm)}
+.fire-matrix{display:grid;grid-template-columns:80px repeat(5,1fr);gap:6px}
+.fire-header{font-weight:700;color:var(--ob-text-tertiary);font-size:11px;display:flex;align-items:center;justify-content:center;text-transform:uppercase}
+.fire-cell{background:rgba(0,0,0,.15);border:1px solid var(--sf-border);border-radius:0;padding:10px 6px;text-align:center;font-size:11px;cursor:pointer;transition:all .2s;position:relative}
+.fire-cell:hover{border-color:oklch(1 0 0 / .15);transform:scale(1.02)}
+.fire-cell .zone-name{color:var(--ob-text-tertiary);margin-bottom:6px;font-size:10px}
+.fire-cell .temp{font-size:10px;color:var(--ob-text-tertiary);margin-top:4px}
+.fire-cell.alarm-flash{animation:alarmFlash 1s infinite}
+@keyframes alarmFlash{0%,100%{border-color:var(--sf-alarm);box-shadow:0 0 8px oklch(0.48 0.07 22 / .2)}50%{border-color:oklch(0.48 0.07 22 / .1);box-shadow:none}}
+/* Status dot */
+.sd{width:10px;height:10px;border-radius:50%;display:inline-block}
+.sd-ok{background:var(--sf-ok);box-shadow:0 0 6px rgba(74,222,128,.3)}
+.sd-warn{background:var(--sf-warn);box-shadow:0 0 6px oklch(0.56 0.05 70 / .3)}
+.sd-alarm{background:var(--sf-alarm);box-shadow:0 0 8px oklch(0.48 0.07 22 / .4)}
+/* ESD Panel */
+.esd-panel{background:var(--sf-glass);backdrop-filter:blur(14px);border:1px solid var(--sf-border);border-radius:0;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.esd-panel h5{margin:0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;width:100%;display:flex;align-items:center;gap:8px}
+.esd-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sf-red)}
+.esd-btn{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle at 35% 35%,oklch(0.48 0.07 22),oklch(0.48 0.07 22));border:5px solid rgba(255,82,82,.5);color: oklch(0.18 0.008 110);font-size:24px;font-weight:900;cursor:pointer;box-shadow:0 0 40px rgba(229,57,53,0.3),inset 0 -4px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:all .15s;text-shadow:0 2px 4px rgba(0,0,0,.4)}
+.esd-btn:hover{box-shadow:0 0 60px rgba(229,57,53,0.5),inset 0 -4px 12px rgba(0,0,0,.3);transform:scale(1.02)}
+.esd-btn:active{transform:scale(0.96);box-shadow:0 0 20px rgba(229,57,53,0.6)}
+.esd-btn.triggered{background:radial-gradient(circle at 35% 35%,oklch(0.48 0.07 22),oklch(0.48 0.07 22));animation:esdPulse 1s infinite}
+@keyframes esdPulse{0%,100%{box-shadow:0 0 40px rgba(255,23,68,.4)}50%{box-shadow:0 0 80px rgba(255,23,68,.7)}}
+.esd-steps{display:flex;gap:12px}
+.esd-step{padding:8px 14px;border:1px solid var(--sf-border);border-radius:0;font-size:12px;text-align:center;transition:all .3s}
+.esd-step.active{border-color:var(--sf-alarm);color:var(--sf-alarm);background:oklch(0.48 0.07 22 / .08)}
+.esd-timer{font-size:24px;font-weight:700;color:var(--sf-alarm);font-family:monospace;display:none}
+/* ── Bottom Row ── */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* Life Saving */
+.ls-panel{background:var(--sf-glass);backdrop-filter:blur(14px);border:1px solid var(--sf-border);border-radius:0;padding:18px}
+.ls-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.ls-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sf-ok)}
+.ls-table{width:100%;border-collapse:collapse;font-size:12px}
+.ls-table th{text-align:left;padding:8px 10px;color:var(--ob-text-tertiary);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--sf-border)}
+.ls-table td{padding:8px 10px;border-bottom:1px solid oklch(1 0 0 / .03)}
+.ls-table tr:hover td{background:oklch(1 0 0 / .03)}
+.badge{display:inline-flex;padding:3px 10px;border-radius:0;font-size:10px;font-weight:600}
+.badge-ok{background:rgba(74,222,128,.12);color:var(--sf-ok);border:1px solid rgba(74,222,128,.2)}
+.badge-warn{background:oklch(0.56 0.05 70 / .12);color:var(--sf-warn);border:1px solid oklch(0.56 0.05 70 / .2)}
+.badge-alarm{background:oklch(0.48 0.07 22 / .12);color:var(--sf-alarm);border:1px solid oklch(0.48 0.07 22 / .2)}
+/* Emergency Plans */
+.plan-panel{background:var(--sf-glass);backdrop-filter:blur(14px);border:1px solid var(--sf-border);border-radius:0;padding:18px}
+.plan-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.plan-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sf-cyan)}
+.plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.plan-card{background:rgba(0,0,0,.15);border:1px solid var(--sf-border);border-radius:0;padding:16px 10px;text-align:center;cursor:pointer;transition:all .2s}
+.plan-card:hover{border-color:rgba(34,211,238,.3);transform:translateY(-2px)}
+.plan-card .icon{font-size:30px;margin-bottom:8px}
+.plan-card .name{font-size:12px;font-weight:600;margin-bottom:6px}
+.plan-card .status{font-size:10px}
+/* Muster Station */
+.muster-panel{background:var(--sf-glass);backdrop-filter:blur(14px);border:1px solid var(--sf-border);border-radius:0;padding:18px}
+.muster-panel h5{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.muster-panel h5::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--sf-warn)}
+.muster-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.muster-item{text-align:center;padding:12px;background:rgba(0,0,0,.1);border-radius:0;border:1px solid var(--sf-border)}
+.muster-item .loc{font-size:11px;color:var(--ob-text-tertiary);margin-bottom:4px}
+.muster-item .count{font-size:24px;font-weight:700}
+.muster-item .cap{font-size:10px;color:var(--ob-text-tertiary);margin-top:2px}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.pulse{animation:pulse 2s infinite}
+</style>
+</head>
+<body>
+<div class="safety-wrap">
+<!-- ═══ Alert Bar ═══ -->
+<div class="alert-bar">
+    <div class="alert-card"><div class="alert-num" style="color:var(--sf-ok)" id="alNormal">12</div><div class="alert-lbl">正常区域</div></div>
+    <div class="alert-card"><div class="alert-num" style="color:var(--sf-warn)" id="alWarn">3</div><div class="alert-lbl">注意区域</div></div>
+    <div class="alert-card"><div class="alert-num" style="color:var(--sf-alarm)" id="alAlarm">0</div><div class="alert-lbl">报警区域</div></div>
+    <div class="alert-card"><div class="alert-num" style="color:var(--sf-cyan)" id="alEquip">6</div><div class="alert-lbl">救生设备</div></div>
+    <div class="alert-card"><div class="alert-num" style="color:var(--sf-ok)" id="alReady">8</div><div class="alert-lbl">预案就绪</div></div>
+</div>
+<!-- ═══ Top Row ═══ -->
+<div class="top-row">
+    <!-- Fire Zone Matrix -->
+    <div class="fire-panel">
+        <h5>🔥 消防区域矩阵 <span class="pulse" style="font-size:10px;color:var(--sf-alarm);margin-left:auto">● 监控中</span></h5>
+        <div class="fire-matrix" id="fireMatrix">
+            <div class="fire-header"></div><div class="fire-header">Deck 1</div><div class="fire-header">Deck 2</div><div class="fire-header">Deck 3</div><div class="fire-header">Deck 4</div><div class="fire-header">Deck 5</div>
+            <div class="fire-header">Port</div>
+            <div class="fire-cell"><div class="zone-name">P1-机舱</div><span class="sd sd-ok"></span><div class="temp">32°C</div></div>
+            <div class="fire-cell"><div class="zone-name">P2-货舱</div><span class="sd sd-ok"></span><div class="temp">28°C</div></div>
+            <div class="fire-cell"><div class="zone-name">P3-住舱</div><span class="sd sd-warn"></span><div class="temp">38°C</div></div>
+            <div class="fire-cell"><div class="zone-name">P4-驾驶</div><span class="sd sd-ok"></span><div class="temp">24°C</div></div>
+            <div class="fire-cell"><div class="zone-name">P5-甲板</div><span class="sd sd-ok"></span><div class="temp">26°C</div></div>
+            <div class="fire-header">Center</div>
+            <div class="fire-cell"><div class="zone-name">C1-机舱</div><span class="sd sd-warn"></span><div class="temp">42°C</div></div>
+            <div class="fire-cell"><div class="zone-name">C2-货舱</div><span class="sd sd-ok"></span><div class="temp">25°C</div></div>
+            <div class="fire-cell"><div class="zone-name">C3-住舱</div><span class="sd sd-ok"></span><div class="temp">23°C</div></div>
+            <div class="fire-cell"><div class="zone-name">C4-驾驶</div><span class="sd sd-ok"></span><div class="temp">22°C</div></div>
+            <div class="fire-cell"><div class="zone-name">C5-甲板</div><span class="sd sd-ok"></span><div class="temp">27°C</div></div>
+            <div class="fire-header">Stbd</div>
+            <div class="fire-cell"><div class="zone-name">S1-机舱</div><span class="sd sd-ok"></span><div class="temp">34°C</div></div>
+            <div class="fire-cell"><div class="zone-name">S2-货舱</div><span class="sd sd-ok"></span><div class="temp">26°C</div></div>
+            <div class="fire-cell"><div class="zone-name">S3-住舱</div><span class="sd sd-ok"></span><div class="temp">24°C</div></div>
+            <div class="fire-cell"><div class="zone-name">S4-驾驶</div><span class="sd sd-warn"></span><div class="temp">36°C</div></div>
+            <div class="fire-cell"><div class="zone-name">S5-甲板</div><span class="sd sd-ok"></span><div class="temp">25°C</div></div>
+        </div>
+    </div>
+    <!-- ESD Panel -->
+    <div class="esd-panel">
+        <h5>🛑 紧急停车 ESD</h5>
+        <button class="esd-btn" id="esdBtn">ESD</button>
+        <div class="esd-timer" id="esdTimer">00:00</div>
+        <div class="esd-steps">
+            <div class="esd-step" id="esdS1">① 按下</div>
+            <div class="esd-step" id="esdS2">② 确认</div>
+            <div class="esd-step" id="esdS3">③ 执行</div>
+        </div>
+    </div>
+</div>
+<!-- ═══ Bottom Row ═══ -->
+<div class="bottom-row">
+    <!-- Life Saving Equipment -->
+    <div class="ls-panel">
+        <h5>🛟 救生设备清单</h5>
+        <table class="ls-table">
+            <thead><tr><th>设备</th><th>数量</th><th>容量</th><th>检验日期</th><th>状态</th></tr></thead>
+            <tbody id="lsBody">
+                <tr><td>🚢 救生艇 #1 (左)</td><td>1</td><td>30人</td><td>2026-01-15</td><td><span class="badge badge-ok">就绪</span></td></tr>
+                <tr><td>🚢 救生艇 #2 (右)</td><td>1</td><td>30人</td><td>2026-01-15</td><td><span class="badge badge-ok">就绪</span></td></tr>
+                <tr><td>🛟 救生筏 A</td><td>2</td><td>25人×2</td><td>2026-02-20</td><td><span class="badge badge-ok">就绪</span></td></tr>
+                <tr><td>🛟 救生筏 B</td><td>2</td><td>20人×2</td><td>2026-02-20</td><td><span class="badge badge-ok">就绪</span></td></tr>
+                <tr><td>⭕ 救生圈 (发光)</td><td>8</td><td>—</td><td>2026-03-01</td><td><span class="badge badge-ok">就绪</span></td></tr>
+                <tr><td>💨 救生圈 (烟雾)</td><td>4</td><td>—</td><td>2025-12-10</td><td><span class="badge badge-warn">检修中</span></td></tr>
+                <tr><td>🧥 救生衣</td><td>50</td><td>—</td><td>2026-01-01</td><td><span class="badge badge-ok">就绪</span></td></tr>
+                <tr><td>📻 EPIRB</td><td>2</td><td>—</td><td>2026-03-15</td><td><span class="badge badge-ok">就绪</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Emergency Plans -->
+    <div class="plan-panel">
+        <h5>📋 应急预案</h5>
+        <div class="plan-grid">
+            <div class="plan-card" onclick="showPlan('fire')"><div class="icon">🔥</div><div class="name">火灾</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('abandon')"><div class="icon">🚢</div><div class="name">弃船</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('mob')"><div class="icon">🏊</div><div class="name">人落水</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('collision')"><div class="icon">💥</div><div class="name">碰撞</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('grounding')"><div class="icon">⚓</div><div class="name">搁浅</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('flooding')"><div class="icon">🌊</div><div class="name">进水</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('pollution')"><div class="icon">🛢️</div><div class="name">污染</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+            <div class="plan-card" onclick="showPlan('medical')"><div class="icon">🏥</div><div class="name">医疗</div><div class="status"><span class="badge badge-ok">READY</span></div></div>
+        </div>
+    </div>
+</div>
+<!-- ═══ Muster Stations ═══ -->
+<div class="muster-panel">
+    <h5>👥 集合站点 Muster Stations</h5>
+    <div class="muster-grid">
+        <div class="muster-item"><div class="loc">A 站 - 左舷甲板</div><div class="count" style="color:var(--sf-ok)">12</div><div class="cap">/ 15 人已到</div></div>
+        <div class="muster-item"><div class="loc">B 站 - 右舷甲板</div><div class="count" style="color:var(--sf-ok)">14</div><div class="cap">/ 15 人已到</div></div>
+        <div class="muster-item"><div class="loc">C 站 - 驾驶台</div><div class="count" style="color:var(--sf-warn)">3</div><div class="cap">/ 5 人已到</div></div>
+        <div class="muster-item"><div class="loc">D 站 - 机舱控制室</div><div class="count" style="color:var(--sf-ok)">4</div><div class="cap">/ 4 人已到</div></div>
+    </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PoseidonX Safety Emergency — Enhanced
+// ═══════════════════════════════════════════════
+
+// ── ESD Button Logic ──
+let esdTriggered=false,esdConfirmed=false,esdTimer=null,esdSeconds=0;
+document.getElementById('esdBtn').addEventListener('click',function(){
+    if(!esdTriggered){
+        esdTriggered=true;
+        document.getElementById('esdS1').classList.add('active');
+        this.textContent='确认?';
+        return;
+    }
+    if(!esdConfirmed){
+        esdConfirmed=true;
+        document.getElementById('esdS2').classList.add('active');
+        document.getElementById('esdS3').classList.add('active');
+        this.classList.add('triggered');
+        this.textContent='ESD!';
+        document.getElementById('esdTimer').style.display='block';
+        esdTimer=setInterval(()=>{esdSeconds++;const m=String(Math.floor(esdSeconds/60)).padStart(2,'0');const s=String(esdSeconds%60).padStart(2,'0');document.getElementById('esdTimer').textContent=m+':'+s;},1000);
+        fetch('/api/v1/safety/esd-trigger',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({zone:'all',reason:'manual'})}).catch(()=>{});
+    }
+});
+
+// ── Fire Zone API ──
+const fireCells=document.querySelectorAll('.fire-cell');
+function fetchFireZones(){
+    fetch('/api/v1/safety/fire-zones').then(r=>r.json()).then(d=>{
+        if(!d.zones)return;
+        const dots=document.querySelectorAll('.fire-cell .sd');
+        d.zones.forEach((z,i)=>{
+            if(dots[i]){
+                const s=z.status||'normal';
+                dots[i].className='sd '+(s==='normal'?'sd-ok':s==='warning'?'sd-warn':'sd-alarm');
+                if(s==='alarm')fireCells[i].classList.add('alarm-flash');
+                else fireCells[i].classList.remove('alarm-flash');
+            }
+            if(z.temperature){const tempEl=fireCells[i]&&fireCells[i].querySelector('.temp');if(tempEl)tempEl.textContent=z.temperature+'°C';}
+        });
+        // Update counters
+        let ok=0,warn=0,alarm=0;
+        d.zones.forEach(z=>{const s=z.status||'normal';if(s==='normal')ok++;else if(s==='warning')warn++;else alarm++;});
+        document.getElementById('alNormal').textContent=ok;
+        document.getElementById('alWarn').textContent=warn;
+        document.getElementById('alAlarm').textContent=alarm;
+    }).catch(()=>{});
+}
+fetchFireZones();setInterval(fetchFireZones,10000);
+
+// ── Life Saving Equipment API ──
+fetch('/api/v1/safety/life-saving').then(r=>r.json()).then(d=>{
+    if(!d.equipment)return;
+    const tbody=document.getElementById('lsBody');
+    tbody.innerHTML='';
+    d.equipment.forEach(eq=>{
+        const st=eq.status==='ready'?'badge-ok':'badge-warn';
+        const stText=eq.status==='ready'?'就绪':'检修中';
+        tbody.innerHTML+=`<tr><td>${eq.name}</td><td>${eq.count||1}</td><td>${eq.capacity||'—'}</td><td>${eq.inspection_date||'—'}</td><td><span class="badge ${st}">${stText}</span></td></tr>`;
+    });
+}).catch(()=>{});
+
+// ── Emergency Plans API ──
+const planIcons={fire:'🔥',abandon_ship:'🚢',man_overboard:'🏊',collision:'💥',grounding:'⚓',flooding:'🌊',pollution:'🛢️',medical:'🏥'};
+fetch('/api/v1/safety/emergency-plans').then(r=>r.json()).then(d=>{
+    if(!d.plans)return;
+    const grid=document.querySelector('.plan-grid');
+    grid.innerHTML='';
+    d.plans.slice(0,8).forEach(p=>{
+        grid.innerHTML+=`<div class="plan-card" onclick="showPlan('${p.type}')"><div class="icon">${planIcons[p.type]||'📋'}</div><div class="name">${p.name}</div><div class="status"><span class="badge badge-ok">READY</span></div></div>`;
+    });
+    document.getElementById('alReady').textContent=d.plans.length;
+}).catch(()=>{});
+
+// ── Show Plan (placeholder) ──
+function showPlan(type){
+    const plans={fire:'① 发现火情 → ② 报告驾驶台 → ③ 按下火警按钮 → ④ 初期灭火 → ⑤ 关闭通风',
+                 abandon:'① 船长下令 → ② 穿救生衣 → ③ 到集合站 → ④ 清点人数 → ⑤ 放艇',
+                 mob:'① 大声呼叫 → ② 抛救生圈 → ③ 记录位置 → ④ Williamson Turn → ⑤ 搜救',
+                 collision:'① 评估损害 → ② 堵漏 → ③ 测量进水 → ④ 启动舱底泵 → ⑤ 报告VTS',
+                 grounding:'① 停车 → ② 测量水深 → ③ 检查舱底 → ④ 评估脱浅 → ⑤ 请求拖带',
+                 flooding:'① 关闭水密门 → ② 启动排水泵 → ③ 堵漏 → ④ 评估稳性 → ⑤ 报告',
+                 pollution:'① 停止泄漏源 → ② 布设围油栏 → ③ 报告海事局 → ④ 使用吸油材料',
+                 medical:'① 评估伤情 → ② 急救处理 → ③ 联系TMAS → ④ 安排后送'};
+    alert('应急预案: '+(plans[type]||'未找到'));
+}
+
+// ── WebSocket ──
+(function(){let ws;function cn(){try{ws=new WebSocket('ws://'+location.host+'/ws/safety');ws.onmessage=function(e){try{const d=JSON.parse(e.data);if(d.type==='fire_alarm')fetchFireZones();}catch(ex){}};ws.onclose=function(){setTimeout(cn,5000);};ws.onerror=function(){ws.close();};}catch(e){setTimeout(cn,5000);}}cn();})();
+</script>
+<script src="/js/nav-sidebar.js" data-active="safety"></script>
+</body>
+</html>

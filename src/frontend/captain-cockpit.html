@@ -8,21 +8,23 @@
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Noto+Serif:wght@200;300;400;600;900&family=Noto+Serif+SC:wght@200;300;400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/openbridge-theme.css">
+    <link rel="stylesheet" href="/css/ws-theme-bridge.css">
     <style>
         :root {
-            --bg: #07111f;
-            --panel: rgba(9, 22, 39, 0.86);
-            --panel-strong: rgba(9, 22, 39, 0.96);
-            --line: rgba(125, 207, 255, 0.18);
-            --cyan: #7ddcff;
-            --cyan-strong: #35c8ff;
-            --lime: #98f5a7;
-            --amber: #ffcf70;
-            --red: #ff7d7d;
-            --text: #eef7ff;
-            --muted: #94a9bc;
-            --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+            --bg: var(--shironeri, oklch(0.96 0.003 110));
+            --panel: var(--ishi, oklch(0.91 0.004 110));
+            --panel-strong: var(--kabe, oklch(0.85 0.005 110));
+            --line: var(--groove, oklch(0.82 0.004 110));
+            --cyan: var(--koke, oklch(0.52 0.04 160));
+            --cyan-strong: var(--sumi, oklch(0.18 0.008 110));
+            --lime: var(--koke, oklch(0.52 0.04 160));
+            --amber: var(--kitsune, oklch(0.56 0.05 70));
+            --red: var(--shu, oklch(0.48 0.07 22));
+            --text: var(--sumi, oklch(0.18 0.008 110));
+            --muted: var(--sumi-3, oklch(0.55 0.005 110));
+            --shadow: 0 2px 4px oklch(0 0 0 / 0.06);
         }
 
         * {
@@ -32,13 +34,15 @@
         }
 
         body {
-            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            font-family: 'Noto Sans SC', system-ui, sans-serif;
             min-height: 100vh;
             color: var(--text);
-            background:
-                radial-gradient(circle at top left, rgba(53, 200, 255, 0.18), transparent 28%),
-                radial-gradient(circle at top right, rgba(152, 245, 167, 0.12), transparent 24%),
-                linear-gradient(180deg, #06101d 0%, #091727 56%, #07111f 100%);
+            background: var(--bg);
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: radial-gradient(oklch(0 0 0/0.012) 1px, transparent 1px), radial-gradient(oklch(0 0 0/0.008) 1px, transparent 1px);
+            background-size: 5px 5px, 7px 7px; background-position: 0 0, 3px 3px;
         }
 
         .shell {
@@ -53,11 +57,10 @@
             background: var(--panel);
             border: 1px solid var(--line);
             box-shadow: var(--shadow);
-            backdrop-filter: blur(16px);
         }
 
         .topbar {
-            border-radius: 20px;
+            border-radius:0;
             padding: 18px 22px;
             display: flex;
             justify-content: space-between;
@@ -72,10 +75,10 @@
         }
 
         .eyebrow {
-            font-family: 'IBM Plex Mono', monospace;
-            color: var(--cyan);
-            font-size: 12px;
-            letter-spacing: 0.12em;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
         }
 
@@ -104,10 +107,10 @@
         }
 
         .sync-item {
-            border-radius: 16px;
+            border-radius:0;
             padding: 12px 14px;
-            background: rgba(10, 23, 39, 0.82);
-            border: 1px solid rgba(125, 220, 255, 0.14);
+            background: var(--panel);
+            border: 1px solid var(--line);
             box-shadow: var(--shadow);
         }
 
@@ -125,29 +128,28 @@
         .action-link,
         .chip,
         .command-button {
-            border: 1px solid rgba(125, 220, 255, 0.24);
-            background: rgba(125, 220, 255, 0.08);
+            border: 1px solid var(--line);
+            background: var(--panel);
             color: var(--text);
-            border-radius: 999px;
+            border-radius:0;
             padding: 10px 14px;
             text-decoration: none;
             font-size: 12px;
             cursor: pointer;
-            transition: 0.2s ease;
+            transition: 0.15s ease;
         }
 
         .action-link:hover,
         .chip:hover,
         .command-button:hover {
-            transform: translateY(-1px);
-            background: rgba(125, 220, 255, 0.15);
-            border-color: rgba(125, 220, 255, 0.4);
+            background: var(--panel-strong);
+            border-color: var(--cyan);
         }
 
         .chip.is-active {
-            background: rgba(125, 220, 255, 0.22);
-            border-color: rgba(125, 220, 255, 0.48);
-            box-shadow: 0 0 0 1px rgba(125, 220, 255, 0.1) inset;
+            background: oklch(0.52 0.04 160 / 0.10);
+            border-color: var(--cyan);
+            box-shadow: none;
         }
 
         .metrics {
@@ -175,10 +177,10 @@
         }
 
         .briefing-card {
-            border-radius: 18px;
+            border-radius:0;
             padding: 16px;
-            background: linear-gradient(180deg, rgba(7, 20, 36, 0.95), rgba(8, 14, 24, 0.98));
-            border: 1px solid rgba(125, 220, 255, 0.14);
+            background: var(--panel);
+            border: 1px solid var(--line);
             display: grid;
             gap: 8px;
             min-height: 122px;
@@ -186,9 +188,9 @@
         }
 
         .briefing-card.is-focus {
-            border-color: rgba(125, 220, 255, 0.36);
-            background: linear-gradient(180deg, rgba(12, 33, 56, 0.96), rgba(8, 18, 31, 0.98));
-            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+            border-color: var(--cyan);
+            background: oklch(0.52 0.04 160 / 0.06);
+            box-shadow: var(--shadow);
         }
 
         .briefing-card.is-dim {
@@ -215,10 +217,10 @@
         }
 
         .mission-card {
-            border-radius: 18px;
+            border-radius:0;
             padding: 16px;
-            background: linear-gradient(180deg, rgba(8, 25, 43, 0.92), rgba(7, 17, 30, 0.98));
-            border: 1px solid rgba(125, 220, 255, 0.14);
+            background: var(--panel);
+            border: 1px solid var(--line);
             display: grid;
             gap: 8px;
             min-height: 132px;
@@ -242,10 +244,10 @@
         }
 
         .domain-card {
-            border-radius: 18px;
+            border-radius:0;
             padding: 16px;
-            background: linear-gradient(180deg, rgba(12, 28, 47, 0.9), rgba(7, 18, 32, 0.92));
-            border: 1px solid rgba(125, 220, 255, 0.14);
+            background: var(--panel);
+            border: 1px solid var(--line);
             box-shadow: var(--shadow);
             display: grid;
             gap: 8px;
@@ -257,23 +259,23 @@
         .domain-card:hover,
         .domain-card.is-active {
             transform: translateY(-2px);
-            border-color: rgba(125, 220, 255, 0.34);
-            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+            border-color: var(--cyan);
+            box-shadow: 0 18px 36px oklch(0 0 0 / 0.28);
         }
 
         .domain-card.theme-rcc,
         .pathway-stage.theme-rcc {
-            border-left: 3px solid rgba(125, 220, 255, 0.52);
+            border-left: 3px solid var(--cyan);
         }
 
         .domain-card.theme-environment,
         .pathway-stage.theme-environment {
-            border-left: 3px solid rgba(152, 245, 167, 0.5);
+            border-left: 3px solid var(--koke, oklch(0.52 0.04 160));
         }
 
         .domain-card.theme-governance,
         .pathway-stage.theme-governance {
-            border-left: 3px solid rgba(255, 125, 125, 0.52);
+            border-left: 3px solid var(--shu, oklch(0.48 0.07 22));
         }
 
         .domain-kicker {
@@ -313,7 +315,7 @@
         }
 
         .metric {
-            border-radius: 18px;
+            border-radius:0;
             padding: 16px;
             min-height: 108px;
             position: relative;
@@ -327,7 +329,7 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(125, 220, 255, 0.16), transparent 70%);
+            background: radial-gradient(circle, oklch(0.52 0.04 160 / 0.08), transparent 70%);
         }
 
         .metric-label {
@@ -355,7 +357,7 @@
         }
 
         .frame-card {
-            border-radius: 22px;
+            border-radius:0;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -393,7 +395,7 @@
         iframe {
             width: 100%;
             border: 0;
-            background: #06101d;
+            background: oklch(0.96 0.003 110);
         }
 
         .twin-frame {
@@ -408,7 +410,7 @@
         }
 
         .panel {
-            border-radius: 20px;
+            border-radius:0;
             overflow: hidden;
         }
 
@@ -426,9 +428,9 @@
             justify-content: space-between;
             gap: 12px;
             padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.04);
         }
 
         .list-item strong {
@@ -455,8 +457,8 @@
             font-family: 'IBM Plex Mono', monospace;
             font-size: 11px;
             padding: 5px 8px;
-            border-radius: 999px;
-            background: rgba(125, 220, 255, 0.12);
+            border-radius:0;
+            background: oklch(0.52 0.04 160 / 0.06);
             color: var(--cyan);
             white-space: nowrap;
         }
@@ -469,17 +471,17 @@
         .command-input {
             width: 100%;
             padding: 14px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(125, 220, 255, 0.16);
-            background: rgba(0, 0, 0, 0.24);
+            border-radius:0;
+            border: 1px solid oklch(0.52 0.04 160 / 0.08);
+            background: oklch(0 0 0 / 0.24);
             color: var(--text);
             font: inherit;
         }
 
         .command-response {
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.04);
             padding: 14px;
             min-height: 136px;
             color: var(--text);
@@ -503,9 +505,9 @@
 
         .command-deck-card {
             padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.05);
             display: grid;
             gap: 6px;
             color: var(--text);
@@ -514,8 +516,8 @@
         }
 
         .command-deck-card.is-primary {
-            border-color: rgba(125, 220, 255, 0.3);
-            background: rgba(125, 220, 255, 0.1);
+            border-color: oklch(0.52 0.04 160 / 0.15);
+            background: oklch(0.52 0.04 160 / 0.06);
         }
 
         .command-deck-card small {
@@ -536,18 +538,18 @@
         }
 
         .command-inline-button {
-            border: 1px solid rgba(125, 220, 255, 0.2);
-            background: rgba(125, 220, 255, 0.08);
+            border: 1px solid oklch(0.52 0.04 160 / 0.10);
+            background: oklch(0.52 0.04 160 / 0.04);
             color: var(--text);
-            border-radius: 999px;
+            border-radius:0;
             padding: 6px 10px;
             font-size: 11px;
             cursor: pointer;
         }
 
         .command-inline-button.is-primary {
-            background: rgba(125, 220, 255, 0.16);
-            border-color: rgba(125, 220, 255, 0.36);
+            background: oklch(0.52 0.04 160 / 0.08);
+            border-color: var(--cyan);
         }
 
         .pathway-list {
@@ -562,9 +564,9 @@
 
         .constraint-item {
             padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.05);
             display: flex;
             justify-content: space-between;
             gap: 12px;
@@ -589,9 +591,9 @@
 
         .doctrine-item {
             padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.05);
         }
 
         .doctrine-item strong {
@@ -612,9 +614,9 @@
 
         .focus-console-card {
             padding: 14px;
-            border-radius: 16px;
-            background: linear-gradient(180deg, rgba(9, 24, 42, 0.94), rgba(8, 16, 28, 0.98));
-            border: 1px solid rgba(125, 220, 255, 0.16);
+            border-radius:0;
+            background: var(--panel);
+            border: 1px solid var(--line);
             display: grid;
             gap: 8px;
         }
@@ -637,9 +639,9 @@
 
         .pathway-stage {
             padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.05);
             display: grid;
             gap: 8px;
             cursor: pointer;
@@ -649,8 +651,8 @@
         .pathway-stage:hover,
         .pathway-stage.is-active {
             transform: translateY(-1px);
-            border-color: rgba(125, 220, 255, 0.28);
-            background: rgba(125, 220, 255, 0.08);
+            border-color: oklch(0.52 0.04 160 / 0.12);
+            background: oklch(0.52 0.04 160 / 0.04);
         }
 
         .pathway-stage-head {
@@ -674,15 +676,15 @@
         .pathway-track {
             width: 100%;
             height: 6px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.08);
             overflow: hidden;
         }
 
         .pathway-meter {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(90deg, var(--cyan-strong), #9af6bd);
+            background: linear-gradient(90deg, var(--cyan-strong), oklch(0.52 0.04 160));
         }
 
         .map-frame {
@@ -692,9 +694,8 @@
         .map-shell {
             position: relative;
             min-height: 320px;
-            background:
-                radial-gradient(circle at top, rgba(0, 214, 255, 0.16), transparent 36%),
-                linear-gradient(180deg, rgba(7, 21, 36, 0.96) 0%, rgba(6, 16, 28, 0.88) 100%);
+            background: var(--panel);
+            border: 1px solid var(--line);
         }
 
         .map-canvas {
@@ -713,11 +714,10 @@
         .map-focus-note,
         .traffic-strip {
             pointer-events: auto;
-            border-radius: 14px;
-            backdrop-filter: blur(10px);
-            background: rgba(5, 15, 27, 0.72);
-            border: 1px solid rgba(125, 220, 255, 0.12);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+            border-radius:0;
+            background: var(--panel-strong);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
         }
 
         .map-summary {
@@ -767,9 +767,9 @@
 
         .map-focus-hint {
             padding: 8px 12px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.05);
             color: var(--muted);
             font-size: 11px;
             line-height: 1.45;
@@ -785,9 +785,9 @@
         .traffic-chip {
             min-width: 118px;
             padding: 8px 10px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius:0;
+            background: oklch(1 0 0 / 0.04);
+            border: 1px solid oklch(1 0 0 / 0.04);
             cursor: pointer;
         }
 
@@ -803,20 +803,20 @@
         }
 
         .traffic-chip.is-high {
-            border-color: rgba(255, 114, 114, 0.28);
-            background: rgba(255, 114, 114, 0.12);
+            border-color: oklch(0.48 0.07 22 / 0.20);
+            background: oklch(0.48 0.07 22 / 0.06);
         }
 
         .traffic-chip.is-meta {
-            border-color: rgba(125, 220, 255, 0.18);
-            background: rgba(125, 220, 255, 0.08);
+            border-color: var(--line);
+            background: oklch(0.52 0.04 160 / 0.04);
             min-width: 156px;
         }
 
         .traffic-chip.is-focus {
-            border-color: rgba(125, 220, 255, 0.3);
-            background: rgba(125, 220, 255, 0.12);
-            box-shadow: 0 0 0 1px rgba(125, 220, 255, 0.08) inset;
+            border-color: oklch(0.52 0.04 160 / 0.15);
+            background: oklch(0.52 0.04 160 / 0.06);
+            box-shadow: 0 0 0 1px oklch(0.52 0.04 160 / 0.04) inset;
         }
 
         .ownship-marker,
@@ -824,48 +824,48 @@
             width: 16px;
             height: 16px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
+            border: 2px solid oklch(1 0 0 / 0.9);
+            box-shadow: 0 0 18px oklch(0 0 0 / 0.35);
         }
 
         .ownship-marker {
             width: 20px;
             height: 20px;
-            background: #7ddcff;
-            box-shadow: 0 0 18px rgba(125, 220, 255, 0.65);
+            background: oklch(0.52 0.04 160);
+            box-shadow: 0 0 18px oklch(0.52 0.04 160 / 0.15);
         }
 
         .target-marker {
-            background: #6ef5a1;
+            background: oklch(0.52 0.04 160);
         }
 
         .target-marker.is-medium {
-            background: #ffc857;
+            background: oklch(0.56 0.05 70);
         }
 
         .target-marker.is-high {
-            background: #ff7272;
+            background: oklch(0.48 0.07 22);
         }
 
         .target-marker.is-focus {
             width: 20px;
             height: 20px;
-            box-shadow: 0 0 20px rgba(125, 220, 255, 0.5);
-            border-color: rgba(125, 220, 255, 0.9);
+            box-shadow: 0 0 20px var(--cyan);
+            border-color: var(--cyan);
         }
 
         .maplibregl-popup-content {
-            background: rgba(7, 18, 32, 0.96);
+            background: var(--panel-strong);
             color: var(--text);
-            border: 1px solid rgba(125, 220, 255, 0.16);
-            border-radius: 14px;
+            border: 1px solid oklch(0.52 0.04 160 / 0.08);
+            border-radius:0;
             padding: 10px 12px;
         }
 
         .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
         .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
         .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
-            border-top-color: rgba(7, 18, 32, 0.96);
+            border-top-color: var(--panel-strong);
         }
 
         .footer-note {
@@ -879,21 +879,21 @@
         .metric-value.is-ok { color: var(--lime); }
         .metric-value.is-warn { color: var(--amber); }
         .metric-value.is-danger { color: var(--red); }
-        .badge.is-ok { background: rgba(152, 245, 167, 0.15); color: var(--lime); }
-        .badge.is-warn { background: rgba(255, 207, 112, 0.15); color: var(--amber); }
-        .badge.is-danger { background: rgba(255, 125, 125, 0.18); color: var(--red); }
-        .badge.is-neutral { background: rgba(125, 220, 255, 0.12); color: var(--cyan); }
+        .badge.is-ok { background: oklch(0.52 0.04 160 / 0.08); color: var(--lime); }
+        .badge.is-warn { background: oklch(0.56 0.05 70 / 0.08); color: var(--amber); }
+        .badge.is-danger { background: oklch(0.48 0.07 22 / 0.08); color: var(--red); }
+        .badge.is-neutral { background: oklch(0.52 0.04 160 / 0.06); color: var(--cyan); }
 
         /* Glow effect on critical metrics */
         .metric.has-alert {
-            border-color: rgba(255, 125, 125, 0.35);
-            box-shadow: 0 0 24px rgba(255, 125, 125, 0.08);
+            border-color: oklch(0.48 0.07 22 / 0.15);
+            box-shadow: 0 0 24px oklch(0.48 0.07 22 / 0.06);
         }
 
         /* Pulse animation for active link */
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 8px rgba(125, 220, 255, 0.2); }
-            50% { box-shadow: 0 0 18px rgba(125, 220, 255, 0.45); }
+            0%, 100% { box-shadow: 0 0 8px oklch(0.52 0.04 160 / 0.10); }
+            50% { box-shadow: 0 0 8px oklch(0.52 0.04 160 / 0.15); }
         }
         .badge.is-live {
             animation: pulse-glow 2s ease-in-out infinite;
@@ -2847,18 +2847,20 @@
                 const et = o.execution_team || {};
                 const s = o.scheduler || {};
                 b.textContent = s.running ? 'ACTIVE' : 'OFFLINE';
-                b.style.background = s.running ? 'rgba(72,187,120,.15)' : 'rgba(252,129,129,.15)';
-                b.style.color = s.running ? '#48bb78' : '#fc8181';
+                b.style.background = s.running ? 'oklch(0.52 0.04 160 / 0.08)' : 'oklch(0.48 0.07 22 / 0.08)';
+                b.style.color = s.running ? 'oklch(0.52 0.04 160)' : 'oklch(0.48 0.07 22)';
                 const n = (bt.agent_count||0)+(et.agent_count||0);
-                const mk = (l,v,cl) => '<div style="flex:1;min-width:80px;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:'+cl+'">'+v+'</div><div style="font-size:10px;color:#718096">'+l+'</div></div>';
-                c.innerHTML = mk('Agent 在线',n,'#4fc3f7') + mk('调度 Tick',s.tick_count||0,'#48bb78') + mk('报告数',s.reports_generated||0,'#f6ad55');
+                const mk = (l,v,cl) => '<div style="flex:1;min-width:80px;background:var(--panel);border-radius:0;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:'+cl+'">'+v+'</div><div style="font-size:10px;color:oklch(0.55 0.005 110)">'+l+'</div></div>';
+                c.innerHTML = mk('Agent 在线',n,'oklch(0.52 0.04 160)') + mk('调度 Tick',s.tick_count||0,'oklch(0.52 0.04 160)') + mk('报告数',s.reports_generated||0,'oklch(0.56 0.05 70)');
             } catch(e) {
-                if (b) { b.textContent='OFFLINE'; b.style.color='#fc8181'; }
-                if (c) { c.innerHTML='<div style="color:#718096;font-size:12px">Agent 服务离线</div>'; }
+                if (b) { b.textContent='OFFLINE'; b.style.color='oklch(0.48 0.07 22)'; }
+                if (c) { c.innerHTML='<div style="color:oklch(0.55 0.005 110);font-size:12px">Agent 服务离线</div>'; }
             }
         }
         loadAgentTeamStatus();
         setInterval(loadAgentTeamStatus, 30000);
     </script>
+<script src="/js/i18n.js"></script>
+<script src="/js/nav-sidebar.js" data-active="captain"></script>
 </body>
 </html>
