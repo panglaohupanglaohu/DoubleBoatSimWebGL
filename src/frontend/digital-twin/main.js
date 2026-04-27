@@ -4121,19 +4121,25 @@ function animate() {
         state._seaFloor.material.uniforms.time.value = now;
     }
     
-    // AR-CAS: 货船运动 — 以双体船(原点)为圆心做圆周运动 (速度别太快)
+    // AR-CAS: 货船运动 — 以双体船(原点)为圆心做椭圆运动 (速度别太快)
     if (state.cargoShip) {
         // 使用帧计数器: 每帧递增，角速度 0.005 rad/帧 ≈ 0.3°/s @60fps
         if (state._cargoOrbitAngle === undefined) state._cargoOrbitAngle = 0;
         state._cargoOrbitAngle += 0.005;
         const orbitAngle = state._cargoOrbitAngle;
-        // 圆周运动参数
-        const orbitRadius = 80;          // 轨道半径 (units)
-        // 计算圆周位置: 以原点(双体船位置)为圆心
-        state.cargoShip.position.x = Math.cos(orbitAngle) * orbitRadius;
-        state.cargoShip.position.z = Math.sin(orbitAngle) * orbitRadius;
-        // 船头指向运动方向 (圆周切线方向)
-        const headingAngle = orbitAngle + Math.PI / 2; // 切线方向 = 径向 + 90°
+        // 椭圆运动参数: 长轴沿 X 轴 (120 units), 短轴沿 Z 轴 (60 units)
+        const orbitRadiusX = 120;        // 长轴半径 (X方向)
+        const orbitRadiusZ = 60;         // 短轴半径 (Z方向)
+        // 计算椭圆位置: 以原点(双体船位置)为圆心
+        state.cargoShip.position.x = Math.cos(orbitAngle) * orbitRadiusX;
+        state.cargoShip.position.z = Math.sin(orbitAngle) * orbitRadiusZ;
+        // 船头指向运动方向 (椭圆切线方向)
+        // 椭圆参数方程: x = a*cos(θ), z = b*sin(θ)
+        // 切线方向: dx/dθ = -a*sin(θ), dz/dθ = b*cos(θ)
+        const headingAngle = Math.atan2(
+            orbitRadiusX * Math.cos(orbitAngle),   // dz/dθ 的符号
+            -orbitRadiusZ * Math.sin(orbitAngle)    // dx/dθ 的符号
+        );
         state.cargoShip.rotation.y = headingAngle;
         // 大型船波浪影响 — 摇摆幅度小、周期长
         state.cargoShip.rotation.z = Math.sin(now * 0.4) * 0.008;

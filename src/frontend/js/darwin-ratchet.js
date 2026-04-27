@@ -123,7 +123,7 @@
             { id: 'agent-page-light-theme-v1', title: '智能体页强制浅色主题',   category: 'ui',       description: '/agent-team-config.html 使用 OpenBridge day 主题, 不从 localStorage 继承深色' },
             { id: 'bridge-uses-agent-llm-v1', title: '桥楼 LLM 统一走智能体团队', category: 'ai',      description: '数字孪生 Bridge Chat 通过 /api/v1/bridge-chat/send 使用智能体团队默认 LLM 配置 (localStorage 降级为 fallback)' },
             { id: 'marine-datacenter-v1',     title: '船载数据中心 AI 能耗管理',  category: 'energy',   description: '第一性原理重构: 4 视角(设备/设施/环境/流程) + IoT Hub(LoRa/MC-RFID/PLC-Agent) + Skill库 + Policy引擎 + 闭环 + Darwin 棘轮; 页面: /marine-datacenter.html' },
-            { id: 'cargo-orbit-catamaran-v1', title: '货船以双体船为圆心做圆周运动', category: 'scene',   description: '货船围绕双体船(原点)以半径80单位匀速圆周运动, 船头指向切线方向' },
+            { id: 'cargo-orbit-catamaran-v1', title: '货船以双体船为圆心做椭圆运动', category: 'scene',   description: '货船围绕双体船(原点)以半长轴120、半短轴60做椭圆运动, 船头指向切线方向' },
         ];
         
         const existing = load();

@@ -1623,6 +1623,11 @@ async def submit_task(team_id: str, req: SubmitTaskRequest) -> Dict[str, Any]:
                 _start_claude_session(sid, step_prompt, cfg, agent, task.task_id)
                 first_step["session_id"] = sid
                 task.metadata["workflow"] = wf
+                _emit_pipeline_event(task.task_id, "step_started", {
+                    "step": first_step["key"],
+                    "label": first_step.get("label", ""),
+                    "agent": agent.name,
+                })
         # Mark task as running and start harness monitor
         await engine.start_task(task.task_id)
         _start_harness_monitor(task.task_id, team_id)
@@ -2059,6 +2064,43 @@ _HARNESS_RETRY_DELAY = 3     # Seconds between retries
 _HARNESS_STALL_SEC = 300     # Mark stalled if no output for N seconds (large models need time)
 _HARNESS_AUTO_ADVANCE = True # Auto-advance on step completion
 _PIPELINE_MAX_REWINDS = 2    # Max times to rewind develop→test→deploy with QA feedback
+_SESSION_GC_TTL_SEC = 1800   # Remove completed sessions after 30 min
+
+# ── Pipeline event bus (per-task SSE subscribers) ──
+import collections as _collections
+_pipeline_events: Dict[str, list] = {}  # task_id -> list of event dicts
+_pipeline_subscribers: Dict[str, list] = {}  # task_id -> list of asyncio.Queue
+
+
+def _emit_pipeline_event(task_id: str, event_type: str, data: Dict[str, Any]) -> None:
+    """Push an event to all SSE subscribers of a task and persist it."""
+    evt = {"type": event_type, "ts": _time.time(), **data}
+    _pipeline_events.setdefault(task_id, []).append(evt)
+    # Keep last 200 events per task
+    if len(_pipeline_events[task_id]) > 200:
+        _pipeline_events[task_id] = _pipeline_events[task_id][-200:]
+    # Push to SSE subscribers
+    for q in _pipeline_subscribers.get(task_id, []):
+        try:
+            q.put_nowait(evt)
+        except Exception:
+            pass
+
+
+def _gc_sessions() -> int:
+    """Remove completed/failed sessions older than _SESSION_GC_TTL_SEC. Returns count removed."""
+    now = _time.time()
+    to_remove = []
+    for sid, s in _claude_sessions.items():
+        if s.get("status") in ("completed", "failed", "stopped"):
+            age = now - s.get("started_at", now)
+            if age > _SESSION_GC_TTL_SEC:
+                to_remove.append(sid)
+    for sid in to_remove:
+        _claude_sessions.pop(sid, None)
+    if to_remove:
+        _harness_log.info(f"[GC] Cleaned up {len(to_remove)} expired sessions")
+    return len(to_remove)
 
 
 def _rewind_pipeline_to_develop(task, wf: list, qa_reason: str, qa_report: str) -> bool:
@@ -2079,6 +2121,20 @@ def _rewind_pipeline_to_develop(task, wf: list, qa_reason: str, qa_report: str) 
             f"[Harness] Rewind cap reached ({rewind_count}/{_PIPELINE_MAX_REWINDS}) "
             f"for task {task.task_id} — giving up"
         )
+        # G7 fix: explicitly fail the task so it doesn't stay "running" forever
+        _emit_pipeline_event(task.task_id, "pipeline_failed", {
+            "reason": f"QA rewind cap exhausted ({_PIPELINE_MAX_REWINDS}): {qa_reason}",
+        })
+        for s in wf:
+            if s.get("status") in ("active", "pending"):
+                s["status"] = "failed"
+                s["error"] = f"pipeline halted: rewind cap ({_PIPELINE_MAX_REWINDS}) exhausted"
+        task.metadata["workflow"] = wf
+        task.metadata["pipeline_failed_reason"] = qa_reason
+        try:
+            task.status = task.status.__class__("failed")
+        except Exception:
+            pass
         return False
 
     rewind_count += 1
@@ -2172,6 +2228,12 @@ def _rewind_pipeline_to_develop(task, wf: list, qa_reason: str, qa_report: str) 
         f"for task {task.task_id}: {qa_reason} "
         f"({len(structured_failures)} structured failure(s))"
     )
+    _emit_pipeline_event(task.task_id, "pipeline_rewind", {
+        "iteration": rewind_count,
+        "max": _PIPELINE_MAX_REWINDS,
+        "reason": qa_reason[:200],
+        "failures": len(structured_failures),
+    })
     return True
 
 
@@ -2185,8 +2247,13 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
     """Background thread that monitors a task's active step and auto-advances on completion.
     Inspired by Claude Code's stall watchdog and task notification flow."""
     _harness_log.info(f"[Harness] Monitoring task {task_id}")
+    _gc_counter = 0
+    _emit_pipeline_event(task_id, "pipeline_started", {"team_id": team_id})
     while True:
         _time.sleep(_HARNESS_POLL_SEC)
+        _gc_counter += 1
+        if _gc_counter % 50 == 0:
+            _gc_sessions()
         try:
             engine = _te()
             task = engine.get_task(task_id)
@@ -2222,6 +2289,10 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                         "total_steps": len(wf),
                         "completed": completed_count,
                         "failed": failed_count,
+                        "steps": [{"key": s["key"], "status": s["status"]} for s in wf],
+                    })
+                    _emit_pipeline_event(task_id, "pipeline_complete", {
+                        "completed": completed_count, "failed": failed_count,
                         "steps": [{"key": s["key"], "status": s["status"]} for s in wf],
                     })
                     _harness_log.info(
@@ -2462,6 +2533,9 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                                     )
                                 except Exception as smoke_err:
                                     _harness_log.warning(f"[Harness] smoke check failed: {smoke_err}")
+                        else:
+                            # Explicitly mark 0 deliverables so deploy step can detect no-op
+                            active_step["deliverable_count"] = 0
                     except Exception as pipe_err:
                         _harness_log.error(f"[Harness] Pipeline save error: {pipe_err}")
 
@@ -2494,6 +2568,12 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                 # ── Deploy step: apply code from developer's pipeline output ──
                 if step_key == "deploy":
                     try:
+                        # ── Check if developer produced zero changes (no-op task) ──
+                        dev_step_obj = next((s for s in wf if s.get("key") == "develop"), None)
+                        dev_deliverables = dev_step_obj.get("deliverable_count", 0) if dev_step_obj else 0
+                        dev_no_op = (dev_deliverables == 0 and dev_step_obj
+                                     and dev_step_obj.get("status") == "completed")
+
                         # ── QA Gate: refuse to apply if test step verdict is FAIL ──
                         gate_blocked = False
                         gate_reason = ""
@@ -2586,11 +2666,23 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                                 "developer": dev_result,
                                 "deployer": deploy_result,
                             }
-                            session["lines"].append(
-                                f"\n📦 部署结果: {total_applied} 文件已应用 "
-                                f"(开发: {dev_applied}, 蓝绿: {deploy_applied}), "
-                                f"{total_skipped} 跳过, {total_failed} 失败\n"
-                            )
+
+                            # ── No-op deploy: developer found no changes needed ──
+                            if dev_no_op and total_applied == 0:
+                                active_step["deploy_no_op"] = True
+                                session["lines"].append(
+                                    "\n✅ 开发者判定无需代码变更，部署步骤跳过 (no-op)\n"
+                                )
+                                _harness_log.info(
+                                    f"[Harness] Deploy no-op: developer had 0 deliverables, "
+                                    f"treating as successful no-op deploy"
+                                )
+                            else:
+                                session["lines"].append(
+                                    f"\n📦 部署结果: {total_applied} 文件已应用 "
+                                    f"(开发: {dev_applied}, 蓝绿: {deploy_applied}), "
+                                    f"{total_skipped} 跳过, {total_failed} 失败\n"
+                                )
                             _harness_log.info(
                                 f"[Harness] Deploy: {total_applied} applied "
                                 f"(dev={dev_applied}, deploy={deploy_applied})"
@@ -2601,13 +2693,22 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                 task.metadata["workflow"] = wf
 
                 if sess_status == "completed" and not has_content:
-                    # Session "completed" but produced no real output — treat as failed
-                    _harness_log.warning(
-                        f"[Harness] Step {active_step['key']} session completed but has NO meaningful output — "
-                        f"treating as failed (LLM may have returned empty/error response)"
-                    )
-                    sess_status = "failed"
-                    session["status"] = "failed"
+                    # No-op deploy is still valid — developer found nothing to change
+                    is_no_op_deploy = (step_key == "deploy"
+                                       and active_step.get("deploy_no_op"))
+                    if is_no_op_deploy:
+                        _harness_log.info(
+                            f"[Harness] Step {active_step['key']} is a no-op deploy — "
+                            f"treating as completed despite minimal output"
+                        )
+                    else:
+                        # Session "completed" but produced no real output — treat as failed
+                        _harness_log.warning(
+                            f"[Harness] Step {active_step['key']} session completed but has NO meaningful output — "
+                            f"treating as failed (LLM may have returned empty/error response)"
+                        )
+                        sess_status = "failed"
+                        session["status"] = "failed"
 
                 if sess_status == "failed":
                     active_step["status"] = "failed"
@@ -2623,9 +2724,18 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                         "output_lines": len(list(session.get("lines", []))),
                     }, from_agent=active_step.get("agent_id", ""),
                        to_agent="(next step)")
+                    _emit_pipeline_event(task_id, "step_failed", {
+                        "step": active_step["key"],
+                        "label": active_step.get("label", ""),
+                        "error": str(session.get("error", "unknown"))[:200],
+                    })
 
                 if sess_status == "completed":
                     active_step["status"] = "completed"
+                    _emit_pipeline_event(task_id, "step_completed", {
+                        "step": active_step["key"],
+                        "label": active_step.get("label", ""),
+                    })
                     # Build structured handoff payload with summary data
                     _handoff_payload = {
                         "step": active_step["key"],
@@ -2709,6 +2819,12 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                                     f"[Harness] Auto-advancing: step {active_step['key']} → "
                                     f"{next_step['key']} (agent: {agent.name}, session: {new_sid})"
                                 )
+                                _emit_pipeline_event(task_id, "step_started", {
+                                    "step": next_step["key"],
+                                    "label": next_step.get("label", ""),
+                                    "agent": agent.name,
+                                    "prev_step": active_step["key"],
+                                })
                                 _start_claude_session(new_sid, step_prompt, cfg, agent, task_id)
                                 next_step["session_id"] = new_sid
                             except Exception as start_err:
@@ -2748,6 +2864,10 @@ def _harness_monitor(task_id: str, team_id: str) -> None:
                             "status": s["status"],
                             "artifact": s.get("artifact", ""),
                         } for s in wf],
+                    })
+                    _emit_pipeline_event(task_id, "pipeline_complete", {
+                        "completed": completed_count, "failed": failed_count,
+                        "steps": [{"key": s["key"], "status": s["status"]} for s in wf],
                     })
 
                     _harness_log.info(
@@ -5365,6 +5485,125 @@ async def harness_status() -> Dict[str, Any]:
             "auto_advance": _HARNESS_AUTO_ADVANCE,
         },
     }
+
+
+# ── Pipeline status + SSE endpoints ──────────────────────────────────────
+
+
+@router.get(
+    "/tasks/{task_id}/pipeline/status",
+    summary="Get pipeline execution status (lightweight, for bridge chat polling)",
+)
+def get_pipeline_status(task_id: str) -> Dict[str, Any]:
+    """Return current pipeline status: steps with their statuses, active step, rewind count.
+    Designed for the bridge chat widget to poll cheaply."""
+    engine = _te()
+    task = engine.get_task(task_id)
+    if task is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+    wf = (task.metadata or {}).get("workflow", [])
+    steps = []
+    active_step = None
+    for s in wf:
+        step_info = {
+            "key": s.get("key", ""),
+            "label": s.get("label", ""),
+            "status": s.get("status", "pending"),
+        }
+        if s.get("error"):
+            step_info["error"] = str(s["error"])[:200]
+        if s.get("deliverable_count"):
+            step_info["files"] = s["deliverable_count"]
+        steps.append(step_info)
+        if s.get("status") == "active":
+            active_step = s.get("key")
+    md = task.metadata or {}
+    return {
+        "task_id": task_id,
+        "task_status": task.status.value if hasattr(task.status, "value") else str(task.status),
+        "title": task.title,
+        "steps": steps,
+        "active_step": active_step,
+        "rewinds": int(md.get("pipeline_rewinds", 0)),
+        "max_rewinds": _PIPELINE_MAX_REWINDS,
+        "pipeline_failed_reason": md.get("pipeline_failed_reason"),
+        "events": _pipeline_events.get(task_id, [])[-20:],
+    }
+
+
+@router.get(
+    "/tasks/{task_id}/pipeline/events",
+    summary="SSE stream of pipeline events for a task",
+)
+async def pipeline_events_sse(task_id: str):
+    """Server-Sent Events stream for real-time pipeline progress.
+    The bridge chat subscribes to this after dispatching a task."""
+    from starlette.responses import StreamingResponse
+    import json as _sse_json
+
+    engine = _te()
+    task = engine.get_task(task_id)
+    if task is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+    _pipeline_subscribers.setdefault(task_id, []).append(queue)
+
+    async def event_generator():
+        try:
+            # Send current state as first event
+            wf = (task.metadata or {}).get("workflow", [])
+            init = {
+                "type": "init",
+                "task_status": task.status.value if hasattr(task.status, "value") else str(task.status),
+                "steps": [{"key": s.get("key"), "label": s.get("label"), "status": s.get("status")} for s in wf],
+            }
+            yield f"data: {_sse_json.dumps(init, ensure_ascii=False)}\n\n"
+
+            # Also replay recent events
+            for evt in _pipeline_events.get(task_id, [])[-10:]:
+                yield f"data: {_sse_json.dumps(evt, ensure_ascii=False)}\n\n"
+
+            # Stream new events
+            while True:
+                try:
+                    evt = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    yield f"data: {_sse_json.dumps(evt, ensure_ascii=False)}\n\n"
+                    # Terminal events
+                    if evt.get("type") in ("pipeline_complete", "pipeline_failed"):
+                        break
+                except asyncio.TimeoutError:
+                    # Send keepalive
+                    yield f": keepalive\n\n"
+                    # Check if task is terminal
+                    t = engine.get_task(task_id)
+                    if t and hasattr(t.status, "value") and t.status.value in ("completed", "failed", "cancelled"):
+                        final = {"type": "pipeline_complete", "task_status": t.status.value}
+                        yield f"data: {_sse_json.dumps(final, ensure_ascii=False)}\n\n"
+                        break
+        finally:
+            # Unsubscribe
+            subs = _pipeline_subscribers.get(task_id, [])
+            if queue in subs:
+                subs.remove(queue)
+            if not subs:
+                _pipeline_subscribers.pop(task_id, None)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.post(
+    "/harness/gc",
+    summary="Run session garbage collection",
+)
+async def run_session_gc() -> Dict[str, Any]:
+    """Manually trigger GC of expired sessions."""
+    removed = _gc_sessions()
+    return {"removed": removed, "remaining": len(_claude_sessions)}
 
 
 async def _execute_llm_chat(prompt: str, agent, task_id: str) -> Dict[str, Any]:

@@ -1165,10 +1165,18 @@ function startWorkflowPoll(){
         loadTasks();
         setTimeout(()=>connectAllTaskTerminals(),600);
       }
-      // Stop polling if no active steps
+      // G11 fix: Stop polling only when all tasks are terminal (completed/failed/cancelled),
+      // not just when no step is currently "active" (race between steps)
       if(!hasActive){
-        clearInterval(_wfPollTimer);
-        _wfPollTimer=null;
+        let allTerminal = true;
+        taskList.forEach(t => {
+          const st = t.status || '';
+          if (!['completed','failed','cancelled'].includes(st)) allTerminal = false;
+        });
+        if(allTerminal){
+          clearInterval(_wfPollTimer);
+          _wfPollTimer=null;
+        }
       }
     }catch(e){}
   }, 4000); // Poll every 4 seconds

@@ -358,7 +358,12 @@ export class SimpleBridgeChat {
       background: ${role === 'user' ? 'rgba(79,195,247,0.2)' : role === 'system' ? 'rgba(255,183,77,0.2)' : 'rgba(76,175,80,0.2)'};
       color: ${role === 'user' ? '#81d4fa' : role === 'system' ? '#ffe082' : '#a5d6a7'};
     `;
-    messageDiv.textContent = text;
+    // User messages use textContent (safe), system/assistant use innerHTML (trusted source)
+    if (role === 'user') {
+      messageDiv.textContent = text;
+    } else {
+      messageDiv.innerHTML = text;
+    }
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -465,33 +470,140 @@ export class SimpleBridgeChat {
   
   async dispatchTask(intent) {
     try {
-      const url = `/api/v1/agent-config/teams/${intent.teamId}/tasks`;
-      const body = {
-        title: intent.title,
-        description: intent.description,
-        agent_id: intent.agentId || '',
-        priority: intent.priority,
-        dependencies: [],
-        metadata: { source: 'bridge_chat', issued_at: new Date().toISOString() },
-      };
-      const r = await fetch(url, {
+      // G2 fix: Use bridge-chat/send as unified entry point — backend handles task creation,
+      // dedup, Captain Agent safety instructions, and workflow kickoff.
+      const sessionId = this._sessionId || (this._sessionId = 'twin-' + Date.now().toString(36));
+      const r = await fetch('/api/v1/bridge-chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          message: intent.description,
+          session_id: sessionId,
+          agent_id: intent.agentId || 'ship_navigator',
+        }),
       });
       if (!r.ok) {
-        const err = await r.text();
-        // 即使后端不可达, 也记录到 Darwin 作为本地任务
         this.recordLocalTask(intent, 'pending-backend');
         return `⚠️ 任务已本地登记 (后端 ${r.status})\n📋 标题: ${intent.title}\n👤 团队: ${intent.teamId} / ${intent.agentId || '自动分配'}\n💡 请前往 <a href="/agent-team-config.html" target="_blank" style="color:#4fc3f7">智能体配置页</a> 查看`;
       }
       const data = await r.json();
-      this.recordLocalTask(intent, 'submitted', data.task_id);
-      return `✅ 任务已提交至 <b>${intent.teamId}</b>\n👤 执行者: <b>${intent.agentId || '自动分配'}</b>\n📋 ID: <code>${data.task_id}</code>\n🔥 优先级: ${['紧急','高','普通','低'][intent.priority]}\n\n👉 <a href="/agent-team-config.html?view=tasks" target="_blank" style="color:#4fc3f7">查看任务进度</a>`;
+      const taskId = data.task_id;
+      const pipelineError = data.pipeline_error;
+
+      this.recordLocalTask(intent, taskId ? 'submitted' : 'chat_only', taskId);
+
+      let msg = '';
+      if (data.reply) {
+        msg += data.reply + '\n\n';
+      }
+      if (pipelineError) {
+        msg += `⚠️ ${pipelineError}\n`;
+      }
+      if (taskId) {
+        msg += `✅ 任务已提交 · ID: <code>${taskId}</code>\n`;
+        msg += `🔥 优先级: ${['紧急','高','普通','低'][intent.priority]}\n`;
+        msg += `👉 <a href="/agent-team-config.html?view=tasks" target="_blank" style="color:#4fc3f7">查看任务进度</a>\n`;
+        // G1 fix: subscribe to pipeline events for real-time feedback
+        this._subscribePipelineEvents(taskId);
+      }
+      return msg.trim();
     } catch (e) {
       this.recordLocalTask(intent, 'error');
       return `❌ 任务派发失败: ${e.message}\n（已记录到本地 Darwin 队列）`;
     }
+  }
+
+  /**
+   * G1: Subscribe to pipeline SSE events and show step progress in chat.
+   */
+  _subscribePipelineEvents(taskId) {
+    if (this._pipelineEventSource) {
+      this._pipelineEventSource.close();
+    }
+    const url = `/api/v1/agent-config/tasks/${taskId}/pipeline/events`;
+    const es = new EventSource(url);
+    this._pipelineEventSource = es;
+
+    const stepLabels = {};  // key -> label cache
+
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const type = data.type;
+        if (type === 'init') {
+          // Cache labels
+          (data.steps || []).forEach(s => { stepLabels[s.key] = s.label || s.key; });
+          return;
+        }
+        if (type === 'step_started') {
+          stepLabels[data.step] = data.label || data.step;
+          this.addMessage('system', `⏳ 管线 [${data.label || data.step}] 启动中 — ${data.agent || ''}`);
+        } else if (type === 'step_completed') {
+          this.addMessage('system', `✅ 管线 [${data.label || data.step}] 完成`);
+        } else if (type === 'step_failed') {
+          this.addMessage('system', `❌ 管线 [${data.label || data.step}] 失败: ${(data.error || '').slice(0, 100)}`);
+        } else if (type === 'pipeline_rewind') {
+          this.addMessage('system', `🔁 QA 检测到问题，回滚重试 (${data.iteration}/${data.max})`);
+        } else if (type === 'pipeline_complete') {
+          const ok = data.completed || 0;
+          const fail = data.failed || 0;
+          if (fail > 0) {
+            this.addMessage('system', `📦 管线完成: ${ok} 步骤成功, ${fail} 步骤失败`);
+          } else {
+            this.addMessage('system', `🎉 管线全部完成! ${ok}/${ok} 步骤成功\n👉 <a href="/agent-team-config.html?view=tasks" target="_blank" style="color:#4fc3f7">查看结果</a>`);
+          }
+          es.close();
+          this._pipelineEventSource = null;
+        } else if (type === 'pipeline_failed') {
+          this.addMessage('system', `🛑 管线失败: ${(data.reason || '').slice(0, 150)}`);
+          es.close();
+          this._pipelineEventSource = null;
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+    };
+
+    es.onerror = () => {
+      // SSE connection lost — fall back to polling
+      es.close();
+      this._pipelineEventSource = null;
+      this._pollPipelineStatus(taskId);
+    };
+  }
+
+  /**
+   * Fallback polling for pipeline status when SSE fails.
+   */
+  _pollPipelineStatus(taskId) {
+    if (this._pipelinePollTimer) clearInterval(this._pipelinePollTimer);
+    let lastStep = '';
+    this._pipelinePollTimer = setInterval(async () => {
+      try {
+        const r = await fetch(`/api/v1/agent-config/tasks/${taskId}/pipeline/status`);
+        if (!r.ok) { clearInterval(this._pipelinePollTimer); return; }
+        const data = await r.json();
+        // Show newly active step
+        if (data.active_step && data.active_step !== lastStep) {
+          const stepInfo = (data.steps || []).find(s => s.key === data.active_step);
+          this.addMessage('system', `⏳ 管线 [${stepInfo?.label || data.active_step}] 执行中...`);
+          lastStep = data.active_step;
+        }
+        // Terminal state
+        if (['completed', 'failed', 'cancelled'].includes(data.task_status)) {
+          const ok = (data.steps || []).filter(s => s.status === 'completed').length;
+          const fail = (data.steps || []).filter(s => s.status === 'failed').length;
+          if (data.task_status === 'completed' && fail === 0) {
+            this.addMessage('system', `🎉 管线全部完成! ${ok} 步骤成功`);
+          } else {
+            this.addMessage('system', `📦 管线结束 (${data.task_status}): ${ok} 成功, ${fail} 失败`);
+          }
+          clearInterval(this._pipelinePollTimer);
+        }
+      } catch (e) {
+        // Network error — keep polling
+      }
+    }, 6000);
   }
   
   recordLocalTask(intent, status, backendId = null) {
@@ -539,7 +651,15 @@ export class SimpleBridgeChat {
         if (data && data.reply) {
           const src = data.source || 'agent-llm';
           const tag = data.task_id ? ` · 任务 <code>${data.task_id}</code>` : '';
-          return `${data.reply}\n\n<span style="font-size:10px;color:#78909c">⚙️ ${src}${tag}</span>`;
+          // G1: if backend created a pipeline task, subscribe to its events
+          if (data.task_id) {
+            this._subscribePipelineEvents(data.task_id);
+          }
+          let extra = '';
+          if (data.pipeline_error) {
+            extra = `\n⚠️ ${data.pipeline_error}`;
+          }
+          return `${data.reply}${extra}\n\n<span style="font-size:10px;color:#78909c">⚙️ ${src}${tag}</span>`;
         }
       } else {
         console.warn('[BridgeChat] backend /bridge-chat/send returned', r.status);

@@ -2691,6 +2691,9 @@ async def bridge_chat_send(payload: BridgeChatRequest):
                 logger.info(f"[BridgeChat] Dedup: reusing existing task {task_id}")
         except Exception as e:
             logger.warning(f"[BridgeChat] Failed to auto-create task: {e}")
+            # G5: propagate error so bridge chat can inform the user
+            if llm_result:
+                llm_result["pipeline_error"] = f"任务创建失败: {str(e)[:200]}"
 
     # Also check LLM reply for task-routing intent (LLM may promise to forward
     # even when user message didn't contain build keywords)

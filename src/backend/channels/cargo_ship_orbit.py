@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Cargo Ship Orbit Channel - 货船绕双体船轨道运动控制
+Cargo Ship Orbit Channel - 货船绕双体船椭圆轨道运动控制
 
-实现货船以双体船为圆心做圆周运动的控制逻辑。
+实现货船以双体船为圆心做椭圆运动的控制逻辑。
+椭圆参数: 长轴沿 X 轴 (radius_x=120), 短轴沿 Z 轴 (radius_z=60)。
 通过 MarineChannel 架构集成到 PoseidonX 系统中。
 """
 
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OrbitConfig:
     """轨道运动配置参数。"""
-    radius: float = 80.0           # 轨道半径 (场景单位，与前端3D场景匹配)
+    radius_x: float = 120.0         # 椭圆长轴半径 (X方向，场景单位)
+    radius_z: float = 60.0          # 椭圆短轴半径 (Z方向，场景单位)
     speed_deg_per_sec: float = 0.3  # 角速度 (度/秒) — 慢速，约 0.005 rad/帧 @60fps
     initial_angle_deg: float = 0.0  # 初始角度 (度)
     height_offset: float = 0.0      # 高度偏移 (米)
@@ -78,7 +80,8 @@ class CargoShipOrbitChannel(MarineChannel):
         # 轨道配置
         orbit_cfg = self.config.get("orbit", {})
         self.orbit_config = OrbitConfig(
-            radius=orbit_cfg.get("radius", 80.0),
+            radius_x=orbit_cfg.get("radius_x", 120.0),
+            radius_z=orbit_cfg.get("radius_z", 60.0),
             speed_deg_per_sec=orbit_cfg.get("speed_deg_per_sec", 0.3),
             initial_angle_deg=orbit_cfg.get("initial_angle_deg", 0.0),
             height_offset=orbit_cfg.get("height_offset", 0.0),
@@ -104,8 +107,8 @@ class CargoShipOrbitChannel(MarineChannel):
         # 事件日志
         self.event_log: List[Dict[str, Any]] = []
         
-        logger.info("🚢 CargoShipOrbitChannel initialized (radius=%.1fm, speed=%.2f°/s)",
-                     self.orbit_config.radius, self.orbit_config.speed_deg_per_sec)
+        logger.info("🚢 CargoShipOrbitChannel initialized (radius_x=%.1fm, radius_z=%.1fm, speed=%.2f°/s)",
+                     self.orbit_config.radius_x, self.orbit_config.radius_z, self.orbit_config.speed_deg_per_sec)
     
     # ── MarineChannel 接口 ───────────────────────────────────
     
@@ -117,10 +120,10 @@ class CargoShipOrbitChannel(MarineChannel):
             self.orbit_state.is_running = self.orbit_config.auto_start
             self._set_health(
                 ChannelStatus.OK,
-                f"货船轨道运动就绪 (半径={self.orbit_config.radius}m, 速度={self.orbit_config.speed_deg_per_sec}°/s)"
+                f"货船椭圆轨道运动就绪 (长轴={self.orbit_config.radius_x}m, 短轴={self.orbit_config.radius_z}m, 速度={self.orbit_config.speed_deg_per_sec}°/s)"
             )
-            logger.info("🚢 Cargo ship orbit initialized: radius=%.1fm, speed=%.2f°/s",
-                         self.orbit_config.radius, self.orbit_config.speed_deg_per_sec)
+            logger.info("🚢 Cargo ship orbit initialized: radius_x=%.1fm, radius_z=%.1fm, speed=%.2f°/s",
+                         self.orbit_config.radius_x, self.orbit_config.radius_z, self.orbit_config.speed_deg_per_sec)
         else:
             self._set_health(ChannelStatus.OK, "货船轨道运动已禁用")
         
@@ -167,12 +170,21 @@ class CargoShipOrbitChannel(MarineChannel):
             return {"status": "ok" if ok else "error", "action": "stop_orbit"}
         
         elif event_type == "set_radius":
-            radius = event.get("radius", 80.0)
+            radius = event.get("radius", 120.0)
             try:
                 self.set_orbit_radius(radius)
                 return {"status": "ok", "action": "set_radius", "radius": radius}
             except ValueError as e:
                 return {"status": "error", "action": "set_radius", "message": str(e)}
+
+        elif event_type == "set_ellipse_radii":
+            radius_x = event.get("radius_x", 120.0)
+            radius_z = event.get("radius_z", 60.0)
+            try:
+                self.set_ellipse_radii(radius_x, radius_z)
+                return {"status": "ok", "action": "set_ellipse_radii", "radius_x": radius_x, "radius_z": radius_z}
+            except ValueError as e:
+                return {"status": "error", "action": "set_ellipse_radii", "message": str(e)}
         
         elif event_type == "set_speed":
             speed = event.get("speed_deg_per_sec", 0.3)
@@ -249,21 +261,27 @@ class CargoShipOrbitChannel(MarineChannel):
         self.orbit_state.last_update = now.isoformat()
         self.orbit_state.total_orbits = self.orbit_state.elapsed_seconds * self.orbit_config.speed_deg_per_sec / 360.0
         
-        # 计算货船位置
+        # 计算货船位置 (椭圆轨迹)
         angle_rad = math.radians(self.orbit_state.current_angle_deg)
         cx = self._catamaran_position["x"]
         cz = self._catamaran_position["z"]
         cy = self._catamaran_position["y"]
+        rx = self.orbit_config.radius_x
+        rz = self.orbit_config.radius_z
         
+        # 椭圆参数方程: x = rx * cos(θ), z = rz * sin(θ)
         self._cargo_ship_position = {
-            "x": cx + self.orbit_config.radius * math.cos(angle_rad),
+            "x": cx + rx * math.cos(angle_rad),
             "y": cy + self.orbit_config.height_offset,
-            "z": cz + self.orbit_config.radius * math.sin(angle_rad),
+            "z": cz + rz * math.sin(angle_rad),
         }
         
-        # 货船朝向 (运动方向切线方向)
-        # 切线方向 = 当前角度 + 90°
-        heading_deg = (self.orbit_state.current_angle_deg + 90.0) % 360.0
+        # 货船朝向 (椭圆切线方向)
+        # 椭圆切线: dx/dθ = -rx*sin(θ), dz/dθ = rz*cos(θ)
+        heading_deg = math.degrees(math.atan2(
+            rx * math.cos(angle_rad),   # dz/dθ
+            -rz * math.sin(angle_rad)   # dx/dθ
+        )) % 360.0
         self._cargo_ship_heading = heading_deg
         
         # 记录事件
@@ -340,11 +358,20 @@ class CargoShipOrbitChannel(MarineChannel):
         return True
     
     def set_orbit_radius(self, radius: float) -> None:
-        """设置轨道半径。"""
+        """设置轨道半径 (同时设置长轴和短轴为相同值，即圆形)。"""
         if radius <= 0:
             raise ValueError("Radius must be positive")
-        self.orbit_config.radius = radius
-        logger.info("🚢 Orbit radius set to %.1fm", radius)
+        self.orbit_config.radius_x = radius
+        self.orbit_config.radius_z = radius
+        logger.info("🚢 Orbit radius set to %.1fm (circular)", radius)
+
+    def set_ellipse_radii(self, radius_x: float, radius_z: float) -> None:
+        """设置椭圆轨道长轴和短轴半径。"""
+        if radius_x <= 0 or radius_z <= 0:
+            raise ValueError("Radii must be positive")
+        self.orbit_config.radius_x = radius_x
+        self.orbit_config.radius_z = radius_z
+        logger.info("🚢 Ellipse radii set to radius_x=%.1fm, radius_z=%.1fm", radius_x, radius_z)
     
     def set_orbit_speed(self, speed_deg_per_sec: float) -> None:
         """设置轨道角速度。"""
@@ -376,6 +403,7 @@ class CargoShipOrbitChannel(MarineChannel):
             "cargo_position": self._cargo_ship_position,
             "cargo_heading": self._cargo_ship_heading,
             "catamaran_position": self._catamaran_position,
+            "orbit_type": "ellipse",
         }
 
 
