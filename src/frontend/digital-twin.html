@@ -3534,6 +3534,15 @@
                 <span style="color:oklch(0.52 0.04 160);margin-left:14px">🧊 冰山: 0</span>
             </div>
             
+            <!-- AR-CAS 雷达图 -->
+            <div style="margin-bottom:12px;border:1px solid rgba(0,255,136,0.25);border-radius:6px;overflow:hidden;background:rgba(4,8,16,0.94);">
+                <div style="padding:4px 10px;background:rgba(0,255,136,0.08);border-bottom:1px solid rgba(0,255,136,0.15);display:flex;align-items:center;justify-content:space-between;">
+                    <span style="color:rgba(0,255,136,0.8);font-size:10px;font-weight:600;letter-spacing:0.5px;">📡 雷达态势图</span>
+                    <span style="color:rgba(0,255,136,0.4);font-size:8px;" id="ar-cas-radar-time">LIVE</span>
+                </div>
+                <div id="ar-cas-radar-chart" style="width:100%;height:260px;"></div>
+            </div>
+            
             <!-- 目标详情 -->
             <div style="font-size:11px;color:oklch(0.55 0.005 110);margin-bottom:6px;letter-spacing:1px;">▼ 监视目标</div>
             <div id="ar-cas-targets" style="max-height:300px;overflow-y:auto;font-size:13px;">
@@ -3683,6 +3692,82 @@
     </script>
 
     <script src="./digital-twin/weather-controls.js" defer></script>
+<script src="/js/radar_chart.js"></script>
+<script>
+// AR-CAS Pro 雷达图 — 从 3D 场景 state 读取目标数据并更新
+(function() {
+    const container = document.getElementById('ar-cas-radar-chart');
+    if (!container) return;
+    let radarChart = null;
+    try {
+        radarChart = new RadarChart('ar-cas-radar-chart', {
+            maxRange: 5, rangeRingStep: 1, bearingStep: 30
+        });
+        radarChart.start();
+    } catch (e) { console.error('AR-CAS RadarChart init failed:', e); return; }
+
+    // 每 2 秒从 DigitalTwin state 读取目标并转换为雷达数据
+    setInterval(function() {
+        if (!window.DigitalTwin || !window.DigitalTwin.getState) return;
+        var st = window.DigitalTwin.getState();
+        if (!st || !st.boatMesh) return;
+
+        var ownX = st.boatMesh.position.x || 0;
+        var ownZ = st.boatMesh.position.z || 0;
+        var hdg = ((st.boatMesh.rotation.y * 180 / Math.PI + 360) % 360);
+        var targets = [];
+
+        // AR-CAS 目标 (货船等)
+        (st.arCasTargets || []).forEach(function(t) {
+            var dx = t.mesh.position.x - ownX;
+            var dz = t.mesh.position.z - ownZ;
+            var dist = Math.sqrt(dx * dx + dz * dz);
+            var bearing = ((Math.atan2(dx, -dz) * 180 / Math.PI + 360) % 360);
+            var rangeNm = dist * 0.02; // 场景坐标 → NM 近似
+            var d = t.data || {};
+            var cpa = rangeNm;
+            var relSpeed = Math.max(d.speed || 1, 1);
+            var tcpa = (dist / relSpeed) * 2.0;
+            var risk = 'low';
+            if (cpa < 0.5 && tcpa < 30) risk = 'high';
+            else if (cpa < 1.0 && tcpa < 60) risk = 'medium';
+            targets.push({
+                mmsi: d.mmsi || '000000000',
+                ship_name: d.name || 'Target',
+                bearing: Math.round(bearing * 10) / 10,
+                range: Math.round(rangeNm * 100) / 100,
+                cog: d.course || 0,
+                sog: d.speed || 0,
+                risk_level: risk
+            });
+        });
+
+        // 冰山
+        (st.icebergs || []).forEach(function(ib, i) {
+            var dx = ib.position.x - ownX;
+            var dz = ib.position.z - ownZ;
+            var dist = Math.sqrt(dx * dx + dz * dz);
+            var bearing = ((Math.atan2(dx, -dz) * 180 / Math.PI + 360) % 360);
+            targets.push({
+                mmsi: 'ICE-' + (i + 1),
+                ship_name: '冰山 #' + (i + 1),
+                bearing: Math.round(bearing * 10) / 10,
+                range: Math.round(dist * 0.02 * 100) / 100,
+                cog: 0, sog: 0,
+                risk_level: 'high'
+            });
+        });
+
+        radarChart.updateData({
+            own_ship: { heading: hdg },
+            targets: targets
+        });
+
+        var timeEl = document.getElementById('ar-cas-radar-time');
+        if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('zh-CN');
+    }, 2000);
+})();
+</script>
 <script src="/js/i18n.js"></script>
 <script src="/js/nav-sidebar.js" data-active="twin"></script>
 <script src="/js/darwin-ratchet.js"></script>
