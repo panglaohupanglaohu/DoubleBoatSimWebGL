@@ -204,6 +204,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <div class="header-right">
       <span class="s100-badge">S-100 Ed.5.2</span>
       <span class="clock" id="utcClock">00:00:00 UTC</span>
+      <span id="avoidanceStatus" style="display:none;font-size:10px;padding:3px 10px;border:1px solid var(--cyber-red);color:var(--cyber-red);font-weight:600;font-family:var(--font-mono);letter-spacing:.5px">🛡️ 避让中</span>
+      <span id="collisionAlertBadge" style="display:none;font-size:10px;padding:3px 10px;border:1px solid var(--cyber-red);background:var(--cyber-red);color:white;font-weight:700;font-family:var(--font-mono);letter-spacing:.5px;animation:pulse-border 1s infinite">⚠ 碰撞风险</span>
     </div>
   </header>
 
@@ -589,12 +591,28 @@ function generateAvoidAdvice(target, risk) {
 
 // ═══ Risk List UI ═══
 function updateRiskList() {
+  // 优先使用后端碰撞检测结果，否则前端自行计算
   const risks = state.targets.map(t => {
+    let riskLevel, cpaVal, tcpaVal, range, bearing;
+    if (t.risk_level) {
+      // 使用后端数据
+      riskLevel = t.risk_level;
+      cpaVal = t.cpa_backend !== null ? t.cpa_backend : Infinity;
+      tcpaVal = t.tcpa_backend !== null ? t.tcpa_backend / 60 : Infinity; // 后端用秒，转分钟
+    }
+    // 前端自行计算（补充或覆盖）
     const r = calcCPA(state.ship, t);
-    return { ...t, ...r, riskLevel: classifyRisk(r.cpa, r.tcpa) };
+    if (!t.risk_level) {
+      riskLevel = classifyRisk(r.cpa, r.tcpa);
+      cpaVal = r.cpa;
+      tcpaVal = r.tcpa;
+    }
+    range = r.range;
+    bearing = r.bearing;
+    return { ...t, cpa: cpaVal, tcpa: tcpaVal, range, bearing, riskLevel };
   }).sort((a, b) => {
-    const order = { danger: 0, caution: 1, safe: 2 };
-    return (order[a.riskLevel] - order[b.riskLevel]) || (a.cpa - b.cpa);
+    const order = { emergency: 0, danger: 1, caution: 2, safe: 3 };
+    return (order[a.riskLevel] || 3) - (order[b.riskLevel] || 3) || (a.cpa - b.cpa);
   });
   el.riskCount.textContent = risks.length;
   if (!risks.length) {
@@ -602,27 +620,35 @@ function updateRiskList() {
     return;
   }
   el.riskList.innerHTML = risks.map(r => {
-    const tcpaStr = r.tcpa === Infinity ? '—' : r.tcpa.toFixed(0) + 'm';
-    const cls = r.riskLevel === 'danger' ? 'danger' : (r.riskLevel === 'caution' ? 'warning' : '');
-    const color = r.riskLevel === 'danger' ? '--cyber-red' : r.riskLevel === 'caution' ? '--cyber-orange' : '--cyber-green';
+    const tcpaStr = r.tcpa === Infinity ? '—' : (typeof r.tcpa === 'number' ? r.tcpa.toFixed(0) + 'm' : '—');
+    const isDanger = r.riskLevel === 'danger' || r.riskLevel === 'emergency';
+    const isCaution = r.riskLevel === 'caution';
+    const cls = isDanger ? 'danger' : (isCaution ? 'warning' : '');
+    const color = isDanger ? '--cyber-red' : isCaution ? '--cyber-orange' : '--cyber-green';
+    // 显示后端提供的避让建议
+    const actionHtml = r.suggested_action
+      ? '<div class="risk-action" style="font-size:10px;color:var(--cyber-red);margin-top:2px">⚠ ' + r.suggested_action + '</div>'
+      : '';
     return '<div class="risk-item ' + cls + '" data-mmsi="' + r.mmsi + '">' +
-      '<span class="risk-dot ' + r.riskLevel + '"></span>' +
+      '<span class="risk-dot ' + (isDanger ? 'danger' : isCaution ? 'caution' : 'safe') + '"></span>' +
       '<div class="risk-info"><div class="risk-name">' + (r.name || 'MMSI ' + r.mmsi) + '</div>' +
-      '<div class="risk-detail">BRG ' + r.bearing.toFixed(0) + '° | RNG ' + r.range.toFixed(1) + ' nm | TCPA ' + tcpaStr + '</div></div>' +
-      '<div class="risk-cpa" style="color:var(' + color + ')">' + r.cpa.toFixed(2) + '</div></div>';
+      '<div class="risk-detail">BRG ' + r.bearing.toFixed(0) + '° | RNG ' + r.range.toFixed(1) + ' nm | TCPA ' + tcpaStr + '</div>' +
+      actionHtml + '</div>' +
+      '<div class="risk-cpa" style="color:var(' + color + ')">' + (r.cpa < 999 ? r.cpa.toFixed(2) : '—') + '</div></div>';
   }).join('');
 
-  // COLREGs advice for danger targets — show in advisory bar, not chat
+  // COLREGs advice for danger targets — show in advisory bar
   const adviceItems = risks.filter(r => r.riskLevel !== 'safe').map(t => {
-    const advice = generateAvoidAdvice(t, t);
+    // 优先使用后端建议
+    const advice = t.suggested_action || generateAvoidAdvice(t, t);
     return advice ? { text: advice, level: t.riskLevel } : null;
   }).filter(Boolean);
   if (adviceItems.length) {
     el.colregsAdviceBar.innerHTML = adviceItems.map(a =>
       '<div class="colregs-advice-item ' + a.level + '">' +
-      (a.level === 'danger' ? '⚠️ ' : '⚡ ') + a.text + '</div>'
+      (a.level === 'danger' || a.level === 'emergency' ? '⚠️ ' : '⚡ ') + a.text + '</div>'
     ).join('');
-    el.colregsAdviceBar.className = 'colregs-advice-bar has-' + (adviceItems.some(a => a.level === 'danger') ? 'danger' : 'caution');
+    el.colregsAdviceBar.className = 'colregs-advice-bar has-' + (adviceItems.some(a => a.level === 'danger' || a.level === 'emergency') ? 'danger' : 'caution');
   } else {
     el.colregsAdviceBar.innerHTML = '';
     el.colregsAdviceBar.className = 'colregs-advice-bar';
@@ -630,8 +656,26 @@ function updateRiskList() {
 
   // Header risk chip
   const maxRisk = risks[0] ? risks[0].riskLevel : 'safe';
-  el.chipRiskVal.textContent = maxRisk.toUpperCase();
-  el.chipRisk.className = 'chip' + (maxRisk === 'danger' ? ' danger' : maxRisk === 'caution' ? ' warn' : '');
+  el.chipRiskVal.textContent = (maxRisk === 'emergency' ? 'EMERGENCY' : maxRisk.toUpperCase());
+  el.chipRisk.className = 'chip' + (maxRisk === 'emergency' || maxRisk === 'danger' ? ' danger' : maxRisk === 'caution' ? ' warn' : '');
+
+  // 如果有避让状态，显示在状态栏
+  if (state.avoidanceState && state.avoidanceState.active) {
+    el.statusText.textContent = '🛡️ 避让中: ' + (state.avoidanceState.message || '');
+    // 显示避让状态标签
+    const avoidanceEl = document.getElementById('avoidanceStatus');
+    if (avoidanceEl) avoidanceEl.style.display = 'inline-block';
+  } else {
+    const avoidanceEl = document.getElementById('avoidanceStatus');
+    if (avoidanceEl) avoidanceEl.style.display = 'none';
+  }
+
+  // 更新碰撞风险警报徽章
+  const alertBadge = document.getElementById('collisionAlertBadge');
+  if (alertBadge) {
+    const hasDanger = risks.some(r => r.riskLevel === 'danger' || r.riskLevel === 'emergency');
+    alertBadge.style.display = hasDanger ? 'inline-block' : 'none';
+  }
 }
 
 // ═══ AI Messages ═══
@@ -829,16 +873,74 @@ function drawRadarSweep(cx, cy, r) {
 function drawTargets(cx, cy, scale) {
   state.targets.forEach(t => {
     const {x, y} = latLonToCanvas(t.lat, t.lon);
-    const risk = calcCPA(state.ship, t);
-    const riskLevel = classifyRisk(risk.cpa, risk.tcpa);
-    if (riskLevel === 'danger') {
+    // 优先使用后端碰撞检测结果，否则前端自行计算
+    let riskLevel = 'safe';
+    let cpaVal = Infinity;
+    let tcpaVal = Infinity;
+    if (t.risk_level) {
+      riskLevel = t.risk_level;
+      cpaVal = t.cpa_backend || Infinity;
+      tcpaVal = t.tcpa_backend || Infinity;
+    } else {
+      const risk = calcCPA(state.ship, t);
+      cpaVal = risk.cpa;
+      tcpaVal = risk.tcpa;
+      riskLevel = classifyRisk(risk.cpa, risk.tcpa);
+    }
+    const isDanger = riskLevel === 'danger' || riskLevel === 'emergency';
+    const isCaution = riskLevel === 'caution';
+    if (isDanger) {
+      // 高风险目标：绘制轨迹预测线和闪烁警告环
+      const predictMinutes = Math.max(6, Math.min(30, 15 / (cpaVal + 0.1)));
+      const fx = x + (t.sog / 60) * Math.sin(t.cog * DEG) * scale * predictMinutes;
+      const fy = y - (t.sog / 60) * Math.cos(t.cog * DEG) * scale * predictMinutes;
+      // 本船轨迹预测线
+      const ownFx = cx + (state.ship.sog / 60) * Math.sin(state.ship.cog * DEG) * scale * predictMinutes;
+      const ownFy = cy - (state.ship.sog / 60) * Math.cos(state.ship.cog * DEG) * scale * predictMinutes;
+      // 绘制碰撞风险区域（两船轨迹交汇处）
+      const midX = (fx + ownFx) / 2, midY = (fy + ownFy) / 2;
+      const dangerRadius = Math.max(10, 30 - cpaVal * 20);
+      const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+      ctx.beginPath(); ctx.arc(midX, midY, dangerRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'oklch(0.48 0.07 22 / ' + (pulse * 0.15) + ')';
+      ctx.fill();
+      ctx.strokeStyle = 'oklch(0.48 0.07 22 / ' + (pulse * 0.4) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 6]); ctx.stroke(); ctx.setLineDash([]);
+      // 目标船轨迹预测线（红色虚线）
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(fx, fy);
+      ctx.strokeStyle = 'oklch(0.48 0.07 22 / .8)'; ctx.lineWidth = 2;
+      ctx.setLineDash([8, 6]); ctx.stroke(); ctx.setLineDash([]);
+      // 本船轨迹预测线（绿色虚线）
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ownFx, ownFy);
+      ctx.strokeStyle = 'oklch(0.52 0.04 160 / .6)'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+      // 标注"碰撞风险"文字
+      ctx.font = 'bold 10px "JetBrains Mono"';
+      ctx.fillStyle = 'oklch(0.48 0.07 22 / ' + (pulse * 0.9) + ')';
+      ctx.fillText('⚠ 碰撞风险 CPA=' + cpaVal.toFixed(2) + 'nm', midX - 60, midY - dangerRadius - 8);
+      // 警告环
+      ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.strokeStyle = 'oklch(0.48 0.07 22 / ' + (pulse * 0.6) + ')'; ctx.lineWidth = 2.5;
+      ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+      // 内圈脉冲环
+      ctx.beginPath(); ctx.arc(x, y, 12 + pulse * 8, 0, Math.PI * 2);
+      ctx.strokeStyle = 'oklch(0.48 0.07 22 / ' + (pulse * 0.3) + ')'; ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else if (isCaution) {
+      // 警戒目标：绘制轨迹预测线
       const fx = x + (t.sog / 60) * Math.sin(t.cog * DEG) * scale * 10;
       const fy = y - (t.sog / 60) * Math.cos(t.cog * DEG) * scale * 10;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(fx, fy);
-      ctx.strokeStyle = 'oklch(0.48 0.07 22 / .6)'; ctx.lineWidth = 1;
-      ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = 'oklch(0.56 0.05 70 / .6)'; ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+      // 警戒环
+      const pulse = Math.sin(Date.now() / 500) * 0.2 + 0.8;
+      ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2);
+      ctx.strokeStyle = 'oklch(0.56 0.05 70 / ' + (pulse * 0.4) + ')'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
     }
-    const color = riskLevel === 'danger' ? 'oklch(0.48 0.07 22)' : riskLevel === 'caution' ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
+    const color = isDanger ? 'oklch(0.48 0.07 22)' : isCaution ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
     ctx.save(); ctx.translate(x, y); ctx.rotate(t.cog * DEG);
     ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(-6, 6); ctx.lineTo(6, 6); ctx.closePath();
     ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = 'oklch(1 0 0 / .6)'; ctx.lineWidth = 0.5; ctx.stroke();
@@ -849,7 +951,33 @@ function drawTargets(cx, cy, scale) {
     ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
     ctx.font = '9px "JetBrains Mono"'; ctx.fillStyle = color;
     ctx.fillText(t.name || t.mmsi, x + 12, y - 4);
-    ctx.fillStyle = 'rgba(148,163,184,.6)'; ctx.fillText(t.sog.toFixed(1) + 'kn', x + 12, y + 8);
+    // 显示 CPA 值（高风险目标）
+    if (isDanger && cpaVal < 1.0) {
+      ctx.font = 'bold 10px "JetBrains Mono"';
+      ctx.fillStyle = 'oklch(0.48 0.07 22 / .9)';
+      ctx.fillText('CPA ' + cpaVal.toFixed(2) + 'nm', x + 14, y + 22);
+      // 显示 TCPA
+      if (tcpaVal < 999) {
+        ctx.font = '9px "JetBrains Mono"';
+        ctx.fillStyle = 'oklch(0.48 0.07 22 / .7)';
+        ctx.fillText('TCPA ' + (tcpaVal < 60 ? tcpaVal.toFixed(0) + 'm' : (tcpaVal/60).toFixed(1) + 'h'), x + 14, y + 36);
+      }
+    } else if (isCaution) {
+      ctx.font = '9px "JetBrains Mono"';
+      ctx.fillStyle = 'oklch(0.56 0.05 70 / .8)';
+      ctx.fillText('CPA ' + cpaVal.toFixed(2) + 'nm', x + 12, y + 20);
+    } else {
+      ctx.fillStyle = 'rgba(148,163,184,.6)';
+      ctx.fillText(t.sog.toFixed(1) + 'kn', x + 12, y + 8);
+    }
+    // 显示避让建议（高风险目标）
+    if (isDanger && t.suggested_action) {
+      ctx.font = 'bold 8px "JetBrains Mono"'; ctx.fillStyle = 'oklch(0.48 0.07 22 / .9)';
+      ctx.fillText('⚠ ' + t.suggested_action.substring(0, 24), x + 14, y + 50);
+    } else if (isCaution && t.suggested_action) {
+      ctx.font = '8px "JetBrains Mono"'; ctx.fillStyle = 'oklch(0.56 0.05 70 / .7)';
+      ctx.fillText('⚠ ' + t.suggested_action.substring(0, 24), x + 12, y + 34);
+    }
   });
 }
 
@@ -1086,7 +1214,18 @@ function connectWS() {
             mmsi: k, lat: t.latitude || t.lat, lon: t.longitude || t.lon,
             cog: t.course || t.cog || 0, sog: t.speed || t.sog || 0,
             name: t.name || 'TGT-' + k.slice(-3),
+            // 后端碰撞检测风险字段
+            is_high_risk: t.is_high_risk || false,
+            risk_level: t.risk_level || null,
+            cpa_backend: t.cpa || null,
+            tcpa_backend: t.tcpa || null,
+            suggested_action: t.suggested_action || null,
+            encounter_type: t.encounter_type || null,
           }));
+        }
+        // 处理碰撞检测避让状态
+        if (d.collision_avoidance) {
+          state.avoidanceState = d.collision_avoidance;
         }
         if (d.alarms) updateAlarms(d.alarms);
         updateShipUI(); updateRiskList();

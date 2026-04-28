@@ -1126,7 +1126,15 @@
                 <div class="vr-legend-row"><span class="vr-swatch" style="color:oklch(0.48 0.07 22); background:oklch(0.48 0.07 22);"></span><span>高风险目标 / 冰山</span></div>
                 <div class="vr-legend-row"><span class="vr-swatch" style="color:oklch(0.52 0.04 160); background:oklch(0.52 0.04 160);"></span><span>船体 / 环境流场</span></div>
             </div>
-            <div class="vr-overlay-note">当前场景通过高斯泼溅式语义粒子绘制周边环境，并以本船为中心生成可切换的 VR 观察菜单。</div>
+            <!-- AR-CAS Pro 雷达图面板 -->
+            <div id="ar-cas-radar-panel" style="position:absolute;right:14px;bottom:52px;width:280px;height:280px;border:1px solid rgba(0,255,136,0.3);border-radius:4px;overflow:hidden;z-index:5;background:rgba(4,8,16,0.94);box-shadow:0 0 20px rgba(0,255,136,0.1);">
+                <div style="position:absolute;top:0;left:0;right:0;height:22px;background:rgba(0,255,136,0.1);border-bottom:1px solid rgba(0,255,136,0.2);display:flex;align-items:center;padding:0 8px;z-index:6;">
+                    <span style="color:rgba(0,255,136,0.8);font-size:9px;font-weight:600;letter-spacing:0.5px;">📡 AR-CAS 雷达图</span>
+                    <span style="margin-left:auto;color:rgba(0,255,136,0.4);font-size:8px;" id="radar-last-update">等待数据...</span>
+                </div>
+                <div id="radar-chart-container" style="position:absolute;top:22px;left:0;right:0;bottom:0;"></div>
+            </div>
+            <div class="vr-overlay-note">当前场景通过高斯泼溅式语义粒子绘制周边环境，并以本船为中心生成可切换的 VR 观察菜单。右下角为 AR-CAS 雷达图。</div>
         </div>
     </div>
 
@@ -2238,6 +2246,138 @@
             if (feeds.length > 0) feeds[0].classList.add('active');
         });
     </script>
+<script src="/js/radar_chart.js"></script>
+<script>
+// --- AR-CAS Pro 雷达图初始化与 WebSocket 数据连接 ---
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化雷达图组件
+    const radarContainer = document.getElementById('radar-chart-container');
+    if (!radarContainer) {
+        console.warn('radar-chart-container not found');
+        return;
+    }
+
+    let radarChart = null;
+    try {
+        radarChart = new RadarChart('radar-chart-container', {
+            maxRange: 5,
+            rangeRingStep: 1,
+            bearingStep: 30
+        });
+        radarChart.start();
+        console.log('✅ AR-CAS RadarChart initialized');
+    } catch (e) {
+        console.error('Failed to initialize RadarChart:', e);
+    }
+
+    // 建立 WebSocket 连接
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.hostname || 'localhost';
+    const wsPort = window.location.port || '8080';
+    const wsUrl = `${wsProtocol}//${wsHost}:${wsPort}/ws/radar/567890123,345678901`;
+
+    let ws = null;
+    let reconnectTimer = null;
+    let lastUpdateTime = null;
+
+    function connectRadarWS() {
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+            return;
+        }
+
+        try {
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log('📡 AR-CAS Radar WebSocket connected');
+                const updateEl = document.getElementById('radar-last-update');
+                if (updateEl) updateEl.textContent = '已连接';
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    lastUpdateTime = new Date().toISOString();
+
+                    // 更新雷达图
+                    if (radarChart && data) {
+                        radarChart.updateData(data);
+                    }
+
+                    // 更新状态标签
+                    const updateEl = document.getElementById('radar-last-update');
+                    if (updateEl) {
+                        const now = new Date();
+                        updateEl.textContent = now.toLocaleTimeString('zh-CN');
+                    }
+
+                    // 更新 VR 语义菜单中的目标信息
+                    if (data && data.targets) {
+                        // 更新双体船和货船信息到 VR 语义菜单
+                        data.targets.forEach(function(target) {
+                            if (target.mmsi === '567890123' || target.mmsi === '345678901') {
+                                const shipLabel = target.mmsi === '567890123' ? '双体船' : '货船';
+                                const riskText = target.risk_level === 'high' ? '🔴 高风险' :
+                                    target.risk_level === 'medium' ? '🟡 中风险' : '🟢 低风险';
+                                // 更新 VR 语义菜单中的 Focus Target
+                                const semanticTarget = document.getElementById('vr-semantic-target');
+                                if (semanticTarget) {
+                                    semanticTarget.textContent = `${shipLabel} (${target.mmsi})`;
+                                }
+                                // 更新威胁数量
+                                const threatEl = document.getElementById('vr-semantic-threats');
+                                if (threatEl) {
+                                    const highCount = data.targets.filter(function(t) {
+                                        return t.risk_level === 'high';
+                                    }).length;
+                                    threatEl.textContent = String(highCount);
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Radar WS message parse error:', e);
+                }
+            };
+
+            ws.onerror = function(error) {
+                console.error('📡 Radar WebSocket error:', error);
+                const updateEl = document.getElementById('radar-last-update');
+                if (updateEl) updateEl.textContent = '连接错误';
+            };
+
+            ws.onclose = function() {
+                console.log('📡 Radar WebSocket closed, reconnecting in 5s...');
+                const updateEl = document.getElementById('radar-last-update');
+                if (updateEl) updateEl.textContent = '断开重连...';
+                // 自动重连
+                if (reconnectTimer) clearTimeout(reconnectTimer);
+                reconnectTimer = setTimeout(connectRadarWS, 5000);
+            };
+        } catch (e) {
+            console.error('Failed to create Radar WebSocket:', e);
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectRadarWS, 10000);
+        }
+    }
+
+    // 启动 WebSocket 连接
+    connectRadarWS();
+
+    // 页面卸载时清理
+    window.addEventListener('beforeunload', function() {
+        if (ws) {
+            ws.close();
+        }
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+        }
+        if (radarChart) {
+            radarChart.stop();
+        }
+    });
+});
+</script>
 <script src="/js/i18n.js"></script>
 </body>
 </html>

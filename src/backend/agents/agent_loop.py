@@ -29,6 +29,13 @@ DEFAULT_MAX_ITERATIONS = 25
 DEFAULT_MAX_TOKENS = 65536
 DEFAULT_TEMPERATURE = 0.2
 
+# ── Safeguard constants ──
+# Safeguard 1: auto-finish nudge when approaching iteration cap
+_ITERATION_NUDGE_RATIO = 0.80  # at 80% of max_iterations, inject nudge
+# Safeguard 2: context budget — compress old tool results when messages grow
+_CONTEXT_BUDGET_CHARS = 100_000  # max combined chars in messages
+_TOOL_RESULT_TRUNC = 500  # truncate old tool results to this when over budget
+
 
 class AgentLoop:
     """Multi-turn function-calling driver against an OpenAI-compatible endpoint."""
@@ -141,6 +148,11 @@ class AgentLoop:
         self._emit("loop_start", {"role": self.role, "tools": [t["function"]["name"] for t in self.tools]})
 
         for it in range(self.max_iterations):
+            # ── Safeguard 1: nudge agent when approaching iteration cap ──
+            self._maybe_inject_nudge(it)
+            # ── Safeguard 2: compact old tool results when context too large ──
+            self._compact_old_tool_results()
+
             t0 = time.time()
             try:
                 resp = self._post_chat()
@@ -260,6 +272,21 @@ class AgentLoop:
                 }
 
         # Hit iteration cap
+        # ── Safeguard 3: partial success if agent produced useful work ──
+        if self.files_changed or self.summary:
+            logger.info(
+                "[AgentLoop] Iteration cap hit but agent produced work "
+                "(%d files, %d chars summary) — treating as partial success",
+                len(self.files_changed), len(self.summary),
+            )
+            self._emit("loop_end", {"reason": "iteration_cap_partial", "iteration": self.max_iterations})
+            return {
+                "ok": True,
+                "error": f"iteration cap hit ({self.max_iterations}) — partial result",
+                "summary": self.summary or f"(completed {len(self.files_changed)} file changes before cap)",
+                "files_changed": self.files_changed,
+                "iterations": self.max_iterations, "log": self.tool_call_log,
+            }
         self._emit("loop_end", {"reason": "iteration_cap", "iteration": self.max_iterations})
         return {
             "ok": False, "error": f"iteration cap hit ({self.max_iterations})",
@@ -289,3 +316,56 @@ class AgentLoop:
                 self.on_event(kind, payload)
             except Exception:
                 pass
+
+    # ────────────────────────────────────────────────
+    # Safeguard helpers
+    # ────────────────────────────────────────────────
+    def _messages_char_count(self) -> int:
+        """Estimate total chars in the message list."""
+        total = 0
+        for m in self.messages:
+            total += len(m.get("content") or "")
+        return total
+
+    def _compact_old_tool_results(self):
+        """Safeguard 2: when context exceeds budget, truncate old tool result
+        messages to keep the conversation within context window limits.
+        Only compacts messages before the last 6 (preserve recent context).
+        """
+        total = self._messages_char_count()
+        if total <= _CONTEXT_BUDGET_CHARS:
+            return
+        # Work backwards from older messages, truncate tool results
+        preserve_tail = 6  # keep the most recent messages intact
+        cutoff = max(0, len(self.messages) - preserve_tail)
+        freed = 0
+        for i in range(cutoff):
+            m = self.messages[i]
+            if m.get("role") == "tool":
+                old_content = m.get("content", "")
+                if len(old_content) > _TOOL_RESULT_TRUNC:
+                    freed += len(old_content) - _TOOL_RESULT_TRUNC
+                    m["content"] = old_content[:_TOOL_RESULT_TRUNC] + "\n…(context compacted)"
+        if freed > 0:
+            logger.info(
+                "[AgentLoop] Context budget: compacted %d chars from old tool results "
+                "(total was %d, budget %d)", freed, total, _CONTEXT_BUDGET_CHARS,
+            )
+            self._emit("context_compact", {"freed_chars": freed, "was": total})
+
+    def _maybe_inject_nudge(self, iteration: int):
+        """Safeguard 1: when approaching iteration cap, inject a system nudge
+        telling the agent to wrap up and call finish().
+        """
+        threshold = int(self.max_iterations * _ITERATION_NUDGE_RATIO)
+        if iteration != threshold:
+            return
+        nudge = (
+            f"⚠️ 你已消耗 {iteration}/{self.max_iterations} 轮迭代，剩余 "
+            f"{self.max_iterations - iteration} 轮。请立刻完成剩余工作并调用 "
+            "finish() 工具提交你的成果。如果还有未完成的修改，优先完成最关键的部分，"
+            "其余可在 summary 中说明。不要再做大量阅读探索。"
+        )
+        self.messages.append({"role": "system", "content": nudge})
+        logger.info("[AgentLoop] Injected iteration nudge at turn %d/%d", iteration, self.max_iterations)
+        self._emit("nudge", {"iteration": iteration, "max": self.max_iterations})

@@ -28,6 +28,11 @@ from adapters.worldmonitor_adapter import WorldMonitorAdapter
 from adapters.worldmonitor_adapter_real import WorldMonitorRealAdapter
 from channels.openbridge_command_router import build_openbridge_command_result
 from config_loader import get_config
+from services.collision_avoidance_service import (
+    CollisionAvoidanceService,
+    RiskLevel,
+    AvoidanceState,
+)
 from storage.data_lakehouse import create_lakehouse
 
 # 配置日志
@@ -190,6 +195,10 @@ class AISTarget(BaseModel):
     vessel_type: str
     cpa: Optional[float] = None
     tcpa: Optional[float] = None
+    is_high_risk: bool = False
+    risk_level: Optional[str] = None
+    suggested_action: Optional[str] = None
+    encounter_type: Optional[str] = None
 
 class EngineStatus(BaseModel):
     """主机状态"""
@@ -329,6 +338,9 @@ class SimulationEngine:
             "lube_oil_pressure": 4.5,
             "fuel_consumption": 180.0,
         }
+
+        # 碰撞检测与避让服务
+        self.collision_avoidance = CollisionAvoidanceService()
 
     def seed_initial_state(self) -> None:
         """在后台循环启动前写入首批缓存，避免冷启动空数据。"""
@@ -487,6 +499,87 @@ class SimulationEngine:
                         tcpa=round(tcpa_s, 1),
                     )
                 
+                # ==================== 碰撞检测与避让 ====================
+                try:
+                    # 构建 AIS 目标字典供碰撞检测服务使用
+                    ais_dict = {}
+                    for mmsi, tgt in self.ais_targets.items():
+                        ais_dict[mmsi] = {
+                            "latitude": tgt["lat"],
+                            "longitude": tgt["lon"],
+                            "course": tgt["course"],
+                            "speed": tgt["speed"],
+                            "name": tgt.get("name", f"TGT-{mmsi[-3:]}"),
+                        }
+                    
+                    # 评估所有目标的碰撞风险
+                    risks = self.collision_avoidance.assess_risks(
+                        own_lat=self.ship_position["lat"],
+                        own_lon=self.ship_position["lon"],
+                        own_course=self.ship_course,
+                        own_speed=self.ship_speed,
+                        ais_targets=ais_dict,
+                    )
+                    
+                    # 更新 AISTarget 模型中的风险字段
+                    for risk in risks:
+                        if risk.target_mmsi in ais_targets:
+                            tgt = ais_targets[risk.target_mmsi]
+                            tgt.is_high_risk = risk.risk_level in (
+                                RiskLevel.DANGER, RiskLevel.EMERGENCY, RiskLevel.CAUTION
+                            )
+                            tgt.risk_level = risk.risk_level.value
+                            tgt.suggested_action = risk.suggested_action
+                            tgt.encounter_type = risk.encounter_type
+                            tgt.cpa = round(risk.cpa_nm, 3)
+                            tgt.tcpa = round(risk.tcpa_min * 60, 1)  # 分钟→秒
+                    
+                    # 生成避让指令
+                    command = self.collision_avoidance.decide_avoidance(
+                        risks=risks,
+                        current_course=self.ship_course,
+                        current_speed=self.ship_speed,
+                    )
+                    
+                    # 应用避让动作到本船
+                    if command:
+                        new_course, new_speed = self.collision_avoidance.apply_avoidance(
+                            command=command,
+                            current_course=self.ship_course,
+                            current_speed=self.ship_speed,
+                            dt=1.0,
+                        )
+                        # 平滑应用到仿真引擎
+                        self.ship_course = new_course
+                        self.ship_speed = new_speed
+                    else:
+                        # 无避让指令时检查恢复
+                        self.collision_avoidance.check_recovery(
+                            risks=risks,
+                            current_course=self.ship_course,
+                            current_speed=self.ship_speed,
+                        )
+                        # 应用恢复
+                        new_course, new_speed = self.collision_avoidance.apply_avoidance(
+                            command=None,
+                            current_course=self.ship_course,
+                            current_speed=self.ship_speed,
+                            dt=1.0,
+                        )
+                        self.ship_course = new_course
+                        self.ship_speed = new_speed
+                    
+                    # 记录高风险目标报警
+                    high_risks = [r for r in risks if r.risk_level in (RiskLevel.DANGER, RiskLevel.EMERGENCY)]
+                    for r in high_risks:
+                        await self.create_alarm(
+                            level="WARNING" if r.risk_level == RiskLevel.DANGER else "CRITICAL",
+                            source="COLLISION_AVOIDANCE",
+                            message=f"碰撞风险: {r.target_name} CPA={r.cpa_nm:.2f}nm TCPA={r.tcpa_min:.1f}min - {r.suggested_action}",
+                        )
+                except Exception as e:
+                    logger.error(f"Collision avoidance error: {e}")
+                
                 # 更新主机状态 (带真实波动模式)
                 import random
                 # RPM: 基于负载和海况的波动
@@ -617,7 +710,8 @@ class SimulationEngine:
                     "heave_m": round(heave_m, 2),
                 },
                 "weather_event": weather_event,
-            }
+                "collision_avoidance": self.collision_avoidance.get_status(),
+            },
         })
 
         # fire-and-forget broadcast with timeout
@@ -3914,6 +4008,166 @@ async def ws_navigation(websocket: WebSocket):
         logger.error(f"Navigation WS error: {e}")
         if websocket in active_connections:
             active_connections.remove(websocket)
+
+
+# ==================== AR-CAS Pro Radar WebSocket ====================
+
+@app.websocket("/ws/radar/{mmsi_list}")
+async def ws_radar_data(websocket: WebSocket, mmsi_list: str):
+    """
+    AR-CAS Pro 雷达图数据 WebSocket。
+
+    每 2 秒推送指定 MMSI 目标的雷达图数据，包含：
+    - 本船位置
+    - 目标相对本船的方位 (bearing) 和距离 (range)
+    - 目标航向 (COG)、航速 (SOG)
+    - 碰撞风险等级 (risk_level)
+
+    Args:
+        mmsi_list: 逗号分隔的 MMSI 列表，如 "567890123,345678901"
+    """
+    await websocket.accept()
+    target_mmsis = [m.strip() for m in mmsi_list.split(",") if m.strip()]
+    logger.info(f"📡 Radar WS connected for MMSIs: {target_mmsis}")
+
+    # 本船固定位置 (任务要求)
+    OWN_SHIP_LAT = 30.9036
+    OWN_SHIP_LON = 122.4036
+    own_ship_pos = (OWN_SHIP_LAT, OWN_SHIP_LON)
+
+    # 模拟目标运动状态（用于模拟数据回退）
+    sim_catamaran_step = 0
+    sim_cargo_step = 0
+
+    try:
+        while True:
+            from datetime import datetime
+            from channels.marine_base import get_default_registry
+            from app.utils.geo_utils import (
+                calculate_bearing_and_range,
+                calculate_cpa_tcpa,
+                calculate_risk_level,
+            )
+
+            registry = get_default_registry()
+            ais_channel = registry.get("ais_processor")
+
+            targets_data = []
+            if ais_channel:
+                all_targets = ais_channel.get_target_table()
+                for t in all_targets:
+                    mmsi_str = str(t.get("mmsi", ""))
+                    if mmsi_str in target_mmsis:
+                        lat = t.get("lat") or t.get("latitude", 0)
+                        lon = t.get("lon") or t.get("longitude", 0)
+                        if lat and lon:
+                            bearing, range_nm = calculate_bearing_and_range(
+                                own_ship_pos, (lat, lon)
+                            )
+                            cog = float(t.get("cog") or t.get("course", 0))
+                            sog = float(t.get("sog") or t.get("speed", 0))
+
+                            # 使用 CPA/TCPA 计算准确的风险等级
+                            cpa, tcpa = calculate_cpa_tcpa(
+                                own_ship_pos, 0, 0,  # 本船静止
+                                (lat, lon), cog, sog
+                            )
+                            risk_level = calculate_risk_level(cpa, tcpa)
+
+                            targets_data.append({
+                                "mmsi": mmsi_str,
+                                "ship_name": t.get("name") or t.get("vessel_type", f"TGT-{mmsi_str[-3:]}"),
+                                "latitude": lat,
+                                "longitude": lon,
+                                "cog": round(cog, 1),
+                                "sog": round(sog, 1),
+                                "bearing": round(bearing, 1),
+                                "range": round(range_nm, 2),
+                                "risk_level": risk_level,
+                                "cpa": round(cpa, 3),
+                                "tcpa": round(tcpa, 1),
+                            })
+
+            # 如果 AIS 通道中没有目标，使用带动态运动的模拟数据
+            if not targets_data:
+                import math
+
+                sim_catamaran_step += 1
+                sim_cargo_step += 1
+
+                # 双体船 (MMSI 567890123) — 航向 46°, 航速 9.0 kn
+                # 模拟其沿航向运动
+                cat_speed_deg_per_step = 9.0 * (2.0 / 3600.0) / 60.0
+                cat_lat_offset = 0.015 + sim_catamaran_step * cat_speed_deg_per_step * math.cos(math.radians(46))
+                cat_lon_offset = 0.012 + sim_catamaran_step * cat_speed_deg_per_step * math.sin(math.radians(46)) / math.cos(math.radians(OWN_SHIP_LAT))
+                catamaran_lat = OWN_SHIP_LAT + cat_lat_offset
+                catamaran_lon = OWN_SHIP_LON + cat_lon_offset
+
+                b1, r1 = calculate_bearing_and_range(own_ship_pos, (catamaran_lat, catamaran_lon))
+                cpa1, tcpa1 = calculate_cpa_tcpa(
+                    own_ship_pos, 0, 0,
+                    (catamaran_lat, catamaran_lon), 46.0, 9.0
+                )
+                risk1 = calculate_risk_level(cpa1, tcpa1)
+
+                targets_data.append({
+                    "mmsi": "567890123",
+                    "ship_name": "双体船",
+                    "latitude": round(catamaran_lat, 6),
+                    "longitude": round(catamaran_lon, 6),
+                    "cog": 46.0,
+                    "sog": 9.0,
+                    "bearing": round(b1, 1),
+                    "range": round(r1, 2),
+                    "risk_level": risk1,
+                    "cpa": round(cpa1, 3),
+                    "tcpa": round(tcpa1, 1),
+                })
+
+                # 货船 (MMSI 345678901) — 航向 90°, 航速 12.0 kn
+                cargo_speed_deg_per_step = 12.0 * (2.0 / 3600.0) / 60.0
+                cargo_lat_offset = 0.028 + sim_cargo_step * cargo_speed_deg_per_step * math.cos(math.radians(90))
+                cargo_lon_offset = 0.035 + sim_cargo_step * cargo_speed_deg_per_step * math.sin(math.radians(90)) / math.cos(math.radians(OWN_SHIP_LAT))
+                cargo_lat = OWN_SHIP_LAT + cargo_lat_offset
+                cargo_lon = OWN_SHIP_LON + cargo_lon_offset
+
+                b2, r2 = calculate_bearing_and_range(own_ship_pos, (cargo_lat, cargo_lon))
+                cpa2, tcpa2 = calculate_cpa_tcpa(
+                    own_ship_pos, 0, 0,
+                    (cargo_lat, cargo_lon), 90.0, 12.0
+                )
+                risk2 = calculate_risk_level(cpa2, tcpa2)
+
+                targets_data.append({
+                    "mmsi": "345678901",
+                    "ship_name": "货船",
+                    "latitude": round(cargo_lat, 6),
+                    "longitude": round(cargo_lon, 6),
+                    "cog": 90.0,
+                    "sog": 12.0,
+                    "bearing": round(b2, 1),
+                    "range": round(r2, 2),
+                    "risk_level": risk2,
+                    "cpa": round(cpa2, 3),
+                    "tcpa": round(tcpa2, 1),
+                })
+
+            response_data = {
+                "timestamp": datetime.now().isoformat(),
+                "own_ship": {
+                    "latitude": OWN_SHIP_LAT,
+                    "longitude": OWN_SHIP_LON,
+                },
+                "targets": targets_data,
+            }
+
+            await websocket.send_json(response_data)
+            await asyncio.sleep(2)
+
+    except WebSocketDisconnect:
+        logger.info(f"📡 Radar WS disconnected for MMSIs: {mmsi_list}")
+    except Exception as e:
+        logger.error(f"Radar WS error: {e}")
 
 
 # ==================== Shore & Sim WebSocket ====================
