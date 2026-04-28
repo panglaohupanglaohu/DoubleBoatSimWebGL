@@ -65,6 +65,15 @@ class AgentLoop:
     # ────────────────────────────────────────────────
     # HTTP plumbing
     # ────────────────────────────────────────────────
+    _API_MAX_RETRIES = 3
+    _API_RETRY_BACKOFF = [2, 5, 10]  # seconds between retries
+    # Transient errors worth retrying
+    _RETRYABLE = (
+        ConnectionResetError, ConnectionAbortedError, ConnectionRefusedError,
+        BrokenPipeError, TimeoutError, OSError,
+        http.client.RemoteDisconnected, http.client.IncompleteRead,
+    )
+
     def _post_chat(self) -> Dict[str, Any]:
         parsed = urlparse(self.api_base_url)
         host = parsed.hostname or "api.deepseek.com"
@@ -72,10 +81,8 @@ class AgentLoop:
         path = (parsed.path or "").rstrip("/") + "/chat/completions"
         ctx = ssl.create_default_context() if parsed.scheme == "https" else None
         conn_cls = http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
-        conn = conn_cls(host, port, context=ctx, timeout=300) if ctx \
-            else conn_cls(host, port, timeout=300)
 
-        body = {
+        body_str = json.dumps({
             "model": self.model,
             "messages": self.messages,
             "tools": self.tools,
@@ -83,18 +90,47 @@ class AgentLoop:
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
             "stream": False,
-        }
+        })
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        conn.request("POST", path, body=json.dumps(body), headers=headers)
-        resp = conn.getresponse()
-        raw = resp.read().decode("utf-8", errors="replace")
-        conn.close()
-        if resp.status >= 400:
-            raise RuntimeError(f"LLM HTTP {resp.status}: {raw[:500]}")
-        return json.loads(raw)
+
+        last_err: Optional[Exception] = None
+        for attempt in range(self._API_MAX_RETRIES):
+            try:
+                conn = conn_cls(host, port, context=ctx, timeout=300) if ctx \
+                    else conn_cls(host, port, timeout=300)
+                conn.request("POST", path, body=body_str, headers=headers)
+                resp = conn.getresponse()
+                raw = resp.read().decode("utf-8", errors="replace")
+                conn.close()
+                if resp.status == 429 or resp.status >= 500:
+                    # Server-side error — retryable
+                    raise RuntimeError(f"LLM HTTP {resp.status}: {raw[:300]}")
+                if resp.status >= 400:
+                    raise RuntimeError(f"LLM HTTP {resp.status}: {raw[:500]}")
+                return json.loads(raw)
+            except self._RETRYABLE as e:
+                last_err = e
+                wait = self._API_RETRY_BACKOFF[min(attempt, len(self._API_RETRY_BACKOFF) - 1)]
+                logger.warning(
+                    "[AgentLoop] Transient error on attempt %d/%d: %s — retrying in %ds",
+                    attempt + 1, self._API_MAX_RETRIES, e, wait,
+                )
+                time.sleep(wait)
+            except RuntimeError as e:
+                # HTTP 429 / 5xx — retry with backoff
+                if "HTTP 4" in str(e) and "HTTP 429" not in str(e):
+                    raise  # 4xx (non-429) is not retryable
+                last_err = e
+                wait = self._API_RETRY_BACKOFF[min(attempt, len(self._API_RETRY_BACKOFF) - 1)]
+                logger.warning(
+                    "[AgentLoop] Server error on attempt %d/%d: %s — retrying in %ds",
+                    attempt + 1, self._API_MAX_RETRIES, e, wait,
+                )
+                time.sleep(wait)
+        raise last_err or RuntimeError("_post_chat failed after retries")
 
     # ────────────────────────────────────────────────
     # Loop
@@ -109,8 +145,23 @@ class AgentLoop:
             try:
                 resp = self._post_chat()
             except Exception as e:
-                logger.exception("[AgentLoop] HTTP error on iteration %d", it)
+                logger.exception("[AgentLoop] HTTP error on iteration %d (after retries)", it)
                 self._emit("error", {"iteration": it, "error": str(e)})
+                # If we have already done useful work, don't discard it —
+                # treat as a graceful early stop instead of hard failure.
+                if self.files_changed or self.summary:
+                    logger.info(
+                        "[AgentLoop] Partial progress (%d files, %d chars summary) — "
+                        "returning partial success",
+                        len(self.files_changed), len(self.summary),
+                    )
+                    self._emit("loop_end", {"reason": "network_error_partial", "iteration": it})
+                    return {
+                        "ok": True, "error": str(e),
+                        "summary": self.summary or f"(network error after {it} turns)",
+                        "files_changed": self.files_changed,
+                        "iterations": it, "log": self.tool_call_log,
+                    }
                 return {
                     "ok": False, "error": str(e),
                     "summary": self.summary, "files_changed": self.files_changed,
