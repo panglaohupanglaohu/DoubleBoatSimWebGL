@@ -56,10 +56,6 @@
 
         /* CCTV 监控模式：只露 3D 画面 */
         html.cam-mode, html.cam-mode body { background: #0b1525 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
-
-        /* 场景/摄像机按钮高亮 */
-        .scenario-btn.active, .cam-mode-btn.active { border-color: oklch(0.52 0.04 160) !important; color: oklch(0.52 0.04 160) !important; background: rgba(0,40,60,0.9) !important; box-shadow: 0 0 6px oklch(0.52 0.04 160 / 0.3); }
-        .scenario-btn:hover, .cam-mode-btn:hover { border-color: oklch(0.52 0.04 160 / 0.6) !important; color: oklch(0.52 0.04 160) !important; }
         /* OpenBridge 外壳容器在 cam-mode 下使用 display:contents 取消其布局影响，
            保持 #canvas-container 在 DOM 中可见，但不再被祖先 hidden 折叠 */
         html.cam-mode .ob-app,
@@ -103,7 +99,7 @@
         html.cam-mode .data-card,
         html.cam-mode .cockpit-card,
         html.cam-mode .cockpit-grid,
-        /* #cargo-orbit-hud 已移除，内容已迁入 AR-CAS Pro 面板 (#ar-cas-cargo-orbit) */
+        html.cam-mode #cargo-orbit-hud,
         html.cam-mode #hud-overlay,
         html.cam-mode #hud-speed,
         html.cam-mode #hud-attitude,
@@ -1157,17 +1153,6 @@
                 <button onclick="toggleNightMode()" id="btn-night" style="background:rgba(0,20,40,0.7);border:1px solid oklch(0.52 0.04 160 / 0.4);color:oklch(0.52 0.04 160);font-size:10px;font-family:monospace;padding:4px 10px;border-radius:4px;cursor:pointer;text-align:left;backdrop-filter:blur(6px);">🌙 NIGHT</button>
             </div>
             
-            <!-- ═══ 场景切换 + 摄像机模式 (左上角) ═══ -->
-            <div id="scenario-panel" style="position:absolute;top:12px;left:140px;display:flex;gap:6px;z-index:300;pointer-events:auto;">
-                <button class="scenario-btn active" data-scenario="a" onclick="switchScenario('a')" style="background:rgba(0,20,40,0.85);border:1px solid oklch(0.52 0.04 160 / 0.5);color:oklch(0.52 0.04 160);font-size:10px;font-family:monospace;padding:5px 12px;border-radius:4px;cursor:pointer;backdrop-filter:blur(6px);transition:all .2s;">🅰 停靠卸货</button>
-                <button class="scenario-btn" data-scenario="b" onclick="switchScenario('b')" style="background:rgba(0,20,40,0.85);border:1px solid oklch(0.52 0.04 160 / 0.3);color:oklch(0.55 0.005 110);font-size:10px;font-family:monospace;padding:5px 12px;border-radius:4px;cursor:pointer;backdrop-filter:blur(6px);transition:all .2s;">🅱 伴随前行</button>
-                <span style="width:1px;background:oklch(0.52 0.04 160 / 0.2);margin:0 2px;"></span>
-                <button class="cam-mode-btn" data-mode="orbit" onclick="switchCameraMode('orbit')" style="background:rgba(0,20,40,0.85);border:1px solid oklch(0.52 0.04 160 / 0.3);color:oklch(0.55 0.005 110);font-size:10px;font-family:monospace;padding:5px 10px;border-radius:4px;cursor:pointer;backdrop-filter:blur(6px);">◎ 轨道操控</button>
-                <button class="cam-mode-btn" data-mode="overview" onclick="switchCameraMode('overview')" style="background:rgba(0,20,40,0.85);border:1px solid oklch(0.52 0.04 160 / 0.3);color:oklch(0.55 0.005 110);font-size:10px;font-family:monospace;padding:5px 10px;border-radius:4px;cursor:pointer;backdrop-filter:blur(6px);">⊕ 鸟瞰</button>
-                <button class="cam-mode-btn" data-mode="follow" onclick="switchCameraMode('follow')" style="background:rgba(0,20,40,0.85);border:1px solid oklch(0.52 0.04 160 / 0.3);color:oklch(0.55 0.005 110);font-size:10px;font-family:monospace;padding:5px 10px;border-radius:4px;cursor:pointer;backdrop-filter:blur(6px);">▷ 跟踪</button>
-                <button class="cam-mode-btn" data-mode="datacenter" onclick="switchCameraMode('datacenter')" style="background:rgba(0,20,40,0.85);border:1px solid oklch(0.52 0.04 160 / 0.3);color:oklch(0.55 0.005 110);font-size:10px;font-family:monospace;padding:5px 10px;border-radius:4px;cursor:pointer;backdrop-filter:blur(6px);">⬚ 数据中心</button>
-            </div>
-
             <!-- 舱室快速进入 (右上角单按钮 + 下拉菜单, 不与其他面板冲突) -->
             <div id="cabin-launcher" style="position:absolute;top:12px;right:145px;z-index:300;">
                 <button id="cabin-toggle-btn" onclick="toggleCabinMenu()" style="background:linear-gradient(135deg,rgba(15,30,55,0.95),rgba(25,40,70,0.95));border:1px solid oklch(0.52 0.04 160 / 0.5);color:oklch(0.52 0.04 160);font-size:12px;font-family:monospace;padding:7px 14px;border-radius:6px;cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 4px 12px oklch(0 0 0 / 0.4);display:flex;align-items:center;gap:6px;font-weight:600;">
@@ -2790,108 +2775,7 @@
             ctx.fill();
             ctx.restore();
             
-            // ── 从 3D 场景获取目标数据 (货船 + 冰山) ──
-            const sceneTargets = [];
-            try {
-                const st = window.DigitalTwin?.getState?.() || {};
-                const ownX = st.boatMesh?.position?.x || 0;
-                const ownZ = st.boatMesh?.position?.z || 0;
-                const ownHdg = st.boatMesh?.rotation?.y || 0;
-                // 雷达量程 (3D场景单位 → 雷达像素)
-                const radarRange = 250; // 场景单位覆盖范围
-                const scale = radius / radarRange;
-
-                // 货船
-                if (st.cargoShip) {
-                    const dx = st.cargoShip.position.x - ownX;
-                    const dz = st.cargoShip.position.z - ownZ;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-                    const bearing = Math.atan2(dx, -dz) - ownHdg;
-                    const px = cx + Math.sin(bearing) * dist * scale;
-                    const py = cy - Math.cos(bearing) * dist * scale;
-                    if (Math.sqrt((px - cx) ** 2 + (py - cy) ** 2) <= radius) {
-                        sceneTargets.push({
-                            px, py,
-                            color: dist < 40 ? 'oklch(0.48 0.07 22)' : dist < 80 ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)',
-                            label: 'CARGO',
-                            heading: st.cargoShip.rotation?.y || 0,
-                            isShip: true
-                        });
-                    }
-                }
-                // 冰山
-                const iceRadii = [8, 6]; // ICE-1 scale=8, ICE-2 scale=6
-                (st.icebergs || []).forEach((ib, i) => {
-                    const dx = ib.position.x - ownX;
-                    const dz = ib.position.z - ownZ;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-                    const bearing = Math.atan2(dx, -dz) - ownHdg;
-                    const px = cx + Math.sin(bearing) * dist * scale;
-                    const py = cy - Math.cos(bearing) * dist * scale;
-                    // 安全域半径映射到雷达像素
-                    const safeR = ((iceRadii[i] || 8) + 35 + 12) * scale;
-                    if (Math.sqrt((px - cx) ** 2 + (py - cy) ** 2) <= radius) {
-                        sceneTargets.push({
-                            px, py,
-                            color: 'rgba(0, 200, 220, 0.9)',
-                            label: 'ICE-' + (i + 1),
-                            isShip: false,
-                            safetyR: safeR
-                        });
-                    }
-                });
-            } catch (e) { /* 3D 场景未就绪 */ }
-
-            // 绘制 3D 场景目标
-            sceneTargets.forEach(t => {
-                if (t.isShip) {
-                    // 船舶: 圆点 + 航向线
-                    ctx.beginPath();
-                    ctx.arc(t.px, t.py, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = t.color;
-                    ctx.fill();
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                    if (t.heading != null) {
-                        ctx.beginPath();
-                        ctx.moveTo(t.px, t.py);
-                        ctx.lineTo(t.px + Math.sin(t.heading) * 10, t.py - Math.cos(t.heading) * 10);
-                        ctx.strokeStyle = t.color;
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                    }
-                } else {
-                    // 冰山: 三角形标记 + 安全域圈
-                    ctx.save();
-                    ctx.translate(t.px, t.py);
-                    // 安全域圈 (虚线)
-                    if (t.safetyR) {
-                        ctx.beginPath();
-                        ctx.arc(0, 0, t.safetyR, 0, Math.PI * 2);
-                        ctx.strokeStyle = 'rgba(255, 80, 80, 0.25)';
-                        ctx.lineWidth = 0.5;
-                        ctx.setLineDash([2, 2]);
-                        ctx.stroke();
-                        ctx.setLineDash([]);
-                    }
-                    ctx.beginPath();
-                    ctx.moveTo(0, -4);
-                    ctx.lineTo(-3.5, 3);
-                    ctx.lineTo(3.5, 3);
-                    ctx.closePath();
-                    ctx.fillStyle = t.color;
-                    ctx.fill();
-                    ctx.restore();
-                }
-                // 标签
-                ctx.fillStyle = 'rgba(200, 240, 255, 0.6)';
-                ctx.font = '6px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText(t.label, t.px, t.py - 6);
-            });
-
-            // 也绘制后端 AIS 目标 (如果有)
+            // AIS 目标
             const ownLat = Number(ownShip.latitude ?? ownShip.lat ?? 0);
             const ownLon = Number(ownShip.longitude ?? ownShip.lon ?? 0);
             
@@ -2900,19 +2784,26 @@
                 targets.forEach(t => {
                     const tLat = Number(t.latitude ?? t.lat ?? 0);
                     const tLon = Number(t.longitude ?? t.lon ?? 0);
-                    const dLat = (tLat - ownLat) * 60;
+                    const dLat = (tLat - ownLat) * 60; // NM approx
                     const dLon = (tLon - ownLon) * 60 * Math.cos(ownLat * Math.PI / 180);
-                    const scaleNm = radius / 5;
-                    const px = cx + dLon * scaleNm;
-                    const py = cy - dLat * scaleNm;
+                    const scale = radius / 5; // 5 NM range
+                    const px = cx + dLon * scale;
+                    const py = cy - dLat * scale;
+                    
+                    // 在雷达范围内才画
                     const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
                     if (dist > radius) return;
+                    
+                    // 风险着色
                     const cpa = Number(t.cpa ?? 5);
                     const color = cpa < 0.5 ? 'oklch(0.48 0.07 22)' : cpa < 1.5 ? 'oklch(0.56 0.05 70)' : 'oklch(0.52 0.04 160)';
+                    
                     ctx.beginPath();
                     ctx.arc(px, py, 2.5, 0, Math.PI * 2);
                     ctx.fillStyle = color;
                     ctx.fill();
+                    
+                    // 航向线
                     if (t.course != null) {
                         const tHdg = (Number(t.course) * Math.PI) / 180;
                         ctx.beginPath();
@@ -2929,7 +2820,7 @@
             ctx.fillStyle = 'rgba(0, 255, 100, 0.4)';
             ctx.font = '7px monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('250m', cx, cy + radius + 9);
+            ctx.fillText('5nm', cx, cy + radius + 9);
         }
         
         // 定时更新雷达
@@ -3554,15 +3445,12 @@
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
             
             switch (e.key) {
-                case '1': switchCameraMode('overview'); break;
-                case '2': switchCameraMode('follow'); break;
-                case '3': switchCameraMode('datacenter'); break;
+                case '1': setCameraPreset('overview'); break;
+                case '2': setCameraPreset('bridge'); break;
+                case '3': setCameraPreset('bow'); break;
                 case '4': setCameraPreset('stern'); break;
                 case '5': setCameraPreset('underwater'); break;
                 case '6': setCameraPreset('top'); break;
-                case '0': switchCameraMode('orbit'); break;
-                case 'a': case 'A': switchScenario('a'); break;
-                case 'b' : if (!e.ctrlKey && !e.metaKey) { switchScenario('b'); } break;
                 case 'n': case 'N': toggleNightMode(); break;
                 case 'h': case 'H':
                     // 切换 HUD 显隐

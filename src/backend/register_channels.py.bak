@@ -69,6 +69,7 @@ from channels.voyage_data_analyzer import VoyageDataAnalyzerChannel
 from channels.maintenance_planner import MaintenancePlannerChannel
 from channels.bridge_chat import BridgeChatChannel
 from channels.cargo_orbit_telemetry import CargoOrbitTelemetryChannel
+from channels.cargo_ship_orbit import CargoShipOrbitChannel
 from datetime import datetime
 from channels.agent_set_protocol import create_coordination_bus
 from channels.agent_set_coordinator import AgentSetCoordinator
@@ -855,17 +856,31 @@ def register_marine_datacenter_energy():
     return channel
 
 
+def register_cargo_ship_orbit():
+    """注册货船轨道运动控制 Channel (椭圆轨迹)."""
+    channel = CargoShipOrbitChannel()
+    result = register_channel(channel)
+    if result:
+        print(f"✅ 已注册 Channel: {channel.name}")
+        channel.initialize()
+        status = channel.get_status()
+        print(f"   状态：{status['health']}")
+    else:
+        print(f"❌ 注册失败：{channel.name}")
+    return channel
+
+
 def register_cargo_orbit_telemetry():
-    \"\"\"注册货船轨道遥测上报 Channel.\"\"\"
+    """注册货船轨道遥测上报 Channel."""
     channel = CargoOrbitTelemetryChannel()
     result = register_channel(channel)
     if result:
-        print(f\"✅ 已注册 Channel: {channel.name}\")
+        print(f"✅ 已注册 Channel: {channel.name}")
         channel.initialize()
         status = channel.get_status()
-        print(f\"   状态：{status['health']}\")
+        print(f"   状态：{status['health']}")
     else:
-        print(f\"❌ 注册失败：{channel.name}\")
+        print(f"❌ 注册失败：{channel.name}")
     return channel
 
 

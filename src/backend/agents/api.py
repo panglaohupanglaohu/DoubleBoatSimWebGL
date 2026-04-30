@@ -3240,6 +3240,7 @@ def _save_step_to_pipeline(task_id: str, step_key: str, content: str,
                 f.write(d["content"])
             _harness_log.info("[Pipeline] Code saved: %s (%d chars)", d["path"], len(d["content"]))
 
+        _auto_ingest_step_to_kb(task_id, step_key, content, deliverables)
         return summary_path
     else:
         # Text-only step: save as single .md file
@@ -3247,6 +3248,7 @@ def _save_step_to_pipeline(task_id: str, step_key: str, content: str,
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(content)
         _harness_log.info("[Pipeline] Step artifact: %s (%d chars)", out_path, len(content))
+        _auto_ingest_step_to_kb(task_id, step_key, content, deliverables)
         return out_path
 
 
@@ -7293,4 +7295,126 @@ def ingest_workspace_to_kb(team_id: str, agent_id: str, path: str = "") -> Dict[
         ingested += 1
 
     return {"status": "ingested", "files": ingested, "agent_id": agent_id}
+
+
+# ── Phase 3.1: Batch ingest evolution audit rules into KB ──
+
+@router.post(
+    "/knowledge-base/ingest-evolution-rules",
+    summary="Batch ingest 41 evolution audit rules into knowledge base",
+    status_code=status.HTTP_201_CREATED,
+)
+def kb_ingest_evolution_rules() -> Dict[str, Any]:
+    """Read BUILTIN_AUDIT_RULES from system_evolution and create KB documents."""
+    try:
+        from src.backend.channels.system_evolution import BUILTIN_AUDIT_RULES
+    except ImportError:
+        try:
+            import importlib, sys
+            mod = importlib.import_module("channels.system_evolution")
+            BUILTIN_AUDIT_RULES = mod.BUILTIN_AUDIT_RULES
+        except Exception as exc:
+            raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=f"Cannot import BUILTIN_AUDIT_RULES: {exc}")
+
+    kb = get_knowledge_base()
+    # Avoid duplicates: skip rules already in KB
+    existing_titles = {d.title for d in kb._docs.values() if d.category == "evolution_rule"}
+    ingested = 0
+    skipped = 0
+    for rule in BUILTIN_AUDIT_RULES:
+        rd = rule.to_dict() if hasattr(rule, "to_dict") else {}
+        title = rd.get("title", getattr(rule, "title", ""))
+        if title in existing_titles:
+            skipped += 1
+            continue
+        rule_id = rd.get("id", getattr(rule, "id", ""))
+        domain = rd.get("domain", getattr(rule, "domain", ""))
+        desc = rd.get("description", getattr(rule, "description", ""))
+        ref = rd.get("reference", getattr(rule, "reference", ""))
+        severity = rd.get("severity", getattr(rule, "severity", "medium"))
+        target = rd.get("target_channel", getattr(rule, "target_channel", ""))
+        op_domain = rd.get("operational_domain", "")
+        content = (
+            f"# {rule_id}: {title}\n\n"
+            f"**Domain**: {domain}  \n"
+            f"**Severity**: {severity}  \n"
+            f"**Target Channel**: {target}  \n"
+            f"**Operational Domain**: {op_domain}  \n"
+            f"**Reference**: {ref}  \n\n"
+            f"## Description\n\n{desc}\n"
+        )
+        doc = KBDocument(
+            title=title,
+            content=content,
+            source_agent="system_evolution",
+            source_team="poseidon",
+            category="evolution_rule",
+            tags=[rule_id, domain, severity, target, "audit", "compliance"],
+            path=f"evolution_rules/{rule_id}.md",
+            metadata=rd,
+        )
+        kb.add(doc)
+        ingested += 1
+
+    return {"status": "ok", "ingested": ingested, "skipped": skipped,
+            "total_rules": len(BUILTIN_AUDIT_RULES)}
+
+
+# ── Phase 3.2: Auto-ingest pipeline step output into KB ──
+
+def _auto_ingest_step_to_kb(task_id: str, step_key: str,
+                             content: str, deliverables: list = None):
+    """Called after _save_step_to_pipeline to push step output into KB."""
+    try:
+        kb = get_knowledge_base()
+        tags = [task_id, step_key, "pipeline", "auto_ingest"]
+        doc = KBDocument(
+            title=f"[{task_id[:8]}] {step_key} output",
+            content=content[:50000],  # cap at 50k chars
+            source_agent=step_key,
+            source_team="build_system",
+            category="deliverable",
+            tags=tags,
+            path=f"pipeline/{task_id}/{step_key}.md",
+        )
+        kb.add(doc)
+        # Also ingest code deliverables
+        if deliverables:
+            for d in deliverables:
+                code_doc = KBDocument(
+                    title=f"[{task_id[:8]}] {step_key}/{d.get('path', 'code')}",
+                    content=d.get("content", "")[:50000],
+                    source_agent=step_key,
+                    source_team="build_system",
+                    category="deliverable",
+                    tags=tags + [d.get("path", "")],
+                    path=f"pipeline/{task_id}/{step_key}/{d.get('path', 'file')}",
+                )
+                kb.add(code_doc)
+    except Exception:
+        pass  # best-effort, don't break pipeline
+
+
+# ── Phase 3.3: Enhanced search with source_context ──
+
+@router.post("/knowledge-base/search/enhanced", summary="Enhanced RAG search with source context")
+def kb_search_enhanced(req: KBSearchRequest) -> Dict[str, Any]:
+    kb = get_knowledge_base()
+    results = kb.search(
+        query=req.query,
+        max_results=req.max_results,
+        category=req.category,
+        agent_id=req.agent_id,
+    )
+    # Enrich results with source_context
+    for r in results:
+        doc = kb.get(r.get("doc_id", ""))
+        if doc:
+            r["source_context"] = {
+                "full_content": doc.content,
+                "metadata": doc.metadata,
+                "path": doc.path,
+            }
+    return {"query": req.query, "results": results, "total": len(results)}
 

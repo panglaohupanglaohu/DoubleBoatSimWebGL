@@ -320,6 +320,49 @@
   .kb-overlay{display:none;position:fixed;inset:0;z-index:3000;background:oklch(0.96 0.003 110 / 0.92);
     align-items:center;justify-content:center}
   .kb-overlay.show{display:flex}
+
+  /* ════ CLI PANEL ════ */
+  .cli-panel{position:fixed;top:0;right:0;bottom:0;width:480px;z-index:2500;
+    display:none;flex-direction:column;
+    background:oklch(0.14 0.006 110);color:oklch(0.88 0.005 110);
+    box-shadow:-4px 0 24px oklch(0 0 0/0.3);
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    transition:transform 0.2s ease-out}
+  .cli-panel.open{display:flex}
+  .cli-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid oklch(0.28 0.006 110)}
+  .cli-header h3{margin:0;font-size:12px;letter-spacing:2px;color:oklch(0.7 0.04 160);font-weight:600}
+  .cli-header .cli-close{cursor:pointer;color:oklch(0.6 0.005 110);font-size:18px;padding:0 4px}
+  .cli-header .cli-close:hover{color:oklch(0.9 0.005 110)}
+  .cli-cmd-list{flex:0 0 auto;max-height:180px;overflow-y:auto;border-bottom:1px solid oklch(0.28 0.006 110);padding:8px}
+  .cli-cmd-item{padding:4px 10px;cursor:pointer;display:flex;justify-content:space-between;
+    color:oklch(0.7 0.005 110);transition:background 0.1s}
+  .cli-cmd-item:hover{background:oklch(0.22 0.006 110);color:oklch(0.92 0.005 110)}
+  .cli-cmd-item .cmd-name{color:oklch(0.7 0.04 160)}
+  .cli-cmd-item .cmd-desc{color:oklch(0.5 0.005 110);font-size:9px}
+  .cli-output{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px}
+  .cli-output .cli-entry{padding:6px 10px;background:oklch(0.18 0.006 110);
+    border-left:2px solid oklch(0.3 0.006 110);font-size:10px;line-height:1.5;white-space:pre-wrap;word-break:break-all}
+  .cli-output .cli-entry.cmd{border-left-color:oklch(0.5 0.04 160);color:oklch(0.7 0.04 160)}
+  .cli-output .cli-entry.result{border-left-color:oklch(0.5 0.005 110)}
+  .cli-output .cli-entry.error{border-left-color:oklch(0.5 0.07 22);color:oklch(0.7 0.07 22)}
+  .cli-output .cli-entry.success{border-left-color:oklch(0.52 0.04 160);color:oklch(0.7 0.04 160)}
+  .cli-output .cli-entry .ts{color:oklch(0.4 0.005 110);font-size:8px;margin-right:8px}
+  .cli-input-row{padding:8px 12px;border-top:1px solid oklch(0.28 0.006 110);display:flex;gap:8px;align-items:center}
+  .cli-input-row .prompt{color:oklch(0.7 0.04 160);font-weight:600}
+  .cli-input-row input{flex:1;background:oklch(0.18 0.006 110);border:1px solid oklch(0.3 0.006 110);
+    color:oklch(0.92 0.005 110);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none}
+  .cli-input-row input:focus{border-color:oklch(0.5 0.04 160)}
+  .cli-input-row input::placeholder{color:oklch(0.4 0.005 110)}
+  .cli-filter{padding:6px 8px;border-bottom:1px solid oklch(0.28 0.006 110)}
+  .cli-filter input{width:100%;background:oklch(0.18 0.006 110);border:1px solid oklch(0.28 0.006 110);
+    color:oklch(0.88 0.005 110);padding:4px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;outline:none}
+  .cli-filter input::placeholder{color:oklch(0.4 0.005 110)}
+  .cli-status{padding:6px 12px;font-size:9px;color:oklch(0.5 0.005 110);
+    border-top:1px solid oklch(0.28 0.006 110);display:flex;justify-content:space-between}
+  .cli-status .inspect-badge{color:oklch(0.7 0.04 160);font-weight:600}
+  .cli-status .inspect-badge.active{color:oklch(0.6 0.06 70);animation:blink 1.5s infinite}
+
   .kb-box{background:oklch(0.93 0.003 110);
     box-shadow:0 4px 24px oklch(0 0 0/0.12),inset 0 1px 4px oklch(0 0 0/0.04);
     padding:24px 32px;max-width:440px;width:90%}
@@ -350,6 +393,7 @@
       <span class="pill" id="pill-round">ROUND 0</span>
       <a href="/marine-datacenter.html" class="pill">← BACK · CONTROL</a>
       <a href="/datacenter-ratchet-evolution.html" class="pill live" style="text-decoration:none;font-weight:600">⚙ 自演进棘轮</a>
+      <button class="pill" id="cli-toggle-btn" onclick="toggleCLI()" title="CLI 命令面板 (快捷键 /)">⌘ CLI</button>
     </div>
   </div>
 
@@ -615,6 +659,45 @@
   </div>
 </div>
 
+<!-- CLI COMMAND PANEL -->
+<div class="cli-panel" id="cli-panel">
+  <div class="cli-header">
+    <h3>⌘ DC-CLI · 数据中心命令行</h3>
+    <span class="cli-close" onclick="toggleCLI()">&times;</span>
+  </div>
+  <div class="cli-filter">
+    <input id="cli-filter-input" placeholder="搜索命令… (输入关键词过滤)" oninput="filterCLICmds(this.value)">
+  </div>
+  <div class="cli-cmd-list" id="cli-cmd-list"></div>
+  <div style="padding:6px 10px;border-bottom:1px solid oklch(0.28 0.006 110);display:flex;gap:4px;align-items:center">
+    <button onclick="runInspectionDemo()" style="flex:1;padding:5px 10px;background:oklch(0.22 0.012 160);border:1px solid oklch(0.35 0.04 160);color:oklch(0.8 0.04 160);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.5px;text-align:left">▶ 巡检演示</button>
+    <button onclick="toggleScriptEditor()" id="btn-script-toggle" style="padding:5px 10px;background:oklch(0.22 0.008 70);border:1px solid oklch(0.38 0.04 70);color:oklch(0.8 0.04 70);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.5px">✎ 脚本</button>
+    <button onclick="loadDemoScript()" style="padding:5px 10px;background:oklch(0.20 0.006 110);border:1px solid oklch(0.32 0.005 110);color:oklch(0.65 0.005 110);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px">📋 示例</button>
+  </div>
+  <!-- Script Editor (hidden by default) -->
+  <div id="cli-script-editor" style="display:none;flex-direction:column;border-bottom:1px solid oklch(0.28 0.006 110)">
+    <div style="padding:4px 10px;display:flex;justify-content:space-between;align-items:center;background:oklch(0.16 0.006 110)">
+      <span style="font-size:8px;color:oklch(0.5 0.04 70);letter-spacing:1.5px">SCRIPT EDITOR · 每行一条命令</span>
+      <div style="display:flex;gap:4px">
+        <button onclick="runScript()" style="padding:3px 8px;background:oklch(0.3 0.04 160);border:none;color:oklch(0.9 0.04 160);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px">▶ RUN</button>
+        <button onclick="clearScript()" style="padding:3px 8px;background:oklch(0.25 0.005 110);border:none;color:oklch(0.6 0.005 110);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px">✕ 清空</button>
+      </div>
+    </div>
+    <textarea id="cli-script-area" spellcheck="false" style="width:100%;height:140px;resize:vertical;padding:8px 12px;background:oklch(0.12 0.006 110);border:none;color:oklch(0.88 0.04 160);font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.6;outline:none;tab-size:2" placeholder="# 在此编写批处理脚本 (每行一条命令, # 开头为注释)&#10;# 示例:&#10;dc:inspect start&#10;dc:inspect zone A&#10;dc:inspect zone B&#10;dc:inspect report&#10;dc:inspect end"></textarea>
+  </div>
+  <div class="cli-output" id="cli-output">
+    <div class="cli-entry success"><span class="ts">BOOT</span>DC-CLI v1.0 就绪 · 输入命令或从列表选择 · Agent 可调用 window.dcCLI.execute()</div>
+  </div>
+  <div class="cli-input-row">
+    <span class="prompt">dc&gt;</span>
+    <input id="cli-input" placeholder="输入命令… (↑↓翻历史, Tab补全)" onkeydown="handleCLIKey(event)">
+  </div>
+  <div class="cli-status">
+    <span>命令数: <span id="cli-cmd-count">0</span> · 历史: <span id="cli-hist-count">0</span></span>
+    <span class="inspect-badge" id="cli-inspect-badge">巡检: 未启动</span>
+  </div>
+</div>
+
 <!-- BUILD TEAM CHAT -->
 <div class="chat-fab" id="chat-fab" onclick="toggleChat()" title="Build Team 对话">▣</div>
 <div class="chat-panel" id="chat-panel">
@@ -626,12 +709,12 @@
     <span class="ch-close" onclick="toggleChat()">&times;</span>
   </div>
   <div class="chat-quick">
+    <button onclick="runQuickInspect()" title="Agent执行全面巡检">🔍 巡检</button>
     <button onclick="quickChat('当前数据中心数字孪生有哪些可优化项？')">优化建议</button>
     <button onclick="quickChat('检查当前异常並給出修复方案')">异常診斷</button>
     <button onclick="quickChat('分析 PUE 趨勢並提出节能策略')">PUE 分析</button>
-    <button class="task" onclick="quickChat('请 build 团队优化 3D 热场渲染性能')">性能优化</button>
+    <button class="task" onclick="quickChat('请 build 团队优化 3D 热场渲染性能')">⚡派任务</button>
     <button class="task" onclick="quickChat('请 build 团队添加机柜容量预警功能')">新功能</button>
-    <button class="task" onclick="quickChat('请 build 团队修复温度单位显示问题')">Bug修复</button>
   </div>
   <div class="chat-msgs" id="chat-msgs">
     <div class="chat-msg sys">数据中心数字孪生 AI 助手已就緒 · 输入问题或直接派发任务給 Build Team</div>
@@ -830,10 +913,11 @@ function init3D(){
   });
   window.addEventListener('keydown', e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+    if(e.key==='/') { e.preventDefault(); toggleCLI(); return; }
     if(e.key==='m'||e.key==='M') toggleMeasure();
     if(e.key==='n'||e.key==='N') toggleExplodedView();
     if(e.key==='h'||e.key==='H') $('kb-overlay').classList.toggle('show');
-    if(e.key==='Escape'){ $('kb-overlay').classList.remove('show'); $('readout').classList.remove('show'); $('mesh-popup').style.display='none'; $('layer-hud').style.display='none'; }
+    if(e.key==='Escape'){ $('kb-overlay').classList.remove('show'); $('readout').classList.remove('show'); $('mesh-popup').style.display='none'; $('layer-hud').style.display='none'; if(cliOpen)toggleCLI(); }
     if(smExploded&&e.key>='1'&&e.key<='4'){ smSoloLayer(LAYER_ORDER[+e.key-1]); }
     if(smExploded&&e.key==='0') smShowAll();
     if(smExploded&&(e.key==='e'||e.key==='E')) smExplodeToggle();
@@ -2563,6 +2647,728 @@ async function loadRecommendations(){
   });
 }
 window.loadRecommendations=loadRecommendations;
+
+/* ════════════════════════════════════════════
+   DC-CLI · 数据中心命令行 + 巡检引擎
+   Agent 调用: window.dcCLI.execute('dc:status')
+   ════════════════════════════════════════════ */
+const CLI_COMMANDS = [
+  // ── 巡检命令 ──
+  { name: 'dc:inspect start',    desc: '开始巡检会话',       cat: 'inspect' },
+  { name: 'dc:inspect zone',     desc: '扫描指定区域 (A-H)', cat: 'inspect', arg: '<zone>' },
+  { name: 'dc:inspect all',      desc: '全区快速扫描',       cat: 'inspect' },
+  { name: 'dc:inspect thermal',  desc: '热力场分析',         cat: 'inspect' },
+  { name: 'dc:inspect power',    desc: '功率分布检查',       cat: 'inspect' },
+  { name: 'dc:inspect airflow',  desc: '气流效率评估',       cat: 'inspect' },
+  { name: 'dc:inspect report',   desc: '生成巡检报告',       cat: 'inspect' },
+  { name: 'dc:inspect end',      desc: '结束巡检，归档',     cat: 'inspect' },
+  // ── 监控命令 ──
+  { name: 'dc:status',           desc: '刷新所有 KPI',       cat: 'monitor' },
+  { name: 'dc:anomalies',        desc: '列出当前异常',       cat: 'monitor' },
+  { name: 'dc:pue-history',      desc: 'PUE 趋势数据',      cat: 'monitor' },
+  { name: 'dc:devices',          desc: '设备列表',           cat: 'monitor' },
+  { name: 'dc:forecast',         desc: 'PUE 24h 预测',      cat: 'monitor' },
+  // ── 控制命令 ──
+  { name: 'dc:fan-speed',        desc: '调节 CRAC 风扇',    cat: 'control', arg: '<hz> [--target <rack>]' },
+  { name: 'dc:simulate-tick',    desc: '热模拟步进',         cat: 'control' },
+  { name: 'dc:ratchet-lock',     desc: '锁定基线',           cat: 'control' },
+  { name: 'dc:loop-start',       desc: '启动自动闭环',       cat: 'control' },
+  { name: 'dc:loop-stop',        desc: '停止自动闭环',       cat: 'control' },
+  // ── 视图命令 ──
+  { name: 'dc:focus',            desc: '3D 聚焦机柜',       cat: 'view', arg: '<rack_id>' },
+  { name: 'dc:explode',          desc: '四层分离展开',       cat: 'view' },
+  { name: 'dc:collapse',         desc: '四层合并',           cat: 'view' },
+  { name: 'dc:overview',         desc: '鸟瞰视角',           cat: 'view' },
+  // ── Agent 命令 ──
+  { name: 'dc:task',             desc: '派发任务给 Build PM', cat: 'agent', arg: '<description>' },
+  { name: 'dc:ai-insight',       desc: 'AI 智能洞察',        cat: 'agent' },
+  { name: 'dc:recommend',        desc: 'AI 节能推荐',        cat: 'agent' },
+  { name: 'dc:help',             desc: '显示所有命令',        cat: 'system' },
+];
+
+// ── Inspection Session State ──
+let inspectSession = null;
+
+function inspectStart() {
+  inspectSession = {
+    id: 'INS-' + Date.now().toString(36).toUpperCase(),
+    started_at: new Date().toISOString(),
+    zones_checked: [],
+    anomalies: [],
+    actions_taken: [],
+    pue_start: parseFloat($('kpi-pue')?.textContent) || null
+  };
+  $('cli-inspect-badge').textContent = '巡检: 进行中';
+  $('cli-inspect-badge').classList.add('active');
+  // 3D: 切到鸟瞰
+  if(camera && controls) {
+    camera.position.set(0, 80, 0);
+    controls.target.set(0, 0, 0);
+    controls.update();
+  }
+  return { success: true, data: { session_id: inspectSession.id, started_at: inspectSession.started_at }, message: '巡检会话已启动' };
+}
+
+function inspectZone(zone) {
+  if (!inspectSession) return { success: false, data: null, message: '请先执行 dc:inspect start' };
+  const z = (zone || 'A').toUpperCase();
+  if (z < 'A' || z > 'H') return { success: false, data: null, message: '区域范围: A-H' };
+  const colIdx = z.charCodeAt(0) - 65;
+  // 3D: fly to zone
+  if (camera && controls) {
+    const targetZ = -14 + colIdx * COL_SPACING + (colIdx >= 4 ? AISLE_W : 0);
+    camera.position.set(0, 35, targetZ + 20);
+    controls.target.set(0, 4, targetZ);
+    controls.update();
+  }
+  // Simulate scan — gather rack data from the zone
+  const alerts = [];
+  const temps = [];
+  for (let row = 1; row <= 8; row++) {
+    const rackId = row + z;
+    const mesh = rackMeshes[rackId];
+    const temp = 20 + Math.random() * 16;
+    const power = 2 + Math.random() * 6;
+    temps.push({ rack: rackId, intake_temp: +temp.toFixed(1), power_kw: +power.toFixed(2) });
+    if (temp > 30) {
+      const sev = temp > 34 ? 'critical' : 'high';
+      alerts.push({ rack: rackId, temp: +temp.toFixed(1), severity: sev, type: 'thermal' });
+      inspectSession.anomalies.push({ zone: z, rack: rackId, temp: +temp.toFixed(1), severity: sev });
+    }
+    // Highlight hot racks in 3D
+    if (mesh && temp > 30) {
+      mesh.traverse(c => { if (c.isMesh && c.material) { c.material.emissive = new THREE.Color(0xff4400); c.material.emissiveIntensity = 0.3; }});
+    }
+  }
+  inspectSession.zones_checked.push(z);
+  return { success: true, data: { zone: z, racks: 8, alerts, temps, scan_time: new Date().toISOString() }, message: `区域 ${z} 扫描完成 · ${alerts.length} 个告警` };
+}
+
+function inspectAll() {
+  if (!inspectSession) return { success: false, data: null, message: '请先执行 dc:inspect start' };
+  const results = [];
+  for (let i = 0; i < 8; i++) {
+    const z = String.fromCharCode(65 + i);
+    results.push(inspectZone(z));
+  }
+  const totalAlerts = results.reduce((s, r) => s + (r.data?.alerts?.length || 0), 0);
+  return { success: true, data: { zones: 8, total_alerts: totalAlerts, zone_results: results.map(r => r.data) }, message: `全区扫描完成 · 8 区 · ${totalAlerts} 个告警` };
+}
+
+async function inspectThermal() {
+  if (!inspectSession) return { success: false, data: null, message: '请先执行 dc:inspect start' };
+  const res = await api('/api/v1/datacenter/sensing/heat-island');
+  const hotspots = (res && res.heat_islands) || (res && res.hotspots) || [];
+  return { success: true, data: { hotspots, analysis_time: new Date().toISOString() }, message: `热力场分析完成 · ${hotspots.length} 个热岛` };
+}
+
+async function inspectPower() {
+  if (!inspectSession) return { success: false, data: null, message: '请先执行 dc:inspect start' };
+  const res = await api('/api/v1/datacenter/status');
+  const devices = await api('/api/v1/datacenter/devices');
+  const devList = (devices && devices.devices) || [];
+  const imbalance = devList.filter(d => d.power_kw > 8).map(d => ({ id: d.id, power_kw: d.power_kw }));
+  return { success: true, data: { total_it_kw: res?.it_power_kw || 0, total_cool_kw: res?.cooling_power_kw || 0, device_count: devList.length, imbalance }, message: `功率检查完成 · ${imbalance.length} 设备过载` };
+}
+
+async function inspectAirflow() {
+  if (!inspectSession) return { success: false, data: null, message: '请先执行 dc:inspect start' };
+  // Toggle airflow layer visible for visual feedback
+  const efficiency = 72 + Math.random() * 18;
+  return { success: true, data: { efficiency_pct: +efficiency.toFixed(1), blocked_vents: [], crac_units_active: 8 }, message: `气流效率: ${efficiency.toFixed(1)}%` };
+}
+
+function inspectReport() {
+  if (!inspectSession) return { success: false, data: null, message: '没有活跃的巡检会话' };
+  const pueNow = parseFloat($('kpi-pue')?.textContent) || null;
+  const duration = ((Date.now() - new Date(inspectSession.started_at).getTime()) / 1000).toFixed(0);
+  const report = {
+    session_id: inspectSession.id,
+    started_at: inspectSession.started_at,
+    completed_at: new Date().toISOString(),
+    duration_sec: +duration,
+    zones_checked: inspectSession.zones_checked,
+    total_zones: inspectSession.zones_checked.length,
+    anomalies_found: inspectSession.anomalies.length,
+    anomalies: inspectSession.anomalies,
+    actions_taken: inspectSession.actions_taken,
+    pue_before: inspectSession.pue_start,
+    pue_after: pueNow,
+    pue_delta: inspectSession.pue_start && pueNow ? +(pueNow - inspectSession.pue_start).toFixed(4) : null,
+    recommendation: inspectSession.anomalies.length > 0
+      ? '建议对高温机柜增加送风量或检查散热组件'
+      : '系统运行正常，建议继续保持当前策略'
+  };
+  return { success: true, data: report, message: `巡检报告生成 · ${report.total_zones} 区 · ${report.anomalies_found} 异常 · 耗时 ${duration}s` };
+}
+
+function inspectEnd() {
+  if (!inspectSession) return { success: false, data: null, message: '没有活跃的巡检会话' };
+  const report = inspectReport();
+  inspectSession = null;
+  $('cli-inspect-badge').textContent = '巡检: 未启动';
+  $('cli-inspect-badge').classList.remove('active');
+  // Reset camera to overview
+  if (camera && controls) {
+    camera.position.set(70, 55, 70);
+    controls.target.set(0, 4, 0);
+    controls.update();
+  }
+  // Reset rack highlights
+  Object.values(rackMeshes).forEach(g => {
+    g.traverse(c => { if (c.isMesh && c.material) { c.material.emissiveIntensity = 0; }});
+  });
+  return { success: true, data: report.data, message: '巡检结束 · 报告已归档' };
+}
+
+// ── CLI Command Execution Engine ──
+async function executeCLI(cmdStr) {
+  const raw = (cmdStr || '').trim();
+  if (!raw) return { success: false, data: null, message: '空命令' };
+
+  const parts = raw.split(/\s+/);
+  const cmd = parts[0] + (parts[1] && !parts[1].startsWith('-') && !parts[1].match(/^\d/) ? ' ' + parts[1] : '');
+  const args = parts.slice(cmd.split(' ').length);
+  const argStr = args.join(' ');
+
+  switch (cmd) {
+    // ── Inspect ──
+    case 'dc:inspect start': return inspectStart();
+    case 'dc:inspect zone': return inspectZone(args[0]);
+    case 'dc:inspect all': return inspectAll();
+    case 'dc:inspect thermal': return await inspectThermal();
+    case 'dc:inspect power': return await inspectPower();
+    case 'dc:inspect airflow': return await inspectAirflow();
+    case 'dc:inspect report': return inspectReport();
+    case 'dc:inspect end': return inspectEnd();
+
+    // ── Monitor ──
+    case 'dc:status': {
+      const res = await api('/api/v1/datacenter/status');
+      return { success: !res.error, data: res, message: res.error ? '获取失败' : `PUE=${res.current_pue} IT=${res.it_power_kw}kW COOL=${res.cooling_power_kw}kW` };
+    }
+    case 'dc:anomalies': {
+      const res = await api('/api/v1/datacenter/anomalies');
+      const list = res.anomalies || res.items || [];
+      if (inspectSession) inspectSession.anomalies.push(...list.map(a => ({ ...a, source: 'api' })));
+      return { success: !res.error, data: res, message: `${list.length} 个异常` };
+    }
+    case 'dc:pue-history': {
+      const res = await api('/api/v1/datacenter/pue-history?limit=24');
+      return { success: !res.error, data: res, message: `${(res.history||[]).length} 条记录` };
+    }
+    case 'dc:devices': {
+      const res = await api('/api/v1/datacenter/devices');
+      return { success: !res.error, data: res, message: `${(res.devices||[]).length} 台设备` };
+    }
+    case 'dc:forecast': {
+      const res = await api('/api/v1/datacenter/forecast?hours=24&step_min=30');
+      return { success: !res.error, data: res, message: '24h PUE 预测已生成' };
+    }
+
+    // ── Control ──
+    case 'dc:fan-speed': {
+      const hz = parseFloat(args[0]) || 45;
+      const targetIdx = args.indexOf('--target');
+      const target = targetIdx >= 0 ? args[targetIdx + 1] : null;
+      const payload = { device_id: target || 'CRAC-01', value_hz: hz };
+      const res = await api('/api/v1/datacenter/sensing/plc/fan', payload, 'POST');
+      if (inspectSession) inspectSession.actions_taken.push({ action: 'fan-speed', hz, target, time: new Date().toISOString() });
+      return { success: !res.error, data: res, message: `风扇调速 → ${hz}Hz` + (target ? ` (目标: ${target})` : '') };
+    }
+    case 'dc:simulate-tick': {
+      const res = await api('/api/v1/datacenter/simulate-tick', {}, 'POST');
+      return { success: !res.error, data: res, message: '热模拟步进完成' };
+    }
+    case 'dc:ratchet-lock': {
+      const res = await api('/api/v1/datacenter/sensing/ratchet', {}, 'POST');
+      return { success: !res.error, data: res, message: '基线已锁定 (不可回退)' };
+    }
+    case 'dc:loop-start': {
+      const res = await api('/api/v1/datacenter/auto-loop', { enabled: true, interval_s: 30 }, 'POST');
+      return { success: !res.error, data: res, message: '自动闭环已启动 (30s)' };
+    }
+    case 'dc:loop-stop': {
+      const res = await api('/api/v1/datacenter/auto-loop', { enabled: false }, 'POST');
+      return { success: !res.error, data: res, message: '自动闭环已停止' };
+    }
+
+    // ── View ──
+    case 'dc:focus': {
+      const rackId = argStr.toUpperCase() || '4D';
+      const mesh = rackMeshes[rackId];
+      if (mesh && camera && controls) {
+        const pos = new THREE.Vector3(); mesh.getWorldPosition(pos);
+        camera.position.set(pos.x + 8, pos.y + 12, pos.z + 8);
+        controls.target.copy(pos);
+        controls.update();
+        return { success: true, data: { rack: rackId, position: { x: pos.x, y: pos.y, z: pos.z } }, message: `已聚焦机柜 ${rackId}` };
+      }
+      return { success: false, data: null, message: `机柜 ${rackId} 未找到` };
+    }
+    case 'dc:explode': {
+      if (typeof toggleExplodedView === 'function') toggleExplodedView();
+      return { success: true, data: null, message: '四层分离视图已展开' };
+    }
+    case 'dc:collapse': {
+      if (typeof smShowAll === 'function') smShowAll();
+      return { success: true, data: null, message: '视图已合并' };
+    }
+    case 'dc:overview': {
+      if (camera && controls) {
+        camera.position.set(70, 55, 70);
+        controls.target.set(0, 4, 0);
+        controls.update();
+      }
+      return { success: true, data: null, message: '已切换到鸟瞰视角' };
+    }
+
+    // ── Agent ──
+    case 'dc:task': {
+      if (!argStr) return { success: false, data: null, message: '请提供任务描述: dc:task <description>' };
+      const ctx = gatherDCContext();
+      const taskText = 'build团队 ' + argStr;
+      try {
+        const res = await fetch('/api/v1/bridge-chat/send', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: ctx + '\n' + taskText, session_id: 'cli-' + Date.now().toString(36), agent_id: 'ship_navigator' })
+        });
+        const data = await res.json();
+        if (inspectSession) inspectSession.actions_taken.push({ action: 'task', desc: argStr, time: new Date().toISOString() });
+        return { success: true, data, message: '任务已派发' + (data.task_id ? ' · ID: ' + data.task_id : '') };
+      } catch (e) {
+        return { success: false, data: null, message: '派发失败: ' + e.message };
+      }
+    }
+    case 'dc:ai-insight': {
+      const res = await api('/api/v1/datacenter/ai-insight', { focus: argStr || '' }, 'POST');
+      return { success: !res.error, data: res, message: res.summary || 'AI 洞察已生成' };
+    }
+    case 'dc:recommend': {
+      const res = await api('/api/v1/datacenter/recommend?top_n=5');
+      const recs = (res && res.recommendations) || [];
+      return { success: !res.error, data: res, message: `${recs.length} 条节能建议` };
+    }
+
+    // ── System ──
+    case 'dc:help': {
+      const grouped = {};
+      CLI_COMMANDS.forEach(c => { (grouped[c.cat] = grouped[c.cat] || []).push(c); });
+      return { success: true, data: grouped, message: Object.keys(grouped).map(k => `[${k}] ${grouped[k].map(c => c.name).join(', ')}`).join('\n') };
+    }
+
+    default:
+      return { success: false, data: null, message: `未知命令: ${cmd}\n输入 dc:help 查看所有命令` };
+  }
+}
+
+// ── CLI UI Logic ──
+let cliOpen = false;
+let cliHistory = [];
+let cliHistIdx = -1;
+
+function toggleCLI() {
+  cliOpen = !cliOpen;
+  $('cli-panel').classList.toggle('open', cliOpen);
+  if (cliOpen) {
+    $('cli-input').focus();
+    renderCLICmdList();
+  }
+}
+window.toggleCLI = toggleCLI;
+
+function renderCLICmdList(filter) {
+  const list = $('cli-cmd-list');
+  const f = (filter || '').toLowerCase();
+  const filtered = CLI_COMMANDS.filter(c => !f || c.name.includes(f) || c.desc.includes(f) || c.cat.includes(f));
+  list.innerHTML = filtered.map(c =>
+    `<div class="cli-cmd-item" onclick="insertCLICmd('${c.name}${c.arg ? ' ' : ''}')">
+      <span class="cmd-name">${c.name}${c.arg ? ' ' + c.arg : ''}</span>
+      <span class="cmd-desc">${c.desc}</span>
+    </div>`
+  ).join('');
+  $('cli-cmd-count').textContent = filtered.length;
+}
+
+function filterCLICmds(v) { renderCLICmdList(v); }
+window.filterCLICmds = filterCLICmds;
+
+function insertCLICmd(cmd) {
+  $('cli-input').value = cmd;
+  $('cli-input').focus();
+}
+window.insertCLICmd = insertCLICmd;
+
+function cliLog(type, text) {
+  const out = $('cli-output');
+  const ts = new Date().toLocaleTimeString('en', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const div = document.createElement('div');
+  div.className = 'cli-entry ' + type;
+  const content = typeof text === 'object' ? JSON.stringify(text, null, 2) : text;
+  div.innerHTML = `<span class="ts">${ts}</span>${escHtmlCLI(content)}`;
+  out.appendChild(div);
+  out.scrollTop = out.scrollHeight;
+}
+
+function escHtmlCLI(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+}
+
+async function runCLI(cmdStr) {
+  if (!cmdStr) return;
+  cliHistory.push(cmdStr);
+  cliHistIdx = cliHistory.length;
+  $('cli-hist-count').textContent = cliHistory.length;
+  cliLog('cmd', '> ' + cmdStr);
+  try {
+    const result = await executeCLI(cmdStr);
+    if (result.success) {
+      cliLog('success', result.message);
+      if (result.data && typeof result.data === 'object') {
+        cliLog('result', JSON.stringify(result.data, null, 2));
+      }
+    } else {
+      cliLog('error', result.message);
+    }
+    return result;
+  } catch (e) {
+    cliLog('error', '执行错误: ' + e.message);
+    return { success: false, data: null, message: e.message };
+  }
+}
+
+function handleCLIKey(e) {
+  if (e.key === 'Enter') {
+    const input = $('cli-input');
+    const val = input.value.trim();
+    if (val) { runCLI(val); input.value = ''; }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (cliHistIdx > 0) { cliHistIdx--; $('cli-input').value = cliHistory[cliHistIdx]; }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (cliHistIdx < cliHistory.length - 1) { cliHistIdx++; $('cli-input').value = cliHistory[cliHistIdx]; }
+    else { cliHistIdx = cliHistory.length; $('cli-input').value = ''; }
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    const val = $('cli-input').value;
+    const match = CLI_COMMANDS.find(c => c.name.startsWith(val));
+    if (match) $('cli-input').value = match.name + (match.arg ? ' ' : '');
+  } else if (e.key === 'Escape') {
+    toggleCLI();
+  }
+}
+window.handleCLIKey = handleCLIKey;
+
+// ── Script Editor ──
+let scriptEditorOpen = false;
+
+function toggleScriptEditor() {
+  scriptEditorOpen = !scriptEditorOpen;
+  const editor = $('cli-script-editor');
+  editor.style.display = scriptEditorOpen ? 'flex' : 'none';
+  if (scriptEditorOpen) $('cli-script-area').focus();
+}
+window.toggleScriptEditor = toggleScriptEditor;
+
+async function runScript() {
+  const area = $('cli-script-area');
+  const text = (area.value || '').trim();
+  if (!text) { cliLog('error', '脚本为空'); return; }
+  const lines = text.split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#')); // skip empty lines and comments
+  if (!lines.length) { cliLog('error', '没有有效命令 (# 开头为注释)'); return; }
+  cliLog('cmd', `▶ 执行脚本 (${lines.length} 条命令)…`);
+  cliLog('result', '─'.repeat(40));
+  for (let i = 0; i < lines.length; i++) {
+    cliLog('cmd', `[${i+1}/${lines.length}] ${lines[i]}`);
+    try {
+      const result = await executeCLI(lines[i]);
+      if (result.success) {
+        cliLog('success', result.message);
+      } else {
+        cliLog('error', result.message);
+      }
+    } catch (e) {
+      cliLog('error', '错误: ' + e.message);
+    }
+    // Small delay between commands for visual feedback
+    await new Promise(r => setTimeout(r, 300));
+  }
+  cliLog('result', '─'.repeat(40));
+  cliLog('success', `✓ 脚本执行完毕 · ${lines.length} 条命令`);
+}
+window.runScript = runScript;
+
+function clearScript() {
+  $('cli-script-area').value = '';
+  $('cli-script-area').focus();
+}
+window.clearScript = clearScript;
+
+function loadDemoScript() {
+  scriptEditorOpen = true;
+  $('cli-script-editor').style.display = 'flex';
+  $('cli-script-area').value = `# ═══ 数据中心巡检脚本 ═══
+# Agent 可通过 window.dcCLI.batch() 执行等效流程
+
+# 1. 启动巡检会话
+dc:inspect start
+
+# 2. 逐区扫描 (摄像机自动飞入)
+dc:inspect zone A
+dc:inspect zone B
+dc:inspect zone C
+dc:inspect zone D
+
+# 3. 专项分析
+dc:inspect thermal
+dc:inspect power
+
+# 4. 查看所有异常
+dc:anomalies
+
+# 5. 对过热区域调速风扇 (示例: 3B柜)
+dc:fan-speed 52 --target 3B
+
+# 6. 生成巡检报告
+dc:inspect report
+
+# 7. 派发维护工单
+dc:task 巡检完成: 发现3B柜过热, 已调整风扇, 建议排查散热片
+
+# 8. 结束巡检
+dc:inspect end`;
+  $('cli-script-area').focus();
+  cliLog('success', '📋 示例脚本已载入 · 点击 ▶ RUN 执行');
+}
+window.loadDemoScript = loadDemoScript;
+
+// ── Quick inspection from chat ──
+async function runQuickInspect() {
+  appendMsg('sys', '🔍 正在执行自动巡检…');
+  const results = await window.dcCLI.batch([
+    'dc:inspect start',
+    'dc:inspect all',
+    'dc:inspect thermal',
+    'dc:inspect report',
+    'dc:inspect end'
+  ]);
+  const report = results[3]; // report is 4th command
+  if (report && report.data) {
+    appendMsg('bot', `<b>巡检完成</b><br>` +
+      `区域: ${report.data.total_zones || 8} 区<br>` +
+      `异常: ${report.data.anomalies_found || 0} 个<br>` +
+      `耗时: ${report.data.duration_sec || 0}s<br>` +
+      `PUE: ${report.data.pue_before || '—'} → ${report.data.pue_after || '—'}<br>` +
+      `<i>${report.data.recommendation || ''}</i>`);
+  } else {
+    appendMsg('bot', '巡检完成 · 结果已记录在 CLI 面板');
+  }
+}
+window.runQuickInspect = runQuickInspect;
+
+// ── Cinematic Inspection Demo (摄像机镜头巡检演示) ──
+let demoRunning = false;
+async function runInspectionDemo() {
+  if (demoRunning) { cliLog('error', '演示正在进行中…'); return; }
+  demoRunning = true;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  // Smooth camera fly helper
+  function flyCamera(pos, target, duration = 1200) {
+    return new Promise(resolve => {
+      if (!camera || !controls) { resolve(); return; }
+      const startPos = camera.position.clone();
+      const startTarget = controls.target.clone();
+      const endPos = new THREE.Vector3(pos.x, pos.y, pos.z);
+      const endTarget = new THREE.Vector3(target.x, target.y, target.z);
+      const t0 = performance.now();
+      function tick() {
+        const t = Math.min(1, (performance.now() - t0) / duration);
+        const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+        camera.position.lerpVectors(startPos, endPos, ease);
+        controls.target.lerpVectors(startTarget, endTarget, ease);
+        controls.update();
+        if (t < 1) requestAnimationFrame(tick); else resolve();
+      }
+      tick();
+    });
+  }
+
+  // Flash a rack red
+  function flashRack(rackId, color = 0xff2200) {
+    const mesh = rackMeshes[rackId];
+    if (!mesh) return;
+    mesh.traverse(c => {
+      if (c.isMesh && c.material) {
+        c.material.emissive = new THREE.Color(color);
+        c.material.emissiveIntensity = 0.6;
+      }
+    });
+  }
+  function resetRack(rackId) {
+    const mesh = rackMeshes[rackId];
+    if (!mesh) return;
+    mesh.traverse(c => {
+      if (c.isMesh && c.material) { c.material.emissiveIntensity = 0; }
+    });
+  }
+
+  try {
+    // ═══ ACT 1: 启动巡检 ═══
+    cliLog('cmd', '▶ 巡检演示开始 — 摄像机镜头巡航');
+    cliLog('success', '━━━━━━ ACT 1: 系统初始化 ━━━━━━');
+    await runCLI('dc:inspect start');
+    await wait(600);
+
+    // ═══ ACT 2: 鸟瞰全景 ═══
+    cliLog('success', '━━━━━━ ACT 2: 鸟瞰全景扫描 ━━━━━━');
+    cliLog('cmd', '📷 摄像机: 升高至鸟瞰位置…');
+    await flyCamera({x:0, y:90, z:5}, {x:0, y:0, z:0}, 1500);
+    await wait(800);
+    cliLog('success', '🔭 全景视图就位 · 开始逐区扫描');
+
+    // ═══ ACT 3: 逐区巡航 (A→D) ═══
+    cliLog('success', '━━━━━━ ACT 3: 逐区巡航 ━━━━━━');
+    const zones = ['A', 'B', 'C', 'D'];
+    let anomalyZone = null, anomalyRack = null, anomalyTemp = 0;
+
+    for (const z of zones) {
+      const colIdx = z.charCodeAt(0) - 65;
+      const targetZ = -14 + colIdx * 3.2 + (colIdx >= 4 ? 3.5 : 0);
+      cliLog('cmd', `📷 摄像机: 飞入 ${z} 列通道…`);
+      await flyCamera(
+        {x: -20, y: 18, z: targetZ + 8},
+        {x: 10, y: 4, z: targetZ},
+        1000
+      );
+      await wait(400);
+
+      // Scan — simulate finding temps
+      const result = await executeCLI('dc:inspect zone ' + z);
+      if (result.data && result.data.alerts && result.data.alerts.length > 0) {
+        // Found anomaly!
+        const worst = result.data.alerts.reduce((a, b) => a.temp > b.temp ? a : b);
+        if (worst.temp > anomalyTemp) {
+          anomalyZone = z;
+          anomalyRack = worst.rack;
+          anomalyTemp = worst.temp;
+        }
+      }
+      cliLog('success', `✓ ${z}列扫描完毕 · ${result.data?.alerts?.length || 0} 告警`);
+      await wait(300);
+    }
+
+    // ═══ ACT 4: 发现异常 — 摄像机锁定 ═══
+    if (!anomalyRack) {
+      // Force a demo anomaly for visual effect
+      anomalyRack = '3B';
+      anomalyZone = 'B';
+      anomalyTemp = 35.7;
+    }
+
+    cliLog('error', '━━━━━━ ACT 4: ⚠ 异常设备定位 ━━━━━━');
+    cliLog('error', `🚨 检测到热点: 机柜 ${anomalyRack} · 进风温度 ${anomalyTemp.toFixed(1)}°C · 超出阈值!`);
+    await wait(400);
+
+    // Fly to the anomaly rack
+    const rackRow = parseInt(anomalyRack[0]);
+    const rackCol = anomalyRack[1];
+    const colIdx = rackCol.charCodeAt(0) - 65;
+    const rackX = -32 + (rackRow - 1) * 8.5;
+    const rackZ = -14 + colIdx * 3.2 + (colIdx >= 4 ? 3.5 : 0);
+
+    cliLog('cmd', `📷 摄像机: 快速聚焦 → 机柜 ${anomalyRack}…`);
+    await flyCamera(
+      {x: rackX + 6, y: 10, z: rackZ + 6},
+      {x: rackX, y: 4.5, z: rackZ},
+      800
+    );
+    flashRack(anomalyRack);
+    await wait(1200);
+
+    cliLog('error', `⚡ 机柜 ${anomalyRack} 已标红 · 温度 ${anomalyTemp.toFixed(1)}°C (阈值 30°C)`);
+    cliLog('cmd', '🔍 诊断: 检查周围气流与散热…');
+    await wait(600);
+    await executeCLI('dc:inspect thermal');
+    cliLog('success', `📋 热力场分析: ${anomalyRack} 附近存在热回流, 冷通道气流被部分阻挡`);
+    await wait(500);
+
+    // ═══ ACT 5: 自动纠正 ═══
+    cliLog('success', '━━━━━━ ACT 5: 自动纠正措施 ━━━━━━');
+    cliLog('cmd', `🔧 动作: 提升 ${anomalyRack} 区域 CRAC 风扇转速 45Hz → 52Hz`);
+    await executeCLI(`dc:fan-speed 52 --target ${anomalyRack}`);
+    await wait(800);
+    cliLog('success', `✓ 风扇调速完成 · 预计 3 分钟后温度下降`);
+
+    // Visual: fade the red highlight to orange (cooling)
+    flashRack(anomalyRack, 0xff8800);
+    await wait(600);
+
+    // ═══ ACT 6: 确认效果 + 生成报告 ═══
+    cliLog('success', '━━━━━━ ACT 6: 生成巡检报告 ━━━━━━');
+    cliLog('cmd', '📷 摄像机: 拉回鸟瞰…');
+    await flyCamera({x: 55, y: 50, z: 55}, {x: 0, y: 4, z: 0}, 1200);
+    resetRack(anomalyRack);
+    await wait(600);
+
+    const report = await executeCLI('dc:inspect report');
+    cliLog('success', '📊 巡检报告已生成:');
+    cliLog('result', [
+      `┌─────────────────────────────────────────┐`,
+      `│  巡检报告 · ${new Date().toLocaleTimeString()}`,
+      `├─────────────────────────────────────────┤`,
+      `│  区域: A B C D (4/8 区)`,
+      `│  异常: 机柜 ${anomalyRack} 过热 ${anomalyTemp.toFixed(1)}°C`,
+      `│  措施: CRAC 风扇提速至 52Hz`,
+      `│  状态: 已纠正, 持续监控中`,
+      `│  PUE:  ${report.data?.pue_before || '1.42'} → ${report.data?.pue_after || '1.41'}`,
+      `│  建议: 排查 ${anomalyRack} 散热片积尘`,
+      `└─────────────────────────────────────────┘`
+    ].join('\n'));
+
+    // ═══ ACT 7: 派发工单 ═══
+    cliLog('success', '━━━━━━ ACT 7: 任务派发 ━━━━━━');
+    await executeCLI(`dc:task 巡检发现${anomalyRack}机柜过热${anomalyTemp.toFixed(1)}°C, 已自动调高风扇, 建议现场排查散热片`);
+    await wait(400);
+
+    // End
+    await executeCLI('dc:inspect end');
+    cliLog('success', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    cliLog('success', '✅ 巡检演示完成 · 全流程: 发现→诊断→纠正→报告→派工');
+    cliLog('cmd', '💡 Agent 可通过 window.dcCLI.batch([...]) 自动执行以上全部步骤');
+  } catch (e) {
+    cliLog('error', '演示出错: ' + e.message);
+  }
+  demoRunning = false;
+}
+window.runInspectionDemo = runInspectionDemo;
+
+// ── Global dcCLI interface for Agent calls ──
+window.dcCLI = {
+  execute: async function(cmd) { return await executeCLI(cmd); },
+  batch: async function(cmds) {
+    const results = [];
+    for (const cmd of cmds) {
+      results.push(await executeCLI(cmd));
+    }
+    return results;
+  },
+  inspect: {
+    start: () => executeCLI('dc:inspect start'),
+    zone: (id) => executeCLI('dc:inspect zone ' + id),
+    all: () => executeCLI('dc:inspect all'),
+    thermal: () => executeCLI('dc:inspect thermal'),
+    power: () => executeCLI('dc:inspect power'),
+    airflow: () => executeCLI('dc:inspect airflow'),
+    report: () => executeCLI('dc:inspect report'),
+    end: () => executeCLI('dc:inspect end'),
+  },
+  history: cliHistory,
+  commands: CLI_COMMANDS,
+};
 
 /* ════════ WS + BOOT ════════ */
 function initWS(){

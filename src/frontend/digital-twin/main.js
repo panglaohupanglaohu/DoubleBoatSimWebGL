@@ -71,7 +71,7 @@ export function init() {
     // 创建场景
     state.scene = new THREE.Scene();
     state.scene.background = new THREE.Color(0x0b1525);
-    state.scene.fog = new THREE.Fog(0x0b1525, 80, 600);
+    state.scene.fog = new THREE.Fog(0x0b1525, 100, 800);
     
     // 创建相机
     const container = document.getElementById('canvas-container');
@@ -79,7 +79,7 @@ export function init() {
         60,
         container.clientWidth / container.clientHeight,
         0.1,
-        800
+        2000
     );
     state.camera.position.set(45, 30, 50);
     
@@ -108,7 +108,7 @@ export function init() {
     state.controls.maxPolarAngle = Math.PI * 0.49;
     state.controls.target.set(0, 0, 0);
     state.controls.minDistance = 10;
-    state.controls.maxDistance = 120;
+    state.controls.maxDistance = 800;
 
     // ── 监控摄像头预设（worldmonitor-map.html 通过 ?cam=top|bow|stern 嵌入）──
     const camParam = new URLSearchParams(window.location.search).get('cam');
@@ -119,7 +119,7 @@ export function init() {
         state.controls.enablePan = false;
         state.controls.enableZoom = true;
         state.controls.minDistance = 5;
-        state.controls.maxDistance = 400;
+        state.controls.maxDistance = 800;
         // canvas 仍要响应滚轮事件
         try { state.renderer.domElement.style.pointerEvents = 'auto'; } catch (e) {}
         if (camParam === 'top') {
@@ -156,9 +156,13 @@ export function init() {
     // 创建 AR-CAS 场景元素 (货船 + 冰山)
     createCargoShip();
     createIcebergs();
+    createDatacenter();
     
     // 创建 wabi-sabi 风格 HUD (货船轨道遥测)
     createCargoOrbitHUD();
+    
+    // 初始化路径系统
+    RouteSystem.init();
     
     // 测深仪声纳可视化
     createDepthSounder();
@@ -370,17 +374,17 @@ function setupLights() {
     state.scene.add(hemiLight);
     state._hemiLight = hemiLight;
     
-    // 平行光 (太阳, 更亮更白)
+    // 平行光 (太阳, 更亮更白 — 高位覆盖全局场景)
     const dirLight = new THREE.DirectionalLight(0xfffaea, 2.2);
-    dirLight.position.set(30, 60, 20);
+    dirLight.position.set(0, 200, 0);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.set(2048, 2048);
     dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 200;
-    dirLight.shadow.camera.left = -80;
-    dirLight.shadow.camera.right = 80;
-    dirLight.shadow.camera.top = 80;
-    dirLight.shadow.camera.bottom = -80;
+    dirLight.shadow.camera.far = 500;
+    dirLight.shadow.camera.left = -300;
+    dirLight.shadow.camera.right = 300;
+    dirLight.shadow.camera.top = 300;
+    dirLight.shadow.camera.bottom = -300;
     dirLight.shadow.bias = -0.001;
     state.scene.add(dirLight);
     state._dirLight = dirLight;
@@ -403,7 +407,7 @@ function setupLights() {
 
 function createSky() {
     // 天空球 — 渐变从地平线到天顶
-    const skyGeom = new THREE.SphereGeometry(380, 32, 32);
+    const skyGeom = new THREE.SphereGeometry(1200, 32, 32);
     const skyMat = new THREE.ShaderMaterial({
         uniforms: {
             topColor:     { value: new THREE.Color(0x4a8ac8) },   // 日间明亮蓝
@@ -1706,16 +1710,182 @@ function createCargoShip() {
     console.log('✅ AR-CAS: Container ship created (NMRI-style) with nav lights');
 }
 
+// ==================== Phase 4: 船载数据中心 (Datacenter) ====================
+
+function createDatacenter() {
+    const dcGroup = new THREE.Group();
+    dcGroup.name = 'datacenter';
+
+    // 数据中心为独立岸基设施，放置在场景固定位置 (不随船移动)
+    // 位于港口区域 x=150, z=80 (远离航线，岸侧)
+    const roomW = 14, roomH = 4, roomD = 20;
+
+    // ── Room shell (walls + floor + ceiling) ──
+    const wallMat = new THREE.MeshPhongMaterial({ color: 0x1a2a3a, side: THREE.BackSide });
+    const floorMat = new THREE.MeshPhongMaterial({ color: 0x0a1520, side: THREE.DoubleSide });
+    const ceilMat = new THREE.MeshPhongMaterial({ color: 0x151f2a, side: THREE.BackSide });
+
+    // Floor (raised tiles)
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomD), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0;
+    floor.receiveShadow = true;
+    dcGroup.add(floor);
+
+    // Ceiling
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(roomW, roomD), ceilMat);
+    ceil.rotation.x = Math.PI / 2;
+    ceil.position.y = roomH;
+    dcGroup.add(ceil);
+
+    // Walls: left, right, front, back
+    const wallGeomLR = new THREE.PlaneGeometry(roomD, roomH);
+    const wallGeomFB = new THREE.PlaneGeometry(roomW, roomH);
+
+    const leftWall = new THREE.Mesh(wallGeomLR, wallMat);
+    leftWall.rotation.y = Math.PI / 2;
+    leftWall.position.set(-roomW / 2, roomH / 2, 0);
+    dcGroup.add(leftWall);
+
+    const rightWall = new THREE.Mesh(wallGeomLR, wallMat);
+    rightWall.rotation.y = -Math.PI / 2;
+    rightWall.position.set(roomW / 2, roomH / 2, 0);
+    dcGroup.add(rightWall);
+
+    const backWall = new THREE.Mesh(wallGeomFB, wallMat);
+    backWall.position.set(0, roomH / 2, roomD / 2);
+    backWall.rotation.y = Math.PI;
+    dcGroup.add(backWall);
+
+    const frontWall = new THREE.Mesh(wallGeomFB, wallMat);
+    frontWall.position.set(0, roomH / 2, -roomD / 2);
+    dcGroup.add(frontWall);
+
+    // ── Server racks: 2 rows × 6 racks (42U 标准机柜) ──
+    const rackMat = new THREE.MeshPhongMaterial({ color: 0x111111 });
+    const rackLedMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+    const rackLedWarn = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+    const rackW = 0.6, rackH = 2.8, rackD = 1.0;
+    const rackGeo = new THREE.BoxGeometry(rackW, rackH, rackD);
+    const ledGeo = new THREE.BoxGeometry(0.04, 0.04, 0.02);
+
+    const racks = [];
+    for (let row = 0; row < 2; row++) {
+        const xOff = row === 0 ? -4.5 : 4.5;
+        for (let col = 0; col < 6; col++) {
+            const zOff = -7 + col * 2.8;
+            const rack = new THREE.Mesh(rackGeo, rackMat);
+            rack.position.set(xOff, rackH / 2, zOff);
+            rack.castShadow = true;
+            dcGroup.add(rack);
+            racks.push(rack);
+
+            // LED indicators (4 rows of 5 on front face)
+            for (let ly = 0; ly < 4; ly++) {
+                for (let lx = 0; lx < 5; lx++) {
+                    const led = new THREE.Mesh(ledGeo,
+                        Math.random() > 0.12 ? rackLedMat : rackLedWarn);
+                    const face = row === 0 ? rackD / 2 + 0.01 : -(rackD / 2 + 0.01);
+                    led.position.set(
+                        xOff + (lx - 2) * 0.1,
+                        0.6 + ly * 0.6,
+                        zOff + face
+                    );
+                    dcGroup.add(led);
+                }
+            }
+        }
+    }
+
+    // ── Cold aisle containment (中间冷通道地板标识) ──
+    const aisleFloor = new THREE.Mesh(
+        new THREE.PlaneGeometry(5, roomD - 2),
+        new THREE.MeshPhongMaterial({ color: 0x1a3050, transparent: true, opacity: 0.8 })
+    );
+    aisleFloor.rotation.x = -Math.PI / 2;
+    aisleFloor.position.set(0, 0.01, 0);
+    dcGroup.add(aisleFloor);
+
+    // ── Overhead strip lights (冷白色荧光灯管) ──
+    const stripMat = new THREE.MeshBasicMaterial({ color: 0xddeeff, transparent: true, opacity: 0.7 });
+    for (let i = 0; i < 4; i++) {
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, roomD - 2), stripMat);
+        strip.position.set(-3 + i * 2, roomH - 0.05, 0);
+        dcGroup.add(strip);
+    }
+
+    // ── Lighting ──
+    const dcAmbient = new THREE.PointLight(0x3366ff, 1.0, 25);
+    dcAmbient.position.set(0, 3.5, 0);
+    dcGroup.add(dcAmbient);
+
+    const dcSpot1 = new THREE.PointLight(0x00ff88, 0.4, 12);
+    dcSpot1.position.set(-4.5, 2, -4);
+    dcGroup.add(dcSpot1);
+
+    const dcSpot2 = new THREE.PointLight(0x00ff88, 0.4, 12);
+    dcSpot2.position.set(4.5, 2, 4);
+    dcGroup.add(dcSpot2);
+
+    // ── 环境监测传感器 (温湿度 + UPS状态) ──
+    const sensorMat = new THREE.MeshPhongMaterial({ color: 0x556677 });
+    const sensorGeo = new THREE.BoxGeometry(0.4, 0.4, 0.12);
+    [
+        { x: -6.9, y: 2.8, z: -6 }, { x: -6.9, y: 2.8, z: 0 }, { x: -6.9, y: 2.8, z: 6 },
+        { x: 6.9, y: 2.8, z: -6 }, { x: 6.9, y: 2.8, z: 0 }, { x: 6.9, y: 2.8, z: 6 },
+    ].forEach(p => {
+        const sensor = new THREE.Mesh(sensorGeo, sensorMat);
+        sensor.position.set(p.x, p.y, p.z);
+        dcGroup.add(sensor);
+        const ind = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6),
+            new THREE.MeshBasicMaterial({ color: 0x00ff44 }));
+        ind.position.set(p.x, p.y + 0.25, p.z);
+        dcGroup.add(ind);
+    });
+
+    // ── Cable trays (架空走线架) ──
+    const trayMat = new THREE.MeshPhongMaterial({ color: 0x333344 });
+    [-3, 0, 3].forEach(xp => {
+        const tray = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, roomD - 1), trayMat);
+        tray.position.set(xp, roomH - 0.2, 0);
+        dcGroup.add(tray);
+    });
+
+    // ── Inspection camera path (巡检路径: 环绕机柜通道) ──
+    const inspectPts = [
+        new THREE.Vector3(0, 1.7, -8),
+        new THREE.Vector3(-5, 1.7, -6),
+        new THREE.Vector3(-5, 1.7, -2),
+        new THREE.Vector3(-5, 2.5, 2),
+        new THREE.Vector3(-3, 2.5, 7),
+        new THREE.Vector3(0, 1.7, 8),
+        new THREE.Vector3(3, 2.5, 7),
+        new THREE.Vector3(5, 2.5, 2),
+        new THREE.Vector3(5, 1.7, -2),
+        new THREE.Vector3(5, 1.7, -6),
+        new THREE.Vector3(0, 1.9, -8),
+    ];
+    const dcCurve = new THREE.CatmullRomCurve3(inspectPts, true);
+
+    // Store references for CameraMode
+    state.datacenter = dcGroup;
+    state.datacenterCurve = dcCurve;
+    state.datacenterRacks = racks;
+
+    // 岸基数据中心固定位置
+    dcGroup.position.set(150, 0, 80);
+    dcGroup.visible = false;
+    state.scene.add(dcGroup);
+}
+
 // ==================== AR-CAS: 冰山模型 ====================
 
 function createIcebergs() {
     // 冰山尺寸: radius=scale (1unit≈2.3m), 直径≈scale*4.6m
+    // 精简为 2 个冰山 — 作为航线障碍物
     const icebergPositions = [
-        { x: -55, z: -70, scale: 9, above: 7 },      // ~42m 大型冰山
-        { x: -80, z: -45, scale: 5.5, above: 4 },    // ~25m 中型冰山
-        { x: -40, z: -100, scale: 7, above: 5.5 },   // ~32m 中型冰山
-        { x: -95, z: -90, scale: 3.0, above: 2.2 },  // ~14m 小型冰山 (growler)
-        { x: -30, z: -55, scale: 2.0, above: 1.5 },  // ~9m bergy bit
+        { x: -60, z: -80, scale: 8, above: 6 },      // ICE-1: ~37m 大型冰山 (场景A/B航线障碍)
+        { x: 40, z: -120, scale: 6, above: 4.5 },    // ICE-2: ~28m 中型冰山 (第二航线障碍)
     ];
     
     // 自定义冰山着色器 — 半透明次表面散射冰效果
@@ -1854,9 +2024,32 @@ function createIcebergs() {
             new THREE.Vector3(pos.x, pos.above + pos.scale + 4, pos.z)
         );
         state.scene.add(label);
+
+        // ── 安全域可视化环 (Fujii ship domain boundary) ──
+        // 显示货船安全域: 障碍物半径 + 船半长(35) + 裕度(12)
+        const safetyR = pos.scale + 35 + 12;
+        const ringGeom = new THREE.RingGeometry(safetyR - 0.5, safetyR + 0.5, 64);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xff4444, transparent: true, opacity: 0.15, side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(pos.x, 0.2, pos.z);
+        state.scene.add(ring);
+
+        // 虚线圈 (更紧的物理碰撞边界: 障碍物半径+船半长)
+        const collR = pos.scale + 35;
+        const collGeom = new THREE.RingGeometry(collR - 0.3, collR + 0.3, 48);
+        const collMat = new THREE.MeshBasicMaterial({
+            color: 0xffaa00, transparent: true, opacity: 0.1, side: THREE.DoubleSide
+        });
+        const collRing = new THREE.Mesh(collGeom, collMat);
+        collRing.rotation.x = -Math.PI / 2;
+        collRing.position.set(pos.x, 0.15, pos.z);
+        state.scene.add(collRing);
     });
     
-    console.log(`✅ AR-CAS: ${icebergPositions.length} icebergs created`);
+    console.log(`✅ AR-CAS: ${icebergPositions.length} icebergs created with safety domains`);
 }
 
 // ==================== AR-CAS: CPA/TCPA 计算 ====================
@@ -3564,12 +3757,12 @@ function createFloatingLabel(text, color, position) {
 // ==================== 摄像机预设 ====================
 
 const CAMERA_PRESETS = {
-    overview: { pos: [30, 20, 30], target: [0, 0, 0] },
+    overview: { pos: [0, 300, 1], target: [0, 0, -50] },
     bridge:   { pos: [0, 8, 2], target: [0, 6, -20] },
     bow:      { pos: [0, 4, -18], target: [0, 2, -40] },
     stern:    { pos: [0, 6, 18], target: [0, 2, -5] },
     underwater: { pos: [12, -15, 12], target: [0, -30, 0] },
-    top:      { pos: [0, 80, 0.1], target: [0, 0, 0] },
+    top:      { pos: [0, 300, 0.1], target: [0, 0, -50] },
     // ── 舱内视角 ──
     'cabin-bridge':       { pos: [0, 9.8, 6.5], target: [0, 9.5, 1.0] },
     'cabin-engine':       { pos: [-2, 4.5, 12], target: [0, 3.0, 9.0] },
@@ -3818,118 +4011,11 @@ function handleWindowMessage(event) {
 // ==================== Wabi-Sabi 风格 HUD (货船轨道遥测) ====================
 
 function createCargoOrbitHUD() {
-    // 创建 HUD 容器 — 侘寂风格: 粗粝质感、不对称、留白、自然色
-    const container = document.createElement('div');
-    container.id = 'cargo-orbit-hud';
-    container.innerHTML = `
-      <div class="wabisabi-hud">
-        <div class="hud-title">⛵ 貨船軌道 · 侘寂</div>
-        <div class="hud-body">
-          <div class="hud-row">
-            <span class="hud-label">方位角</span>
-            <span class="hud-value" id="orbit-angle">0.0°</span>
-          </div>
-          <div class="hud-row">
-            <span class="hud-label">距本船</span>
-            <span class="hud-value" id="orbit-distance">80.0 m</span>
-          </div>
-          <div class="hud-row">
-            <span class="hud-label">航向</span>
-            <span class="hud-value" id="orbit-heading">090°</span>
-          </div>
-          <div class="hud-row">
-            <span class="hud-label">緯度</span>
-            <span class="hud-value" id="orbit-lat">--</span>
-          </div>
-          <div class="hud-row">
-            <span class="hud-label">經度</span>
-            <span class="hud-value" id="orbit-lon">--</span>
-          </div>
-        </div>
-        <div class="hud-footer">— 不完全の美 —</div>
-      </div>
-    `;
-    document.body.appendChild(container);
+    // 货船轨道遥测已移入 AR-CAS Pro 浮动面板 (#ar-cas-floating)
+    // 不再创建独立 HUD 容器，直接缓存 AR-CAS Pro 面板内的 DOM 引用
+    // 面板 HTML 定义在 digital-twin.html 的 #ar-cas-cargo-orbit 中
 
-    // 注入 wabi-sabi 样式
-    const style = document.createElement('style');
-    style.textContent = `
-      #cargo-orbit-hud {
-        position: fixed;
-        right: 24px;
-        bottom: 80px;
-        z-index: 1000;
-        font-family: 'Noto Serif SC', 'Georgia', 'Times New Roman', serif;
-        user-select: none;
-        pointer-events: none;
-        opacity: 0;
-        animation: wabisabiFadeIn 2.5s ease-out 1.5s forwards;
-      }
-      @keyframes wabisabiFadeIn {
-        to { opacity: 1; }
-      }
-      .wabisabi-hud {
-        background: rgba(18, 22, 18, 0.72);
-        backdrop-filter: blur(6px);
-        border: 1px solid rgba(140, 130, 110, 0.35);
-        border-radius: 2px;
-        padding: 18px 22px 14px;
-        min-width: 180px;
-        box-shadow:
-          0 0 0 1px rgba(100, 90, 70, 0.12) inset,
-          4px 6px 18px rgba(0, 0, 0, 0.5);
-        /* 不对称偏移 — 侘寂的「不完全」 */
-        transform: rotate(-0.6deg) translateY(2px);
-      }
-      .hud-title {
-        font-size: 13px;
-        letter-spacing: 3px;
-        color: #b8aa8a;
-        text-transform: uppercase;
-        border-bottom: 1px solid rgba(140, 130, 110, 0.25);
-        padding-bottom: 8px;
-        margin-bottom: 10px;
-        font-weight: 400;
-      }
-      .hud-body {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-      }
-      .hud-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 16px;
-      }
-      .hud-label {
-        font-size: 11px;
-        color: #8a8a7a;
-        letter-spacing: 1px;
-        font-weight: 300;
-      }
-      .hud-value {
-        font-size: 15px;
-        color: #d4cfc0;
-        font-weight: 400;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: 0.5px;
-        text-shadow: 0 0 6px rgba(180, 170, 140, 0.15);
-      }
-      .hud-footer {
-        font-size: 10px;
-        color: #6a6a5a;
-        text-align: right;
-        margin-top: 10px;
-        padding-top: 6px;
-        border-top: 1px solid rgba(140, 130, 110, 0.15);
-        letter-spacing: 2px;
-        font-style: italic;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // 缓存 DOM 引用
+    // 缓存 DOM 引用（从 AR-CAS Pro 面板内获取）
     state._hudAngle = document.getElementById('orbit-angle');
     state._hudDistance = document.getElementById('orbit-distance');
     state._hudHeading = document.getElementById('orbit-heading');
@@ -3969,6 +4055,434 @@ function updateCargoOrbitHUD() {
     state._hudLon.textContent = lon.toFixed(4) + '°E';
 }
 
+// ==================== 路径系统 (RouteSystem) ====================
+
+const RouteSystem = {
+    currentScenario: 'a',  // 'a' = 停靠卸货, 'b' = 伴随前行
+    progress: { cargo: 0, catamaran: 0 },
+    speed: 0.0003,  // 基础速度 (t增量/帧)
+    paused: false,
+    curves: {},
+
+    // ═══ 障碍物安全域定义 (Fujii ship domain model) ═══
+    // 每个障碍物: center + safetyRadius (含船舶自身半长 + 障碍物半径 + 安全裕度)
+    obstacles: [
+        // ICE-1: center(-60,-80), 物理半径8, 船半长35, 裕度15 → 安全域58
+        { x: -60, z: -80, physRadius: 8, safetyRadius: 58, label: 'ICE-1' },
+        // ICE-2: center(40,-120), 物理半径6, 船半长35, 裕度15 → 安全域56
+        { x: 40, z: -120, physRadius: 6, safetyRadius: 56, label: 'ICE-2' },
+    ],
+
+    // 场景 A: 货船封闭路线 — 所有航路点保持 ≥ safetyRadius 到障碍物中心
+    // ICE-1(-60,-80): 最近航路点距离 ≥ 58
+    // ICE-2(40,-120): 最近航路点距离 ≥ 56
+    _scenarioA_cargo: function() {
+        return new THREE.CatmullRomCurve3([
+            new THREE.Vector3(200, 0, 50),       // 远方起始 (d_ICE1=297, d_ICE2=221)
+            new THREE.Vector3(140, 0, 35),       // 接近 (d_ICE1=224, d_ICE2=175)
+            new THREE.Vector3(70, 0, 18),        // 靠近双体船 (d_ICE1=155, d_ICE2=141)
+            new THREE.Vector3(22, 0, 10),        // 靠泊位 (d_ICE1=113, d_ICE2=131)
+            new THREE.Vector3(18, 0, 10),        // 卸货停留 (d_ICE1=110, d_ICE2=131)
+            new THREE.Vector3(22, 0, 10),        // 离泊 (d_ICE1=113, d_ICE2=131)
+            new THREE.Vector3(50, 0, -15),       // 驶离南偏 (d_ICE1=126, d_ICE2=105)
+            new THREE.Vector3(40, 0, -50),       // 向南 (d_ICE1=105, d_ICE2=70)
+            new THREE.Vector3(10, 0, -15),       // 绕北 (d_ICE1=93, d_ICE2=108)
+            new THREE.Vector3(-60, 0, -15),      // 西移 (d_ICE1=65✓, d_ICE2=138)
+            new THREE.Vector3(-120, 0, -50),     // ICE-1 西北远绕 (d_ICE1=68✓, d_ICE2=174)
+            new THREE.Vector3(-120, 0, -100),    // 绕ICE-1南侧 (d_ICE1=63✓, d_ICE2=162)
+            new THREE.Vector3(-60, 0, -145),     // ICE-1正南 (d_ICE1=65✓, d_ICE2=103)
+            new THREE.Vector3(0, 0, -170),       // 过渡至ICE-2区 (d_ICE1=103, d_ICE2=61✓)
+            new THREE.Vector3(40, 0, -180),      // ICE-2正南远绕 (d_ICE1=134, d_ICE2=60✓)
+            new THREE.Vector3(100, 0, -155),     // ICE-2东侧远绕 (d_ICE1=172, d_ICE2=69✓)
+            new THREE.Vector3(110, 0, -100),     // 北返 (d_ICE1=172, d_ICE2=73)
+            new THREE.Vector3(140, 0, -40),      // 远距返回 (d_ICE1=204, d_ICE2=126)
+            new THREE.Vector3(180, 0, 20),       // 回起点 (d_ICE1=258, d_ICE2=195)
+        ], true, 'catmullrom', 0.3);
+    },
+
+    // 场景 B: 双体船路线 — 保持所有点距障碍物 ≥ safetyRadius
+    _scenarioB_catamaran: function() {
+        return new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0),          // 起点 (d_ICE1=100, d_ICE2=126)
+            new THREE.Vector3(40, 0, -15),       // 东偏 (d_ICE1=116, d_ICE2=105)
+            new THREE.Vector3(50, 0, -50),       // 向南 (d_ICE1=114, d_ICE2=70)
+            new THREE.Vector3(20, 0, -15),       // 偏北 (d_ICE1=100, d_ICE2=108)
+            new THREE.Vector3(-60, 0, -15),      // 西移 (d_ICE1=65✓, d_ICE2=138)
+            new THREE.Vector3(-125, 0, -60),     // ICE-1 西北远绕 (d_ICE1=68✓, d_ICE2=175)
+            new THREE.Vector3(-125, 0, -105),    // 绕ICE-1西南 (d_ICE1=70✓, d_ICE2=168)
+            new THREE.Vector3(-60, 0, -145),     // ICE-1正南 (d_ICE1=65✓, d_ICE2=103)
+            new THREE.Vector3(0, 0, -175),       // 过渡 (d_ICE1=109, d_ICE2=66✓)
+            new THREE.Vector3(40, 0, -180),      // ICE-2正南 (d_ICE1=134, d_ICE2=60✓)
+            new THREE.Vector3(100, 0, -150),     // ICE-2东 (d_ICE1=172, d_ICE2=66✓)
+            new THREE.Vector3(100, 0, -80),      // 北返 (d_ICE1=160, d_ICE2=72)
+            new THREE.Vector3(60, 0, -30),       // 回程 (d_ICE1=129, d_ICE2=92)
+        ], true, 'catmullrom', 0.3);
+    },
+
+    // 场景 B: 货船伴随路线 (平行偏移 ~35 单位，同样保持安全距离)
+    _scenarioB_cargo: function() {
+        return new THREE.CatmullRomCurve3([
+            new THREE.Vector3(35, 0, 10),        // 起点右侧
+            new THREE.Vector3(75, 0, -5),        // 东偏
+            new THREE.Vector3(85, 0, -45),       // 向南
+            new THREE.Vector3(55, 0, -10),       // 偏北
+            new THREE.Vector3(-25, 0, -10),      // 西移 (d_ICE1=77, 安全)
+            new THREE.Vector3(-90, 0, -50),      // ICE-1 远绕 (d_ICE1=72✓)
+            new THREE.Vector3(-90, 0, -95),      // 绕ICE-1 (d_ICE1=66✓)
+            new THREE.Vector3(-25, 0, -140),     // 过渡 (d_ICE1=70✓)
+            new THREE.Vector3(35, 0, -170),      // ICE-2南 (d_ICE2=58✓)
+            new THREE.Vector3(75, 0, -175),      // 东转 (d_ICE2=65✓)
+            new THREE.Vector3(135, 0, -145),     // ICE-2东远 (d_ICE2=98)
+            new THREE.Vector3(135, 0, -70),      // 北返 (d_ICE2=105)
+            new THREE.Vector3(95, 0, -20),       // 回程
+        ], true, 'catmullrom', 0.3);
+    },
+
+    // 速度区段 (绕障碍区间减速，模拟实际避碰减速操作)
+    _speedZones_A: [
+        { start: 0.10, end: 0.22, factor: 0.2 },   // 靠泊减速
+        { start: 0.45, end: 0.60, factor: 0.6 },   // 绕ICE-1减速
+        { start: 0.68, end: 0.80, factor: 0.6 },   // 绕ICE-2减速
+    ],
+    _speedZones_B: [
+        { start: 0.25, end: 0.45, factor: 0.6 },   // 绕ICE-1
+        { start: 0.55, end: 0.70, factor: 0.6 },   // 绕ICE-2
+    ],
+
+    init: function() {
+        this.curves = {
+            scenario_a_cargo: this._scenarioA_cargo(),
+            scenario_b_catamaran: this._scenarioB_catamaran(),
+            scenario_b_cargo: this._scenarioB_cargo(),
+        };
+        this.progress = { cargo: 0, catamaran: 0 };
+        console.log('✅ RouteSystem initialized with', Object.keys(this.curves).length, 'routes');
+    },
+
+    switchScenario: function(name) {
+        this.currentScenario = name;
+        this.progress = { cargo: 0, catamaran: 0 };
+        // 场景A: 双体船回到原点
+        if (name === 'a' && state.boatMesh) {
+            state.boatMesh.position.set(0, 0, 0);
+            state.boatMesh.rotation.y = 0;
+        }
+        // 如果当前在数据中心模式，自动切回轨道操控
+        if (CameraMode.current === 'datacenter') {
+            CameraMode.switch('orbit');
+        }
+        console.log('🔄 Scenario switched to:', name);
+    },
+
+    getSpeedFactor: function(t, zones) {
+        for (const z of zones) {
+            if (t >= z.start && t <= z.end) return z.factor;
+        }
+        return 1.0;
+    },
+
+    update: function() {
+        if (this.paused) return;
+
+        if (this.currentScenario === 'a') {
+            // 场景A: 只有货船运动
+            const curve = this.curves.scenario_a_cargo;
+            if (!curve || !state.cargoShip) return;
+            const speedFactor = this.getSpeedFactor(this.progress.cargo, this._speedZones_A);
+            this.progress.cargo = (this.progress.cargo + this.speed * speedFactor) % 1.0;
+            const pos = curve.getPointAt(this.progress.cargo);
+            const tangent = curve.getTangentAt(this.progress.cargo);
+            state.cargoShip.position.set(pos.x, pos.y, pos.z);
+            state.cargoShip.rotation.y = Math.atan2(tangent.x, tangent.z);
+            // VO 实时避碰微调 (货船半长35)
+            CollisionAvoidance.applyRepulsion(state.cargoShip, 35);
+        } else if (this.currentScenario === 'b') {
+            // 场景B: 双体船 + 货船伴随
+            const curveCat = this.curves.scenario_b_catamaran;
+            const curveCargo = this.curves.scenario_b_cargo;
+            if (!curveCat || !curveCargo) return;
+            const speedFactor = this.getSpeedFactor(this.progress.catamaran, this._speedZones_B);
+            const dt = this.speed * speedFactor;
+            this.progress.catamaran = (this.progress.catamaran + dt) % 1.0;
+            this.progress.cargo = (this.progress.cargo + dt) % 1.0;
+
+            // 双体船
+            if (state.boatMesh) {
+                const posCat = curveCat.getPointAt(this.progress.catamaran);
+                const tanCat = curveCat.getTangentAt(this.progress.catamaran);
+                state.boatMesh.position.x = posCat.x;
+                state.boatMesh.position.z = posCat.z;
+                state.boatMesh.rotation.y = Math.atan2(tanCat.x, tanCat.z);
+                // VO 实时避碰微调 (对静态障碍)
+                CollisionAvoidance.applyRepulsion(state.boatMesh, 8);
+            }
+            // 货船伴随
+            if (state.cargoShip) {
+                const posCar = curveCargo.getPointAt(this.progress.cargo);
+                const tanCar = curveCargo.getTangentAt(this.progress.cargo);
+                state.cargoShip.position.set(posCar.x, posCar.y, posCar.z);
+                state.cargoShip.rotation.y = Math.atan2(tanCar.x, tanCar.z);
+                // VO 实时避碰微调 (对静态障碍)
+                CollisionAvoidance.applyRepulsion(state.cargoShip, 35);
+            }
+            // 船间互斥 (双船保持安全间距 ≥ 船半长之和 + 裕度)
+            if (state.boatMesh && state.cargoShip) {
+                CollisionAvoidance.applyShipRepulsion(state.boatMesh, 8, state.cargoShip, 35);
+            }
+        }
+    },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Collision Avoidance Engine (Velocity Obstacle + Artificial Potential Field)
+// 基于 Fujii Ship Domain Model + VO(速度障碍) 混合方法
+// 参考: Fiorini & Shiller 1998, IMO COLREGs Rule 8(避碰行动)
+// ═══════════════════════════════════════════════════════════════════
+
+const CollisionAvoidance = {
+    // 安全域参数 (基于 Fujii 模型: 前方加长)
+    SAFETY_MARGIN: 12,     // 最小安全裕度 (场景单位)
+    REPULSION_STRENGTH: 2.0, // APF 斥力强度
+    MAX_CORRECTION: 5.0,     // 每帧最大位移修正 (防止跳变)
+
+    /**
+     * applyRepulsion — 对移动物体施加基于 APF 的障碍物排斥力
+     * 实现 Artificial Potential Field (人工势场法):
+     *   F_rep = η * (1/d - 1/d0) * (1/d²) * ∇d
+     * 其中 d=到障碍物距离, d0=安全域边界, η=增益系数
+     *
+     * @param {THREE.Object3D} obj - 需要避碰的物体
+     * @param {number} objRadius - 物体自身包围圆半径
+     */
+    applyRepulsion: function(obj, objRadius) {
+        if (!obj) return;
+        const ox = obj.position.x;
+        const oz = obj.position.z;
+        let fx = 0, fz = 0;
+
+        for (const obs of RouteSystem.obstacles) {
+            const dx = ox - obs.x;
+            const dz = oz - obs.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            // 安全域边界 = 障碍物物理半径 + 船体半径 + 裕度
+            const d0 = obs.physRadius + objRadius + this.SAFETY_MARGIN;
+
+            if (dist < d0 && dist > 0.1) {
+                // APF 斥力: 指向远离障碍物方向, 强度与侵入深度成正比
+                const penetration = (d0 - dist) / d0; // 0~1 归一化侵入量
+                const force = this.REPULSION_STRENGTH * penetration * penetration;
+                const nx = dx / dist; // 单位方向向量 (远离障碍物)
+                const nz = dz / dist;
+                fx += nx * force;
+                fz += nz * force;
+            }
+        }
+
+        // 限幅: 防止单帧大幅跳变
+        const fMag = Math.sqrt(fx * fx + fz * fz);
+        if (fMag > this.MAX_CORRECTION) {
+            fx = fx / fMag * this.MAX_CORRECTION;
+            fz = fz / fMag * this.MAX_CORRECTION;
+        }
+
+        if (fMag > 0.01) {
+            obj.position.x += fx;
+            obj.position.z += fz;
+        }
+    },
+
+    /**
+     * applyShipRepulsion — 两船之间互斥力 (COLREGs Rule 8: 避碰行动)
+     * 保持安全间距 = r1 + r2 + margin
+     */
+    applyShipRepulsion: function(ship1, r1, ship2, r2) {
+        if (!ship1 || !ship2) return;
+        const dx = ship1.position.x - ship2.position.x;
+        const dz = ship1.position.z - ship2.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        const minDist = r1 + r2 + this.SAFETY_MARGIN;
+
+        if (dist < minDist && dist > 0.1) {
+            const penetration = (minDist - dist) / minDist;
+            const force = this.REPULSION_STRENGTH * penetration * 0.5;
+            const nx = dx / dist;
+            const nz = dz / dist;
+            // 各推一半
+            ship1.position.x += nx * force * 0.5;
+            ship1.position.z += nz * force * 0.5;
+            ship2.position.x -= nx * force * 0.5;
+            ship2.position.z -= nz * force * 0.5;
+        }
+    },
+
+    /**
+     * checkCPA — 计算两个物体的 CPA (Closest Point of Approach)
+     * 标准 CPA/TCPA 算法 (IMO COLREGs 避碰评估)
+     * @returns {{ cpa: number, tcpa: number }}
+     */
+    checkCPA: function(pos1, vel1, pos2, vel2) {
+        const dPos = { x: pos2.x - pos1.x, z: pos2.z - pos1.z };
+        const dVel = { x: vel2.x - vel1.x, z: vel2.z - vel1.z };
+        const dVelSq = dVel.x * dVel.x + dVel.z * dVel.z;
+        if (dVelSq < 1e-8) {
+            return { cpa: Math.sqrt(dPos.x * dPos.x + dPos.z * dPos.z), tcpa: 0 };
+        }
+        const tcpa = -(dPos.x * dVel.x + dPos.z * dVel.z) / dVelSq;
+        const cpaX = dPos.x + dVel.x * Math.max(0, tcpa);
+        const cpaZ = dPos.z + dVel.z * Math.max(0, tcpa);
+        return { cpa: Math.sqrt(cpaX * cpaX + cpaZ * cpaZ), tcpa: Math.max(0, tcpa) };
+    },
+
+    /**
+     * getStatus — 返回当前避碰状态 (供HUD显示)
+     */
+    getStatus: function() {
+        const results = [];
+        const ships = [];
+        if (state.cargoShip) ships.push({ name: 'CARGO', obj: state.cargoShip, radius: 35 });
+        if (state.boatMesh && RouteSystem.currentScenario === 'b')
+            ships.push({ name: 'WPC', obj: state.boatMesh, radius: 8 });
+
+        for (const ship of ships) {
+            for (const obs of RouteSystem.obstacles) {
+                const dx = ship.obj.position.x - obs.x;
+                const dz = ship.obj.position.z - obs.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                const clearance = dist - obs.physRadius - ship.radius;
+                results.push({
+                    ship: ship.name,
+                    obstacle: obs.label,
+                    distance: Math.round(dist),
+                    clearance: Math.round(clearance),
+                    safe: clearance >= this.SAFETY_MARGIN,
+                });
+            }
+        }
+        return results;
+    },
+};
+
+// 暴露给全局 (供调试和HUD)
+window.CollisionAvoidance = CollisionAvoidance;
+
+// 暴露给全局 (UI 按钮调用)
+window.switchScenario = function(name) {
+    RouteSystem.switchScenario(name);
+    // 更新按钮状态
+    document.querySelectorAll('.scenario-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.scenario === name);
+    });
+};
+
+// ==================== 伴随摄像机 + 相机模式管理 ====================
+
+const CameraMode = {
+    current: 'orbit',  // 'orbit' | 'overview' | 'follow' | 'datacenter'
+    followOffset: new THREE.Vector3(0, 15, 40),
+    followLookAhead: 30,
+    followLerp: 0.05,
+    _dcCamera: null,       // 数据中心巡检摄像机
+    _dcProgress: 0,        // 巡检进度
+    _dcCurve: null,        // 巡检路径
+
+    switch: function(mode) {
+        const prev = this.current;
+        this.current = mode;
+
+        // Show/hide datacenter room
+        if (state.datacenter) {
+            state.datacenter.visible = (mode === 'datacenter');
+        }
+
+        if (mode === 'orbit') {
+            state.controls.enabled = true;
+            state.camera.up.set(0, 1, 0);
+        } else if (mode === 'overview') {
+            state.controls.enabled = false;
+            state.camera.position.set(0, 300, 1);
+            state.camera.up.set(0, 0, -1);
+            state.camera.lookAt(0, 0, -50);
+        } else if (mode === 'follow') {
+            state.controls.enabled = false;
+            state.camera.up.set(0, 1, 0);
+        } else if (mode === 'datacenter') {
+            state.controls.enabled = false;
+            state.camera.up.set(0, 1, 0);
+            // Use the inspection curve from createDatacenter()
+            this._dcCurve = state.datacenterCurve || null;
+            this._dcProgress = 0;
+        }
+        // 更新按钮高亮
+        document.querySelectorAll('.cam-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+        console.log('📷 Camera mode:', mode);
+    },
+
+    updateFollow: function() {
+        if (this.current !== 'follow') return;
+        // 跟随目标: 场景A → 货船, 场景B → 双体船
+        let target, heading;
+        if (RouteSystem.currentScenario === 'a' && state.cargoShip) {
+            target = state.cargoShip;
+            heading = target.rotation.y;
+        } else if (RouteSystem.currentScenario === 'b' && state.boatMesh) {
+            target = state.boatMesh;
+            heading = target.rotation.y;
+        } else {
+            return;
+        }
+
+        // 相机在目标后上方 (相对于运动方向)
+        const sin = Math.sin(heading);
+        const cos = Math.cos(heading);
+        const idealPos = new THREE.Vector3(
+            target.position.x - sin * this.followOffset.z + cos * this.followOffset.x,
+            target.position.y + this.followOffset.y,
+            target.position.z - cos * this.followOffset.z - sin * this.followOffset.x
+        );
+        const lookTarget = new THREE.Vector3(
+            target.position.x + sin * this.followLookAhead,
+            target.position.y + 3,
+            target.position.z + cos * this.followLookAhead
+        );
+
+        state.camera.position.lerp(idealPos, this.followLerp);
+        // Smooth lookAt via lerp
+        const currentLook = new THREE.Vector3();
+        state.camera.getWorldDirection(currentLook);
+        state.camera.lookAt(lookTarget);
+    },
+
+    updateDatacenter: function() {
+        if (this.current !== 'datacenter' || !this._dcCurve) return;
+        if (!state.datacenter) return;
+
+        this._dcProgress = (this._dcProgress + 0.0006) % 1.0;
+        // Get local position on curve, convert to world (datacenter has fixed world position)
+        const localPos = this._dcCurve.getPointAt(this._dcProgress);
+        const tangent = this._dcCurve.getTangentAt(this._dcProgress);
+
+        // datacenter is at fixed position (150, 0, 80)
+        const worldPos = localPos.clone().add(state.datacenter.position);
+        state.camera.position.copy(worldPos);
+
+        // Look along tangent with subtle side oscillation toward rack rows
+        const sideOffset = Math.sin(this._dcProgress * Math.PI * 8) * 3;
+        const localLook = new THREE.Vector3(
+            localPos.x + tangent.x * 4 + sideOffset,
+            localPos.y - 0.2,
+            localPos.z + tangent.z * 4
+        );
+        const worldLook = localLook.add(state.datacenter.position);
+        state.camera.lookAt(worldLook);
+    },
+};
+
+window.switchCameraMode = function(mode) {
+    CameraMode.switch(mode);
+};
+
 // ==================== 动画循环 ====================
 
 function animate() {
@@ -3985,10 +4499,10 @@ function animate() {
         const cargo = state.cargoShip;
 
         if (state.cctvPreset === 'top') {
-            // 全局俯视：高空看双体船 + 货船轨道；轻微跟随双体船位置
-            state.camera.position.set(b.position.x, 180, b.position.z + 1);
+            // 全局俯视：高空看全场景
+            state.camera.position.set(b.position.x, 300, b.position.z + 1);
             state.camera.up.set(0, 0, -1);
-            state.camera.lookAt(b.position.x, 0, b.position.z);
+            state.camera.lookAt(b.position.x, 0, b.position.z - 50);
         } else if (state.cctvPreset === 'bow' && cargo) {
             // 前置摄像头：起点位于双体船船头，终点落在货船上
             const bowOff = -10;  // 本地 -Z 是船首方向
@@ -4121,34 +4635,21 @@ function animate() {
         state._seaFloor.material.uniforms.time.value = now;
     }
     
-    // AR-CAS: 货船运动 — 以双体船(原点)为圆心做椭圆运动 (速度别太快)
-    if (state.cargoShip) {
-        // 使用帧计数器: 每帧递增，角速度 0.005 rad/帧 ≈ 0.3°/s @60fps
-        if (state._cargoOrbitAngle === undefined) state._cargoOrbitAngle = 0;
-        state._cargoOrbitAngle += 0.005;
-        const orbitAngle = state._cargoOrbitAngle;
-        // 椭圆运动参数: 长轴沿 X 轴 (120 units), 短轴沿 Z 轴 (60 units)
-        const orbitRadiusX = 120;        // 长轴半径 (X方向)
-        const orbitRadiusZ = 60;         // 短轴半径 (Z方向)
-        // 计算椭圆位置: 以原点(双体船位置)为圆心
-        state.cargoShip.position.x = Math.cos(orbitAngle) * orbitRadiusX;
-        state.cargoShip.position.z = Math.sin(orbitAngle) * orbitRadiusZ;
-        // 船头指向运动方向 (椭圆切线方向)
-        // 椭圆参数方程: x = a*cos(θ), z = b*sin(θ)
-        // 切线方向: dx/dθ = -a*sin(θ), dz/dθ = b*cos(θ)
-        const headingAngle = Math.atan2(
-            orbitRadiusX * Math.cos(orbitAngle),   // dz/dθ 的符号
-            -orbitRadiusZ * Math.sin(orbitAngle)    // dx/dθ 的符号
-        );
-        state.cargoShip.rotation.y = headingAngle;
+    // AR-CAS: 路径系统驱动货船/双体船运动
+    if (state.cargoShip && RouteSystem.curves.scenario_a_cargo) {
+        RouteSystem.update();
         // 大型船波浪影响 — 摇摆幅度小、周期长
         state.cargoShip.rotation.z = Math.sin(now * 0.4) * 0.008;
         state.cargoShip.rotation.x = Math.cos(now * 0.3) * 0.006;
-        state.cargoShip.position.y = Math.sin(now * 0.5) * 0.5;
+        state.cargoShip.position.y += Math.sin(now * 0.5) * 0.5;
 
         // 更新 wabi-sabi HUD
         updateCargoOrbitHUD();
     }
+
+    // 伴随摄像机 + 数据中心摄像机更新
+    CameraMode.updateFollow();
+    CameraMode.updateDatacenter();
     
     // AR-CAS: 冰山漂浮 (大型冰山, 缓慢漂移)
     state.icebergs.forEach((ib, i) => {

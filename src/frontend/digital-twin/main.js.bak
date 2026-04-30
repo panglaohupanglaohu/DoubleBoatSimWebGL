@@ -109,6 +109,40 @@ export function init() {
     state.controls.target.set(0, 0, 0);
     state.controls.minDistance = 10;
     state.controls.maxDistance = 120;
+
+    // ── 监控摄像头预设（worldmonitor-map.html 通过 ?cam=top|bow|stern 嵌入）──
+    const camParam = new URLSearchParams(window.location.search).get('cam');
+    if (camParam && ['top', 'bow', 'stern'].includes(camParam)) {
+        state.cctvPreset = camParam;
+        // 关闭旋转/平移，仅保留鼠标滚轮缩放（用户要求）
+        state.controls.enableRotate = false;
+        state.controls.enablePan = false;
+        state.controls.enableZoom = true;
+        state.controls.minDistance = 5;
+        state.controls.maxDistance = 400;
+        // canvas 仍要响应滚轮事件
+        try { state.renderer.domElement.style.pointerEvents = 'auto'; } catch (e) {}
+        if (camParam === 'top') {
+            state.camera.position.set(0, 180, 1);
+            state.camera.fov = 60;
+        } else {
+            state.camera.fov = 50;
+        }
+        state.camera.updateProjectionMatrix();
+        console.log(`[CCTV] preset=${camParam} 已激活（鼠标滚轮可缩放）`);
+        // 鼠标滚轮缩放（调整 FOV，35° ~ 95°）
+        state.cctvZoom = 1.0;
+        state.renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const baseFov = camParam === 'top' ? 60 : 50;
+            state.cctvZoom = Math.max(0.4, Math.min(2.0, state.cctvZoom + (e.deltaY > 0 ? 0.05 : -0.05)));
+            state.camera.fov = baseFov * state.cctvZoom;
+            state.camera.updateProjectionMatrix();
+        }, { passive: false });
+        // 强制 resize，避免 canvas 尺寸残留
+        setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch(e) {} }, 50);
+        setTimeout(() => { try { window.dispatchEvent(new Event('resize')); } catch(e) {} }, 500);
+    }
     
     // 设置灯光
     setupLights();
@@ -3942,7 +3976,43 @@ function animate() {
     
     state.controls.update();
     const now = performance.now() * 0.001;
-    
+
+    // ── CCTV 预设相机：锁定为顶视/船头/船尾 跟随双体船 ──
+    if (state.cctvPreset && state.boatMesh) {
+        const b = state.boatMesh;
+        const heading = b.rotation.y || 0;
+        const sin = Math.sin(heading), cos = Math.cos(heading);
+        const cargo = state.cargoShip;
+
+        if (state.cctvPreset === 'top') {
+            // 全局俯视：高空看双体船 + 货船轨道；轻微跟随双体船位置
+            state.camera.position.set(b.position.x, 180, b.position.z + 1);
+            state.camera.up.set(0, 0, -1);
+            state.camera.lookAt(b.position.x, 0, b.position.z);
+        } else if (state.cctvPreset === 'bow' && cargo) {
+            // 前置摄像头：起点位于双体船船头，终点落在货船上
+            const bowOff = -10;  // 本地 -Z 是船首方向
+            const bx = b.position.x + bowOff * sin;
+            const bz = b.position.z + bowOff * cos;
+            state.camera.position.set(bx, b.position.y + 5.5, bz);
+            state.camera.up.set(0, 1, 0);
+            state.camera.lookAt(cargo.position.x, cargo.position.y + 3, cargo.position.z);
+        } else if (state.cctvPreset === 'stern' && cargo) {
+            // 后置摄像头：起点位于双体船船尾，终点落在货船上
+            const sternOff = 10;
+            const sx = b.position.x + sternOff * sin;
+            const sz = b.position.z + sternOff * cos;
+            state.camera.position.set(sx, b.position.y + 5.5, sz);
+            state.camera.up.set(0, 1, 0);
+            state.camera.lookAt(cargo.position.x, cargo.position.y + 3, cargo.position.z);
+        } else if (state.cctvPreset === 'bow' || state.cctvPreset === 'stern') {
+            // 货船尚未加载时，给一个临时朝向
+            const dir = state.cctvPreset === 'bow' ? -1 : 1;
+            state.camera.position.set(b.position.x, b.position.y + 5.5, b.position.z + dir * 10);
+            state.camera.lookAt(b.position.x, b.position.y + 3, b.position.z + dir * 80);
+        }
+    }
+
     // 更新水面 + 天空时间
     if (state.waterMesh) {
         state.waterMesh.material.uniforms.time.value = now;
@@ -4051,24 +4121,33 @@ function animate() {
         state._seaFloor.material.uniforms.time.value = now;
     }
     
-    // AR-CAS: 货船运动 — 以双体船(原点)为圆心做圆周运动 (速度别太快)
+    // AR-CAS: 货船运动 — 以双体船(原点)为圆心做椭圆运动 (速度别太快)
     if (state.cargoShip) {
         // 使用帧计数器: 每帧递增，角速度 0.005 rad/帧 ≈ 0.3°/s @60fps
         if (state._cargoOrbitAngle === undefined) state._cargoOrbitAngle = 0;
         state._cargoOrbitAngle += 0.005;
         const orbitAngle = state._cargoOrbitAngle;
-        // 圆周运动参数
-        const orbitRadius = 80;          // 轨道半径 (units)
-        // 计算圆周位置: 以原点(双体船位置)为圆心
-        state.cargoShip.position.x = Math.cos(orbitAngle) * orbitRadius;
-        state.cargoShip.position.z = Math.sin(orbitAngle) * orbitRadius;
-        // 船头指向运动方向 (圆周切线方向)
-        const headingAngle = orbitAngle + Math.PI / 2; // 切线方向 = 径向 + 90°
+        // 椭圆运动参数: 长轴沿 X 轴 (120 units), 短轴沿 Z 轴 (60 units)
+        const orbitRadiusX = 120;        // 长轴半径 (X方向)
+        const orbitRadiusZ = 60;         // 短轴半径 (Z方向)
+        // 计算椭圆位置: 以原点(双体船位置)为圆心
+        state.cargoShip.position.x = Math.cos(orbitAngle) * orbitRadiusX;
+        state.cargoShip.position.z = Math.sin(orbitAngle) * orbitRadiusZ;
+        // 船头指向运动方向 (椭圆切线方向)
+        // 椭圆参数方程: x = a*cos(θ), z = b*sin(θ)
+        // 切线方向: dx/dθ = -a*sin(θ), dz/dθ = b*cos(θ)
+        const headingAngle = Math.atan2(
+            orbitRadiusX * Math.cos(orbitAngle),   // dz/dθ 的符号
+            -orbitRadiusZ * Math.sin(orbitAngle)    // dx/dθ 的符号
+        );
         state.cargoShip.rotation.y = headingAngle;
         // 大型船波浪影响 — 摇摆幅度小、周期长
         state.cargoShip.rotation.z = Math.sin(now * 0.4) * 0.008;
         state.cargoShip.rotation.x = Math.cos(now * 0.3) * 0.006;
         state.cargoShip.position.y = Math.sin(now * 0.5) * 0.5;
+
+        // 更新 wabi-sabi HUD
+        updateCargoOrbitHUD();
     }
     
     // AR-CAS: 冰山漂浮 (大型冰山, 缓慢漂移)
